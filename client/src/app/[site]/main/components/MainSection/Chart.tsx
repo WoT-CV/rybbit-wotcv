@@ -139,16 +139,19 @@ export function Chart({
     );
 
     const now = DateTime.now();
+    const lowerBoundMs = cMin?.getTime();
     const upperBoundMs = (boundsMax ?? now.toJSDate()).getTime();
 
-    // Current points — filter against the strict upper bound only. Stale data
-    // during a goBack transition (timestamps in the future relative to the
-    // new range) gets dropped here.
+    // Filter against the strict period bounds (not the fallback-extended
+    // chartMax) so that during a goBack/goForward transition, stale data
+    // from the previous query doesn't get dragged onto the new x-axis.
     const currentPoints: Point[] = [];
     data?.data?.forEach(e => {
       const ts = DateTime.fromSQL(e.time, { zone: timezone }).toUTC();
       if (ts > now) return;
-      if (ts.toMillis() > upperBoundMs) return;
+      const tsMs = ts.toMillis();
+      if (lowerBoundMs !== undefined && tsMs < lowerBoundMs) return;
+      if (tsMs > upperBoundMs) return;
       currentPoints.push({
         x: ts.toJSDate(),
         y: Number(e[selectedStat] ?? 0),
@@ -166,11 +169,10 @@ export function Chart({
     const effChartMax = chartXMax ?? boundsMax ?? dataMax ?? now.toJSDate();
 
     // Previous points — time-shift onto the current period's x-axis. Each
-    // previous timestamp is shifted by (cMin − prevMin), so prev[0] lands at
-    // cMin. The previous line therefore spans the *full* previous period
-    // mapped onto the current's domain (e.g. "this month" shows all 30 days
-    // of April mapped to May 1-30, even though current data only goes to today).
-    // Keep originalTime so the tooltip can show the real previous date.
+    // previous timestamp is shifted by (cMin - prevMin), so prev[0] lands at
+    // cMin. Keep originalTime so the tooltip can show the real previous date.
+    // Filter against the strict bounds so stale previous queries don't bleed
+    // onto the new x-axis during goBack/goForward.
     const { min: prevMin } = getChartTimeBounds(previousTime, bucket, timezone);
     const offsetMs =
       cMin && prevMin ? cMin.getTime() - prevMin.getTime() : 0;
@@ -178,6 +180,7 @@ export function Chart({
     previousData?.data?.forEach(e => {
       const prevTs = DateTime.fromSQL(e.time, { zone: timezone }).toUTC();
       const mappedMs = prevTs.toMillis() + offsetMs;
+      if (lowerBoundMs !== undefined && mappedMs < lowerBoundMs) return;
       if (mappedMs > upperBoundMs) return;
       previousPoints.push({
         x: new Date(mappedMs),
