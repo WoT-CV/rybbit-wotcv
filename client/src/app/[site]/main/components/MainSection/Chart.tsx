@@ -88,6 +88,53 @@ const floorToBucket = (dt: DateTime, bucket: TimeBucket): DateTime => {
   }
 };
 
+const floorToMinuteInterval = (dt: DateTime, minutes: number): DateTime =>
+  dt.set({
+    minute: Math.floor(dt.minute / minutes) * minutes,
+    second: 0,
+    millisecond: 0,
+  });
+
+const bucketMinuteInterval = (bucket: TimeBucket): number | null => {
+  switch (bucket) {
+    case "minute":
+      return 1;
+    case "five_minutes":
+      return 5;
+    case "ten_minutes":
+      return 10;
+    case "fifteen_minutes":
+      return 15;
+    case "hour":
+      return 60;
+    default:
+      return null;
+  }
+};
+
+const bucketDurationMinutes = (bucket: TimeBucket): number => {
+  switch (bucket) {
+    case "minute":
+      return 1;
+    case "five_minutes":
+      return 5;
+    case "ten_minutes":
+      return 10;
+    case "fifteen_minutes":
+      return 15;
+    case "hour":
+      return 60;
+    case "day":
+      return 24 * 60;
+    case "week":
+      return 7 * 24 * 60;
+    case "month":
+      return 31 * 24 * 60;
+    case "year":
+      return 366 * 24 * 60;
+  }
+};
+
 const canDragSelectBucket = (bucket: TimeBucket) =>
   bucket === "minute" ||
   bucket === "five_minutes" ||
@@ -101,17 +148,23 @@ const getDragZoomBucket = (
   endExclusive: DateTime,
   sourceBucket: TimeBucket
 ): TimeBucket | null => {
+  let desiredBucket: TimeBucket | null = null;
+
   if (sourceBucket === "day") {
     const days = Math.round(
       endExclusive.startOf("day").diff(start.startOf("day"), "days").days
     );
-    return days <= 3 ? "hour" : null;
+    desiredBucket = days <= 3 ? "hour" : null;
+  } else {
+    const minutes = endExclusive.diff(start, "minutes").minutes;
+    if (minutes <= 60) desiredBucket = "minute";
+    else if (minutes <= 3 * 24 * 60) desiredBucket = "hour";
   }
 
-  const minutes = endExclusive.diff(start, "minutes").minutes;
-  if (minutes <= 60) return "minute";
-  if (minutes <= 3 * 24 * 60) return "hour";
-  return null;
+  if (!desiredBucket) return null;
+  return bucketDurationMinutes(desiredBucket) < bucketDurationMinutes(sourceBucket)
+    ? desiredBucket
+    : null;
 };
 
 type Point = {
@@ -141,11 +194,15 @@ const formatXTick = (
   mode: Time["mode"],
   bucket: TimeBucket,
   pastMinutesStart: number | undefined,
-  isExactRange: boolean
+  isExactRange: boolean,
+  showMinutePrecision: boolean
 ) => {
   const dt = DateTime.fromJSDate(date, { zone: "utc" })
     .setZone(getTimezone())
     .setLocale(userLocale);
+  if (showMinutePrecision) {
+    return dt.toFormat(hour12 ? "h:mm" : "HH:mm");
+  }
   if (mode === "past-minutes") {
     if ((pastMinutesStart ?? 0) < 1440) {
       return dt.toFormat(hour12 ? "h:mm" : "HH:mm");
@@ -222,6 +279,30 @@ export function Chart({
   const timezone = getTimezone();
   const isExactRange = time.mode === "range" && Boolean(time.startTime && time.endTime);
   const clipId = useId().replace(/:/g, "");
+
+  useEffect(() => {
+    if (time.mode !== "range" || !time.startTime || !time.endTime) return;
+
+    const start = DateTime.fromISO(`${time.startDate}T${time.startTime}`, {
+      zone: timezone,
+    });
+    const end = DateTime.fromISO(`${time.endDate}T${time.endTime}`, {
+      zone: timezone,
+    });
+    const minutes = end.diff(start, "minutes").minutes;
+    if (minutes <= 0) return;
+
+    const nextBucket =
+      minutes <= 60
+        ? "minute"
+        : minutes <= 3 * 24 * 60 && !bucketMinuteInterval(bucket)
+          ? "hour"
+          : null;
+
+    if (nextBucket && nextBucket !== bucket) {
+      setBucket(nextBucket);
+    }
+  }, [bucket, setBucket, time, timezone]);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ width: number; height: number }>({
@@ -363,6 +444,27 @@ export function Chart({
     (time.mode === "past-minutes" && time.pastMinutesStart === 1440)
       ? Math.min(maxTicks, 24)
       : maxTicks;
+  const minuteTickInterval = useMemo(() => {
+    if (!W || !chartMin || !chartMax || xTickCount <= 0) return null;
+    if (!isExactRange && time.mode !== "past-minutes") return null;
+
+    const minInterval = bucketMinuteInterval(bucket);
+    if (!minInterval) return null;
+
+    const durationMinutes = Math.ceil(
+      (chartMax.getTime() - chartMin.getTime()) / 60_000
+    );
+    if (durationMinutes <= 0 || durationMinutes > 6 * 60) return null;
+
+    for (const interval of [1, 5, 10, 15, 30, 60]) {
+      if (interval < minInterval) continue;
+      if (Math.floor(durationMinutes / interval) + 1 <= xTickCount) {
+        return interval;
+      }
+    }
+
+    return durationMinutes <= 2 * 60 && minInterval <= 30 ? 30 : null;
+  }, [W, chartMin, chartMax, xTickCount, isExactRange, time.mode, bucket]);
 
   // Generate ticks spanning [chartMin, chartMax] aligned to bucket boundaries.
   // Anchored on the first current data point so ticks land where the API's
@@ -376,6 +478,29 @@ export function Chart({
 
     const chartMinMs = chartMin.getTime();
     const chartMaxMs = chartMax.getTime();
+    if (minuteTickInterval) {
+      const min = DateTime.fromMillis(chartMinMs, { zone: "utc" }).setZone(
+        timezone
+      );
+      const max = DateTime.fromMillis(chartMaxMs, { zone: "utc" }).setZone(
+        timezone
+      );
+      const ticks: Date[] = [];
+      let t = floorToMinuteInterval(min, minuteTickInterval);
+      if (t.toMillis() < min.toMillis()) {
+        t = t.plus({ minutes: minuteTickInterval });
+      }
+
+      let safety = 0;
+      while (t.toMillis() <= max.toMillis() && safety < 10000) {
+        ticks.push(t.toUTC().toJSDate());
+        t = t.plus({ minutes: minuteTickInterval });
+        safety++;
+      }
+
+      return ticks;
+    }
+
     const anchorMs = current.length ? current[0].x.getTime() : chartMinMs;
     const anchor = DateTime.fromMillis(anchorMs, { zone: "utc" }).setZone(
       timezone
@@ -402,7 +527,16 @@ export function Chart({
     if (ticks.length <= xTickCount) return ticks;
     const stride = Math.max(1, Math.ceil(ticks.length / xTickCount));
     return ticks.filter((_, i) => i % stride === 0);
-  }, [W, chartMin, chartMax, xTickCount, current, bucket, timezone]);
+  }, [
+    W,
+    chartMin,
+    chartMax,
+    xTickCount,
+    minuteTickInterval,
+    current,
+    bucket,
+    timezone,
+  ]);
 
   // Cap vertical gridlines at 8 so dense ranges don't get noisy. Subsample
   // from xTicks so every gridline still aligns with a real label.
@@ -809,7 +943,8 @@ export function Chart({
                   time.mode === "past-minutes"
                     ? time.pastMinutesStart
                     : undefined,
-                  isExactRange
+                  isExactRange,
+                  minuteTickInterval !== null
                 )}
               </text>
             </g>
