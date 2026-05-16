@@ -104,7 +104,7 @@ export function MainSection() {
                   href={session.data ? "/" : "https://rybbit.com"}
                   className="opacity-75"
                 >
-                  <RybbitTextLogo width={80} height={0} />
+                  <RybbitTextLogo width={80} />
                 </Link>
               )}
             </div>
