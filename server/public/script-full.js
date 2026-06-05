@@ -1439,6 +1439,7 @@
       const tagName = target.tagName.toUpperCase();
       if (!["INPUT", "SELECT", "TEXTAREA"].includes(tagName)) return;
       if (target.disabled) return;
+      if (target.readOnly) return;
       if (tagName === "INPUT") {
         const inputType = target.type?.toLowerCase();
         if (inputType === "hidden" || inputType === "password") return;
