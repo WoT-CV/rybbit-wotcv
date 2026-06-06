@@ -11,10 +11,13 @@ type BotEventPayload = TotalTrackingPayload &
     sessionId: string;
   };
 
+const BOT_EVENT_BATCH_SIZE = 5000;
+const BOT_EVENT_FLUSH_INTERVAL_MS = 1000;
+
 class BotEventQueue {
   private queue: BotEventPayload[] = [];
-  private batchSize = 5000;
-  private interval = 1000;
+  private batchSize = BOT_EVENT_BATCH_SIZE;
+  private interval = BOT_EVENT_FLUSH_INTERVAL_MS;
   private processing = false;
   private logger = createServiceLogger("bot-event-queue");
 

@@ -162,7 +162,6 @@ import { auth } from "./lib/auth.js";
 import { createCorsOptionsDelegate, createRejectUntrustedOriginHook } from "./lib/cors.js";
 import { IS_CLOUD } from "./lib/const.js";
 import { reengagementService } from "./services/reengagement/reengagementService.js";
-import { sessionsService } from "./services/sessions/sessionsService.js";
 import { telemetryService } from "./services/telemetryService.js";
 import { handleIdentify } from "./services/tracker/identifyService.js";
 import { trackEvent } from "./services/tracker/trackEvent.js";
@@ -256,10 +255,14 @@ server.register(
   { auth: auth! }
 );
 
-// Serve analytics scripts with generic names to avoid ad-blocker detection
-server.get("/api/script.js", async (_, reply) => reply.sendFile("script.js"));
-server.get("/api/replay.js", async (_, reply) => reply.sendFile("rrweb.min.js"));
-server.get("/api/metrics.js", async (_, reply) => reply.sendFile("web-vitals.iife.js"));
+// Serve analytics scripts with generic names to avoid ad-blocker detection.
+// Cache them so browsers stop revalidating on every page load — without this they
+// default to max-age=0, so each tracked page hit fires a conditional request that
+// lands on caddy and the backend. script.js gets a short TTL so tracker updates
+// still propagate quickly; the vendored libs rarely change and get a longer TTL.
+server.get("/api/script.js", async (_, reply) => reply.sendFile("script.js", { maxAge: "1h" }));
+server.get("/api/replay.js", async (_, reply) => reply.sendFile("rrweb.min.js", { maxAge: "1d" }));
+server.get("/api/metrics.js", async (_, reply) => reply.sendFile("web-vitals.iife.js", { maxAge: "1d" }));
 
 // Domain-specific route plugins
 async function analyticsRoutes(fastify: FastifyInstance) {
@@ -472,7 +475,6 @@ const start = async () => {
     // Cron jobs should only run on the primary process (or in single-process mode)
     if (!cluster.isWorker) {
       telemetryService.startTelemetryCron();
-      sessionsService.startCleanupCron();
       usageService.startUsageCheckCron();
       if (IS_CLOUD && process.env.NODE_ENV !== "development") {
         weeklyReportService.startWeeklyReportCron();

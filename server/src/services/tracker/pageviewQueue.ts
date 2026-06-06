@@ -10,6 +10,9 @@ type TotalPayload = TotalTrackingPayload & {
   sessionId: string;
 };
 
+const PAGEVIEW_BATCH_SIZE = 5000;
+const PAGEVIEW_FLUSH_INTERVAL_MS = 1000;
+
 const getParsedProperties = (properties: string | undefined) => {
   try {
     return properties ? JSON.parse(properties) : undefined;
@@ -20,8 +23,8 @@ const getParsedProperties = (properties: string | undefined) => {
 
 class PageviewQueue {
   private queue: TotalPayload[] = [];
-  private batchSize = 5000;
-  private interval = 1000;
+  private batchSize = PAGEVIEW_BATCH_SIZE;
+  private interval = PAGEVIEW_FLUSH_INTERVAL_MS;
   private processing = false;
   private logger = createServiceLogger("pageview-queue");
 

@@ -10,6 +10,9 @@ import { CLIENT_BOT_SCORE_THRESHOLD } from "./config.js";
 import { detectBot } from "./headerHeuristics.js";
 import { classifyUA } from "./uaBots/index.js";
 
+// Per-detection logging is verbose and costly at high traffic; off by default.
+const LOG_BOT_DETECTIONS = false;
+
 interface BotBlockingPayload {
   siteId: string;
   userAgent?: string;
@@ -174,12 +177,12 @@ function getClientSignalResult(payload: BotBlockingPayload, userAgent: string) {
   };
 }
 
-export function checkBotBlocking({
+export async function checkBotBlocking({
   request,
   blockBots,
   trustedServerSideIngestion = false,
   payload,
-}: BotBlockingInput): BotDetectionResult | null {
+}: BotBlockingInput): Promise<BotDetectionResult | null> {
   const userAgent = payload.userAgent || (request.headers["user-agent"] as string) || "";
   const clientSignalResult = getClientSignalResult(payload, userAgent);
   recordBotBlockingRequest(clientSignalResult.scoreForStats, clientSignalResult.maskForStats);
@@ -253,7 +256,7 @@ export function checkBotBlocking({
   }
 
   // Layer 5: Request-rate and crawl-shape anomaly detection.
-  const anomaly = observeTrackingAnomaly({
+  const anomaly = await observeTrackingAnomaly({
     siteId: payload.siteId,
     ipAddress: payload.ipAddress,
     userAgent,
@@ -279,15 +282,17 @@ export function checkBotBlocking({
     return null;
   }
 
-  logger.info(
-    {
-      siteId: payload.siteId,
-      detectionCount: detections.length,
-      detectionLayers: detections.map(detection => detection.layer),
-      detections,
-    },
-    "Bot request detected"
-  );
+  if (LOG_BOT_DETECTIONS) {
+    logger.info(
+      {
+        siteId: payload.siteId,
+        detectionCount: detections.length,
+        detectionLayers: detections.map(detection => detection.layer),
+        detections,
+      },
+      "Bot request detected"
+    );
+  }
 
   recordBotDetections(detections.map(detection => detection.layer));
 
