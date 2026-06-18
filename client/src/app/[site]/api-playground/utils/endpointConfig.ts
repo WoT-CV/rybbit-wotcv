@@ -87,13 +87,6 @@ export const endpointCategories: EndpointCategory[] = [
       },
       {
         method: "GET",
-        path: "/sites/:site/verify-script",
-        name: "Verify Tracking Script",
-        description: "Checks whether the site has the tracking script installed",
-        hasCommonParams: false,
-      },
-      {
-        method: "GET",
         path: "/sites/:site/private-link-config",
         name: "Get Private Link Config",
         description: "Returns the private link key configuration",

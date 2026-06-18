@@ -122,7 +122,6 @@ import {
   moveSite,
   updateSiteConfig,
   updateSitePrivateLinkConfig,
-  verifyScript,
 } from "./api/sites/index.js";
 import {
   createCheckoutSession,
@@ -360,7 +359,6 @@ async function sitesRoutes(fastify: FastifyInstance) {
   fastify.get("/sites/:siteId/embed-stats", { preHandler: [resolveSiteId] as any }, getEmbedStats); // Public - widget endpoint (handler checks site is public)
   fastify.get("/sites/:siteId/excluded-ips", authSite, getSiteExcludedIPs);
   fastify.get("/sites/:siteId/excluded-countries", authSite, getSiteExcludedCountries);
-  fastify.get("/sites/:siteId/verify-script", authSite, verifyScript);
 
   // Site Imports
   fastify.get("/sites/:siteId/imports", adminSite, getSiteImports);

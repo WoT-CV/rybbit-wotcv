@@ -21,4 +21,3 @@ export { getSiteImports } from "./getSiteImports.js";
 export { createSiteImport } from "./createSiteImport.js";
 export { batchImportEvents } from "./batchImportEvents.js";
 export { deleteSiteImport } from "./deleteSiteImport.js";
-export { verifyScript } from "./verifyScript.js";

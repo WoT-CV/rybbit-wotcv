@@ -1,7 +1,6 @@
 "use client";
 
 import { CodeSnippet } from "@/components/CodeSnippet";
-import { VerifyInstallation } from "@/components/VerifyInstallation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -199,8 +198,6 @@ await rybbit.event("signup_started", { plan: "pro" });`;
             <CodeSnippet code={aiPrompt} />
           </TabsContent>
         </Tabs>
-
-        <VerifyInstallation siteId={siteId} />
 
         {/* Script Options Section */}
         <div className="space-y-4">
