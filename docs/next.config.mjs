@@ -4,8 +4,8 @@ import { createMDX } from 'fumadocs-mdx/next';
 const withNextIntl = createNextIntlPlugin({
   experimental: {
     srcPath: './src',
-    extract: { sourceLocale: 'en' },
     messages: {
+      sourceLocale: 'en',
       path: './messages',
       format: 'json',
       locales: ['en', 'de', 'fr', 'zh', 'es', 'pl', 'it', 'ko', 'pt', 'ja'],
