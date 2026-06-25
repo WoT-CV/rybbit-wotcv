@@ -201,6 +201,23 @@ pre {
   }
 }
 
+/* ── Docs dark surface ───────────────────────────────────────────────────
+   Lift the docs reading surface a few percent in dark mode so it isn't a near
+   black. Scoped to the notebook layout container (which only exists on docs
+   pages), so the marketing pages — which paint the shadcn `--background`
+   token — are untouched. We set the container background directly (the body
+   `--background` is what shows through the docs area otherwise) and raise the
+   layered fumadocs surface tokens in step so cards / code blocks / sidebar
+   keep their depth against the lighter background. */
+.dark #nd-notebook-layout {
+  --color-fd-background: hsl(0, 0%, 7%);
+  --color-fd-card: hsl(0, 0%, 10.5%);
+  --color-fd-popover: hsl(0, 0%, 11%);
+  --color-fd-secondary: hsl(0, 0%, 13.5%);
+  --color-fd-muted: hsl(0, 0%, 13.5%);
+  background-color: var(--color-fd-background);
+}
+
 /* ── Docs section tabs ───────────────────────────────────────────────────
    The docs use the fumadocs "notebook" layout with `tabMode="navbar"`, which
    renders one tab per `root: true` folder (Documentation / API Reference) in
