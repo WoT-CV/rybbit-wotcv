@@ -9,15 +9,21 @@
     "---Analytics---",
     "overview",
     "sessions",
+    "session-replay",
     "users",
+    "user-traits",
     "events",
     "goals",
     "funnels",
     "performance",
     "errors",
+    "bots",
     "insights",
     "---Management---",
     "organizations",
-    "sites"
+    "teams",
+    "sites",
+    "imports",
+    "api-keys"
   ]
 }
