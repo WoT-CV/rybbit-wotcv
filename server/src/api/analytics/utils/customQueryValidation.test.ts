@@ -54,6 +54,29 @@ describe("validateScopedQuery — table reference scoping", () => {
     expect(validateScopedQuery("SELECT * FROM scoped_events JOIN events ON 1=1")).toBe(SCOPED_ONLY_ERROR);
   });
 
+  it("blocks IN table operands that read unauthorized tables", () => {
+    expect(validateScopedQuery("SELECT count() FROM scoped_events WHERE user_id IN events")).toBe(SCOPED_ONLY_ERROR);
+    expect(validateScopedQuery("SELECT count() FROM scoped_events WHERE user_id NOT IN events")).toBe(
+      SCOPED_ONLY_ERROR
+    );
+    expect(validateScopedQuery("SELECT count() FROM scoped_events WHERE user_id in events")).toBe(SCOPED_ONLY_ERROR);
+    expect(validateScopedQuery("SELECT count() FROM scoped_events WHERE user_id GLOBAL IN events")).toBe(
+      SCOPED_ONLY_ERROR
+    );
+    expect(validateScopedQuery("SELECT count() FROM scoped_events WHERE user_id GLOBAL NOT IN events")).toBe(
+      SCOPED_ONLY_ERROR
+    );
+  });
+
+  it("allows IN table operands only when they reference scoped_events or a safe CTE", () => {
+    expect(validateScopedQuery("SELECT count() FROM scoped_events WHERE user_id IN scoped_events")).toBeNull();
+    expect(
+      validateScopedQuery(
+        "WITH safe_users AS (SELECT user_id FROM scoped_events) SELECT count() FROM scoped_events WHERE user_id IN safe_users"
+      )
+    ).toBeNull();
+  });
+
   it("blocks quoted identifiers that can hide unauthorized table references", () => {
     expect(validateScopedQuery('SELECT * FROM "events" scoped_events WHERE 1=1')).toBe(QUOTED_IDENTIFIER_ERROR);
     expect(validateScopedQuery("SELECT * FROM `events` scoped_events WHERE 1=1")).toBe(QUOTED_IDENTIFIER_ERROR);

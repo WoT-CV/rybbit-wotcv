@@ -250,6 +250,21 @@ function isIdentifierChar(char: string) {
   return /[A-Za-z0-9_.]/.test(char);
 }
 
+function readIdentifier(query: string, start: number): [string, number] {
+  let end = start;
+  while (end < query.length && isIdentifierChar(query[end])) {
+    end++;
+  }
+  return [query.slice(start, end), end];
+}
+
+function skipWhitespace(query: string, index: number): number {
+  while (index < query.length && /\s/.test(query[index])) {
+    index++;
+  }
+  return index;
+}
+
 // Collect every directly-named table reference in the query. Covers the table after
 // each FROM/JOIN and every comma-separated entry in a FROM list (`FROM a, b`), which
 // a FROM/JOIN-keyword-only scan would miss. Subquery references (`FROM ( SELECT … )`)
@@ -258,27 +273,12 @@ function collectTableReferences(query: string): string[] {
   const references: string[] = [];
   const length = query.length;
 
-  const readIdentifier = (start: number): [string, number] => {
-    let end = start;
-    while (end < length && isIdentifierChar(query[end])) {
-      end++;
-    }
-    return [query.slice(start, end), end];
-  };
-
-  const skipWhitespace = (index: number): number => {
-    while (index < length && /\s/.test(query[index])) {
-      index++;
-    }
-    return index;
-  };
-
   // Record the table reference that follows a FROM / JOIN / comma when it is a plain
   // identifier; subqueries and anything else are left to the surrounding scan.
   const readReference = (index: number) => {
-    const start = skipWhitespace(index);
+    const start = skipWhitespace(query, index);
     if (start < length && isIdentifierStart(query[start])) {
-      references.push(readIdentifier(start)[0]);
+      references.push(readIdentifier(query, start)[0]);
     }
   };
 
@@ -314,7 +314,7 @@ function collectTableReferences(query: string): string[] {
         readReference(index + 1);
         index++;
       } else if (depth === 0 && isIdentifierStart(char)) {
-        const [word, end] = readIdentifier(index);
+        const [word, end] = readIdentifier(query, index);
         if (fromClauseTerminators.has(word.toLowerCase())) {
           break;
         }
@@ -322,6 +322,21 @@ function collectTableReferences(query: string): string[] {
       } else {
         index++;
       }
+    }
+  }
+
+  return references;
+}
+
+function collectInTableReferences(query: string): string[] {
+  const references: string[] = [];
+  const inPattern = /\b(?:GLOBAL\s+)?(?:NOT\s+)?IN\b/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = inPattern.exec(query)) !== null) {
+    const start = skipWhitespace(query, match.index + match[0].length);
+    if (start < query.length && isIdentifierStart(query[start])) {
+      references.push(readIdentifier(query, start)[0]);
     }
   }
 
@@ -379,11 +394,12 @@ export function validateScopedQuery(query: string): string | null {
     return "scoped_events is reserved and cannot be redefined";
   }
 
-  // Every table reference must be scoped_events or a declared CTE. collectTableReferences
+  // Every data-source reference must be scoped_events or a declared CTE. collectTableReferences
   // walks the full FROM list, so comma-separated targets (`FROM scoped_events, other`) are
   // validated too — a FROM/JOIN-keyword-only scan captured only the first table and let the
-  // rest through. Subqueries are validated by their own inner FROM/JOIN clauses.
-  for (const reference of collectTableReferences(compactQuery)) {
+  // rest through. collectInTableReferences covers ClickHouse's `expr IN table_name`
+  // shorthand, which is equivalent to `expr IN (SELECT * FROM table_name)`.
+  for (const reference of [...collectTableReferences(compactQuery), ...collectInTableReferences(compactQuery)]) {
     const normalizedTableName = reference.toLowerCase();
     if (normalizedTableName !== "scoped_events" && !cteNames.has(normalizedTableName)) {
       return "Queries can only read from scoped_events";
