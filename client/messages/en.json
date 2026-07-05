@@ -1555,5 +1555,8 @@
   "QOaR8l": "Submitted form to \"{action}\"",
   "IQ5tZg": "Submitted form",
   "+B+qvw": "Changed {type}input \"{name}\"",
-  "vDpLV2": "Changed {type}input"
+  "vDpLV2": "Changed {type}input",
+  "qO9iuL": "Access granted through this team's sites",
+  "9YyR5G": "This member will have access to the selected sites, plus sites granted through their teams ({teams}).",
+  "wDjYR2": "This member has access to sites granted through their teams ({teams}), plus any site not assigned to a team."
 }

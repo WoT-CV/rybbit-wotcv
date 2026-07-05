@@ -1555,5 +1555,8 @@
   "QOaR8l": "Formular an \"{action}\" gesendet",
   "IQ5tZg": "Formular abgesendet",
   "+B+qvw": "{type}eingabefeld \"{name}\" geändert",
-  "vDpLV2": "{type}eingabefeld geändert"
+  "vDpLV2": "{type}eingabefeld geändert",
+  "qO9iuL": "Zugriff über die Websites dieses Teams",
+  "9YyR5G": "Dieses Mitglied hat Zugriff auf die ausgewählten Websites sowie auf Websites, die über seine Teams ({teams}) gewährt werden.",
+  "wDjYR2": "Dieses Mitglied hat Zugriff auf Websites, die über seine Teams ({teams}) gewährt werden, sowie auf alle Websites, die keinem Team zugewiesen sind."
 }

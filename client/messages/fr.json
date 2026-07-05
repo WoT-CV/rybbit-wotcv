@@ -1555,5 +1555,8 @@
   "QOaR8l": "Formulaire soumis à \"{action}\"",
   "IQ5tZg": "Formulaire soumis",
   "+B+qvw": "{type}champ de saisie \"{name}\" modifié",
-  "vDpLV2": "{type}champ de saisie modifié"
+  "vDpLV2": "{type}champ de saisie modifié",
+  "qO9iuL": "Accès accordé via les sites de cette équipe",
+  "9YyR5G": "Ce membre aura accès aux sites sélectionnés, ainsi qu'aux sites accordés via ses équipes ({teams}).",
+  "wDjYR2": "Ce membre a accès aux sites accordés via ses équipes ({teams}), ainsi qu'à tout site non attribué à une équipe."
 }

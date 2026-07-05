@@ -1555,5 +1555,8 @@
   "QOaR8l": "Formulario enviado a \"{action}\"",
   "IQ5tZg": "Formulario enviado",
   "+B+qvw": "{type}campo de entrada \"{name}\" cambiado",
-  "vDpLV2": "{type}campo de entrada cambiado"
+  "vDpLV2": "{type}campo de entrada cambiado",
+  "qO9iuL": "Acceso concedido a través de los sitios de este equipo",
+  "9YyR5G": "Este miembro tendrá acceso a los sitios seleccionados, además de los sitios concedidos a través de sus equipos ({teams}).",
+  "wDjYR2": "Este miembro tiene acceso a los sitios concedidos a través de sus equipos ({teams}), además de cualquier sitio no asignado a un equipo."
 }

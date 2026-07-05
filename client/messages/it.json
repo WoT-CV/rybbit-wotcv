@@ -1555,5 +1555,8 @@
   "QOaR8l": "Modulo inviato a \"{action}\"",
   "IQ5tZg": "Modulo inviato",
   "+B+qvw": "{type}campo di input \"{name}\" modificato",
-  "vDpLV2": "{type}campo di input modificato"
+  "vDpLV2": "{type}campo di input modificato",
+  "qO9iuL": "Accesso concesso tramite i siti di questo team",
+  "9YyR5G": "Questo membro avrà accesso ai siti selezionati, oltre ai siti concessi tramite i suoi team ({teams}).",
+  "wDjYR2": "Questo membro ha accesso ai siti concessi tramite i suoi team ({teams}), oltre a qualsiasi sito non assegnato a un team."
 }
