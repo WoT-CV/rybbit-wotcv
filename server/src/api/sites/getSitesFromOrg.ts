@@ -111,8 +111,11 @@ export async function getSitesFromOrg(
       siteTeamMap.set(mapping.siteId, existing);
     }
 
-    // Enhance sites data with session counts and subscription info
-    const enhancedSitesData = sitesData.map(site => ({
+    // Enhance sites data with session counts and subscription info.
+    // apiKey and privateLinkKey are secrets (ingestion auth / private-link
+    // dashboard access) and must not be exposed to org members here — the
+    // client reads them from the admin-gated per-site endpoints instead.
+    const enhancedSitesData = sitesData.map(({ apiKey, privateLinkKey, ...site }) => ({
       ...site,
       type: site.type || "web",
       domain: site.domain || "",

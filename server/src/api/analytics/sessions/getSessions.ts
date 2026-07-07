@@ -97,10 +97,12 @@ export async function getSessions(req: FastifyRequest<GetSessionsRequest>, res: 
   const timeStatement = getTimeStatement(req.query);
 
   // Use composable filter options:
-  // - sessionLevelParams: pathname and page_title filter at session level (finds sessions that visited a page)
+  // - sessionLevelParams: per-event fields filter at session level (finds sessions
+  //   containing a matching event) — required for any parameter the aggregated CTE
+  //   below doesn't project, otherwise the outer WHERE hits an unknown identifier
   // - fieldMappings: CTE extracts UTM params as separate columns, so we need to map the field names
   const filterStatement = getFilterStatement(filters, Number(site), timeStatement, {
-    sessionLevelParams: ["event_name", "pathname", "page_title", "channel"],
+    sessionLevelParams: ["event_name", "pathname", "page_title", "querystring", "channel"],
     fieldMappings: SESSION_FIELD_MAPPINGS,
   });
 
@@ -145,7 +147,8 @@ export async function getSessions(req: FastifyRequest<GetSessionsRequest>, res: 
           argMax(ip, timestamp) AS ip,
           argMax(lat, timestamp) AS lat,
           argMax(lon, timestamp) AS lon,
-          argMax(tag, timestamp) AS tag
+          argMax(tag, timestamp) AS tag,
+          argMax(timezone, timestamp) AS timezone
       FROM events
       WHERE
           site_id = {siteId:Int32}

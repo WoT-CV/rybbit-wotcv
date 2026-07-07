@@ -415,10 +415,16 @@ const httpTimeParamsSchema = z
 
 /**
  * Returns an error message if the request's time query params are present but
- * invalid, or null if they are valid or absent.
+ * invalid, or null if they are valid or absent. Empty-string values count as
+ * absent: the dashboard sends `start_date=&end_date=` in all-time mode, and
+ * `?param=` in a query string has always meant "no value" to these endpoints.
  */
 export function validateHttpTimeParams(query: unknown): string | null {
-  const result = httpTimeParamsSchema.safeParse(query ?? {});
+  const withoutEmpty =
+    typeof query === "object" && query !== null
+      ? Object.fromEntries(Object.entries(query).filter(([, value]) => value !== ""))
+      : {};
+  const result = httpTimeParamsSchema.safeParse(withoutEmpty);
   if (result.success) {
     return null;
   }
