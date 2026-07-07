@@ -265,7 +265,7 @@ export default function GoalCard({ goal, siteId, timeSeries, isLoadingTimeSeries
           <div className="flex shrink-0 justify-end gap-1 md:pl-4">
             <div onClick={e => e.stopPropagation()}>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild variant="ghost" size="smIcon" aria-label={t("Goal actions")}>
+                <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="smIcon" aria-label={t("Goal actions")}>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>

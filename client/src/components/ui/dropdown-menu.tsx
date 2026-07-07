@@ -15,10 +15,11 @@ const DropdownMenuTrigger = React.forwardRef<
     ButtonProps & {
       unstyled?: boolean;
     }
->(({ className, variant, size, unstyled, ...props }, ref) => (
+>(({ asChild, className, variant, size, unstyled, ...props }, ref) => (
   <DropdownMenuPrimitive.Trigger
     ref={ref}
-    className={unstyled ? className : cn(buttonVariants({ variant, size, className }))}
+    asChild={asChild}
+    className={unstyled || asChild ? className : cn(buttonVariants({ variant, size, className }))}
     {...props}
   />
 ));

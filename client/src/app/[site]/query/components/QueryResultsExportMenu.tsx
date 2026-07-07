@@ -64,13 +64,12 @@ export function QueryResultsExportMenu({
             <Button
               type="button"
               variant="ghost"
-              size={compact ? "smIcon" : "xs"}
+              size="smIcon"
               disabled={!canExport}
               aria-label={t("Download results")}
-              className={cn(compact ? "h-7 w-7" : "h-7 px-2", className)}
+              className={cn(compact && "h-6 w-6", className)}
             >
               <Download className="h-3.5 w-3.5" />
-              {!compact && <span>{t("Export")}</span>}
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
