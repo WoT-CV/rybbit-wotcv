@@ -99,12 +99,16 @@ export async function getUsers(req: FastifyRequest<GetUsersRequest>, res: Fastif
 
   // Generate filter statement and time statement
   const timeStatement = getTimeStatement(req.query);
-  // Applied inside the CTE against raw events (same placement as the count
-  // queries): the aggregate doesn't project every filterable column
-  // (pathname, querystring, utm_*, …), and event-level placement keeps the
-  // returned rows consistent with totalCount.
+  // Applied against raw events (same placement as the count queries): the
+  // aggregate doesn't project every filterable column (pathname, querystring,
+  // utm_*, …), and event-level placement keeps the returned rows consistent
+  // with totalCount.
   const filterStatement = getFilterStatement(filters, Number(site), timeStatement);
 
+  // Filters must run in a subquery below the aggregation: the aggregate SELECT
+  // aliases argMax(...) to the same names as the raw columns (country, browser,
+  // …), and ClickHouse resolves unqualified WHERE references at that level to
+  // the aliases, throwing ILLEGAL_AGGREGATION.
   const query = `
 WITH AggregatedUsers AS (
     SELECT
@@ -132,12 +136,15 @@ WITH AggregatedUsers AS (
         max(timestamp) AS last_seen,
         min(timestamp) AS first_seen,
         argMax(tag, timestamp) AS tag
-    FROM events
-    WHERE
-        site_id = {siteId:Int32}
-        ${timeStatement}
-        ${filterStatement}
-        ${matchingUserIds ? "AND events.identified_user_id IN ({matchingUserIds:Array(String)})" : ""}
+    FROM (
+        SELECT *
+        FROM events
+        WHERE
+            site_id = {siteId:Int32}
+            ${timeStatement}
+            ${filterStatement}
+            ${matchingUserIds ? "AND events.identified_user_id IN ({matchingUserIds:Array(String)})" : ""}
+    ) AS events
     GROUP BY
         effective_user_id
 )
