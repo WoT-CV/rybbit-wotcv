@@ -6,9 +6,13 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 AUDIT_DIR="${WOTCV_AUDIT_DIR:-${ROOT_DIR}/wotcv-server-audit-${TIMESTAMP}}"
 INCLUDE_LOGS="${WOTCV_AUDIT_INCLUDE_LOGS:-0}"
+COMMAND_TIMEOUT_SECONDS="${WOTCV_AUDIT_TIMEOUT_SECONDS:-60}"
 
 mkdir -p "${AUDIT_DIR}"
 cd "${ROOT_DIR}"
+
+printf 'Writing audit to %s\n' "${AUDIT_DIR}" >&2
+printf 'Command timeout: %ss\n' "${COMMAND_TIMEOUT_SECONDS}" >&2
 
 redact_stream() {
   sed -E \
@@ -22,11 +26,17 @@ write_command() {
   local output_name="$1"
   shift
 
+  printf 'Collecting %s...\n' "${output_name}" >&2
+
   {
     printf '$'
     printf ' %q' "$@"
     printf '\n\n'
-    "$@"
+    if command -v timeout >/dev/null 2>&1; then
+      timeout "${COMMAND_TIMEOUT_SECONDS}" "$@"
+    else
+      "$@"
+    fi
   } >"${AUDIT_DIR}/${output_name}.txt" 2>&1 || {
     local exit_code=$?
     printf '\n[command exited with code %s]\n' "${exit_code}" >>"${AUDIT_DIR}/${output_name}.txt"
@@ -40,9 +50,15 @@ write_shell() {
   local output_name="$1"
   local shell_command="$2"
 
+  printf 'Collecting %s...\n' "${output_name}" >&2
+
   {
     printf '$ %s\n\n' "${shell_command}"
-    bash -lc "${shell_command}"
+    if command -v timeout >/dev/null 2>&1; then
+      timeout "${COMMAND_TIMEOUT_SECONDS}" bash -lc "${shell_command}"
+    else
+      bash -lc "${shell_command}"
+    fi
   } >"${AUDIT_DIR}/${output_name}.txt" 2>&1 || {
     local exit_code=$?
     printf '\n[command exited with code %s]\n' "${exit_code}" >>"${AUDIT_DIR}/${output_name}.txt"
@@ -57,6 +73,7 @@ copy_redacted_file() {
   local target_file="$2"
 
   if [[ -f "${source_file}" ]]; then
+    printf 'Copying %s...\n' "${source_file}" >&2
     redact_stream <"${source_file}" >"${AUDIT_DIR}/${target_file}"
   fi
 }

@@ -1021,6 +1021,8 @@ Nie wdrażać wyłącznie z ruchomego `latest`.
 
 Aktualna decyzja operacyjna: podstawowy tryb serwera buduje backend i client bezpośrednio z gałęzi `feat/wotcv` za pomocą `scripts/wotcv-branch-build-deploy.sh`. Obrazy GHCR pozostają alternatywnym trybem wdrożenia po gotowym tagu SHA.
 
+Na obecnym serwerze Compose musi działać z `COMPOSE_PROJECT_NAME=rybbit`, aby użyć istniejących volume `rybbit_*`. Port hosta Postgresa pozostaje konfigurowalny przez `HOST_POSTGRES_PORT`, a dla obecnej instalacji wynosi `127.0.0.1:5433:5432`.
+
 ### 9.7. Minimalizacja konfliktów compose
 
 Zamiast mocno modyfikować upstreamowy `docker-compose.yml`, dodajemy overlay:

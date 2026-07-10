@@ -9,9 +9,11 @@ DEPLOY_REMOTE="${WOTCV_REMOTE:-origin}"
 HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
 BACKEND_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-backend"
 CLIENT_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-client"
+COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-rybbit}}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.wotcv.yml -f docker-compose.wotcv.branch-build.yml)
 
 cd "${ROOT_DIR}"
+export COMPOSE_PROJECT_NAME
 
 command -v git >/dev/null 2>&1 || { echo "git is required." >&2; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo "docker is required." >&2; exit 1; }

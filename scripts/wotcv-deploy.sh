@@ -8,9 +8,11 @@ HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
 TARGET_TAG="${1:-${IMAGE_TAG:-}}"
 BACKEND_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-backend"
 CLIENT_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-client"
+COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-rybbit}}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.wotcv.yml)
 
 cd "${ROOT_DIR}"
+export COMPOSE_PROJECT_NAME
 
 if [[ -z "${TARGET_TAG}" ]]; then
   echo "Usage: IMAGE_TAG=sha-<commit> ./scripts/wotcv-deploy.sh" >&2

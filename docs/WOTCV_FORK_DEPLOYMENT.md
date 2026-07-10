@@ -6,6 +6,8 @@ Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-C
 
 - serwer buduje i uruchamia aplikację z gałęzi `feat/wotcv`,
 - `master` pozostaje gałęzią synchronizowaną z oficjalnym Rybbit,
+- Compose działa pod nazwą projektu `rybbit`, aby użyć obecnych volume `rybbit_*`,
+- obecny port hosta Postgresa pozostaje `127.0.0.1:5433`,
 - nie używamy `latest` jako identyfikatora wdrożenia,
 - każde uruchomienie aplikacji ma widoczny commit SHA w `/api/health`,
 - ręcznych migracji DB nie wykonujemy w ramach tych skryptów.
@@ -87,6 +89,22 @@ git remote -v
 git fetch origin --prune
 git fetch upstream --prune
 ```
+
+## Konfiguracja lokalna nowego katalogu
+
+Przed pierwszym buildem skopiuj konfigurację obecnej instalacji i dopisz wartości chroniące aktualne volume oraz porty:
+
+```bash
+cp /home/rybbit/.env /home/rybbit-wotcv/.env
+cp /home/rybbit/Caddyfile /home/rybbit-wotcv/Caddyfile
+
+cd /home/rybbit-wotcv
+
+grep -q '^COMPOSE_PROJECT_NAME=' .env || echo 'COMPOSE_PROJECT_NAME=rybbit' >> .env
+grep -q '^HOST_POSTGRES_PORT=' .env || echo 'HOST_POSTGRES_PORT=127.0.0.1:5433:5432' >> .env
+```
+
+Bez `COMPOSE_PROJECT_NAME=rybbit` Docker Compose uruchomiony z `/home/rybbit-wotcv` utworzy nowe volume zamiast użyć obecnych `rybbit_postgres-data`, `rybbit_clickhouse-data` i `rybbit_redis-data`.
 
 ## Build i wdrożenie z `feat/wotcv`
 
