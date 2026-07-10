@@ -4,7 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { Monitor, Smartphone } from "lucide-react";
-import { AVATAR_COLORS } from "../../../../../../components/Avatar";
+import { AVATAR_COLORS } from "../../../../../../lib/avatar";
 import { getChannelIconComponent } from "../../../../../../components/Channel";
 import {
   escapeHtmlAttribute,

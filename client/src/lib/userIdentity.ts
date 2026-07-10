@@ -1,4 +1,4 @@
-import { generateName } from "../components/Avatar";
+import { generateName } from "./avatar";
 
 export type UserIdentityLike = {
   user_id?: string | null;

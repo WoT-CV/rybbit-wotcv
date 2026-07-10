@@ -28,7 +28,7 @@ import BoringAvatar from "boring-avatars";
 import { createElement } from "react";
 // @ts-ignore - React 19 has built-in types
 import { renderToStaticMarkup } from "react-dom/server";
-import { AVATAR_COLORS } from "./Avatar";
+import { AVATAR_COLORS } from "../lib/avatar";
 
 function generateAvatarSVG(userId: string, size: number): string {
   const avatarElement = createElement(BoringAvatar, {
