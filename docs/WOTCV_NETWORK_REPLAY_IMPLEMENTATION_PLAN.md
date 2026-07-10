@@ -1235,7 +1235,7 @@ Minimum:
 - uruchomienie migracji na kopii schematu poprzedniej wersji,
 - Docker image build,
 - podstawowy smoke test `/api/health`,
-- smoke test wczytania `script.js` i `replay.js`.
+- smoke test wczytania `/api/script.js` i `/api/replay.js`.
 
 ---
 

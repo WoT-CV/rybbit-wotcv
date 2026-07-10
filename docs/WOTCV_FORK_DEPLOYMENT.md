@@ -168,6 +168,10 @@ Workflow `.github/workflows/build-wotcv-images.yml` buduje obrazy z `master` ora
 ```bash
 curl -fsS http://127.0.0.1:3001/api/health | jq
 
+curl -fsS https://tracking.wot-cv.com/api/script.js -o /tmp/rybbit-script.js
+head -c 200 /tmp/rybbit-script.js
+echo
+
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
@@ -196,7 +200,7 @@ Ręczny rollback do poprzedniego tagu obrazów GHCR:
 IMAGE_TAG=sha-POPRZEDNI_COMMIT ./scripts/wotcv-deploy.sh
 ```
 
-Po rollbacku ponownie sprawdź health, logi, dashboard i dostępność skryptu trackera.
+Po rollbacku ponownie sprawdź health, logi, dashboard i dostępność skryptu trackera pod `/api/script.js`.
 
 ## Synchronizacja `master` z upstream Rybbit
 
