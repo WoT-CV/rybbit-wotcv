@@ -20,12 +20,30 @@ interface TrackingTabProps {
   disabled?: boolean;
 }
 
+function getInitialToggleState(siteMetadata: SiteResponse) {
+  return {
+    sessionReplay: siteMetadata.sessionReplay || false,
+    networkReplay: siteMetadata.networkReplayConfig?.enabled ?? false,
+    webVitals: siteMetadata.webVitals || false,
+    trackErrors: siteMetadata.trackErrors || false,
+    trackOutbound: siteMetadata.trackOutbound ?? true,
+    trackUrlParams: siteMetadata.trackUrlParams ?? true,
+    trackInitialPageView: siteMetadata.trackInitialPageView ?? true,
+    trackSpaNavigation: siteMetadata.trackSpaNavigation ?? true,
+    trackButtonClicks: siteMetadata.trackButtonClicks ?? false,
+    trackCopy: siteMetadata.trackCopy ?? false,
+    trackFormInteractions: siteMetadata.trackFormInteractions ?? false,
+  };
+}
+
+type TrackingToggleKey = keyof ReturnType<typeof getInitialToggleState>;
+
 interface ToggleConfig {
   id: string;
   label: string;
   description: string;
   value: boolean;
-  key: keyof SiteResponse;
+  key: TrackingToggleKey;
   enabledMessage?: string;
   disabledMessage?: string;
   disabled?: boolean;
@@ -37,18 +55,7 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
   const { refetch } = useGetSitesFromOrg(siteMetadata?.organizationId ?? "");
   const isMobileSite = siteMetadata.type === "mobile";
 
-  const [toggleStates, setToggleStates] = useState({
-    sessionReplay: siteMetadata.sessionReplay || false,
-    webVitals: siteMetadata.webVitals || false,
-    trackErrors: siteMetadata.trackErrors || false,
-    trackOutbound: siteMetadata.trackOutbound ?? true,
-    trackUrlParams: siteMetadata.trackUrlParams ?? true,
-    trackInitialPageView: siteMetadata.trackInitialPageView ?? true,
-    trackSpaNavigation: siteMetadata.trackSpaNavigation ?? true,
-    trackButtonClicks: siteMetadata.trackButtonClicks ?? false,
-    trackCopy: siteMetadata.trackCopy ?? false,
-    trackFormInteractions: siteMetadata.trackFormInteractions ?? false,
-  });
+  const [toggleStates, setToggleStates] = useState(() => getInitialToggleState(siteMetadata));
 
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
@@ -60,8 +67,16 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
     ) => {
       setLoadingStates(prev => ({ ...prev, [key]: true }));
       try {
-        await updateSiteConfig(siteMetadata.siteId, { [key]: checked });
-        setToggleStates(prev => ({ ...prev, [key]: checked }));
+        if (key === "networkReplay") {
+          await updateSiteConfig(siteMetadata.siteId, { networkReplayConfig: { enabled: checked } });
+        } else {
+          await updateSiteConfig(siteMetadata.siteId, { [key]: checked });
+        }
+        setToggleStates(prev => ({
+          ...prev,
+          [key]: checked,
+          ...(key === "sessionReplay" && !checked ? { networkReplay: false } : {}),
+        }));
         const message = successMessage
           ? checked
             ? successMessage.enabled
@@ -108,6 +123,19 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
             disabled: sessionReplayDisabled,
             badge: <Badge variant="success">Pro</Badge>,
           } as ToggleConfig,
+          {
+            id: "networkReplay",
+            label: t("Network Replay (POC)"),
+            description: t(
+              "Capture raw request and response headers and bodies inside Session Replay. DEV environments only."
+            ),
+            value: toggleStates.networkReplay,
+            key: "networkReplay",
+            enabledMessage: t("Network replay enabled"),
+            disabledMessage: t("Network replay disabled"),
+            disabled: sessionReplayDisabled || !toggleStates.sessionReplay,
+            badge: <Badge variant="warning">DEV</Badge>,
+          } as ToggleConfig,
         ]
       : []),
     ...(IS_CLOUD && !isMobileSite
@@ -117,7 +145,7 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
             label: t("Web Vitals"),
             description: t("Track Core Web Vitals metrics (LCP, CLS, INP, FCP, TTFB)"),
             value: toggleStates.webVitals,
-            key: "webVitals" as keyof SiteResponse,
+            key: "webVitals",
             enabledMessage: t("Web Vitals enabled"),
             disabledMessage: t("Web Vitals disabled"),
             disabled: standardFeaturesDisabled,
@@ -242,7 +270,7 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
             disabled={loadingStates[toggle.key] || disabled || toggle.disabled}
             onCheckedChange={checked =>
               handleToggle(
-                toggle.key as keyof typeof toggleStates,
+                toggle.key,
                 checked,
                 toggle.enabledMessage && toggle.disabledMessage
                   ? { enabled: toggle.enabledMessage, disabled: toggle.disabledMessage }

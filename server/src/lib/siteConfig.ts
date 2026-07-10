@@ -1,8 +1,10 @@
+import type { NetworkReplayConfig } from "@rybbit/shared";
 import { eq, type SQL } from "drizzle-orm";
 import { db } from "../db/postgres/postgres.js";
 import { sites } from "../db/postgres/schema.js";
 import { matchesCIDR, matchesRange } from "./ipUtils.js";
 import { logger } from "./logger/logger.js";
+import { normalizeNetworkReplayConfig } from "./networkReplayConfig.js";
 
 // Site configuration interface
 export interface SiteConfigData {
@@ -21,6 +23,7 @@ export interface SiteConfigData {
   excludedUserAgents: string[];
   privateLinkKey?: string | null;
   sessionReplay: boolean;
+  networkReplayConfig: NetworkReplayConfig;
   webVitals: boolean;
   trackErrors: boolean;
   trackOutbound: boolean;
@@ -108,6 +111,7 @@ class SiteConfig {
         excludedUserAgents: Array.isArray(site.excludedUserAgents) ? site.excludedUserAgents : [],
         privateLinkKey: site.privateLinkKey,
         sessionReplay: site.sessionReplay || false,
+        networkReplayConfig: normalizeNetworkReplayConfig(site.networkReplayConfig),
         webVitals: site.webVitals || false,
         trackErrors: site.trackErrors || false,
         trackOutbound: site.trackOutbound ?? true,

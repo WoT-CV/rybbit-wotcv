@@ -3,6 +3,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { db } from "../../db/postgres/postgres.js";
 import { sites } from "../../db/postgres/schema.js";
 import { getUserHasAdminAccessToSite } from "../../lib/auth-utils.js";
+import { normalizeNetworkReplayConfig } from "../../lib/networkReplayConfig.js";
 
 interface GetSiteParams {
   Params: {
@@ -44,6 +45,7 @@ export async function getSite(request: FastifyRequest<GetSiteParams>, reply: Fas
       isOwner: isOwner,
       // Analytics features
       sessionReplay: site.sessionReplay,
+      networkReplayConfig: normalizeNetworkReplayConfig(site.networkReplayConfig),
       webVitals: site.webVitals,
       trackErrors: site.trackErrors,
       trackOutbound: site.trackOutbound,

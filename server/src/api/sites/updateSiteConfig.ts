@@ -6,7 +6,26 @@ import { eq } from "drizzle-orm";
 import { IS_CLOUD } from "../../lib/const.js";
 import { siteConfig } from "../../lib/siteConfig.js";
 import { validateIPPattern } from "../../lib/ipUtils.js";
+import { normalizeNetworkReplayConfig } from "../../lib/networkReplayConfig.js";
 import { getBestSubscription, subscriptionIncludesReplay } from "../../lib/subscriptionUtils.js";
+
+const networkReplayConfigSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    captureFetch: z.boolean().optional(),
+    captureXhr: z.boolean().optional(),
+    capturePerformanceResources: z.boolean().optional(),
+    captureInitialPerformanceResources: z.boolean().optional(),
+    captureRequestHeaders: z.boolean().optional(),
+    captureResponseHeaders: z.boolean().optional(),
+    captureRequestBody: z.boolean().optional(),
+    captureResponseBody: z.boolean().optional(),
+    maxBodySizeBytes: z.number().int().min(1).max(5_000_000).optional(),
+    bodyReadTimeoutMs: z.number().int().min(100).max(10_000).optional(),
+    maxNetworkEventSizeBytes: z.number().int().min(1).max(9_000_000).optional(),
+    maxReplayBatchSizeBytes: z.number().int().min(1).max(9_000_000).optional(),
+  })
+  .strict();
 
 // Schema for the update request - all fields are optional but validated when present
 const updateSiteConfigSchema = z.object({
@@ -38,6 +57,7 @@ const updateSiteConfigSchema = z.object({
 
   // Analytics features
   sessionReplay: z.boolean().optional(),
+  networkReplayConfig: networkReplayConfigSchema.optional(),
   webVitals: z.boolean().optional(),
   trackErrors: z.boolean().optional(),
   trackOutbound: z.boolean().optional(),
@@ -88,6 +108,11 @@ export async function updateSiteConfig(
     }
 
     const nextSiteType = updateData.type === undefined ? site.type || "web" : updateData.type || "web";
+    const nextSessionReplay = updateData.sessionReplay ?? site.sessionReplay ?? false;
+    const nextNetworkReplayConfig = normalizeNetworkReplayConfig({
+      ...normalizeNetworkReplayConfig(site.networkReplayConfig),
+      ...updateData.networkReplayConfig,
+    });
 
     const nextDomain = updateData.domain ?? site.domain;
     const cleanedDomain = nextDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
@@ -109,10 +134,40 @@ export async function updateSiteConfig(
       }
     }
 
-    if (nextSiteType === "mobile" && (updateData.sessionReplay || updateData.webVitals)) {
+    if (
+      nextSiteType === "mobile" &&
+      (updateData.sessionReplay || updateData.webVitals || updateData.networkReplayConfig?.enabled)
+    ) {
       return reply.status(400).send({
         success: false,
-        error: "Session replay and Web Vitals are only available for web sites",
+        error: "Session Replay, Network Replay, and Web Vitals are only available for web sites",
+      });
+    }
+
+    if (updateData.networkReplayConfig?.enabled === true && !nextSessionReplay) {
+      return reply.status(400).send({
+        success: false,
+        error: "Network Replay requires Session Replay to be enabled",
+      });
+    }
+
+    if (
+      updateData.networkReplayConfig !== undefined &&
+      nextNetworkReplayConfig.maxBodySizeBytes > nextNetworkReplayConfig.maxNetworkEventSizeBytes
+    ) {
+      return reply.status(400).send({
+        success: false,
+        error: "Network Replay body limit cannot exceed the event limit",
+      });
+    }
+
+    if (
+      updateData.networkReplayConfig !== undefined &&
+      nextNetworkReplayConfig.maxNetworkEventSizeBytes > nextNetworkReplayConfig.maxReplayBatchSizeBytes
+    ) {
+      return reply.status(400).send({
+        success: false,
+        error: "Network Replay event limit cannot exceed the replay batch limit",
       });
     }
 
@@ -191,6 +246,17 @@ export async function updateSiteConfig(
       }
     }
 
+    if (updateData.networkReplayConfig !== undefined) {
+      dbUpdateData.networkReplayConfig = nextNetworkReplayConfig;
+    }
+
+    if (updateData.sessionReplay === false) {
+      dbUpdateData.networkReplayConfig = {
+        ...nextNetworkReplayConfig,
+        enabled: false,
+      };
+    }
+
     if (updateData.type !== undefined) {
       dbUpdateData.type = nextSiteType === "web" ? null : nextSiteType;
     }
@@ -199,6 +265,10 @@ export async function updateSiteConfig(
     }
     if (nextSiteType === "mobile") {
       dbUpdateData.sessionReplay = false;
+      dbUpdateData.networkReplayConfig = {
+        ...nextNetworkReplayConfig,
+        enabled: false,
+      };
       dbUpdateData.webVitals = false;
     }
 

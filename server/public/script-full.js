@@ -4,6 +4,33 @@
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+  // networkReplay/config.ts
+  var DEFAULT_NETWORK_REPLAY_CONFIG = {
+    enabled: false,
+    captureFetch: true,
+    captureXhr: true,
+    capturePerformanceResources: true,
+    captureInitialPerformanceResources: true,
+    captureRequestHeaders: true,
+    captureResponseHeaders: true,
+    captureRequestBody: true,
+    captureResponseBody: true,
+    maxBodySizeBytes: 1e6,
+    bodyReadTimeoutMs: 1e3,
+    maxNetworkEventSizeBytes: 25e5,
+    maxReplayBatchSizeBytes: 7e6
+  };
+  function normalizeNetworkReplayConfig(config) {
+    if (!config || typeof config !== "object" || Array.isArray(config)) {
+      return DEFAULT_NETWORK_REPLAY_CONFIG;
+    }
+    return {
+      ...DEFAULT_NETWORK_REPLAY_CONFIG,
+      ...config,
+      enabled: config.enabled === true
+    };
+  }
+
   // utils.ts
   function patternToRegex(pattern) {
     const REGEX_PREFIX = "re:";
@@ -196,6 +223,7 @@
       enableWebVitals: false,
       trackErrors: false,
       enableSessionReplay: false,
+      networkReplay: DEFAULT_NETWORK_REPLAY_CONFIG,
       trackButtonClicks: false,
       trackCopy: false,
       trackFormInteractions: false,
@@ -234,6 +262,7 @@
           enableWebVitals: apiConfig.webVitals ?? defaultConfig.enableWebVitals,
           trackErrors: apiConfig.trackErrors ?? defaultConfig.trackErrors,
           enableSessionReplay: apiConfig.sessionReplay ?? defaultConfig.enableSessionReplay,
+          networkReplay: normalizeNetworkReplayConfig(apiConfig.networkReplay),
           trackButtonClicks: apiConfig.trackButtonClicks ?? defaultConfig.trackButtonClicks,
           trackCopy: apiConfig.trackCopy ?? defaultConfig.trackCopy,
           trackFormInteractions: apiConfig.trackFormInteractions ?? defaultConfig.trackFormInteractions

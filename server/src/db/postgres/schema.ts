@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import type { DashboardConfig } from "@rybbit/shared";
+import type { DashboardConfig, NetworkReplayConfig } from "@rybbit/shared";
 import {
   boolean,
   check,
@@ -17,6 +17,22 @@ import {
   pgEnum,
   uuid,
 } from "drizzle-orm/pg-core";
+
+const defaultNetworkReplayConfig: NetworkReplayConfig = {
+  enabled: false,
+  captureFetch: true,
+  captureXhr: true,
+  capturePerformanceResources: true,
+  captureInitialPerformanceResources: true,
+  captureRequestHeaders: true,
+  captureResponseHeaders: true,
+  captureRequestBody: true,
+  captureResponseBody: true,
+  maxBodySizeBytes: 1_000_000,
+  bodyReadTimeoutMs: 1_000,
+  maxNetworkEventSizeBytes: 2_500_000,
+  maxReplayBatchSizeBytes: 7_000_000,
+};
 
 // User table (BetterAuth)
 export const user = pgTable(
@@ -81,6 +97,10 @@ export const sites = pgTable(
     excludedHostnames: jsonb("excluded_hostnames").default([]).$type<string[]>(), // Array of hostname glob patterns to exclude (e.g., ["localhost", "*.vercel.app"])
     excludedUserAgents: jsonb("excluded_user_agents").default([]).$type<string[]>(), // Array of case-insensitive user-agent substrings to exclude (e.g., ["HeadlessChrome"])
     sessionReplay: boolean().default(false),
+    networkReplayConfig: jsonb("network_replay_config")
+      .$type<NetworkReplayConfig>()
+      .default(defaultNetworkReplayConfig)
+      .notNull(),
     webVitals: boolean().default(false),
     trackErrors: boolean().default(false),
     trackOutbound: boolean().default(true),

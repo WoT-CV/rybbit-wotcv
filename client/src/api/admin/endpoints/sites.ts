@@ -1,3 +1,5 @@
+import type { NetworkReplayConfig } from "@rybbit/shared";
+
 import { authedFetch } from "../../utils";
 
 export type SiteResponse = {
@@ -17,6 +19,7 @@ export type SiteResponse = {
   isOwner: boolean;
   // Analytics features
   sessionReplay?: boolean;
+  networkReplayConfig?: NetworkReplayConfig;
   webVitals?: boolean;
   trackErrors?: boolean;
   trackOutbound?: boolean;
@@ -152,6 +155,7 @@ export function updateSiteConfig(
     excludedHostnames?: string[];
     excludedUserAgents?: string[];
     sessionReplay?: boolean;
+    networkReplayConfig?: Partial<NetworkReplayConfig>;
     webVitals?: boolean;
     trackErrors?: boolean;
     trackOutbound?: boolean;

@@ -1,3 +1,5 @@
+import type { NetworkReplayConfig } from "@rybbit/shared";
+
 export interface ScriptConfig {
   namespace: string;
   analyticsHost: string;
@@ -11,6 +13,7 @@ export interface ScriptConfig {
   enableWebVitals: boolean;
   trackErrors: boolean;
   enableSessionReplay: boolean;
+  networkReplay?: NetworkReplayConfig;
   sessionReplayBatchSize: number;
   sessionReplayBatchInterval: number;
   sessionReplayMaskTextSelectors: string[];
