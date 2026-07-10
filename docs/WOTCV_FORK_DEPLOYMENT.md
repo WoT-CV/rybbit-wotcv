@@ -190,6 +190,41 @@ docker inspect client --format '{{.Config.Image}} {{index .Config.Labels "org.op
 
 Health endpoint zwraca wersję forka, SHA, tag obrazu, identyfikator obrazu, czas budowania i czas wdrożenia.
 
+## Weryfikacja funkcji analityki web
+
+Po wdrożeniu można sprawdzić, czy odblokowane widoki `Strony`, `Wydajność` i `Boty` mają działające endpointy API:
+
+```bash
+cd /home/rybbit-wotcv
+
+WOTCV_SITE_ID=ID_STRONY \
+bash scripts/wotcv-self-hosted-analytics-smoke.sh
+```
+
+Dla strony prywatnej przekaż klucz prywatnego linku albo API key:
+
+```bash
+WOTCV_SITE_ID=ID_STRONY \
+WOTCV_PRIVATE_KEY=PRIVATE_LINK_KEY \
+bash scripts/wotcv-self-hosted-analytics-smoke.sh
+
+WOTCV_SITE_ID=ID_STRONY \
+WOTCV_API_KEY=API_KEY \
+bash scripts/wotcv-self-hosted-analytics-smoke.sh
+```
+
+Zakres czasu można zawęzić bez zmiany kodu:
+
+```bash
+WOTCV_SITE_ID=ID_STRONY \
+WOTCV_START_DATE=2026-07-01 \
+WOTCV_END_DATE=2026-07-10 \
+WOTCV_TIME_ZONE=Europe/Warsaw \
+bash scripts/wotcv-self-hosted-analytics-smoke.sh
+```
+
+`Wydajność` zaczyna pokazywać dane po włączeniu Web Vitals w ustawieniach strony i zebraniu zdarzeń `performance`. `Boty` pokazują dane, gdy tracker zapisuje zdarzenia botów dla danej strony.
+
 ## Rollback
 
 Automatyczny rollback jest wykonywany po nieudanym health checku, jeżeli `.wotcv-deployment.env` zawiera poprzedni tag i lokalne obrazy nadal istnieją.
