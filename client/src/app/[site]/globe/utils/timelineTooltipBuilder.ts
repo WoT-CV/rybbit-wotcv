@@ -4,12 +4,12 @@ import { getTimezone } from "../../../../lib/store";
 // @ts-ignore - React 19 has built-in types
 import { renderToStaticMarkup } from "react-dom/server";
 import { Eye, MousePointerClick } from "lucide-react";
-import { generateName } from "../../../../components/Avatar";
 import { formatShortDuration, hour12, userLocale } from "../../../../lib/dateTimeUtils";
+import { escapeHtml, escapeHtmlAttribute, getUserDisplayName } from "../../../../lib/userIdentity";
 import type { GetSessionsResponse } from "../../../../api/analytics/endpoints";
 import { extractDomain, getDisplayName } from "../../../../components/Channel";
 import {
-  generateAvatarSVG,
+  generateUserAvatarHTML,
   renderCountryFlag,
   renderDeviceIcon,
   renderChannelIcon,
@@ -21,7 +21,7 @@ import {
  * Build the HTML content for a session tooltip
  */
 export function buildTooltipHTML(session: GetSessionsResponse[number], lng: number, lat: number): string {
-  const avatarSVG = generateAvatarSVG(session.user_id, 36);
+  const avatarHTML = generateUserAvatarHTML(session, 36);
   const countryCode = session.country?.length === 2 ? session.country : "";
   const flagSVG = renderCountryFlag(countryCode);
   const deviceIconSVG = renderDeviceIcon(session.device_type || "");
@@ -58,26 +58,27 @@ export function buildTooltipHTML(session: GetSessionsResponse[number], lng: numb
     referrerIconSVG = renderChannelIcon(session.channel);
   }
 
-  const name = generateName(session.user_id);
+  const name = getUserDisplayName(session);
+  const location = `${session.city || "Unknown"}, ${session.country || "Unknown"}`;
 
   return `
     <div class="flex flex-col gap-3 p-3 bg-neutral-850 border border-neutral-750 rounded-lg">
       <div class="flex items-start gap-2.5">
         <div class="shrink-0 w-9 h-9 rounded-full overflow-hidden">
-          ${avatarSVG}
+          ${avatarHTML}
         </div>
         <div class="flex-1 min-w-0">
-          <h3 class="text-sm font-semibold text-white truncate">${name}</h3>
+          <h3 class="text-sm font-semibold text-white truncate">${escapeHtml(name)}</h3>
           <div class="flex items-center gap-1 text-xs text-neutral-300 mt-0.5">
             ${flagSVG}
-            <span>${session.city || "Unknown"}, ${session.country || "Unknown"}</span>
+            <span>${escapeHtml(location)}</span>
           </div>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-1.5 whitespace-nowrap">
-        ${browserIconPath ? `<img src="${browserIconPath}" alt="${session.browser}" title="${session.browser}" class="w-4 h-4" />` : ""}
-        ${osIconPath ? `<img src="${osIconPath}" alt="${session.operating_system}" title="${session.operating_system}" class="w-4 h-4" />` : ""}
-        <span class="flex items-center" title="${session.device_type}">${deviceIconSVG}</span>
+        ${browserIconPath ? `<img src="${browserIconPath}" alt="${escapeHtmlAttribute(session.browser)}" title="${escapeHtmlAttribute(session.browser)}" class="w-4 h-4" />` : ""}
+        ${osIconPath ? `<img src="${osIconPath}" alt="${escapeHtmlAttribute(session.operating_system)}" title="${escapeHtmlAttribute(session.operating_system)}" class="w-4 h-4" />` : ""}
+        <span class="flex items-center" title="${escapeHtmlAttribute(session.device_type)}">${deviceIconSVG}</span>
         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-800 text-neutral-300 text-xs">
           ${pageviewIconSVG}
           <span>${session.pageviews || 0}</span>
@@ -90,7 +91,7 @@ export function buildTooltipHTML(session: GetSessionsResponse[number], lng: numb
       <div class="flex items-center gap-1.5">
         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-800 text-neutral-300 text-xs">
           ${referrerIconSVG}
-          <span>${referrerText}</span>
+          <span>${escapeHtml(referrerText)}</span>
         </span>
       </div>
       <div class="flex items-center justify-between gap-2 text-xs text-neutral-400 pt-1.5 border-t border-neutral-700">

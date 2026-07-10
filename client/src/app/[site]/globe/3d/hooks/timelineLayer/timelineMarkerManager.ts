@@ -1,6 +1,6 @@
 import mapboxgl from "mapbox-gl";
 import type { GetSessionsResponse } from "../../../../../../api/analytics/endpoints";
-import { generateAvatarSVG } from "./timelineMarkerHelpers";
+import { generateUserAvatarHTML } from "./timelineMarkerHelpers";
 import { getUnclusteredFeatures } from "./timelineClusterUtils";
 import { buildTooltipHTML } from "../../../utils/timelineTooltipBuilder";
 
@@ -28,8 +28,7 @@ export function createAvatarMarker(
   avatarContainer.style.cssText =
     "cursor: pointer; border-radius: 50%; overflow: hidden; width: 32px; height: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);";
 
-  const avatarSVG = generateAvatarSVG(session.user_id, 32);
-  avatarContainer.innerHTML = avatarSVG;
+  avatarContainer.innerHTML = generateUserAvatarHTML(session, 32);
 
   const marker = new mapboxgl.Marker({
     element: avatarContainer,

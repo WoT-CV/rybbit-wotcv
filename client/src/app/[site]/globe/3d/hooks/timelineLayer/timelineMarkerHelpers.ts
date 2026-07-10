@@ -4,8 +4,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { Monitor, Smartphone } from "lucide-react";
+import type { GetSessionsResponse } from "../../../../../../api/analytics/endpoints";
 import { AVATAR_COLORS } from "../../../../../../components/Avatar";
 import { getChannelIconComponent } from "../../../../../../components/Channel";
+import { escapeHtmlAttribute, getUserAvatarUrl, getUserDisplayName } from "../../../../../../lib/userIdentity";
 
 // Generate avatar SVG using boring-avatars
 export function generateAvatarSVG(userId: string, size: number): string {
@@ -16,6 +18,30 @@ export function generateAvatarSVG(userId: string, size: number): string {
     colors: AVATAR_COLORS,
   });
   return renderToStaticMarkup(avatarElement);
+}
+
+export function generateUserAvatarHTML(session: GetSessionsResponse[number], size: number): string {
+  const fallbackAvatar = generateAvatarSVG(session.identified_user_id || session.user_id, size);
+  const avatarUrl = getUserAvatarUrl(session);
+
+  if (!avatarUrl) return fallbackAvatar;
+
+  const fallbackDataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(fallbackAvatar)}`;
+  const escapedUrl = escapeHtmlAttribute(avatarUrl);
+  const escapedAlt = escapeHtmlAttribute(getUserDisplayName(session));
+
+  return `
+    <span
+      style="display:block;width:${size}px;height:${size}px;border-radius:9999px;overflow:hidden;background-image:url('${fallbackDataUri}');background-size:cover;background-position:center;"
+    >
+      <img
+        src="${escapedUrl}"
+        alt="${escapedAlt}"
+        style="width:100%;height:100%;object-fit:cover;display:block;"
+        onerror="this.style.display='none';"
+      />
+    </span>
+  `;
 }
 
 // Render country flag to static SVG

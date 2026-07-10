@@ -11,7 +11,7 @@ import VectorSource from "ol/source/Vector";
 import { Circle, Fill, Style, Text } from "ol/style";
 import { useEffect, useRef, useState } from "react";
 import type { GetSessionsResponse } from "../../../../../api/analytics/endpoints";
-import { generateAvatarSVG } from "../../3d/hooks/timelineLayer/timelineMarkerHelpers";
+import { generateUserAvatarHTML } from "../../3d/hooks/timelineLayer/timelineMarkerHelpers";
 import { useActiveSessions, useTimelineStore } from "../../timelineStore";
 import { CLUSTER_MAX_ZOOM, CLUSTERING_THRESHOLD, MIN_CLUSTER_SIZE } from "../../utils/clusteringConstants";
 import { buildTooltipHTML } from "../../utils/timelineTooltipBuilder";
@@ -280,8 +280,7 @@ export function useOpenLayersTimelineLayer({ mapInstanceRef, mapViewRef, mapView
             avatarContainer.className = "timeline-avatar-marker";
             avatarContainer.style.cssText = AVATAR_MARKER_STYLE;
 
-            const avatarSVG = generateAvatarSVG(session.user_id, 32);
-            avatarContainer.innerHTML = avatarSVG;
+            avatarContainer.innerHTML = generateUserAvatarHTML(session, 32);
 
             const handleAvatarClick = (e: MouseEvent) => {
               e.stopPropagation();
@@ -389,8 +388,7 @@ export function useOpenLayersTimelineLayer({ mapInstanceRef, mapViewRef, mapView
           avatarContainer.className = "timeline-avatar-marker";
           avatarContainer.style.cssText = AVATAR_MARKER_STYLE;
 
-          const avatarSVG = generateAvatarSVG(session.user_id, 32);
-          avatarContainer.innerHTML = avatarSVG;
+          avatarContainer.innerHTML = generateUserAvatarHTML(session, 32);
 
           // Add click handler for tooltip
           const handleAvatarClick = (e: MouseEvent) => {
