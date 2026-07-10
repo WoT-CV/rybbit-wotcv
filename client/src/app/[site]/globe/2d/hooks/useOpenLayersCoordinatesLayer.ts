@@ -11,6 +11,8 @@ import { Circle, Fill, Stroke, Style } from "ol/style";
 import { fromLonLat } from "ol/proj";
 import { useGetSessionLocations } from "../../../../../api/analytics/hooks/useGetSessionLocations";
 import { addFilter, removeFilter, useStore } from "../../../../../lib/store";
+import { escapeHtml, getUserDisplayName, type UserIdentityLike } from "../../../../../lib/userIdentity";
+import { generateUserAvatarHTML } from "../../3d/hooks/timelineLayer/timelineMarkerHelpers";
 import { renderCountryFlag } from "../../utils/renderCountryFlag";
 
 const getSizeMultiplier = (total: number) => {
@@ -65,6 +67,11 @@ export function useOpenLayersCoordinatesLayer({ mapInstanceRef, mapViewRef, mapV
         count: location.count,
         city: location.city,
         country: location.country,
+        sample_session_id: location.sample_session_id,
+        sample_user_id: location.sample_user_id,
+        sample_identified_user_id: location.sample_identified_user_id,
+        sample_session_start: location.sample_session_start,
+        sample_traits: location.sample_traits,
         isFiltered,
         lat: roundedLat,
         lon: roundedLon,
@@ -188,6 +195,22 @@ export function useOpenLayersCoordinatesLayer({ mapInstanceRef, mapViewRef, mapV
         const count = feature.get("count") || 0;
         const countryCode = feature.get("country")?.length === 2 ? feature.get("country") : "";
         const flagSVG = renderCountryFlag(countryCode);
+        const sampleUser: UserIdentityLike = {
+          user_id: feature.get("sample_user_id") || undefined,
+          identified_user_id: feature.get("sample_identified_user_id") || undefined,
+          traits: feature.get("sample_traits") || null,
+        };
+        const showSampleUser = count === 1 && !!(sampleUser.user_id || sampleUser.identified_user_id);
+        const sampleUserHTML = showSampleUser
+          ? `
+            <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-700">
+              <div class="w-6 h-6 rounded-full overflow-hidden shrink-0">
+                ${generateUserAvatarHTML(sampleUser, 24)}
+              </div>
+              <span class="text-xs text-neutral-200 truncate max-w-[180px]">${escapeHtml(getUserDisplayName(sampleUser))}</span>
+            </div>
+          `
+          : "";
 
         // Create tooltip if it doesn't exist
         if (!tooltip) {
@@ -200,12 +223,13 @@ export function useOpenLayersCoordinatesLayer({ mapInstanceRef, mapViewRef, mapV
           <div class="bg-neutral-850 border border-neutral-750 rounded-lg p-2 shadow-lg">
             <div class="flex items-center gap-2 mb-1">
               ${flagSVG}
-              <span class="text-sm font-medium text-white">${city}</span>
+              <span class="text-sm font-medium text-white">${escapeHtml(city)}</span>
             </div>
             <div class="text-sm">
               <span class="font-bold text-accent-400">${count.toLocaleString()}</span>
               <span class="text-neutral-300"> sessions</span>
             </div>
+            ${sampleUserHTML}
           </div>
         `;
 

@@ -1,7 +1,7 @@
 import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
-import { getTimeStatement, processResults } from "../utils/utils.js";
+import { enrichWithTraits, getTimeStatement, processResults } from "../utils/utils.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 
 export async function getSessionLocations(
@@ -23,10 +23,13 @@ export async function getSessionLocations(
 WITH stuff AS (
     SELECT
         session_id,
+        argMax(user_id, timestamp) AS user_id,
+        argMax(identified_user_id, timestamp) AS identified_user_id,
         any(lat) AS lat,
         any(lon) AS lon,
         any(city) AS city,
-        any(country) AS country
+        any(country) AS country,
+        min(timestamp) AS session_start
     FROM
         events
     WHERE
@@ -41,7 +44,11 @@ SELECT
     lon,
     city,
     country,
-    count() as count
+    count() as count,
+    argMax(session_id, session_start) AS sample_session_id,
+    argMax(user_id, session_start) AS sample_user_id,
+    argMax(identified_user_id, session_start) AS sample_identified_user_id,
+    max(session_start) AS sample_session_start
 from
     stuff
 GROUP BY
@@ -55,12 +62,30 @@ GROUP BY
     format: "JSONEachRow",
   });
 
-  const data = await processResults<{
+  const rows = await processResults<{
     lat: number;
     lon: number;
     count: number;
     city: string;
+    country: string;
+    sample_session_id: string;
+    sample_user_id: string;
+    sample_identified_user_id: string;
+    sample_session_start: string;
   }>(result);
+
+  const dataWithTraits = await enrichWithTraits(
+    rows.map(row => ({
+      ...row,
+      identified_user_id: row.sample_identified_user_id,
+    })),
+    Number(siteId)
+  );
+
+  const data = dataWithTraits.map(({ identified_user_id, traits, ...row }) => ({
+    ...row,
+    sample_traits: traits,
+  }));
 
   return res.status(200).send({ data });
 }

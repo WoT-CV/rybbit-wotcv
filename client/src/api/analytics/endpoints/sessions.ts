@@ -114,6 +114,11 @@ export type LiveSessionLocation = {
   count: number;
   city: string;
   country: string;
+  sample_session_id?: string;
+  sample_user_id?: string;
+  sample_identified_user_id?: string;
+  sample_session_start?: string;
+  sample_traits?: Record<string, unknown> | null;
 };
 
 export interface SessionsParams extends CommonApiParams, PaginationParams {

@@ -4,10 +4,15 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { Monitor, Smartphone } from "lucide-react";
-import type { GetSessionsResponse } from "../../../../../../api/analytics/endpoints";
 import { AVATAR_COLORS } from "../../../../../../components/Avatar";
 import { getChannelIconComponent } from "../../../../../../components/Channel";
-import { escapeHtmlAttribute, getUserAvatarUrl, getUserDisplayName } from "../../../../../../lib/userIdentity";
+import {
+  escapeHtmlAttribute,
+  getUserAvatarId,
+  getUserAvatarUrl,
+  getUserDisplayName,
+  type UserIdentityLike,
+} from "../../../../../../lib/userIdentity";
 
 // Generate avatar SVG using boring-avatars
 export function generateAvatarSVG(userId: string, size: number): string {
@@ -20,15 +25,15 @@ export function generateAvatarSVG(userId: string, size: number): string {
   return renderToStaticMarkup(avatarElement);
 }
 
-export function generateUserAvatarHTML(session: GetSessionsResponse[number], size: number): string {
-  const fallbackAvatar = generateAvatarSVG(session.identified_user_id || session.user_id, size);
-  const avatarUrl = getUserAvatarUrl(session);
+export function generateUserAvatarHTML(user: UserIdentityLike, size: number): string {
+  const fallbackAvatar = generateAvatarSVG(getUserAvatarId(user), size);
+  const avatarUrl = getUserAvatarUrl(user);
 
   if (!avatarUrl) return fallbackAvatar;
 
   const fallbackDataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(fallbackAvatar)}`;
   const escapedUrl = escapeHtmlAttribute(avatarUrl);
-  const escapedAlt = escapeHtmlAttribute(getUserDisplayName(session));
+  const escapedAlt = escapeHtmlAttribute(getUserDisplayName(user));
 
   return `
     <span
