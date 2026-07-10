@@ -25,6 +25,19 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+ARG WOTCV_GIT_SHA=unknown
+ARG WOTCV_IMAGE_TAG=unknown
+ARG WOTCV_BUILD_TIME=unknown
+
+LABEL org.opencontainers.image.revision=${WOTCV_GIT_SHA}
+LABEL org.opencontainers.image.version=${WOTCV_IMAGE_TAG}
+LABEL org.opencontainers.image.created=${WOTCV_BUILD_TIME}
+
+ENV WOTCV_VERSION=wotcv
+ENV WOTCV_GIT_SHA=${WOTCV_GIT_SHA}
+ENV WOTCV_IMAGE_TAG=${WOTCV_IMAGE_TAG}
+ENV WOTCV_BUILD_TIME=${WOTCV_BUILD_TIME}
+
 # Install PostgreSQL client for migrations and Chromium for Puppeteer PDF generation
 RUN apk add --no-cache \
     postgresql-client \

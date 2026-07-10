@@ -1,0 +1,16 @@
+services:
+  backend:
+    image: ghcr.io/wot-cv/rybbit-wotcv-backend:${IMAGE_TAG:?IMAGE_TAG must use an immutable sha-* tag}
+    environment:
+      WOTCV_VERSION: wotcv
+      WOTCV_IMAGE_TAG: ${IMAGE_TAG}
+      WOTCV_IMAGE_DIGEST: ${BACKEND_IMAGE_DIGEST:-unknown}
+      WOTCV_DEPLOYED_AT: ${WOTCV_DEPLOYED_AT:-unknown}
+
+  client:
+    image: ghcr.io/wot-cv/rybbit-wotcv-client:${IMAGE_TAG:?IMAGE_TAG must use an immutable sha-* tag}
+    environment:
+      WOTCV_VERSION: wotcv
+      WOTCV_IMAGE_TAG: ${IMAGE_TAG}
+      WOTCV_IMAGE_DIGEST: ${CLIENT_IMAGE_DIGEST:-unknown}
+      WOTCV_DEPLOYED_AT: ${WOTCV_DEPLOYED_AT:-unknown}

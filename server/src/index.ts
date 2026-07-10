@@ -164,6 +164,7 @@ import {
 } from "./lib/auth-middleware.js";
 import { mapHeaders } from "./lib/auth-utils.js";
 import { auth } from "./lib/auth.js";
+import { getBuildMetadata } from "./lib/buildMetadata.js";
 import { createCorsOptionsDelegate, createRejectUntrustedOriginHook } from "./lib/cors.js";
 import { IS_CLOUD } from "./lib/const.js";
 import { reengagementService } from "./services/reengagement/reengagementService.js";
@@ -477,7 +478,9 @@ async function apiRoutes(fastify: FastifyInstance) {
   await fastify.register(stripeAdminRoutes);
 
   // Health check
-  fastify.get("/health", { logLevel: "silent" }, (_: FastifyRequest, reply: FastifyReply) => reply.send("OK"));
+  fastify.get("/health", { logLevel: "silent" }, (_: FastifyRequest, reply: FastifyReply) =>
+    reply.send(getBuildMetadata())
+  );
 }
 
 server.post("/api/track", trackEvent);
