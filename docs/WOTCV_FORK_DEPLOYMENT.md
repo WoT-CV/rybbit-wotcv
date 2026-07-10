@@ -153,6 +153,36 @@ Jeżeli chcesz odświeżyć bazowe obrazy Dockera podczas builda:
 WOTCV_BUILD_PULL=1 bash scripts/wotcv-branch-build-deploy.sh
 ```
 
+## Wrapper w `/home/wotcv/tools`
+
+Jeżeli aktualizacje mają być uruchamiane z katalogu narzędzi użytkownika `wotcv`, skopiuj wrapper:
+
+```bash
+mkdir -p /home/wotcv/tools
+cp /home/rybbit-wotcv/scripts/update_rybbit_wotcv.sh /home/wotcv/tools/update_rybbit_wotcv.sh
+chmod +x /home/wotcv/tools/update_rybbit_wotcv.sh
+```
+
+Uruchomienie:
+
+```bash
+/home/wotcv/tools/update_rybbit_wotcv.sh
+```
+
+Wrapper działa niezależnie od bieżącego katalogu. Domyślnie używa `/home/rybbit-wotcv`, gałęzi `origin/feat/wotcv`, projektu Compose `rybbit`, lokalnego healthchecka `http://127.0.0.1:3001/api/health` i publicznego healthchecka `https://tracking.wot-cv.com/api/health`.
+
+Przykłady nadpisania ustawień:
+
+```bash
+RYBBIT_REPO_DIR=/home/rybbit-wotcv \
+WOTCV_BRANCH=feat/wotcv \
+WOTCV_BUILD_PULL=1 \
+/home/wotcv/tools/update_rybbit_wotcv.sh
+
+WOTCV_SITE_ID=ID_STRONY \
+/home/wotcv/tools/update_rybbit_wotcv.sh
+```
+
 ## Alternatywny tryb obrazów GHCR
 
 Tryb GHCR nadal istnieje dla wdrożeń po gotowych obrazach:
