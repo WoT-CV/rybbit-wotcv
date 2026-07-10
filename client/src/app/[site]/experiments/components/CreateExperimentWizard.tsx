@@ -369,10 +369,12 @@ export function CreateExperimentWizard({
   const pathSuggestions: SuggestionOption[] = (pathsData?.data || []).map(item => ({
     value: item.value,
     label: item.value,
+    count: item.count,
   }));
   const eventSuggestions: SuggestionOption[] = (eventsData?.data || []).map(item => ({
     value: item.value,
     label: item.value,
+    count: item.count,
   }));
   const selectedGoal =
     goals.find(goal => String(goal.goalId) === form.existingGoalId) ||

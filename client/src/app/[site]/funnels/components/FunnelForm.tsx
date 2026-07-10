@@ -133,17 +133,17 @@ export function FunnelForm({
 
   // Transform data into SuggestionOption format
   const pathSuggestions: SuggestionOption[] = useMemo(
-    () => pathsData?.data?.map(item => ({ value: item.value, label: item.value })) || [],
+    () => pathsData?.data?.map(item => ({ value: item.value, label: item.value, count: item.count })) || [],
     [pathsData]
   );
 
   const eventSuggestions: SuggestionOption[] = useMemo(
-    () => eventsData?.data?.map(item => ({ value: item.value, label: item.value })) || [],
+    () => eventsData?.data?.map(item => ({ value: item.value, label: item.value, count: item.count })) || [],
     [eventsData]
   );
 
   const hostnameSuggestions: SuggestionOption[] = useMemo(
-    () => hostnamesData?.data?.map(item => ({ value: item.value, label: item.value })) || [],
+    () => hostnamesData?.data?.map(item => ({ value: item.value, label: item.value, count: item.count })) || [],
     [hostnamesData]
   );
 
@@ -155,8 +155,8 @@ export function FunnelForm({
   const autocaptureValuesByType = useAutocaptureValuesByType(enabledAutocaptureTypes);
 
   const stepSuggestions: Record<FunnelStepType, SuggestionOption[]> = useMemo(() => {
-    const toSuggestions = (values?: { value: string }[]): SuggestionOption[] =>
-      values?.map(item => ({ value: item.value, label: item.value })) || [];
+    const toSuggestions = (values?: { value: string; count: number }[]): SuggestionOption[] =>
+      values?.map(item => ({ value: item.value, label: item.value, count: item.count })) || [];
 
     return {
       page: pathSuggestions,

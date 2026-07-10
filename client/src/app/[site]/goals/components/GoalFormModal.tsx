@@ -294,12 +294,14 @@ export default function GoalFormModal({
     pathsData?.data?.map(item => ({
       value: item.value,
       label: item.value,
+      count: item.count,
     })) || [];
 
   const eventSuggestions: SuggestionOption[] =
     eventsData?.data?.map(item => ({
       value: item.value,
       label: item.value,
+      count: item.count,
     })) || [];
 
   // Reinitialize useProperties when goal changes or modal opens
@@ -369,6 +371,7 @@ export default function GoalFormModal({
     autocaptureValuesData?.map(item => ({
       value: item.value,
       label: item.value,
+      count: item.count,
     })) || [];
 
   // Handle form submission
