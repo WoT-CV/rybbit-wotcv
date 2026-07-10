@@ -1,3 +1,4 @@
+import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import {
   AlertTriangle,
   ArrowRight,
@@ -29,9 +30,9 @@ import {
 } from "lucide-react";
 import { DateTime, Duration } from "luxon";
 import Link from "next/link";
+import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import { useShallow } from "zustand/react/shallow";
 import { useGetSessionReplayEvents } from "@/api/analytics/hooks/sessionReplay/useGetSessionReplayEvents";
 import { Avatar } from "@/components/Avatar";
@@ -41,7 +42,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThreeDotLoader } from "@/components/Loaders";
 import { getTimezone } from "@/lib/store";
 import { cn, getUserDisplayName } from "@/lib/utils";
-import { useReplayStore } from "./replayStore";
+import { NetworkTimeline } from "./network/NetworkTimeline";
+import { parseNetworkEvents } from "./network/parseNetworkEvents";
 import {
   getMeaningfulEvents,
   getTechnicalGroups,
@@ -50,7 +52,7 @@ import {
   type MeaningfulKind,
   type TechnicalGroup,
 } from "./replayEvents";
-import { useExtracted } from "next-intl";
+import { useReplayStore } from "./replayStore";
 
 const SEVERITY_COLOR: Record<EventSeverity, string> = {
   default: "text-neutral-500 dark:text-neutral-400",
@@ -169,7 +171,7 @@ export function ReplayBreadcrumbs() {
   const t = useExtracted();
   const params = useParams();
   const siteId = Number(params.site);
-  const [showTechnical, setShowTechnical] = useState(false);
+  const [timelineView, setTimelineView] = useState<"key" | "network" | "all">("key");
   const { sessionId, player, setCurrentTime } = useReplayStore(
     useShallow(s => ({
       sessionId: s.sessionId,
@@ -182,6 +184,7 @@ export function ReplayBreadcrumbs() {
 
   const meaningful = useMemo(() => getMeaningfulEvents(data?.events), [data?.events]);
   const technical = useMemo(() => getTechnicalGroups(data?.events), [data?.events]);
+  const networkRequests = useMemo(() => parseNetworkEvents(data?.events), [data?.events]);
 
   const handleSeek = useCallback(
     (offset: number) => {
@@ -224,7 +227,7 @@ export function ReplayBreadcrumbs() {
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const rowCount = showTechnical ? technical.length : meaningful.length;
+  const rowCount = timelineView === "all" ? technical.length : timelineView === "key" ? meaningful.length : 0;
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => scrollRef.current,
@@ -265,9 +268,11 @@ export function ReplayBreadcrumbs() {
           <div className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
             {isLoading || !data
               ? t("Timeline")
-              : showTechnical
+              : timelineView === "all"
                 ? t("{count} groups", { count: String(technical.length) })
-                : t("{count} key events", { count: String(meaningful.length) })}
+                : timelineView === "network"
+                  ? t("{count} network requests", { count: String(networkRequests.length) })
+                  : t("{count} key events", { count: String(meaningful.length) })}
           </div>
           <div
             className="flex items-center rounded-md border border-neutral-150 dark:border-neutral-800 p-0.5 text-xs shrink-0"
@@ -276,11 +281,11 @@ export function ReplayBreadcrumbs() {
           >
             <button
               role="tab"
-              aria-selected={!showTechnical}
-              onClick={() => setShowTechnical(false)}
+              aria-selected={timelineView === "key"}
+              onClick={() => setTimelineView("key")}
               className={cn(
                 "rounded px-2 py-0.5 transition-colors",
-                !showTechnical
+                timelineView === "key"
                   ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                   : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
               )}
@@ -289,11 +294,24 @@ export function ReplayBreadcrumbs() {
             </button>
             <button
               role="tab"
-              aria-selected={showTechnical}
-              onClick={() => setShowTechnical(true)}
+              aria-selected={timelineView === "network"}
+              onClick={() => setTimelineView("network")}
               className={cn(
                 "rounded px-2 py-0.5 transition-colors",
-                showTechnical
+                timelineView === "network"
+                  ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+              )}
+            >
+              {t("Network")}
+            </button>
+            <button
+              role="tab"
+              aria-selected={timelineView === "all"}
+              onClick={() => setTimelineView("all")}
+              className={cn(
+                "rounded px-2 py-0.5 transition-colors",
+                timelineView === "all"
                   ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                   : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
               )}
@@ -307,15 +325,17 @@ export function ReplayBreadcrumbs() {
           <div className="flex flex-1 items-center justify-center">
             <ThreeDotLoader />
           </div>
+        ) : timelineView === "network" ? (
+          <NetworkTimeline key={sessionId} requests={networkRequests} onSeek={handleSeek} />
         ) : rowCount === 0 ? (
           <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-neutral-500">
-            {showTechnical ? t("No events recorded.") : t("No key interactions in this session.")}
+            {timelineView === "all" ? t("No events recorded.") : t("No key interactions in this session.")}
           </div>
         ) : (
           <div ref={scrollRef} className="flex-1 overflow-auto rounded-b-lg">
             <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
               {virtualizer.getVirtualItems().map(row => {
-                if (showTechnical) {
+                if (timelineView === "all") {
                   const group = technical[row.index];
                   return (
                     <TechnicalRow
@@ -472,4 +492,3 @@ function TechnicalRow({
     </div>
   );
 }
-
