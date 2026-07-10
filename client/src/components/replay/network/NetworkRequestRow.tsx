@@ -15,12 +15,13 @@ import type { ParsedNetworkRequest } from "./types";
 
 interface NetworkRequestRowProps {
   request: ParsedNetworkRequest;
+  isActive: boolean;
   virtualRow: VirtualItem;
   measure: (node: Element | null) => void;
   onSelect: (request: ParsedNetworkRequest) => void;
 }
 
-export function NetworkRequestRow({ request, virtualRow, measure, onSelect }: NetworkRequestRowProps) {
+export function NetworkRequestRow({ request, isActive, virtualRow, measure, onSelect }: NetworkRequestRowProps) {
   const InitiatorIcon = getInitiatorIcon(request.initiatorType);
   const displayUrl = getRequestDisplayUrl(request);
   const statusLabel = getNetworkStatusLabel(request);
@@ -35,7 +36,8 @@ export function NetworkRequestRow({ request, virtualRow, measure, onSelect }: Ne
       className={cn(
         "absolute left-0 right-0 flex w-full items-start gap-2 border-b border-neutral-100 px-2.5 py-2 text-left",
         "transition-colors hover:bg-neutral-50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-neutral-950",
-        "dark:border-neutral-800 dark:hover:bg-neutral-800/60 dark:focus-visible:ring-neutral-300"
+        "dark:border-neutral-800 dark:hover:bg-neutral-800/60 dark:focus-visible:ring-neutral-300",
+        isActive && "bg-accent-500/10 dark:bg-accent-500/10"
       )}
       style={{ top: `${virtualRow.start}px` }}
       onClick={() => onSelect(request)}

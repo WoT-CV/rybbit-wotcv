@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+import { useReplayStore } from "../replayStore";
 import { filterNetworkRequests, getInitiatorLabel } from "./networkEventUtils";
+import { NetworkRequestDetails } from "./NetworkRequestDetails";
 import { NetworkRequestRow } from "./NetworkRequestRow";
 import type { NetworkStatusGroup, ParsedNetworkRequest } from "./types";
 
@@ -24,7 +26,9 @@ export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
   const [initiatorType, setInitiatorType] = useState("all");
   const [fetchXhrOnly, setFetchXhrOnly] = useState(false);
   const [minDurationMs, setMinDurationMs] = useState(0);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const currentTime = useReplayStore(state => state.currentTime);
 
   const methods = useMemo(() => [...new Set(requests.map(request => request.method))].sort(), [requests]);
   const initiatorTypes = useMemo(() => [...new Set(requests.map(request => request.initiatorType))].sort(), [requests]);
@@ -41,7 +45,18 @@ export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
     [fetchXhrOnly, initiatorType, method, minDurationMs, query, requests, statusGroup]
   );
   const handleQueryChange = useCallback((event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value), []);
-  const handleRequestSelect = useCallback((request: ParsedNetworkRequest) => onSeek(request.startOffset), [onSeek]);
+  const handleRequestSelect = useCallback(
+    (request: ParsedNetworkRequest) => {
+      onSeek(request.startOffset);
+      setSelectedRequestId(request.requestId);
+    },
+    [onSeek]
+  );
+  const selectedRequest = useMemo(
+    () => requests.find(request => request.requestId === selectedRequestId),
+    [requests, selectedRequestId]
+  );
+  const handleDetailsBack = useCallback(() => setSelectedRequestId(null), []);
   const virtualizer = useVirtualizer({
     count: filteredRequests.length,
     getScrollElement: () => scrollRef.current,
@@ -55,6 +70,10 @@ export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
         {t("No network requests recorded.")}
       </div>
     );
+  }
+
+  if (selectedRequest) {
+    return <NetworkRequestDetails request={selectedRequest} onBack={handleDetailsBack} />;
   }
 
   return (
@@ -178,6 +197,7 @@ export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
                 <NetworkRequestRow
                   key={request.requestId}
                   request={request}
+                  isActive={currentTime >= request.startOffset && currentTime <= request.endOffset}
                   virtualRow={virtualRow}
                   measure={virtualizer.measureElement}
                   onSelect={handleRequestSelect}

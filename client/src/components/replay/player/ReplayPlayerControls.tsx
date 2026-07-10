@@ -3,14 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Maximize2, Pause, Play } from "lucide-react";
-import { memo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { ReplayDrawer } from "../../Sessions/ReplayDrawer";
+import { parseNetworkEvents } from "../network/parseNetworkEvents";
+import type { ReplayEventLike } from "../network/types";
 import { useReplayStore } from "../replayStore";
 import { formatTime, PLAYBACK_SPEEDS } from "./utils/replayUtils";
 
 interface ReplayPlayerControlsProps {
-  events: any[];
+  events: ReplayEventLike[];
   onPlayPause: () => void;
   onSliderChange: (value: number[]) => void;
   onSpeedChange: (speed: string) => void;
@@ -24,18 +26,29 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   onSpeedChange,
   isDrawer,
 }: ReplayPlayerControlsProps) {
-  const { sessionId, player, isPlaying, currentTime, duration, playbackSpeed, activityPeriods } = useReplayStore(
-    useShallow(s => ({
-      sessionId: s.sessionId,
-      player: s.player,
-      isPlaying: s.isPlaying,
-      currentTime: s.currentTime,
-      duration: s.duration,
-      playbackSpeed: s.playbackSpeed,
-      activityPeriods: s.activityPeriods,
-    }))
-  );
+  const { sessionId, player, isPlaying, currentTime, setCurrentTime, duration, playbackSpeed, activityPeriods } =
+    useReplayStore(
+      useShallow(s => ({
+        sessionId: s.sessionId,
+        player: s.player,
+        isPlaying: s.isPlaying,
+        currentTime: s.currentTime,
+        setCurrentTime: s.setCurrentTime,
+        duration: s.duration,
+        playbackSpeed: s.playbackSpeed,
+        activityPeriods: s.activityPeriods,
+      }))
+    );
   const [replayDrawerOpen, setReplayDrawerOpen] = useState(false);
+  const networkRequests = useMemo(() => parseNetworkEvents(events), [events]);
+  const handleNetworkSeek = useCallback(
+    (offset: number) => {
+      if (!player) return;
+      player.goto(offset);
+      setCurrentTime(offset);
+    },
+    [player, setCurrentTime]
+  );
 
   return (
     <div className="border border-neutral-100 dark:border-neutral-800 p-2 pb-3 bg-white dark:bg-neutral-900 rounded-b-lg pt-6">
@@ -56,6 +69,9 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
             activityPeriods={activityPeriods}
             duration={duration}
             events={events}
+            networkRequests={networkRequests}
+            currentTime={currentTime}
+            onNetworkSeek={handleNetworkSeek}
             className="w-full"
           />
         </div>

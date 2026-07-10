@@ -11,7 +11,7 @@ function isSupportedLocale(locale: string): locale is SupportedLocale {
 function getLocaleFromAcceptLanguage(acceptLanguage: string): SupportedLocale {
   const languages = acceptLanguage
     .split(",")
-    .map((part) => {
+    .map(part => {
       const [lang, q] = part.trim().split(";q=");
       return { lang: lang.trim().split("-")[0].toLowerCase(), q: q ? parseFloat(q) : 1 };
     })
@@ -44,8 +44,28 @@ export default getRequestConfig(async () => {
     }
   }
 
+  const [{ default: englishMessages }, { default: localizedMessages }] = await Promise.all([
+    import("../../messages/en.json"),
+    import(`../../messages/${locale}.json`),
+  ]);
+
   return {
     locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    messages: mergeMessagesWithEnglishFallback(englishMessages, localizedMessages),
   };
 });
+
+function mergeMessagesWithEnglishFallback(
+  englishMessages: Record<string, string>,
+  localizedMessages: Record<string, string>
+): Record<string, string> {
+  const messages = { ...englishMessages, ...localizedMessages };
+
+  for (const [key, value] of Object.entries(messages)) {
+    if (value === "" && englishMessages[key]) {
+      messages[key] = englishMessages[key];
+    }
+  }
+
+  return messages;
+}

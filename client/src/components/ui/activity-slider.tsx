@@ -5,6 +5,8 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import { cn } from "@/lib/utils";
 import { getMeaningfulEvents, type MeaningfulEvent, type MeaningfulKind } from "@/components/replay/replayEvents";
+import { NetworkWaterfall } from "@/components/replay/network/NetworkWaterfall";
+import type { ParsedNetworkRequest } from "@/components/replay/network/types";
 
 interface ActivityPeriod {
   start: number;
@@ -15,6 +17,9 @@ interface ActivitySliderProps extends React.ComponentPropsWithoutRef<typeof Slid
   activityPeriods?: ActivityPeriod[];
   duration?: number;
   events?: Array<{ timestamp: number; type: string | number; data?: any }>;
+  networkRequests?: ParsedNetworkRequest[];
+  currentTime?: number;
+  onNetworkSeek?: (offset: number) => void;
 }
 
 const MARKER_COLOR: Record<MeaningfulKind, string> = {
@@ -67,7 +72,19 @@ function formatOffset(ms: number) {
 }
 
 const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, ActivitySliderProps>(
-  ({ className, activityPeriods = [], duration = 100, events = [], ...props }, ref) => {
+  (
+    {
+      className,
+      activityPeriods = [],
+      duration = 100,
+      events = [],
+      networkRequests = [],
+      currentTime = 0,
+      onNetworkSeek = () => undefined,
+      ...props
+    },
+    ref
+  ) => {
     const markers = React.useMemo(() => {
       const meaningful = getMeaningfulEvents(events).filter(e => e.kind !== "session-start" && e.offset > 0);
       if (meaningful.length <= MAX_MARKERS) return meaningful;
@@ -83,6 +100,12 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
       <div className="w-full">
         {/* Event markers */}
         <div className="relative h-6 w-full mb-2">
+          <NetworkWaterfall
+            requests={networkRequests}
+            duration={duration}
+            currentTime={currentTime}
+            onSeek={onNetworkSeek}
+          />
           {markers.map(event => {
             const position = duration > 0 ? (event.offset / duration) * 100 : 0;
             const constrained = Math.max(0.5, Math.min(99.5, position));
@@ -93,7 +116,7 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
                   "absolute h-2 w-2 rounded-full ring-2 ring-white dark:ring-neutral-900",
                   markerColor(event)
                 )}
-                style={{ left: `${constrained}%`, top: "50%", transform: "translate(-50%, -50%)" }}
+                style={{ left: `${constrained}%`, top: "72%", transform: "translate(-50%, -50%)" }}
                 title={`${shortLabel(event)} · ${formatOffset(event.offset)}`}
               />
             );
