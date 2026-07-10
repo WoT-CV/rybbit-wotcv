@@ -2,7 +2,7 @@
 
 **Data:** 2026-07-10  
 **Zakres:** host filter w Network Replay, marker aktualnego czasu w panelu Network, pomijanie bezczynności użytkownika  
-**Tryb:** POC bez obowiązkowego dopisywania testów automatycznych
+**Tryb:** iteracyjna implementacja bez obowiązkowego dopisywania testów automatycznych
 
 ## 1. Cel
 
@@ -58,7 +58,7 @@ Brakuje filtrowania po hostach, np.:
 
 - Host wyciągamy przez `new URL(request.url).hostname`.
 - Dla błędnych lub względnych URL-i używamy wartości `unknown`.
-- W POC nie robimy grupowania po domenie głównej; filtrujemy dokładny hostname.
+- Na tym etapie nie robimy grupowania po domenie głównej; filtrujemy dokładny hostname.
 - Hosty sortujemy alfabetycznie albo po liczbie requestów malejąco. Preferowane: liczba requestów malejąco.
 
 ### Kryteria akceptacji
@@ -91,7 +91,7 @@ Replay ma `currentTime` w store i requesty mają `startOffset` oraz `endOffset`.
 
 ### Decyzje
 
-- W POC marker robimy w prawym panelu Network, nie przebudowujemy całego playera.
+- Marker robimy w prawym panelu Network, bez przebudowy całego playera.
 - Przy wirtualizacji listy marker musi być kompatybilny z obecnym mechanizmem renderowania rows.
 - Auto-scroll nie może walczyć z ręcznym scrollowaniem użytkownika; dlatego domyślnie może być wyłączony albo czasowo pauzowany po manualnym scrollu.
 
@@ -136,10 +136,10 @@ Slider pokazuje aktywne okresy, ale player nie pomija automatycznie długich prz
 
 ### Decyzje
 
-- Startowy próg POC: przerwy dłuższe niż `5 s`.
+- Startowy próg: przerwy dłuższe niż `5 s`.
 - Skok wykonujemy tylko przy aktywnym odtwarzaniu.
 - Nie zmieniamy realnej osi czasu replay; jedynie automatycznie wykonujemy seek.
-- Ustawienie nie musi być globalnie persystowane w POC. Jeżeli będzie wygodne, można użyć `localStorage`.
+- Ustawienie nie musi być globalnie persystowane. Jeżeli będzie wygodne, można użyć `localStorage`.
 
 ### Kryteria akceptacji
 
@@ -185,7 +185,7 @@ Największe ryzyko UX, bo ingeruje w odtwarzanie.
 - Host filter musi działać na pełnym URL, także dla requestów z query stringiem.
 - Przy bardzo dużej liczbie requestów marker w wirtualizowanej liście musi być lekki obliczeniowo.
 
-## 7. Definition of Done POC
+## 7. Definition of Done
 
 - Można filtrować requesty po hoście.
 - Panel Network pokazuje aktualną pozycję replay względem listy requestów.

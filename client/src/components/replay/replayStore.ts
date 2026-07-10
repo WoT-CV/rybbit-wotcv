@@ -46,6 +46,9 @@ export const useReplayStore = create<{
   inactivitySkipNotice: InactivitySkipNotice | null;
   setInactivitySkipNotice: (notice: InactivitySkipNotice | null) => void;
 
+  manualSeekVersion: number;
+  registerManualSeek: () => void;
+
   // Reset all player state when session changes
   resetPlayerState: () => void;
 }>(set => ({
@@ -85,6 +88,9 @@ export const useReplayStore = create<{
   inactivitySkipNotice: null,
   setInactivitySkipNotice: inactivitySkipNotice => set({ inactivitySkipNotice }),
 
+  manualSeekVersion: 0,
+  registerManualSeek: () => set(state => ({ manualSeekVersion: state.manualSeekVersion + 1 })),
+
   // Reset all player state when session changes
   resetPlayerState: () =>
     set({
@@ -95,5 +101,6 @@ export const useReplayStore = create<{
       playbackSpeed: "1",
       activityPeriods: [],
       inactivitySkipNotice: null,
+      manualSeekVersion: 0,
     }),
 }));

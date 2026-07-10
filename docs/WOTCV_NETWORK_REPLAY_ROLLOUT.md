@@ -5,7 +5,7 @@ Etap rolloutowy nie wprowadza osobnego wariantu konfiguracji ani automatycznej a
 ## Aktywacja per site
 
 1. W ustawieniach strony włącz Session Replay.
-2. Włącz Network Replay (POC) dla tej samej strony.
+2. Włącz Network Replay dla tej samej strony.
 3. Sprawdź publiczny endpoint `GET /site/tracking-config/:siteId`.
 4. Potwierdź, że `sessionReplay` i `networkReplay.enabled` mają wartość `true`.
 5. Otwórz nową sesję i porównaj żądania w replay z DevTools.
@@ -27,7 +27,7 @@ Recorder wykrywa dostępne API i degraduje zakres danych bez wpływu na aplikacj
 | `TextDecoder`                         | Request pozostaje w replay, a niedostępne body otrzymuje jawny powód.                  |
 | Zablokowana modyfikacja prototypu XHR | Przywracane są wszystkie częściowe patche, a pozostałe obserwery działają dalej.       |
 
-Zakres POC nie obejmuje Internet Explorera. Błąd lub brak pojedynczego API nie może przerwać oryginalnego `fetch`, XHR ani Session Replay.
+Obsługa nie obejmuje Internet Explorera. Błąd lub brak pojedynczego API nie może przerwać oryginalnego `fetch`, XHR ani Session Replay.
 
 ## Smoke check
 

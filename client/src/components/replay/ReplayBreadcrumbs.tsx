@@ -172,10 +172,11 @@ export function ReplayBreadcrumbs() {
   const params = useParams();
   const siteId = Number(params.site);
   const [timelineView, setTimelineView] = useState<"key" | "network" | "all">("key");
-  const { sessionId, player, setCurrentTime } = useReplayStore(
+  const { sessionId, player, registerManualSeek, setCurrentTime } = useReplayStore(
     useShallow(s => ({
       sessionId: s.sessionId,
       player: s.player,
+      registerManualSeek: s.registerManualSeek,
       setCurrentTime: s.setCurrentTime,
     }))
   );
@@ -189,10 +190,11 @@ export function ReplayBreadcrumbs() {
   const handleSeek = useCallback(
     (offset: number) => {
       if (!player) return;
+      registerManualSeek();
       player.goto(offset);
       setCurrentTime(offset);
     },
-    [player, setCurrentTime]
+    [player, registerManualSeek, setCurrentTime]
   );
 
   // Resolve labels here, where `t` is the real useExtracted() binding, so the

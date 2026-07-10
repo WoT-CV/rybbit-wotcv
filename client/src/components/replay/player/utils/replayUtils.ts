@@ -17,36 +17,31 @@ export interface InactivitySkipTarget extends ActivityPeriod {
 }
 
 export const INACTIVITY_SKIP_THRESHOLD_MS = 5000;
+const USER_ACTIVITY_INCREMENTAL_SOURCES = new Set([1, 2, 3, 5, 6, 7, 12, 14]);
 
 export const calculateActivityPeriods = (events: any[], totalDuration: number): ActivityPeriod[] => {
-  if (!events || events.length === 0) return [];
+  if (!events || events.length === 0 || totalDuration <= 0) return [];
 
-  // Filter for user interaction events (mouse moves, clicks, etc.)
-  const interactionEvents = events.filter(event => {
-    const eventType = parseInt(event.type.toString());
-    // Type 3 = IncrementalSnapshot (includes mouse moves, clicks, etc.)
-    return eventType === 3;
-  });
-
-  const periods: ActivityPeriod[] = [];
   const firstEventTime = events[0].timestamp;
+  const periods: ActivityPeriod[] = [
+    {
+      start: 0,
+      end: Math.min(totalDuration, INACTIVITY_SKIP_THRESHOLD_MS),
+    },
+  ];
 
-  for (let i = 0; i < interactionEvents.length; i++) {
-    const currentEvent = interactionEvents[i];
-    const nextEvent = interactionEvents[i + 1];
-
-    const currentTime = currentEvent.timestamp - firstEventTime;
-    const nextTime = nextEvent ? nextEvent.timestamp - firstEventTime : totalDuration;
-
-    if (nextTime - currentTime <= INACTIVITY_SKIP_THRESHOLD_MS) {
+  events
+    .filter(isUserActivityEvent)
+    .map(event => Math.max(0, Math.min(totalDuration, event.timestamp - firstEventTime)))
+    .sort((first, second) => first - second)
+    .forEach(offset => {
       periods.push({
-        start: currentTime,
-        end: nextTime,
+        start: offset,
+        end: Math.min(totalDuration, offset + INACTIVITY_SKIP_THRESHOLD_MS),
       });
-    }
-  }
+    });
 
-  return periods;
+  return normalizeActivityPeriods(periods);
 };
 
 export function normalizeActivityPeriods(periods: ActivityPeriod[]): ActivityPeriod[] {
@@ -96,6 +91,20 @@ export function findNextActivityPeriod(
   }
 
   return null;
+}
+
+function isUserActivityEvent(event: any): boolean {
+  const eventType = Number(event.type);
+
+  if (eventType === 4 && event.data?.href) {
+    return true;
+  }
+
+  if (eventType !== 3) {
+    return false;
+  }
+
+  return USER_ACTIVITY_INCREMENTAL_SOURCES.has(Number(event.data?.source));
 }
 
 export const PLAYBACK_SPEEDS = [

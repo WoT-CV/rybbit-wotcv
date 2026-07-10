@@ -37,6 +37,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
     isPlaying,
     playbackSpeed,
     player,
+    registerManualSeek,
     sessionId,
     setCurrentTime,
     setInactivitySkipNotice,
@@ -51,6 +52,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
       isPlaying: s.isPlaying,
       playbackSpeed: s.playbackSpeed,
       player: s.player,
+      registerManualSeek: s.registerManualSeek,
       sessionId: s.sessionId,
       setCurrentTime: s.setCurrentTime,
       setInactivitySkipNotice: s.setInactivitySkipNotice,
@@ -79,10 +81,11 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   const handleNetworkSeek = useCallback(
     (offset: number) => {
       if (!player) return;
+      registerManualSeek();
       player.goto(offset);
       setCurrentTime(offset);
     },
-    [player, setCurrentTime]
+    [player, registerManualSeek, setCurrentTime]
   );
 
   return (

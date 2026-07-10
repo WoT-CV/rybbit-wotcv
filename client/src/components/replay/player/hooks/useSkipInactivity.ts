@@ -8,13 +8,17 @@ interface UseSkipInactivityProps {
   player: any;
 }
 
+const MANUAL_SEEK_SUPPRESSION_MS = 1500;
+
 export function useSkipInactivity({ player }: UseSkipInactivityProps) {
   const lastSkippedTargetRef = useRef<number | null>(null);
+  const skipSuppressedUntilRef = useRef(0);
   const {
     activityPeriods,
     currentTime,
     inactivitySkipThresholdMs,
     isPlaying,
+    manualSeekVersion,
     setCurrentTime,
     setInactivitySkipNotice,
     skipInactivityEnabled,
@@ -24,6 +28,7 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
       currentTime: state.currentTime,
       inactivitySkipThresholdMs: state.inactivitySkipThresholdMs,
       isPlaying: state.isPlaying,
+      manualSeekVersion: state.manualSeekVersion,
       setCurrentTime: state.setCurrentTime,
       setInactivitySkipNotice: state.setInactivitySkipNotice,
       skipInactivityEnabled: state.skipInactivityEnabled,
@@ -31,8 +36,19 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
   );
 
   useEffect(() => {
+    if (manualSeekVersion === 0) return;
+
+    skipSuppressedUntilRef.current = Date.now() + MANUAL_SEEK_SUPPRESSION_MS;
+    lastSkippedTargetRef.current = null;
+  }, [manualSeekVersion]);
+
+  useEffect(() => {
     if (!skipInactivityEnabled || !isPlaying || !player || activityPeriods.length === 0) {
       lastSkippedTargetRef.current = null;
+      return;
+    }
+
+    if (Date.now() < skipSuppressedUntilRef.current) {
       return;
     }
 
@@ -49,6 +65,9 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
 
     lastSkippedTargetRef.current = nextActivity.start;
     player.goto(nextActivity.start);
+    window.requestAnimationFrame(() => {
+      player.play?.();
+    });
     setCurrentTime(nextActivity.start);
     setInactivitySkipNotice({
       from: nextActivity.from,

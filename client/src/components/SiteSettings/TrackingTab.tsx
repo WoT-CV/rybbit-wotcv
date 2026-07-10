@@ -125,7 +125,7 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
           } as ToggleConfig,
           {
             id: "networkReplay",
-            label: t("Network Replay (POC)"),
+            label: t("Network Replay"),
             description: t("Capture raw request and response headers and bodies inside Session Replay."),
             value: toggleStates.networkReplay,
             key: "networkReplay",

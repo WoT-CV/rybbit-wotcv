@@ -27,6 +27,7 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
     setCurrentTime,
     duration,
     setPlaybackSpeed,
+    registerManualSeek,
     resetPlayerState,
   } = useReplayStore(
     useShallow(s => ({
@@ -38,6 +39,7 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
       setCurrentTime: s.setCurrentTime,
       duration: s.duration,
       setPlaybackSpeed: s.setPlaybackSpeed,
+      registerManualSeek: s.registerManualSeek,
       resetPlayerState: s.resetPlayerState,
     }))
   );
@@ -69,14 +71,16 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
   const handleSkipBack = useCallback(() => {
     if (!player) return;
     const newTime = Math.max(0, currentTime - SKIP_SECONDS);
+    registerManualSeek();
     player.goto(newTime);
-  }, [player, currentTime]);
+  }, [player, currentTime, registerManualSeek]);
 
   const handleSkipForward = useCallback(() => {
     if (!player) return;
     const newTime = Math.min(duration, currentTime + SKIP_SECONDS);
+    registerManualSeek();
     player.goto(newTime);
-  }, [player, duration, currentTime]);
+  }, [player, duration, currentTime, registerManualSeek]);
 
   const handleSliderChange = useCallback(
     (value: number[]) => {
@@ -87,10 +91,11 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
       setIsPlaying(false);
 
       const newTime = (value[0] / 100) * duration;
+      registerManualSeek();
       player.goto(newTime);
       setCurrentTime(newTime);
     },
-    [player, duration, setIsPlaying, setCurrentTime]
+    [player, duration, registerManualSeek, setIsPlaying, setCurrentTime]
   );
 
   const handleSpeedChange = useCallback(
