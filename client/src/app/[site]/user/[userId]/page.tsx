@@ -20,10 +20,12 @@ import { useGetRegionName } from "../../../../lib/geo";
 import { MobileSidebar } from "../../components/Sidebar/MobileSidebar";
 import { UserSidebar } from "./components/UserSidebar";
 import { Skeleton } from "../../../../components/ui/skeleton";
-import { Avatar, generateName } from "../../../../components/Avatar";
+import { Avatar } from "../../../../components/Avatar";
 import { Badge } from "../../../../components/ui/badge";
 import { IdentifiedBadge } from "../../../../components/IdentifiedBadge";
 import { UserTopPages } from "./components/UserTopPages";
+import { getUserAvatarUrl } from "../../../../lib/userIdentity";
+import { getUserDisplayName } from "../../../../lib/utils";
 
 const LIMIT = 25;
 
@@ -58,12 +60,13 @@ export default function UserPage() {
 
   const { getRegionName } = useGetRegionName();
 
-  const traitsUsername = data?.traits?.username as string | undefined;
-  const traitsName = data?.traits?.name as string | undefined;
   const traitsEmail = data?.traits?.email as string | undefined;
   const isIdentified = !!data?.identified_user_id;
-  const displayName =
-    traitsUsername || traitsName || (isIdentified ? userId : generateName(userId));
+  const displayName = getUserDisplayName({
+    user_id: data?.user_id ?? userId,
+    identified_user_id: data?.identified_user_id ?? (isIdentified ? userId : undefined),
+    traits: data?.traits,
+  });
 
   return (
     <div className="p-2 md:p-4 max-w-[1200px] mx-auto">
@@ -86,7 +89,12 @@ export default function UserPage() {
       </div>
 
       <div className="flex items-center gap-4 mb-4">
-        <Avatar size={64} id={userId} />
+        <Avatar
+          size={64}
+          id={userId}
+          imageUrl={getUserAvatarUrl(data)}
+          alt={isLoading ? "" : displayName}
+        />
         <div className="mt-3 w-full flex gap-2">
           <div>
             <div className="font-semibold text-lg flex items-center gap-2">

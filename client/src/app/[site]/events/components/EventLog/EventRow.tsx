@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../../componen
 import { useDateTimeFormat } from "../../../../../hooks/useDateTimeFormat";
 import { useEventDisplayName } from "../../../../../lib/events";
 import { getTimezone } from "../../../../../lib/store";
+import { getUserAvatarUrl } from "../../../../../lib/userIdentity";
 import { getCountryName, getUserDisplayName, truncateString } from "../../../../../lib/utils";
 import { Browser } from "../../../components/shared/icons/Browser";
 import { CountryFlag } from "../../../components/shared/icons/CountryFlag";
@@ -77,7 +78,13 @@ export function EventRow({ event, site, onClick }: EventRowProps) {
           onClick={e => e.stopPropagation()}
           className="flex items-center gap-2"
         >
-          <Avatar size={18} id={event.user_id} lastActiveTime={eventTime} />
+          <Avatar
+            size={18}
+            id={event.user_id}
+            imageUrl={getUserAvatarUrl(event)}
+            alt={displayName}
+            lastActiveTime={eventTime}
+          />
           <div className="text-neutral-700 dark:text-neutral-200 truncate max-w-[160px] hover:underline">{displayName}</div>
         </Link>
       </div>

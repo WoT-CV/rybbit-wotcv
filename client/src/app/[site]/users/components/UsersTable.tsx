@@ -33,6 +33,7 @@ import { Switch } from "../../../../components/ui/switch";
 import { TableSortIndicator } from "../../../../components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../components/ui/tooltip";
 import { FilterParameter } from "@rybbit/shared";
+import { getUserAvatarUrl } from "../../../../lib/userIdentity";
 import { getCountryName, getUserDisplayName } from "../../../../lib/utils";
 import { Browser } from "../../components/shared/icons/Browser";
 import { CountryFlag } from "../../components/shared/icons/CountryFlag";
@@ -144,7 +145,13 @@ export function UsersTable() {
 
         return (
           <Link href={`/${site}/user/${encodedLinkId}`} className="flex items-center gap-2">
-            <Avatar size={20} id={linkId as string} lastActiveTime={lastSeen} />
+            <Avatar
+              size={20}
+              id={linkId as string}
+              imageUrl={getUserAvatarUrl(info.row.original)}
+              alt={displayName}
+              lastActiveTime={lastSeen}
+            />
             <span className="max-w-32 truncate hover:underline" title={displayName}>
               {displayName}
             </span>

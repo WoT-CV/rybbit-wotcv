@@ -10,6 +10,7 @@ import { useParams } from "next/navigation";
 import { memo, useCallback, useState } from "react";
 import { GetSessionsResponse } from "../../api/analytics/endpoints";
 import { useDateTimeFormat } from "@/hooks/useDateTimeFormat";
+import { getUserAvatarUrl } from "@/lib/userIdentity";
 import { formatShortDuration } from "../../lib/dateTimeUtils";
 import { cn, formatter, getUserDisplayName, truncateString } from "../../lib/utils";
 import { Avatar } from "../Avatar";
@@ -82,6 +83,8 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
               <Avatar
                 size={24}
                 id={session.user_id}
+                imageUrl={getUserAvatarUrl(session)}
+                alt={getUserDisplayName(session)}
                 lastActiveTime={DateTime.fromSQL(session.session_end, { zone: "utc" })}
               />
               <span className="text-xs text-neutral-600 dark:text-neutral-200 truncate max-w-[150px]">
@@ -185,6 +188,8 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
               <Avatar
                 size={24}
                 id={session.user_id}
+                imageUrl={getUserAvatarUrl(session)}
+                alt={getUserDisplayName(session)}
                 lastActiveTime={DateTime.fromSQL(session.session_end, { zone: "utc" })}
               />
               <span className="text-xs text-neutral-600 dark:text-neutral-200 w-24 truncate hover:underline">

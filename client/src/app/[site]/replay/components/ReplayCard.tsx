@@ -26,6 +26,7 @@ import {
 } from "../../../../components/ui/alert-dialog";
 import { Button } from "../../../../components/ui/button";
 import { Skeleton } from "../../../../components/ui/skeleton";
+import { getUserAvatarUrl } from "../../../../lib/userIdentity";
 import { cn, formatter, getUserDisplayName } from "../../../../lib/utils";
 import { useShallow } from "zustand/react/shallow";
 import { useReplayStore } from "@/components/replay/replayStore";
@@ -123,6 +124,8 @@ export function ReplayCard({ replay, onSelect }: { replay: SessionReplayListItem
         <Avatar
           size={18}
           id={replay.user_id}
+          imageUrl={getUserAvatarUrl(replay)}
+          alt={getUserDisplayName(replay)}
           lastActiveTime={replay.end_time ? DateTime.fromSQL(replay.end_time, { zone: "utc" }) : undefined}
         />
         <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate min-w-0">

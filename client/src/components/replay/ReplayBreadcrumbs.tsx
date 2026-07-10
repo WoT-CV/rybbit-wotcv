@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThreeDotLoader } from "@/components/Loaders";
 import { getTimezone } from "@/lib/store";
+import { getUserAvatarUrl } from "@/lib/userIdentity";
 import { cn, getUserDisplayName } from "@/lib/utils";
 import { NetworkTimeline } from "./network/NetworkTimeline";
 import { parseNetworkEvents } from "./network/parseNetworkEvents";
@@ -382,6 +383,8 @@ function UserHeader({ data, siteId }: { data: any; siteId: number }) {
         <Avatar
           id={data.metadata.user_id}
           size={24}
+          imageUrl={getUserAvatarUrl(data.metadata)}
+          alt={getUserDisplayName(data.metadata)}
           lastActiveTime={
             data.metadata.end_time
               ? DateTime.fromSQL(data.metadata.end_time, { zone: "utc" }).setZone(getTimezone())

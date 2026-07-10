@@ -1,6 +1,7 @@
 import BoringAvatar from "boring-avatars";
 import { DateTime } from "luxon";
 import { useExtracted } from "next-intl";
+import { useEffect, useState } from "react";
 import { animals, colors, uniqueNamesGenerator } from "unique-names-generator";
 import { useDateTimeFormat } from "../hooks/useDateTimeFormat";
 import { getTimezone } from "../lib/store";
@@ -29,14 +30,42 @@ export const AVATAR_COLORS = [
   "#d1d5db",
 ];
 
-export function Avatar({ id, size = 20, lastActiveTime }: { id: string; size?: number; lastActiveTime?: DateTime }) {
+export function Avatar({
+  id,
+  size = 20,
+  lastActiveTime,
+  imageUrl,
+  alt,
+}: {
+  id: string;
+  size?: number;
+  lastActiveTime?: DateTime;
+  imageUrl?: string;
+  alt?: string;
+}) {
   const t = useExtracted();
   const { formatRelative } = useDateTimeFormat();
+  const [imageFailed, setImageFailed] = useState(false);
   const timeSinceEnd = lastActiveTime ? -lastActiveTime.setZone(getTimezone()).diffNow().toMillis() / 1000 : 0;
   const online = lastActiveTime ? timeSinceEnd < 300 : false;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageUrl]);
+
   return (
     <div className="relative">
-      <BoringAvatar size={size} name={id} variant="beam" colors={AVATAR_COLORS} />
+      {imageUrl && !imageFailed ? (
+        <img
+          src={imageUrl}
+          alt={alt || ""}
+          className="rounded-full object-cover bg-neutral-200 dark:bg-neutral-800"
+          style={{ width: size, height: size }}
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <BoringAvatar size={size} name={id} variant="beam" colors={AVATAR_COLORS} />
+      )}
       {online && (
         <Tooltip>
           <TooltipTrigger asChild>

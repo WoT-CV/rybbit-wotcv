@@ -16,6 +16,7 @@ import {
   OperatingSystemTooltipIcon,
   DeviceTypeTooltipIcon,
 } from "../../../../components/TooltipIcons/TooltipIcons";
+import { getUserAvatarUrl } from "../../../../lib/userIdentity";
 import { getUserDisplayName } from "../../../../lib/utils";
 
 export function TraitValueUsersList({
@@ -137,7 +138,7 @@ export function TraitValueUsersList({
               className="flex items-center gap-2 w-64 shrink"
               target="_blank"
             >
-              <Avatar size={20} id={linkId} />
+              <Avatar size={20} id={linkId} imageUrl={getUserAvatarUrl(user)} alt={displayName} />
               <span
                 className="truncate hover:underline"
                 title={displayName}

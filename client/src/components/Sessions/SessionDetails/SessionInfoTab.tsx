@@ -6,8 +6,9 @@ import { Browser } from "../../../app/[site]/components/shared/icons/Browser";
 import { CountryFlag } from "../../../app/[site]/components/shared/icons/CountryFlag";
 import { OperatingSystem } from "../../../app/[site]/components/shared/icons/OperatingSystem";
 import { useGetRegionName } from "../../../lib/geo";
-import { getCountryName, getLanguageName } from "../../../lib/utils";
-import { Avatar, generateName } from "../../Avatar";
+import { getUserAvatarUrl } from "../../../lib/userIdentity";
+import { getCountryName, getLanguageName, getUserDisplayName } from "../../../lib/utils";
+import { Avatar } from "../../Avatar";
 import { IdentifiedBadge } from "../../IdentifiedBadge";
 import { DeviceIcon } from "../../../app/[site]/components/shared/icons/Device";
 
@@ -59,16 +60,17 @@ export function SessionInfoTab({
                       ? session.identified_user_id
                       : sessionDetails.user_id
                   }
+                  imageUrl={getUserAvatarUrl(session)}
+                  alt={getUserDisplayName(session)}
                 />
               </div>
               <div>
                 <div className="text-sm text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
                   <span className="font-medium text-neutral-600 dark:text-neutral-300">
-                    {isIdentified
-                      ? (session.traits?.username as string) ||
-                      (session.traits?.name as string) ||
-                      session.identified_user_id
-                      : generateName(sessionDetails.user_id)}
+                    {getUserDisplayName({
+                      ...session,
+                      user_id: sessionDetails.user_id,
+                    })}
                   </span>
                   {isIdentified && (
                     <IdentifiedBadge traits={session.traits} />
