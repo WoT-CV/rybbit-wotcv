@@ -1,4 +1,5 @@
 import type { CapturedBody, CapturedBodyKind } from "./types.js";
+import { getUtf8ByteSize } from "./utils.js";
 
 export interface BodyCaptureLimits {
   maxBodySizeBytes: number;
@@ -177,6 +178,11 @@ async function consumeTextStream(
   contentType: string | undefined,
   maxBodySizeBytes: number
 ): Promise<CapturedBody> {
+  if (typeof TextDecoder === "undefined") {
+    void reader.cancel().catch(() => undefined);
+    return createUnavailableBody("unreadable", "Text decoding is not supported by this browser", contentType);
+  }
+
   const decoder = new TextDecoder();
   let sizeBytes = 0;
   let value = "";
@@ -242,7 +248,7 @@ async function captureBlob(
     };
   }
 
-  const timedResult = await resolveWithTimeout(blob.text(), limits.bodyReadTimeoutMs);
+  const timedResult = await resolveWithTimeout(readBlobText(blob), limits.bodyReadTimeoutMs);
   if (timedResult.timedOut) {
     return createUnavailableBody("timeout", "Blob read timed out", resolvedContentType);
   }
@@ -308,7 +314,7 @@ function captureTextValue(
   contentType: string | undefined,
   limits: BodyCaptureLimits
 ): CapturedBody {
-  const sizeBytes = new TextEncoder().encode(value).byteLength;
+  const sizeBytes = getUtf8ByteSize(value);
   if (sizeBytes === 0) {
     return {
       kind: "empty",
@@ -391,6 +397,31 @@ async function resolveWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Pr
     window.clearTimeout(timeoutId);
   }
   return result;
+}
+
+function readBlobText(blob: Blob): Promise<string> {
+  if (typeof blob.text === "function") {
+    return blob.text();
+  }
+
+  if (typeof FileReader === "undefined") {
+    return Promise.reject(new Error("Blob text reading is not supported by this browser"));
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error("Blob text reading returned an unsupported result"));
+    });
+    reader.addEventListener("error", () => reject(reader.error || new Error("Blob text reading failed")));
+    reader.addEventListener("abort", () => reject(new Error("Blob text reading was aborted")));
+    reader.readAsText(blob);
+  });
 }
 
 function getErrorMessage(error: unknown): string {

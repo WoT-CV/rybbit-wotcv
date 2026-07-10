@@ -115,25 +115,56 @@ export function observeXhr({
     }
   };
 
-  prototype.open = observedOpen as typeof prototype.open;
-  prototype.setRequestHeader = observedSetRequestHeader as typeof prototype.setRequestHeader;
-  prototype.send = observedSend as typeof prototype.send;
+  try {
+    prototype.open = observedOpen as typeof prototype.open;
+    prototype.setRequestHeader = observedSetRequestHeader as typeof prototype.setRequestHeader;
+    prototype.send = observedSend as typeof prototype.send;
+  } catch (error) {
+    restoreXhrPrototype(prototype, observedOpen, observedSetRequestHeader, observedSend, {
+      open: originalOpen,
+      setRequestHeader: originalSetRequestHeader,
+      send: originalSend,
+    });
+    throw error;
+  }
 
   return () => {
     for (const state of activeStates) {
       cleanupListeners(state, activeStates);
     }
 
-    if (prototype.open === observedOpen) {
-      prototype.open = originalOpen;
-    }
-    if (prototype.setRequestHeader === observedSetRequestHeader) {
-      prototype.setRequestHeader = originalSetRequestHeader;
-    }
-    if (prototype.send === observedSend) {
-      prototype.send = originalSend;
-    }
+    restoreXhrPrototype(prototype, observedOpen, observedSetRequestHeader, observedSend, {
+      open: originalOpen,
+      setRequestHeader: originalSetRequestHeader,
+      send: originalSend,
+    });
   };
+}
+
+function restoreXhrPrototype(
+  prototype: XMLHttpRequest,
+  observedOpen: (...args: unknown[]) => void,
+  observedSetRequestHeader: (name: string, value: string) => void,
+  observedSend: (body?: Document | XMLHttpRequestBodyInit | null) => void,
+  original: Pick<XMLHttpRequest, "open" | "send" | "setRequestHeader">
+): void {
+  try {
+    if (prototype.open === observedOpen) {
+      prototype.open = original.open;
+    }
+  } catch {}
+
+  try {
+    if (prototype.setRequestHeader === observedSetRequestHeader) {
+      prototype.setRequestHeader = original.setRequestHeader;
+    }
+  } catch {}
+
+  try {
+    if (prototype.send === observedSend) {
+      prototype.send = original.send;
+    }
+  } catch {}
 }
 
 function prepareXhrCapture(

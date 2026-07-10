@@ -286,6 +286,105 @@
     }
   };
 
+  // networkReplay/utils.ts
+  function createRequestId() {
+    try {
+      if (globalThis.crypto?.randomUUID) {
+        return globalThis.crypto.randomUUID();
+      }
+    } catch {
+      return createFallbackRequestId();
+    }
+    return createFallbackRequestId();
+  }
+  function createFallbackRequestId() {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  }
+  function getCurrentUrl() {
+    try {
+      return window.location.href;
+    } catch {
+      return "";
+    }
+  }
+  function toAbsoluteUrl(url) {
+    try {
+      return new URL(url, getCurrentUrl() || void 0).href;
+    } catch {
+      return url;
+    }
+  }
+  function getFetchInputUrl(input) {
+    if (typeof input === "string") {
+      return input;
+    }
+    if (typeof URL !== "undefined" && input instanceof URL) {
+      return input.href;
+    }
+    return "url" in input ? input.url : input.href;
+  }
+  function getErrorDetails(error) {
+    if (error instanceof Error) {
+      return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      };
+    }
+    return {
+      message: String(error)
+    };
+  }
+  function isAbortError(error) {
+    return error instanceof Error && error.name === "AbortError";
+  }
+  function getDurationMs(startedAt, completedAt) {
+    return Math.max(0, completedAt - startedAt);
+  }
+  function getUtf8ByteSize(value) {
+    if (typeof TextEncoder !== "undefined") {
+      try {
+        return new TextEncoder().encode(value).byteLength;
+      } catch {
+        return getUtf8ByteSizeWithoutEncoder(value);
+      }
+    }
+    return getUtf8ByteSizeWithoutEncoder(value);
+  }
+  function getJsonByteSize(value) {
+    try {
+      const serialized = JSON.stringify(value);
+      if (serialized === void 0) {
+        return 0;
+      }
+      return getUtf8ByteSize(serialized);
+    } catch {
+      return Number.POSITIVE_INFINITY;
+    }
+  }
+  function getUtf8ByteSizeWithoutEncoder(value) {
+    let sizeBytes = 0;
+    for (let index = 0; index < value.length; index += 1) {
+      const codeUnit = value.charCodeAt(index);
+      if (codeUnit <= 127) {
+        sizeBytes += 1;
+      } else if (codeUnit <= 2047) {
+        sizeBytes += 2;
+      } else if (codeUnit >= 55296 && codeUnit <= 56319) {
+        const nextCodeUnit = value.charCodeAt(index + 1);
+        if (nextCodeUnit >= 56320 && nextCodeUnit <= 57343) {
+          sizeBytes += 4;
+          index += 1;
+        } else {
+          sizeBytes += 3;
+        }
+      } else {
+        sizeBytes += 3;
+      }
+    }
+    return sizeBytes;
+  }
+
   // networkReplay/bodyCapture.ts
   function createUnavailableBody(kind, reason, contentType) {
     return {
@@ -408,6 +507,10 @@
     return timedResult.value ?? createUnavailableBody("unreadable", "Body read failed", contentType);
   }
   async function consumeTextStream(reader, contentType, maxBodySizeBytes) {
+    if (typeof TextDecoder === "undefined") {
+      void reader.cancel().catch(() => void 0);
+      return createUnavailableBody("unreadable", "Text decoding is not supported by this browser", contentType);
+    }
     const decoder = new TextDecoder();
     let sizeBytes = 0;
     let value = "";
@@ -461,7 +564,7 @@
         sizeBytes: blob.size
       };
     }
-    const timedResult = await resolveWithTimeout(blob.text(), limits.bodyReadTimeoutMs);
+    const timedResult = await resolveWithTimeout(readBlobText(blob), limits.bodyReadTimeoutMs);
     if (timedResult.timedOut) {
       return createUnavailableBody("timeout", "Blob read timed out", resolvedContentType);
     }
@@ -505,7 +608,7 @@
     };
   }
   function captureTextValue(value, kind, contentType, limits) {
-    const sizeBytes = new TextEncoder().encode(value).byteLength;
+    const sizeBytes = getUtf8ByteSize(value);
     if (sizeBytes === 0) {
       return {
         kind: "empty",
@@ -568,6 +671,27 @@
     }
     return result;
   }
+  function readBlobText(blob) {
+    if (typeof blob.text === "function") {
+      return blob.text();
+    }
+    if (typeof FileReader === "undefined") {
+      return Promise.reject(new Error("Blob text reading is not supported by this browser"));
+    }
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+          return;
+        }
+        reject(new Error("Blob text reading returned an unsupported result"));
+      });
+      reader.addEventListener("error", () => reject(reader.error || new Error("Blob text reading failed")));
+      reader.addEventListener("abort", () => reject(new Error("Blob text reading was aborted")));
+      reader.readAsText(blob);
+    });
+  }
   function getErrorMessage(error) {
     return error instanceof Error ? error.message : error ? String(error) : "Unknown body capture error";
   }
@@ -607,89 +731,6 @@
       appendCapturedHeader(headers, line.slice(0, separatorIndex).trim(), line.slice(separatorIndex + 1).trim());
     }
     return headers;
-  }
-
-  // networkReplay/utils.ts
-  function createRequestId() {
-    try {
-      if (globalThis.crypto?.randomUUID) {
-        return globalThis.crypto.randomUUID();
-      }
-    } catch {
-      return createFallbackRequestId();
-    }
-    return createFallbackRequestId();
-  }
-  function createFallbackRequestId() {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
-  }
-  function getCurrentUrl() {
-    try {
-      return window.location.href;
-    } catch {
-      return "";
-    }
-  }
-  function toAbsoluteUrl(url) {
-    try {
-      return new URL(url, getCurrentUrl() || void 0).href;
-    } catch {
-      return url;
-    }
-  }
-  function getFetchInputUrl(input) {
-    if (typeof input === "string") {
-      return input;
-    }
-    if (typeof URL !== "undefined" && input instanceof URL) {
-      return input.href;
-    }
-    return "url" in input ? input.url : input.href;
-  }
-  function getErrorDetails(error) {
-    if (error instanceof Error) {
-      return {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      };
-    }
-    return {
-      message: String(error)
-    };
-  }
-  function isAbortError(error) {
-    return error instanceof Error && error.name === "AbortError";
-  }
-  function getDurationMs(startedAt, completedAt) {
-    return Math.max(0, completedAt - startedAt);
-  }
-  function getJsonByteSize(value) {
-    try {
-      const serialized = JSON.stringify(value);
-      if (serialized === void 0) {
-        return 0;
-      }
-      if (typeof TextEncoder !== "undefined") {
-        return new TextEncoder().encode(serialized).byteLength;
-      }
-      let sizeBytes = 0;
-      for (const character of serialized) {
-        const codePoint = character.codePointAt(0) ?? 0;
-        if (codePoint <= 127) {
-          sizeBytes += 1;
-        } else if (codePoint <= 2047) {
-          sizeBytes += 2;
-        } else if (codePoint <= 65535) {
-          sizeBytes += 3;
-        } else {
-          sizeBytes += 4;
-        }
-      }
-      return sizeBytes;
-    } catch {
-      return Number.POSITIVE_INFINITY;
-    }
   }
 
   // networkReplay/ignoredTrackerRequests.ts
@@ -1392,23 +1433,48 @@
         throw error;
       }
     };
-    prototype.open = observedOpen;
-    prototype.setRequestHeader = observedSetRequestHeader;
-    prototype.send = observedSend;
+    try {
+      prototype.open = observedOpen;
+      prototype.setRequestHeader = observedSetRequestHeader;
+      prototype.send = observedSend;
+    } catch (error) {
+      restoreXhrPrototype(prototype, observedOpen, observedSetRequestHeader, observedSend, {
+        open: originalOpen,
+        setRequestHeader: originalSetRequestHeader,
+        send: originalSend
+      });
+      throw error;
+    }
     return () => {
       for (const state of activeStates) {
         cleanupListeners(state, activeStates);
       }
-      if (prototype.open === observedOpen) {
-        prototype.open = originalOpen;
-      }
-      if (prototype.setRequestHeader === observedSetRequestHeader) {
-        prototype.setRequestHeader = originalSetRequestHeader;
-      }
-      if (prototype.send === observedSend) {
-        prototype.send = originalSend;
-      }
+      restoreXhrPrototype(prototype, observedOpen, observedSetRequestHeader, observedSend, {
+        open: originalOpen,
+        setRequestHeader: originalSetRequestHeader,
+        send: originalSend
+      });
     };
+  }
+  function restoreXhrPrototype(prototype, observedOpen, observedSetRequestHeader, observedSend, original) {
+    try {
+      if (prototype.open === observedOpen) {
+        prototype.open = original.open;
+      }
+    } catch {
+    }
+    try {
+      if (prototype.setRequestHeader === observedSetRequestHeader) {
+        prototype.setRequestHeader = original.setRequestHeader;
+      }
+    } catch {
+    }
+    try {
+      if (prototype.send === observedSend) {
+        prototype.send = original.send;
+      }
+    } catch {
+    }
   }
   function prepareXhrCapture(state, body, config, limits, pendingRequests, activeStates, performanceObserver) {
     state.startedAt = Date.now();
