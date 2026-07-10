@@ -10,6 +10,7 @@ import {
 import { captureHeaders } from "./headerCapture.js";
 import { isIgnoredTrackerRequest } from "./ignoredTrackerRequests.js";
 import { PendingRequests } from "./pendingRequests.js";
+import type { NetworkPerformanceObserver } from "./performanceObserver.js";
 import type { CapturedBody, CapturedNetworkRequestDraft, NetworkOutcome } from "./types.js";
 import {
   createRequestId,
@@ -25,6 +26,7 @@ interface FetchObserverOptions {
   analyticsHost: string;
   config: NetworkReplayConfig;
   pendingRequests: PendingRequests;
+  performanceObserver?: NetworkPerformanceObserver;
 }
 
 interface FetchCaptureContext {
@@ -32,7 +34,12 @@ interface FetchCaptureContext {
   startedAt: number;
 }
 
-export function observeFetch({ analyticsHost, config, pendingRequests }: FetchObserverOptions): () => void {
+export function observeFetch({
+  analyticsHost,
+  config,
+  pendingRequests,
+  performanceObserver,
+}: FetchObserverOptions): () => void {
   if (typeof window.fetch !== "function") {
     return () => undefined;
   }
@@ -54,7 +61,15 @@ export function observeFetch({ analyticsHost, config, pendingRequests }: FetchOb
 
     let captureContext: FetchCaptureContext | undefined;
     try {
-      captureContext = registerFetchRequest(input, init, requestUrl, config, bodyCaptureLimits, pendingRequests);
+      captureContext = registerFetchRequest(
+        input,
+        init,
+        requestUrl,
+        config,
+        bodyCaptureLimits,
+        pendingRequests,
+        performanceObserver
+      );
     } catch {
       captureContext = undefined;
     }
@@ -64,7 +79,7 @@ export function observeFetch({ analyticsHost, config, pendingRequests }: FetchOb
       fetchPromise = Reflect.apply(originalFetch, this, [input, init]);
     } catch (error) {
       if (captureContext) {
-        completeFetchError(captureContext, error, pendingRequests);
+        completeFetchError(captureContext, error, pendingRequests, performanceObserver);
       }
       throw error;
     }
@@ -76,14 +91,21 @@ export function observeFetch({ analyticsHost, config, pendingRequests }: FetchOb
     return fetchPromise.then(
       response => {
         try {
-          completeFetchResponse(captureContext, response, config, bodyCaptureLimits, pendingRequests);
+          completeFetchResponse(
+            captureContext,
+            response,
+            config,
+            bodyCaptureLimits,
+            pendingRequests,
+            performanceObserver
+          );
         } catch {
-          completeFetchResponseWithoutBody(captureContext, response, config, pendingRequests);
+          completeFetchResponseWithoutBody(captureContext, response, config, pendingRequests, performanceObserver);
         }
         return response;
       },
       error => {
-        completeFetchError(captureContext, error, pendingRequests);
+        completeFetchError(captureContext, error, pendingRequests, performanceObserver);
         throw error;
       }
     );
@@ -104,7 +126,8 @@ function registerFetchRequest(
   requestUrl: string,
   config: NetworkReplayConfig,
   limits: BodyCaptureLimits,
-  pendingRequests: PendingRequests
+  pendingRequests: PendingRequests,
+  performanceObserver?: NetworkPerformanceObserver
 ): FetchCaptureContext {
   const requestId = createRequestId();
   const startedAt = Date.now();
@@ -129,6 +152,7 @@ function registerFetchRequest(
   };
 
   pendingRequests.register(request, requestBody);
+  performanceObserver?.registerRequest(requestId, requestUrl, "fetch", startedAt);
   return { requestId, startedAt };
 }
 
@@ -137,10 +161,12 @@ function completeFetchResponse(
   response: Response,
   config: NetworkReplayConfig,
   limits: BodyCaptureLimits,
-  pendingRequests: PendingRequests
+  pendingRequests: PendingRequests,
+  performanceObserver?: NetworkPerformanceObserver
 ): void {
   const completedAt = Date.now();
   const responseBody = config.captureResponseBody ? captureResponseBody(response.clone(), limits) : undefined;
+  const performanceTask = performanceObserver?.completeRequest(context.requestId, completedAt, response.url);
 
   pendingRequests.complete(
     context.requestId,
@@ -152,7 +178,8 @@ function completeFetchResponse(
       status: response.status,
       statusText: response.statusText,
     },
-    responseBody
+    responseBody,
+    performanceTask
   );
 }
 
@@ -160,12 +187,14 @@ function completeFetchResponseWithoutBody(
   context: FetchCaptureContext,
   response: Response,
   config: NetworkReplayConfig,
-  pendingRequests: PendingRequests
+  pendingRequests: PendingRequests,
+  performanceObserver?: NetworkPerformanceObserver
 ): void {
   const completedAt = Date.now();
   const responseBody = config.captureResponseBody
     ? Promise.resolve(createUnavailableBody("unreadable", "Response body could not be cloned"))
     : undefined;
+  const performanceTask = performanceObserver?.completeRequest(context.requestId, completedAt, response.url);
 
   pendingRequests.complete(
     context.requestId,
@@ -177,19 +206,31 @@ function completeFetchResponseWithoutBody(
       status: response.status,
       statusText: response.statusText,
     },
-    responseBody
+    responseBody,
+    performanceTask
   );
 }
 
-function completeFetchError(context: FetchCaptureContext, error: unknown, pendingRequests: PendingRequests): void {
+function completeFetchError(
+  context: FetchCaptureContext,
+  error: unknown,
+  pendingRequests: PendingRequests,
+  performanceObserver?: NetworkPerformanceObserver
+): void {
   const completedAt = Date.now();
-  pendingRequests.complete(context.requestId, {
-    completedAt,
-    durationMs: getDurationMs(context.startedAt, completedAt),
-    error: getErrorDetails(error),
-    outcome: isAbortError(error) ? "aborted" : "network_error",
-    responseHeaders: {},
-  });
+  const performanceTask = performanceObserver?.completeRequest(context.requestId, completedAt);
+  pendingRequests.complete(
+    context.requestId,
+    {
+      completedAt,
+      durationMs: getDurationMs(context.startedAt, completedAt),
+      error: getErrorDetails(error),
+      outcome: isAbortError(error) ? "aborted" : "network_error",
+      responseHeaders: {},
+    },
+    undefined,
+    performanceTask
+  );
 }
 
 function createCapturedRequest(input: RequestInfo | URL, init?: RequestInit): Request | undefined {

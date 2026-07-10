@@ -126,15 +126,13 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
           {
             id: "networkReplay",
             label: t("Network Replay (POC)"),
-            description: t(
-              "Capture raw request and response headers and bodies inside Session Replay. DEV environments only."
-            ),
+            description: t("Capture raw request and response headers and bodies inside Session Replay."),
             value: toggleStates.networkReplay,
             key: "networkReplay",
             enabledMessage: t("Network replay enabled"),
             disabledMessage: t("Network replay disabled"),
             disabled: sessionReplayDisabled || !toggleStates.sessionReplay,
-            badge: <Badge variant="warning">DEV</Badge>,
+            badge: <Badge variant="warning">RAW</Badge>,
           } as ToggleConfig,
         ]
       : []),

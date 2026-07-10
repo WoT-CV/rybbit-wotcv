@@ -3,6 +3,8 @@ import type {
   CapturedBody,
   CapturedNetworkRequest,
   CapturedNetworkRequestDraft,
+  CapturedNetworkSizes,
+  CapturedNetworkTiming,
   NetworkRequestEmitter,
 } from "./types.js";
 import { getDurationMs } from "./utils.js";
@@ -11,6 +13,7 @@ interface PendingRequestState {
   request: CapturedNetworkRequestDraft;
   requestBodyTask?: Promise<void>;
   responseBodyTask?: Promise<void>;
+  completionTask?: Promise<void>;
   networkCompleted: boolean;
   finishScheduled: boolean;
   emitted: boolean;
@@ -42,7 +45,8 @@ export class PendingRequests {
       CapturedNetworkRequest,
       "completedAt" | "durationMs" | "error" | "outcome" | "responseHeaders" | "status" | "statusText"
     >,
-    responseBody?: Promise<CapturedBody>
+    responseBody?: Promise<CapturedBody>,
+    completionTask?: Promise<void>
   ): void {
     const state = this.requests.get(requestId);
     if (!state || state.emitted || state.networkCompleted) {
@@ -56,7 +60,22 @@ export class PendingRequests {
       state.responseBodyTask = this.attachBodyTask(state, "responseBody", responseBody);
     }
 
+    if (completionTask) {
+      state.completionTask = completionTask.catch(() => undefined);
+    }
+
     this.scheduleCompletedEmission(state);
+  }
+
+  addPerformance(requestId: string, timing: CapturedNetworkTiming, sizes: CapturedNetworkSizes | undefined): void {
+    const state = this.requests.get(requestId);
+    if (!state || state.emitted) {
+      return;
+    }
+
+    state.request.timing = timing;
+    state.request.sizes = sizes;
+    state.request.performanceEntryFound = true;
   }
 
   finalizePendingOnUnload(): void {
@@ -123,13 +142,13 @@ export class PendingRequests {
     }
 
     state.finishScheduled = true;
-    const bodyTasks = [state.requestBodyTask, state.responseBodyTask].filter(
+    const completionTasks = [state.requestBodyTask, state.responseBodyTask, state.completionTask].filter(
       (task): task is Promise<void> => task !== undefined
     );
 
-    void Promise.all(bodyTasks).then(() => {
+    void Promise.all(completionTasks).then(() => {
       if (!state.emitted) {
-        if (bodyTasks.length > 0) {
+        if (state.requestBodyTask || state.responseBodyTask) {
           state.request.bodyCaptureCompletedAt = Date.now();
         }
         this.emitState(state);

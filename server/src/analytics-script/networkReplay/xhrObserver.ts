@@ -4,6 +4,7 @@ import { captureBodyValue, captureXhrResponseBody, type BodyCaptureLimits } from
 import { appendCapturedHeader, getCapturedHeader, parseXhrResponseHeaders } from "./headerCapture.js";
 import { isIgnoredTrackerRequest } from "./ignoredTrackerRequests.js";
 import { PendingRequests } from "./pendingRequests.js";
+import type { NetworkPerformanceObserver } from "./performanceObserver.js";
 import type { CapturedNetworkError, CapturedNetworkRequestDraft, NetworkOutcome } from "./types.js";
 import { createRequestId, getCurrentUrl, getDurationMs, getErrorDetails, toAbsoluteUrl } from "./utils.js";
 
@@ -11,6 +12,7 @@ interface XhrObserverOptions {
   analyticsHost: string;
   config: NetworkReplayConfig;
   pendingRequests: PendingRequests;
+  performanceObserver?: NetworkPerformanceObserver;
 }
 
 interface XhrListeners {
@@ -35,7 +37,12 @@ interface XhrRequestState {
   listeners?: XhrListeners;
 }
 
-export function observeXhr({ analyticsHost, config, pendingRequests }: XhrObserverOptions): () => void {
+export function observeXhr({
+  analyticsHost,
+  config,
+  pendingRequests,
+  performanceObserver,
+}: XhrObserverOptions): () => void {
   if (typeof XMLHttpRequest === "undefined") {
     return () => undefined;
   }
@@ -55,7 +62,7 @@ export function observeXhr({ analyticsHost, config, pendingRequests }: XhrObserv
       const previousState = states.get(this);
       if (previousState) {
         cleanupListeners(previousState, activeStates);
-        finalizeReopenedRequest(previousState, pendingRequests);
+        finalizeReopenedRequest(previousState, pendingRequests, performanceObserver);
       }
 
       const method = String(args[0] || "GET").toUpperCase();
@@ -91,7 +98,7 @@ export function observeXhr({ analyticsHost, config, pendingRequests }: XhrObserv
     }
 
     try {
-      prepareXhrCapture(state, body, config, limits, pendingRequests, activeStates);
+      prepareXhrCapture(state, body, config, limits, pendingRequests, activeStates, performanceObserver);
     } catch {
       cleanupListeners(state, activeStates);
       Reflect.apply(originalSend, this, [body]);
@@ -103,7 +110,7 @@ export function observeXhr({ analyticsHost, config, pendingRequests }: XhrObserv
     } catch (error) {
       state.outcome = "network_error";
       state.error = getErrorDetails(error);
-      finalizeXhrRequest(state, config, limits, pendingRequests, activeStates);
+      finalizeXhrRequest(state, config, limits, pendingRequests, activeStates, performanceObserver);
       throw error;
     }
   };
@@ -135,7 +142,8 @@ function prepareXhrCapture(
   config: NetworkReplayConfig,
   limits: BodyCaptureLimits,
   pendingRequests: PendingRequests,
-  activeStates: Set<XhrRequestState>
+  activeStates: Set<XhrRequestState>,
+  performanceObserver?: NetworkPerformanceObserver
 ): void {
   state.startedAt = Date.now();
   const contentType = getCapturedHeader(state.requestHeaders, "content-type");
@@ -162,7 +170,7 @@ function prepareXhrCapture(
       state.outcome = "network_error";
       state.error = { name: "NetworkError", message: "XMLHttpRequest failed" };
     },
-    loadend: () => finalizeXhrRequest(state, config, limits, pendingRequests, activeStates),
+    loadend: () => finalizeXhrRequest(state, config, limits, pendingRequests, activeStates, performanceObserver),
     timeout: () => {
       state.outcome = "timeout";
       state.error = { name: "TimeoutError", message: "XMLHttpRequest timed out" };
@@ -176,6 +184,7 @@ function prepareXhrCapture(
   state.xhr.addEventListener("timeout", listeners.timeout);
   activeStates.add(state);
   pendingRequests.register(request, requestBody);
+  performanceObserver?.registerRequest(state.requestId, state.url, "xmlhttprequest", state.startedAt);
   state.registered = true;
 }
 
@@ -184,7 +193,8 @@ function finalizeXhrRequest(
   config: NetworkReplayConfig,
   limits: BodyCaptureLimits,
   pendingRequests: PendingRequests,
-  activeStates: Set<XhrRequestState>
+  activeStates: Set<XhrRequestState>,
+  performanceObserver?: NetworkPerformanceObserver
 ): void {
   if (state.finalized || !state.registered || state.startedAt === undefined) {
     return;
@@ -200,6 +210,11 @@ function finalizeXhrRequest(
   const responseBody = config.captureResponseBody
     ? captureXhrResponseBody(state.xhr, responseContentType, limits)
     : undefined;
+  const performanceTask = performanceObserver?.completeRequest(
+    state.requestId,
+    completedAt,
+    getXhrResponseUrl(state.xhr)
+  );
 
   pendingRequests.complete(
     state.requestId,
@@ -212,24 +227,35 @@ function finalizeXhrRequest(
       status,
       statusText: getXhrStatusText(state.xhr),
     },
-    responseBody
+    responseBody,
+    performanceTask
   );
 }
 
-function finalizeReopenedRequest(state: XhrRequestState, pendingRequests: PendingRequests): void {
+function finalizeReopenedRequest(
+  state: XhrRequestState,
+  pendingRequests: PendingRequests,
+  performanceObserver?: NetworkPerformanceObserver
+): void {
   if (!state.registered || state.finalized || state.startedAt === undefined) {
     return;
   }
 
   const completedAt = Date.now();
   state.finalized = true;
-  pendingRequests.complete(state.requestId, {
-    completedAt,
-    durationMs: getDurationMs(state.startedAt, completedAt),
-    error: { name: "AbortError", message: "XMLHttpRequest was reopened before completion" },
-    outcome: "aborted",
-    responseHeaders: {},
-  });
+  const performanceTask = performanceObserver?.completeRequest(state.requestId, completedAt);
+  pendingRequests.complete(
+    state.requestId,
+    {
+      completedAt,
+      durationMs: getDurationMs(state.startedAt, completedAt),
+      error: { name: "AbortError", message: "XMLHttpRequest was reopened before completion" },
+      outcome: "aborted",
+      responseHeaders: {},
+    },
+    undefined,
+    performanceTask
+  );
 }
 
 function cleanupListeners(state: XhrRequestState, activeStates: Set<XhrRequestState>): void {
@@ -265,6 +291,14 @@ function getXhrStatus(xhr: XMLHttpRequest): number | undefined {
 function getXhrStatusText(xhr: XMLHttpRequest): string | undefined {
   try {
     return xhr.statusText || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getXhrResponseUrl(xhr: XMLHttpRequest): string | undefined {
+  try {
+    return xhr.responseURL || undefined;
   } catch {
     return undefined;
   }
