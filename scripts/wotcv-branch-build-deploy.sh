@@ -31,17 +31,28 @@ read_state() {
 }
 
 wait_for_health() {
+  local expected_git_sha="${1:-}"
+  local expected_image_tag="${2:-}"
   local attempts=60
   local response
+  local last_response=""
 
   for ((attempt = 1; attempt <= attempts; attempt++)); do
     if response="$(curl --fail --silent --show-error --max-time 5 "${HEALTHCHECK_URL}" 2>/dev/null)"; then
-      printf '%s\n' "${response}"
-      return 0
+      last_response="${response}"
+      if [[ -z "${expected_git_sha}" || "${response}" == *"\"gitSha\":\"${expected_git_sha}\""* ]]; then
+        if [[ -z "${expected_image_tag}" || "${response}" == *"\"imageTag\":\"${expected_image_tag}\""* ]]; then
+          printf '%s\n' "${response}"
+          return 0
+        fi
+      fi
     fi
     sleep 2
   done
 
+  if [[ -n "${last_response}" ]]; then
+    printf '%s\n' "${last_response}"
+  fi
   return 1
 }
 
@@ -98,7 +109,7 @@ rollback() {
   CLIENT_IMAGE_DIGEST="${previous_client_digest:-unknown}" \
     "${COMPOSE[@]}" up -d --force-recreate backend client
 
-  if ! rollback_response="$(wait_for_health)"; then
+  if ! rollback_response="$(wait_for_health "${previous_git_sha}" "${previous_tag}")"; then
     echo "Rollback health check failed; manual intervention is required." >&2
     return 1
   fi
@@ -147,7 +158,7 @@ export BACKEND_IMAGE_DIGEST CLIENT_IMAGE_DIGEST
 echo "Starting backend and client..."
 "${COMPOSE[@]}" up -d --force-recreate backend client
 
-if ! HEALTH_RESPONSE="$(wait_for_health)"; then
+if ! HEALTH_RESPONSE="$(wait_for_health "${WOTCV_GIT_SHA}" "${IMAGE_TAG}")"; then
   echo "Health check failed. Recent logs:" >&2
   "${COMPOSE[@]}" logs --since=10m backend client >&2 || true
   rollback "${PREVIOUS_TAG}" "${PREVIOUS_GIT_SHA}" "${PREVIOUS_BUILD_TIME}" "${PREVIOUS_BACKEND_DIGEST}" "${PREVIOUS_CLIENT_DIGEST}" || true
