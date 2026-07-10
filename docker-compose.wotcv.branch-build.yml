@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile
+      args:
+        WOTCV_GIT_SHA: ${WOTCV_GIT_SHA:?WOTCV_GIT_SHA is required}
+        WOTCV_IMAGE_TAG: ${IMAGE_TAG:?IMAGE_TAG is required}
+        WOTCV_BUILD_TIME: ${WOTCV_BUILD_TIME:?WOTCV_BUILD_TIME is required}
+    environment:
+      WOTCV_GIT_SHA: ${WOTCV_GIT_SHA}
+      WOTCV_BUILD_TIME: ${WOTCV_BUILD_TIME}
+
+  client:
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: ${BASE_URL}
+        NEXT_PUBLIC_DISABLE_SIGNUP: ${DISABLE_SIGNUP}
+        NEXT_PUBLIC_LITE_DASHBOARD: ${LITE_DASHBOARD}
+        WOTCV_GIT_SHA: ${WOTCV_GIT_SHA:?WOTCV_GIT_SHA is required}
+        WOTCV_IMAGE_TAG: ${IMAGE_TAG:?IMAGE_TAG is required}
+        WOTCV_BUILD_TIME: ${WOTCV_BUILD_TIME:?WOTCV_BUILD_TIME is required}
+    environment:
+      WOTCV_GIT_SHA: ${WOTCV_GIT_SHA}
+      WOTCV_BUILD_TIME: ${WOTCV_BUILD_TIME}

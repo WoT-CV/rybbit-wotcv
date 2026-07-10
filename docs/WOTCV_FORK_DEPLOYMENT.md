@@ -1,36 +1,41 @@
 # Wdrożenie forka Rybbit WoT-CV
 
-Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na obrazy forka WoT-CV bez zmiany projektu Docker Compose, nazw volume, domen ani reverse proxy.
+Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-CV bez zmiany nazw volume, domen ani reverse proxy.
 
-## Wymagania
+## Założenia
 
-- czyste drzewo robocze Git,
-- Docker z `docker compose`,
-- `curl`,
-- dostęp do pakietów `ghcr.io/wot-cv`,
-- repozytoryjne `WOTCV_BASE_URL` ustawione dla workflow budującego klienta,
-- tag obrazu w formacie `sha-<commit>`.
-
-Nie używamy `latest`. Każde wdrożenie i rollback wskazuje niezmienny tag SHA.
+- serwer buduje i uruchamia aplikację z gałęzi `feat/wotcv`,
+- `master` pozostaje gałęzią synchronizowaną z oficjalnym Rybbit,
+- nie używamy `latest` jako identyfikatora wdrożenia,
+- każde uruchomienie aplikacji ma widoczny commit SHA w `/api/health`,
+- ręcznych migracji DB nie wykonujemy w ramach tych skryptów.
 
 ## Inwentaryzacja serwera
 
-W katalogu istniejącej instalacji wykonaj i zachowaj wynik:
+Na serwerze uruchom:
 
 ```bash
-pwd
-git status --short
-git remote -v
-git branch --show-current
-git rev-parse HEAD
-docker compose ls
-docker compose ps
-docker compose config --services
-docker compose config --volumes
-docker volume ls
+cd /ścieżka/do/rybbit
+bash scripts/wotcv-server-audit.sh
 ```
 
-Zapisz używany katalog, nazwę projektu Compose, nazwy volume, aktywny profil Caddy, pliki override i konfigurację reverse proxy.
+Skrypt tworzy katalog i archiwum `wotcv-server-audit-*.tar.gz`. Jest read-only i redaguje typowe sekrety, tokeny, hasła i klucze.
+
+Jeżeli potrzebne będą logi backend/client z ostatnich 30 minut:
+
+```bash
+WOTCV_AUDIT_INCLUDE_LOGS=1 bash scripts/wotcv-server-audit.sh
+```
+
+Najpierw wklej zawartość tych plików:
+
+- `10-git-status.txt`
+- `11-git-remotes.txt`
+- `12-git-branch.txt`
+- `13-git-head.txt`
+- `34-compose-ps.txt`
+- `35-compose-config.txt`
+- `60-health.txt`
 
 ## Backup przed przełączeniem
 
@@ -54,9 +59,18 @@ Backup Postgres:
 docker exec postgres pg_dumpall -U "${POSTGRES_USER:-frog}" > "$BACKUP_DIR/postgres-all.sql"
 ```
 
-Snapshot ClickHouse i Redis wykonaj zgodnie z mechanizmem backupowym instalacji. Nie uruchamiaj ręcznie skryptów migracyjnych podczas przełączania obrazów.
+Snapshot ClickHouse i Redis wykonaj zgodnie z mechanizmem backupowym instalacji.
 
-## Przełączenie remote
+## Remote i gałęzie
+
+Docelowy układ remote:
+
+```text
+origin   -> fork WoT-CV
+upstream -> oficjalne repozytorium Rybbit
+```
+
+Jeżeli obecny `origin` wskazuje oficjalny Rybbit:
 
 ```bash
 git branch "backup/pre-wotcv-fork-$(date +%F)"
@@ -64,66 +78,74 @@ git remote rename origin upstream
 git remote add origin https://github.com/WoT-CV/rybbit-wotcv.git
 git fetch origin --prune
 git fetch upstream --prune
-git switch master
-git branch --set-upstream-to=origin/master master
-git merge --ff-only origin/master
+```
+
+Jeżeli remote są już ustawione, wystarczy:
+
+```bash
 git remote -v
+git fetch origin --prune
+git fetch upstream --prune
 ```
 
-Docelowo `origin` wskazuje fork WoT-CV, a `upstream` oficjalne repozytorium Rybbit.
+## Build i wdrożenie z `feat/wotcv`
 
-## Logowanie do GHCR
-
-Jeżeli pakiety nie są publiczne:
+Używany zestaw Compose:
 
 ```bash
-echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-```
-
-Token potrzebuje wyłącznie uprawnienia do odczytu pakietów.
-
-## Walidacja konfiguracji
-
-```bash
-export IMAGE_TAG=sha-PEŁNY_COMMIT
-
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
-  config > /tmp/rybbit-wotcv-compose.yml
-
-grep -n "ghcr.io/wot-cv" /tmp/rybbit-wotcv-compose.yml
+  -f docker-compose.wotcv.branch-build.yml \
+  config > /tmp/rybbit-wotcv-branch-build-compose.yml
 ```
 
-Sprawdź, że obrazy backend/client wskazują `ghcr.io/wot-cv`, a volume, porty, domeny i pozostałe usługi są niezmienione.
+Wdrożenie:
 
-## Wdrożenie
+```bash
+bash scripts/wotcv-branch-build-deploy.sh
+```
+
+Skrypt:
+
+1. wymaga czystego working tree,
+2. pobiera `origin/feat/wotcv`,
+3. przełącza lokalną gałąź `feat/wotcv`,
+4. wykonuje wyłącznie fast-forward,
+5. buduje backend i client lokalnie na serwerze,
+6. taguje obrazy jako `sha-<commit>`,
+7. uruchamia `backend` i `client`,
+8. czeka na `/api/health`,
+9. sprawdza `gitSha` i `imageTag`,
+10. zapisuje stan do `.wotcv-deployment.env`,
+11. próbuje wrócić do poprzedniego lokalnego obrazu, jeżeli health check nie przejdzie.
+
+Parametry:
+
+```bash
+WOTCV_BRANCH=feat/wotcv \
+WOTCV_REMOTE=origin \
+WOTCV_HEALTHCHECK_URL=http://127.0.0.1:3001/api/health \
+bash scripts/wotcv-branch-build-deploy.sh
+```
+
+Jeżeli chcesz odświeżyć bazowe obrazy Dockera podczas builda:
+
+```bash
+WOTCV_BUILD_PULL=1 bash scripts/wotcv-branch-build-deploy.sh
+```
+
+## Alternatywny tryb obrazów GHCR
+
+Tryb GHCR nadal istnieje dla wdrożeń po gotowych obrazach:
 
 ```bash
 IMAGE_TAG=sha-PEŁNY_COMMIT ./scripts/wotcv-deploy.sh
 ```
 
-Skrypt:
+Workflow `.github/workflows/build-wotcv-images.yml` buduje obrazy z `master` oraz `feat/wotcv`. Ten tryb wymaga dostępu do `ghcr.io/wot-cv`.
 
-1. wymaga czystego repozytorium i tagu `sha-*`,
-2. waliduje wynik Compose,
-3. pobiera wyłącznie backend i klienta,
-4. zapisuje digesty obrazów,
-5. odtwarza kontenery aplikacji,
-6. czeka na `/api/health`,
-7. sprawdza zwrócony tag,
-8. zapisuje stan do ignorowanego `.wotcv-deployment.env`,
-9. przy błędzie próbuje wrócić do poprzedniego tagu.
-
-Adres health check można nadpisać:
-
-```bash
-WOTCV_HEALTHCHECK_URL=https://analytics.example.com/api/health \
-IMAGE_TAG=sha-PEŁNY_COMMIT \
-./scripts/wotcv-deploy.sh
-```
-
-## Weryfikacja
+## Weryfikacja po wdrożeniu
 
 ```bash
 curl -fsS http://127.0.0.1:3001/api/health | jq
@@ -131,25 +153,60 @@ curl -fsS http://127.0.0.1:3001/api/health | jq
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
+  -f docker-compose.wotcv.branch-build.yml \
   ps
 
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
+  -f docker-compose.wotcv.branch-build.yml \
   logs --since=10m backend client
 
 docker inspect backend --format '{{.Config.Image}} {{index .Config.Labels "org.opencontainers.image.revision"}}'
 docker inspect client --format '{{.Config.Image}} {{index .Config.Labels "org.opencontainers.image.revision"}}'
 ```
 
-Health endpoint zwraca wersję forka, SHA, tag, digest, czas budowania i czas wdrożenia.
+Health endpoint zwraca wersję forka, SHA, tag obrazu, identyfikator obrazu, czas budowania i czas wdrożenia.
 
 ## Rollback
 
-Automatyczny rollback jest wykonywany po nieudanym health checku, jeżeli `.wotcv-deployment.env` zawiera poprzedni tag. Ręczny rollback:
+Automatyczny rollback jest wykonywany po nieudanym health checku, jeżeli `.wotcv-deployment.env` zawiera poprzedni tag i lokalne obrazy nadal istnieją.
+
+Ręczny rollback do poprzedniego tagu obrazów GHCR:
 
 ```bash
 IMAGE_TAG=sha-POPRZEDNI_COMMIT ./scripts/wotcv-deploy.sh
 ```
 
-Po rollbacku ponownie sprawdź health, logi oraz dostępność dashboardu i skryptu trackera.
+Po rollbacku ponownie sprawdź health, logi, dashboard i dostępność skryptu trackera.
+
+## Synchronizacja `master` z upstream Rybbit
+
+Do aktualizacji `master` użyj:
+
+```bash
+bash scripts/wotcv-sync-upstream-master.sh
+```
+
+Skrypt:
+
+1. wymaga czystego working tree,
+2. dodaje remote `upstream`, jeżeli go brakuje,
+3. pobiera `origin` i `upstream`,
+4. przełącza `master`,
+5. fast-forwarduje `origin/master`,
+6. tworzy backup branch,
+7. robi merge `upstream/master` bez rebase,
+8. nie pushuje automatycznie.
+
+Push po udanej synchronizacji:
+
+```bash
+WOTCV_PUSH=1 bash scripts/wotcv-sync-upstream-master.sh
+```
+
+Jeżeli oficjalny Rybbit używa innej głównej gałęzi:
+
+```bash
+WOTCV_UPSTREAM_BRANCH=main bash scripts/wotcv-sync-upstream-master.sh
+```

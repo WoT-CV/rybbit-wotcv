@@ -2,7 +2,7 @@ name: Build WoT-CV Images
 
 on:
   push:
-    branches: [master]
+    branches: [master, feat/wotcv]
   workflow_dispatch:
 
 permissions:

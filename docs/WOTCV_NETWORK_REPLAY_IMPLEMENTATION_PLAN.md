@@ -1019,12 +1019,15 @@ Tagowanie:
 
 Nie wdrażać wyłącznie z ruchomego `latest`.
 
+Aktualna decyzja operacyjna: podstawowy tryb serwera buduje backend i client bezpośrednio z gałęzi `feat/wotcv` za pomocą `scripts/wotcv-branch-build-deploy.sh`. Obrazy GHCR pozostają alternatywnym trybem wdrożenia po gotowym tagu SHA.
+
 ### 9.7. Minimalizacja konfliktów compose
 
 Zamiast mocno modyfikować upstreamowy `docker-compose.yml`, dodajemy overlay:
 
 ```text
 docker-compose.wotcv.yml
+docker-compose.wotcv.branch-build.yml
 ```
 
 Przykładowo:
@@ -1038,12 +1041,13 @@ services:
     image: ghcr.io/wot-cv/rybbit-wotcv-client:${IMAGE_TAG}
 ```
 
-Wszystkie polecenia wdrożeniowe używają:
+Polecenia wdrożeniowe używają overlay forka, a przy buildzie z gałęzi również overlay build:
 
 ```bash
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
+  -f docker-compose.wotcv.branch-build.yml \
   ...
 ```
 
@@ -1051,12 +1055,13 @@ Dzięki temu upstream może dalej aktualizować główny compose, a nasze różn
 
 ### 9.8. Pierwsze wdrożenie
 
-Przed uruchomieniem:
+Przed uruchomieniem builda z gałęzi:
 
 ```bash
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
+  -f docker-compose.wotcv.branch-build.yml \
   config > /tmp/rybbit-wotcv-compose.yml
 ```
 
@@ -1071,15 +1076,7 @@ Zweryfikować:
 Uruchomienie:
 
 ```bash
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.wotcv.yml \
-  pull backend client
-
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.wotcv.yml \
-  up -d --force-recreate backend client
+bash scripts/wotcv-branch-build-deploy.sh
 ```
 
 Weryfikacja:
@@ -1088,6 +1085,7 @@ Weryfikacja:
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
+  -f docker-compose.wotcv.branch-build.yml \
   ps
 
 curl -fsS http://127.0.0.1:3001/api/health
@@ -1095,12 +1093,13 @@ curl -fsS http://127.0.0.1:3001/api/health
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
+  -f docker-compose.wotcv.branch-build.yml \
   logs --since=10m backend client
 ```
 
 ### 9.9. Rollback instalacji
 
-Rollback aplikacji ma polegać na zmianie `IMAGE_TAG` na poprzedni commit i ponownym uruchomieniu backend/client.
+Rollback aplikacji w trybie build z gałęzi korzysta z ostatniego lokalnego obrazu zapisanego w `.wotcv-deployment.env`. Alternatywny rollback obrazów GHCR polega na zmianie `IMAGE_TAG` na poprzedni commit i ponownym uruchomieniu backend/client.
 
 ```bash
 IMAGE_TAG=sha-POPRZEDNI_COMMIT docker compose \
@@ -1119,7 +1118,8 @@ Migracja `network_replay_config` musi być addytywna i zgodna wstecz, aby starsz
 
 Rekomendowany model:
 
-- `master` — stabilna gałąź integracyjna WoT-CV; zawiera upstream i nasze zmiany,
+- `master` — gałąź synchronizowana z upstream Rybbit i utrzymywana bez rebase,
+- `feat/wotcv` — gałąź, z której serwer buduje aktualny kod forka,
 - `feature/wotcv-network-*` — funkcjonalności network replay,
 - `chore/sync-upstream-YYYYMMDD` — każda aktualizacja z upstream.
 
@@ -1138,6 +1138,14 @@ git fetch upstream --prune
 ```
 
 ### 10.3. Aktualizacja upstream — procedura
+
+Do powtarzalnej aktualizacji `master` dodajemy skrypt:
+
+```bash
+bash scripts/wotcv-sync-upstream-master.sh
+```
+
+Skrypt wykonuje fetch `origin` i `upstream`, fast-forwarduje lokalny `master` do `origin/master`, tworzy backup branch i merguje `upstream/master` bez rebase. Push jest opcjonalny przez `WOTCV_PUSH=1`.
 
 ```bash
 git switch master
@@ -1284,9 +1292,12 @@ Dodać:
 
 ```text
 scripts/wotcv-deploy.sh
+scripts/wotcv-branch-build-deploy.sh
+scripts/wotcv-server-audit.sh
+scripts/wotcv-sync-upstream-master.sh
 ```
 
-Skrypt powinien:
+Skrypt `scripts/wotcv-deploy.sh` powinien:
 
 1. wymagać czystego working tree,
 2. odczytać oczekiwany `IMAGE_TAG`,
@@ -1297,6 +1308,12 @@ Skrypt powinien:
 7. czekać na health check,
 8. wyświetlić logi błędów,
 9. w razie niepowodzenia automatycznie albo instrukcyjnie wrócić do poprzedniego tagu.
+
+Skrypt `scripts/wotcv-branch-build-deploy.sh` powinien dodatkowo przełączać czyste repozytorium na `origin/feat/wotcv`, wykonywać wyłącznie fast-forward, budować backend/client lokalnie na serwerze i sprawdzać `/api/health` pod kątem `gitSha` oraz `imageTag`.
+
+Skrypt `scripts/wotcv-server-audit.sh` powinien zebrać redagowaną konfigurację Git, Docker Compose, kontenerów, volume, portów i health checka, aby przed migracją można było ocenić realny stan serwera.
+
+Skrypt `scripts/wotcv-sync-upstream-master.sh` powinien utrzymywać `master` łatwy do aktualizacji z oficjalnego Rybbit bez rebase i bez automatycznego pushowania.
 
 ---
 
