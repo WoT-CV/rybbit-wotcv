@@ -1,8 +1,12 @@
 import { create } from "zustand";
 
-interface ActivityPeriod {
-  start: number;
-  end: number;
+import { INACTIVITY_SKIP_THRESHOLD_MS, type ActivityPeriod } from "./player/utils/replayUtils";
+
+interface InactivitySkipNotice {
+  from: number;
+  to: number;
+  skippedMs: number;
+  createdAt: number;
 }
 
 export const useReplayStore = create<{
@@ -32,6 +36,15 @@ export const useReplayStore = create<{
 
   activityPeriods: ActivityPeriod[];
   setActivityPeriods: (periods: ActivityPeriod[]) => void;
+
+  skipInactivityEnabled: boolean;
+  setSkipInactivityEnabled: (enabled: boolean) => void;
+
+  inactivitySkipThresholdMs: number;
+  setInactivitySkipThresholdMs: (thresholdMs: number) => void;
+
+  inactivitySkipNotice: InactivitySkipNotice | null;
+  setInactivitySkipNotice: (notice: InactivitySkipNotice | null) => void;
 
   // Reset all player state when session changes
   resetPlayerState: () => void;
@@ -63,6 +76,15 @@ export const useReplayStore = create<{
   activityPeriods: [],
   setActivityPeriods: activityPeriods => set({ activityPeriods }),
 
+  skipInactivityEnabled: false,
+  setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
+
+  inactivitySkipThresholdMs: INACTIVITY_SKIP_THRESHOLD_MS,
+  setInactivitySkipThresholdMs: inactivitySkipThresholdMs => set({ inactivitySkipThresholdMs }),
+
+  inactivitySkipNotice: null,
+  setInactivitySkipNotice: inactivitySkipNotice => set({ inactivitySkipNotice }),
+
   // Reset all player state when session changes
   resetPlayerState: () =>
     set({
@@ -72,5 +94,6 @@ export const useReplayStore = create<{
       duration: 0,
       playbackSpeed: "1",
       activityPeriods: [],
+      inactivitySkipNotice: null,
     }),
 }));

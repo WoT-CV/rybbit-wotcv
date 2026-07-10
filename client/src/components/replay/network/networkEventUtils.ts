@@ -13,6 +13,9 @@ export function filterNetworkRequests(
     if (filters.method !== "all" && request.method !== filters.method) {
       return false;
     }
+    if (filters.host !== "all" && getRequestHost(request) !== filters.host) {
+      return false;
+    }
     if (filters.initiatorType !== "all" && request.initiatorType !== filters.initiatorType) {
       return false;
     }
@@ -25,6 +28,22 @@ export function filterNetworkRequests(
 
     return matchesStatusGroup(request, filters.statusGroup);
   });
+}
+
+export function getRequestHost(request: ParsedNetworkRequest): string {
+  if (!request.url) {
+    return "unknown";
+  }
+
+  try {
+    return new URL(request.url).hostname || "unknown";
+  } catch {
+    try {
+      return request.currentUrl ? new URL(request.url, request.currentUrl).hostname || "unknown" : "unknown";
+    } catch {
+      return "unknown";
+    }
+  }
 }
 
 export function getRequestDisplayUrl(request: ParsedNetworkRequest): string {

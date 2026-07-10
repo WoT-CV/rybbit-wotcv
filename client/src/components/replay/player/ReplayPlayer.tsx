@@ -2,15 +2,18 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import "rrweb-player/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
+
 import { useGetSessionReplayEvents } from "@/api/analytics/hooks/sessionReplay/useGetSessionReplayEvents";
 import { ThreeDotLoader } from "@/components/Loaders";
+
 import { useReplayStore } from "../replayStore";
 import { useActivityPeriods } from "./hooks/useActivityPeriods";
 import { useReplayKeyboardShortcuts } from "./hooks/useReplayKeyboardShortcuts";
+import { useSkipInactivity } from "./hooks/useSkipInactivity";
 import { ReplayPlayerControls } from "./ReplayPlayerControls";
 import { ReplayPlayerCore } from "./ReplayPlayerCore";
-import { SKIP_SECONDS } from "./utils/replayUtils";
 import { ReplayPlayerTopbar } from "./ReplayPlayerTopbar";
+import { SKIP_SECONDS } from "./utils/replayUtils";
 
 export function ReplayPlayer({ width, height, isDrawer }: { width: number; height: number; isDrawer?: boolean }) {
   const params = useParams();
@@ -48,6 +51,7 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
 
   // Calculate activity periods when player and data are ready
   useActivityPeriods({ data, player });
+  useSkipInactivity({ player });
 
   const handlePlayPause = useCallback(() => {
     if (!player) return;

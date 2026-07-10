@@ -1,10 +1,12 @@
+import { FastForward, Maximize2, Pause, Play } from "lucide-react";
+import { useExtracted } from "next-intl";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
+
 import { ActivitySlider } from "@/components/ui/activity-slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Maximize2, Pause, Play } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
-import { useShallow } from "zustand/react/shallow";
+
 import { ReplayDrawer } from "../../Sessions/ReplayDrawer";
 import { parseNetworkEvents } from "../network/parseNetworkEvents";
 import type { ReplayEventLike } from "../network/types";
@@ -26,21 +28,54 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   onSpeedChange,
   isDrawer,
 }: ReplayPlayerControlsProps) {
-  const { sessionId, player, isPlaying, currentTime, setCurrentTime, duration, playbackSpeed, activityPeriods } =
-    useReplayStore(
-      useShallow(s => ({
-        sessionId: s.sessionId,
-        player: s.player,
-        isPlaying: s.isPlaying,
-        currentTime: s.currentTime,
-        setCurrentTime: s.setCurrentTime,
-        duration: s.duration,
-        playbackSpeed: s.playbackSpeed,
-        activityPeriods: s.activityPeriods,
-      }))
-    );
+  const t = useExtracted();
+  const {
+    activityPeriods,
+    currentTime,
+    duration,
+    inactivitySkipNotice,
+    isPlaying,
+    playbackSpeed,
+    player,
+    sessionId,
+    setCurrentTime,
+    setInactivitySkipNotice,
+    setSkipInactivityEnabled,
+    skipInactivityEnabled,
+  } = useReplayStore(
+    useShallow(s => ({
+      activityPeriods: s.activityPeriods,
+      currentTime: s.currentTime,
+      duration: s.duration,
+      inactivitySkipNotice: s.inactivitySkipNotice,
+      isPlaying: s.isPlaying,
+      playbackSpeed: s.playbackSpeed,
+      player: s.player,
+      sessionId: s.sessionId,
+      setCurrentTime: s.setCurrentTime,
+      setInactivitySkipNotice: s.setInactivitySkipNotice,
+      setSkipInactivityEnabled: s.setSkipInactivityEnabled,
+      skipInactivityEnabled: s.skipInactivityEnabled,
+    }))
+  );
   const [replayDrawerOpen, setReplayDrawerOpen] = useState(false);
   const networkRequests = useMemo(() => parseNetworkEvents(events), [events]);
+  const inactivitySkipLabel = useMemo(() => {
+    if (!inactivitySkipNotice) return null;
+    return t("Skipped inactivity {duration}", { duration: formatTime(inactivitySkipNotice.skippedMs) });
+  }, [inactivitySkipNotice, t]);
+
+  useEffect(() => {
+    if (!inactivitySkipNotice) return;
+
+    const timeoutId = window.setTimeout(() => setInactivitySkipNotice(null), 2500);
+    return () => window.clearTimeout(timeoutId);
+  }, [inactivitySkipNotice, setInactivitySkipNotice]);
+
+  const handleSkipInactivityToggle = useCallback(() => {
+    setSkipInactivityEnabled(!skipInactivityEnabled);
+  }, [setSkipInactivityEnabled, skipInactivityEnabled]);
+
   const handleNetworkSeek = useCallback(
     (offset: number) => {
       if (!player) return;
@@ -77,6 +112,27 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
         </div>
         <div className="text-xs text-neutral-700 dark:text-neutral-300 w-20 text-center">
           {formatTime(currentTime)} / {formatTime(duration)}
+        </div>
+        <div className="flex min-w-0 items-center gap-1.5">
+          {inactivitySkipLabel && (
+            <span
+              className="hidden max-w-32 truncate text-[10px] tabular-nums text-amber-600 dark:text-amber-400 lg:inline"
+              title={inactivitySkipLabel}
+            >
+              {inactivitySkipLabel}
+            </span>
+          )}
+          <Button
+            type="button"
+            variant={skipInactivityEnabled ? "secondary" : "outline"}
+            size="xs"
+            aria-pressed={skipInactivityEnabled}
+            onClick={handleSkipInactivityToggle}
+            title={t("Skip inactivity")}
+          >
+            <FastForward className="h-3 w-3" aria-hidden="true" />
+            <span className="hidden xl:inline">{t("Skip inactivity")}</span>
+          </Button>
         </div>
 
         <Select value={playbackSpeed} onValueChange={onSpeedChange}>
