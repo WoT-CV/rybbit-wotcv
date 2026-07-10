@@ -11,6 +11,7 @@ import { useUpdateGoal } from "../../../../api/analytics/hooks/goals/useUpdateGo
 import { useAutocaptureValues } from "../../../../api/analytics/hooks/events/useAutocaptureValues";
 import { useMetric } from "../../../../api/analytics/hooks/useGetMetric";
 import { EventTypeIcon } from "../../../../components/EventIcons";
+import { EventTrackingNotice } from "../../../../components/EventTrackingNotice";
 import {
   AUTOCAPTURE_TARGET_TYPES,
   AutocaptureTargetType,
@@ -551,6 +552,7 @@ export default function GoalFormModal({
                       />
                     </FormControl>
                     <FormMessage />
+                    <EventTrackingNotice type="event" className="mt-1" />
                   </FormItem>
                 )}
               />
@@ -575,6 +577,7 @@ export default function GoalFormModal({
                       {autocaptureFieldMeta[goalType].help}{" "}
                       {t("Use * to match within a segment. Use ** to match anything.")}
                     </div>
+                    <EventTrackingNotice type={goalType} className="mt-1" />
                   </FormItem>
                 )}
               />
