@@ -54,8 +54,8 @@ if [[ ! -d "${REPO_DIR}/.git" ]]; then
   exit 1
 fi
 
-if [[ ! -x "${REPO_DIR}/scripts/wotcv-branch-build-deploy.sh" ]]; then
-  echo "Brakuje wykonywalnego skryptu: ${REPO_DIR}/scripts/wotcv-branch-build-deploy.sh" >&2
+if [[ ! -f "${REPO_DIR}/scripts/wotcv-branch-build-deploy.sh" ]]; then
+  echo "Brakuje skryptu: ${REPO_DIR}/scripts/wotcv-branch-build-deploy.sh" >&2
   exit 1
 fi
 
