@@ -27,7 +27,7 @@ import { Suspense } from "react";
 import { useGetSite } from "../../../../api/admin/hooks/useSites";
 import { Sidebar as SidebarComponents } from "../../../../components/sidebar/Sidebar";
 import { SiteSettings } from "../../../../components/SiteSettings/SiteSettings";
-import { DEMO_HOSTNAME, IS_CLOUD } from "../../../../lib/const";
+import { DEMO_HOSTNAME, IS_CLOUD, SHOW_EXTENDED_WEB_ANALYTICS } from "../../../../lib/const";
 import { getSiteRouteContext } from "../../../../lib/siteRoute";
 import { useEmbedPageOptions } from "../../utils";
 import { SiteSelector } from "./SiteSelector";
@@ -88,7 +88,7 @@ function SidebarContent() {
           href={getTabPath("globe")}
           icon={<Globe2 className="w-4 h-4" />}
         />
-        {IS_CLOUD && (
+        {SHOW_EXTENDED_WEB_ANALYTICS && (
           <SidebarComponents.Item
             label={t("Pages")}
             active={isActiveTab("pages")}
@@ -96,7 +96,7 @@ function SidebarContent() {
             icon={<File className="w-4 h-4" />}
           />
         )}
-        {IS_CLOUD && !isMobileSite && (
+        {SHOW_EXTENDED_WEB_ANALYTICS && !isMobileSite && (
           <SidebarComponents.Item
             label={t("Performance")}
             active={isActiveTab("performance")}
@@ -104,7 +104,7 @@ function SidebarContent() {
             icon={<Gauge className="w-4 h-4" />}
           />
         )}
-        {IS_CLOUD && (
+        {SHOW_EXTENDED_WEB_ANALYTICS && (
           <SidebarComponents.Item
             label={t("Bots")}
             active={isActiveTab("bots")}
