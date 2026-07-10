@@ -65,3 +65,34 @@ export function isAbortError(error: unknown): boolean {
 export function getDurationMs(startedAt: number, completedAt: number): number {
   return Math.max(0, completedAt - startedAt);
 }
+
+export function getJsonByteSize(value: unknown): number {
+  try {
+    const serialized = JSON.stringify(value);
+    if (serialized === undefined) {
+      return 0;
+    }
+
+    if (typeof TextEncoder !== "undefined") {
+      return new TextEncoder().encode(serialized).byteLength;
+    }
+
+    let sizeBytes = 0;
+    for (const character of serialized) {
+      const codePoint = character.codePointAt(0) ?? 0;
+      if (codePoint <= 0x7f) {
+        sizeBytes += 1;
+      } else if (codePoint <= 0x7ff) {
+        sizeBytes += 2;
+      } else if (codePoint <= 0xffff) {
+        sizeBytes += 3;
+      } else {
+        sizeBytes += 4;
+      }
+    }
+
+    return sizeBytes;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}

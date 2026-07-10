@@ -277,6 +277,1400 @@
     return resolvedConfig;
   }
 
+  // types.ts
+  var SessionReplayTransportError = class extends Error {
+    constructor(status, statusText) {
+      super(`Session replay transport failed with HTTP ${status}${statusText ? ` ${statusText}` : ""}`);
+      this.name = "SessionReplayTransportError";
+      this.status = status;
+    }
+  };
+
+  // networkReplay/bodyCapture.ts
+  function createUnavailableBody(kind, reason, contentType) {
+    return {
+      kind,
+      contentType: contentType || void 0,
+      reason
+    };
+  }
+  function captureRequestBody(request, limits) {
+    return captureFetchBody(request, limits);
+  }
+  function captureResponseBody(response, limits) {
+    return captureFetchBody(response, limits);
+  }
+  async function captureFetchBody(source, limits) {
+    const contentType = source.headers.get("content-type") || void 0;
+    const contentLength = parseContentLength(source.headers.get("content-length"));
+    if (contentLength !== void 0 && contentLength > limits.maxBodySizeBytes) {
+      return {
+        kind: "too-large",
+        contentType,
+        sizeBytes: contentLength,
+        truncated: true,
+        reason: "Body exceeds the configured size limit"
+      };
+    }
+    if (!source.body) {
+      return {
+        kind: "empty",
+        contentType,
+        sizeBytes: 0
+      };
+    }
+    if (!isTextContentType(contentType)) {
+      return {
+        kind: "binary-unavailable",
+        contentType,
+        sizeBytes: contentLength,
+        reason: "Binary body capture is not supported"
+      };
+    }
+    return readTextStream(source.body, contentType, limits);
+  }
+  async function captureBodyValue(body, contentType, limits) {
+    try {
+      if (body === void 0 || body === null) {
+        return {
+          kind: "empty",
+          contentType,
+          sizeBytes: 0
+        };
+      }
+      if (typeof body === "string") {
+        return captureTextValue(body, getTextBodyKind(contentType), contentType, limits);
+      }
+      if (typeof URLSearchParams !== "undefined" && body instanceof URLSearchParams) {
+        return captureTextValue(body.toString(), "url-search-params", contentType, limits);
+      }
+      if (typeof FormData !== "undefined" && body instanceof FormData) {
+        return captureFormData(body, contentType, limits);
+      }
+      if (typeof Blob !== "undefined" && body instanceof Blob) {
+        return captureBlob(body, contentType, limits);
+      }
+      if (body instanceof ArrayBuffer) {
+        return captureArrayBufferSize(body.byteLength, contentType, limits);
+      }
+      if (ArrayBuffer.isView(body)) {
+        return captureArrayBufferSize(body.byteLength, contentType, limits);
+      }
+      if (typeof Document !== "undefined" && body instanceof Document) {
+        const serializedDocument = new XMLSerializer().serializeToString(body);
+        return captureTextValue(serializedDocument, "text", contentType, limits);
+      }
+      if (typeof ReadableStream !== "undefined" && body instanceof ReadableStream) {
+        return createUnavailableBody("stream-unavailable", "Direct stream body capture is not supported", contentType);
+      }
+      return createUnavailableBody("unreadable", "Unsupported body type", contentType);
+    } catch (error) {
+      return createUnavailableBody("unreadable", getErrorMessage(error), contentType);
+    }
+  }
+  async function captureXhrResponseBody(xhr, contentType, limits) {
+    try {
+      switch (xhr.responseType) {
+        case "":
+        case "text":
+          return captureTextValue(xhr.responseText || "", getTextBodyKind(contentType), contentType, limits);
+        case "json": {
+          if (xhr.response === null || xhr.response === void 0) {
+            return { kind: "empty", contentType, sizeBytes: 0 };
+          }
+          const serializedJson = JSON.stringify(xhr.response);
+          return captureTextValue(serializedJson, "json", contentType, limits);
+        }
+        case "blob":
+          return captureBodyValue(xhr.response, contentType, limits);
+        case "arraybuffer":
+          return captureBodyValue(xhr.response, contentType, limits);
+        case "document":
+          return captureBodyValue(xhr.response, contentType, limits);
+        default:
+          return createUnavailableBody("binary-unavailable", "Unsupported XMLHttpRequest response type", contentType);
+      }
+    } catch (error) {
+      return createUnavailableBody("unreadable", getErrorMessage(error), contentType);
+    }
+  }
+  async function readTextStream(stream, contentType, limits) {
+    const reader = stream.getReader();
+    const readTask = consumeTextStream(reader, contentType, limits.maxBodySizeBytes);
+    const timedResult = await resolveWithTimeout(readTask, limits.bodyReadTimeoutMs);
+    if (timedResult.timedOut) {
+      void reader.cancel().catch(() => void 0);
+      return createUnavailableBody("timeout", "Body read timed out", contentType);
+    }
+    if (timedResult.error) {
+      return createUnavailableBody("unreadable", getErrorMessage(timedResult.error), contentType);
+    }
+    return timedResult.value ?? createUnavailableBody("unreadable", "Body read failed", contentType);
+  }
+  async function consumeTextStream(reader, contentType, maxBodySizeBytes) {
+    const decoder = new TextDecoder();
+    let sizeBytes = 0;
+    let value = "";
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) {
+        value += decoder.decode();
+        if (sizeBytes === 0) {
+          return {
+            kind: "empty",
+            contentType,
+            sizeBytes: 0
+          };
+        }
+        return {
+          kind: getTextBodyKind(contentType),
+          value,
+          contentType,
+          sizeBytes
+        };
+      }
+      sizeBytes += chunk.value.byteLength;
+      if (sizeBytes > maxBodySizeBytes) {
+        void reader.cancel().catch(() => void 0);
+        return {
+          kind: "too-large",
+          contentType,
+          sizeBytes,
+          truncated: true,
+          reason: "Body exceeds the configured size limit"
+        };
+      }
+      value += decoder.decode(chunk.value, { stream: true });
+    }
+  }
+  async function captureBlob(blob, contentType, limits) {
+    const resolvedContentType = blob.type || contentType;
+    if (blob.size > limits.maxBodySizeBytes) {
+      return {
+        kind: "too-large",
+        contentType: resolvedContentType,
+        sizeBytes: blob.size,
+        truncated: true,
+        reason: "Body exceeds the configured size limit"
+      };
+    }
+    if (!isTextContentType(resolvedContentType)) {
+      return {
+        kind: "blob-metadata",
+        contentType: resolvedContentType,
+        sizeBytes: blob.size
+      };
+    }
+    const timedResult = await resolveWithTimeout(blob.text(), limits.bodyReadTimeoutMs);
+    if (timedResult.timedOut) {
+      return createUnavailableBody("timeout", "Blob read timed out", resolvedContentType);
+    }
+    if (timedResult.error || timedResult.value === void 0) {
+      return createUnavailableBody("unreadable", getErrorMessage(timedResult.error), resolvedContentType);
+    }
+    return captureTextValue(timedResult.value, getTextBodyKind(resolvedContentType), resolvedContentType, limits);
+  }
+  async function captureFormData(formData, contentType, limits) {
+    const entries = [];
+    formData.forEach((value, name) => {
+      if (typeof value === "string") {
+        entries.push({ name, value });
+        return;
+      }
+      entries.push({
+        name,
+        value: {
+          name: "name" in value ? value.name : void 0,
+          size: value.size,
+          type: value.type
+        }
+      });
+    });
+    return captureTextValue(JSON.stringify(entries), "form-data", contentType, limits);
+  }
+  function captureArrayBufferSize(sizeBytes, contentType, limits) {
+    if (sizeBytes > limits.maxBodySizeBytes) {
+      return {
+        kind: "too-large",
+        contentType,
+        sizeBytes,
+        truncated: true,
+        reason: "Body exceeds the configured size limit"
+      };
+    }
+    return {
+      kind: "array-buffer-metadata",
+      contentType,
+      sizeBytes
+    };
+  }
+  function captureTextValue(value, kind, contentType, limits) {
+    const sizeBytes = new TextEncoder().encode(value).byteLength;
+    if (sizeBytes === 0) {
+      return {
+        kind: "empty",
+        contentType,
+        sizeBytes: 0
+      };
+    }
+    if (sizeBytes > limits.maxBodySizeBytes) {
+      return {
+        kind: "too-large",
+        contentType,
+        sizeBytes,
+        truncated: true,
+        reason: "Body exceeds the configured size limit"
+      };
+    }
+    return {
+      kind,
+      value,
+      contentType,
+      sizeBytes
+    };
+  }
+  function getTextBodyKind(contentType) {
+    const normalizedContentType = contentType?.toLowerCase() || "";
+    if (normalizedContentType.includes("json")) {
+      return "json";
+    }
+    if (normalizedContentType.includes("application/x-www-form-urlencoded")) {
+      return "url-search-params";
+    }
+    if (normalizedContentType.includes("multipart/form-data")) {
+      return "form-data";
+    }
+    return "text";
+  }
+  function isTextContentType(contentType) {
+    if (!contentType) {
+      return true;
+    }
+    const normalizedContentType = contentType.toLowerCase();
+    return normalizedContentType.startsWith("text/") || normalizedContentType.includes("json") || normalizedContentType.includes("xml") || normalizedContentType.includes("javascript") || normalizedContentType.includes("application/x-www-form-urlencoded") || normalizedContentType.includes("graphql");
+  }
+  function parseContentLength(contentLength) {
+    if (!contentLength) {
+      return void 0;
+    }
+    const parsedContentLength = Number(contentLength);
+    return Number.isFinite(parsedContentLength) && parsedContentLength >= 0 ? parsedContentLength : void 0;
+  }
+  async function resolveWithTimeout(promise, timeoutMs) {
+    let timeoutId;
+    const settledPromise = promise.then((value) => ({ value, timedOut: false })).catch((error) => ({ error, timedOut: false }));
+    const timeoutPromise = new Promise((resolve) => {
+      timeoutId = window.setTimeout(() => resolve({ timedOut: true }), timeoutMs);
+    });
+    const result = await Promise.race([settledPromise, timeoutPromise]);
+    if (timeoutId !== void 0) {
+      window.clearTimeout(timeoutId);
+    }
+    return result;
+  }
+  function getErrorMessage(error) {
+    return error instanceof Error ? error.message : error ? String(error) : "Unknown body capture error";
+  }
+
+  // networkReplay/headerCapture.ts
+  function captureHeaders(headers) {
+    if (!headers) {
+      return {};
+    }
+    try {
+      const capturedHeaders = {};
+      new Headers(headers).forEach((value, key) => {
+        capturedHeaders[key] = value;
+      });
+      return capturedHeaders;
+    } catch {
+      return {};
+    }
+  }
+  function appendCapturedHeader(headers, name, value) {
+    const normalizedName = name.toLowerCase();
+    headers[normalizedName] = headers[normalizedName] ? `${headers[normalizedName]}, ${value}` : value;
+  }
+  function getCapturedHeader(headers, name) {
+    return headers[name.toLowerCase()];
+  }
+  function parseXhrResponseHeaders(rawHeaders) {
+    const headers = {};
+    for (const line of rawHeaders.trim().split(/[\r\n]+/)) {
+      if (!line) {
+        continue;
+      }
+      const separatorIndex = line.indexOf(":");
+      if (separatorIndex <= 0) {
+        continue;
+      }
+      appendCapturedHeader(headers, line.slice(0, separatorIndex).trim(), line.slice(separatorIndex + 1).trim());
+    }
+    return headers;
+  }
+
+  // networkReplay/utils.ts
+  function createRequestId() {
+    try {
+      if (globalThis.crypto?.randomUUID) {
+        return globalThis.crypto.randomUUID();
+      }
+    } catch {
+      return createFallbackRequestId();
+    }
+    return createFallbackRequestId();
+  }
+  function createFallbackRequestId() {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  }
+  function getCurrentUrl() {
+    try {
+      return window.location.href;
+    } catch {
+      return "";
+    }
+  }
+  function toAbsoluteUrl(url) {
+    try {
+      return new URL(url, getCurrentUrl() || void 0).href;
+    } catch {
+      return url;
+    }
+  }
+  function getFetchInputUrl(input) {
+    if (typeof input === "string") {
+      return input;
+    }
+    if (typeof URL !== "undefined" && input instanceof URL) {
+      return input.href;
+    }
+    return "url" in input ? input.url : input.href;
+  }
+  function getErrorDetails(error) {
+    if (error instanceof Error) {
+      return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      };
+    }
+    return {
+      message: String(error)
+    };
+  }
+  function isAbortError(error) {
+    return error instanceof Error && error.name === "AbortError";
+  }
+  function getDurationMs(startedAt, completedAt) {
+    return Math.max(0, completedAt - startedAt);
+  }
+  function getJsonByteSize(value) {
+    try {
+      const serialized = JSON.stringify(value);
+      if (serialized === void 0) {
+        return 0;
+      }
+      if (typeof TextEncoder !== "undefined") {
+        return new TextEncoder().encode(serialized).byteLength;
+      }
+      let sizeBytes = 0;
+      for (const character of serialized) {
+        const codePoint = character.codePointAt(0) ?? 0;
+        if (codePoint <= 127) {
+          sizeBytes += 1;
+        } else if (codePoint <= 2047) {
+          sizeBytes += 2;
+        } else if (codePoint <= 65535) {
+          sizeBytes += 3;
+        } else {
+          sizeBytes += 4;
+        }
+      }
+      return sizeBytes;
+    } catch {
+      return Number.POSITIVE_INFINITY;
+    }
+  }
+
+  // networkReplay/ignoredTrackerRequests.ts
+  var TRACKER_RESOURCE_PATHS = /* @__PURE__ */ new Set(["/script.js", "/replay.js", "/metrics.js"]);
+  function isIgnoredTrackerRequest(requestUrl, analyticsHost) {
+    try {
+      const absoluteRequestUrl = new URL(toAbsoluteUrl(requestUrl));
+      const absoluteAnalyticsHost = new URL(toAbsoluteUrl(analyticsHost));
+      if (absoluteRequestUrl.origin !== absoluteAnalyticsHost.origin) {
+        return false;
+      }
+      const analyticsBasePath = absoluteAnalyticsHost.pathname.replace(/\/$/, "");
+      if (analyticsBasePath && !absoluteRequestUrl.pathname.startsWith(`${analyticsBasePath}/`)) {
+        return false;
+      }
+      const relativePath = analyticsBasePath ? absoluteRequestUrl.pathname.slice(analyticsBasePath.length) || "/" : absoluteRequestUrl.pathname;
+      return relativePath === "/track" || relativePath === "/identify" || relativePath.startsWith("/session-replay/record/") || relativePath.startsWith("/site/tracking-config/") || /^\/site\/[^/]+\/feature-flags\/evaluate$/.test(relativePath) || TRACKER_RESOURCE_PATHS.has(relativePath);
+    } catch {
+      return false;
+    }
+  }
+
+  // networkReplay/fetchObserver.ts
+  function observeFetch({
+    analyticsHost,
+    config,
+    pendingRequests,
+    performanceObserver
+  }) {
+    if (typeof window.fetch !== "function") {
+      return () => void 0;
+    }
+    const originalFetch = window.fetch;
+    const bodyCaptureLimits = config;
+    const observedFetch = function(input, init) {
+      let requestUrl;
+      try {
+        requestUrl = toAbsoluteUrl(getFetchInputUrl(input));
+      } catch {
+        return Reflect.apply(originalFetch, this, [input, init]);
+      }
+      if (isIgnoredTrackerRequest(requestUrl, analyticsHost)) {
+        return Reflect.apply(originalFetch, this, [input, init]);
+      }
+      let captureContext;
+      try {
+        captureContext = registerFetchRequest(
+          input,
+          init,
+          requestUrl,
+          config,
+          bodyCaptureLimits,
+          pendingRequests,
+          performanceObserver
+        );
+      } catch {
+        captureContext = void 0;
+      }
+      let fetchPromise;
+      try {
+        fetchPromise = Reflect.apply(originalFetch, this, [input, init]);
+      } catch (error) {
+        if (captureContext) {
+          completeFetchError(captureContext, error, pendingRequests, performanceObserver);
+        }
+        throw error;
+      }
+      if (!captureContext) {
+        return fetchPromise;
+      }
+      return fetchPromise.then(
+        (response) => {
+          try {
+            completeFetchResponse(
+              captureContext,
+              response,
+              config,
+              bodyCaptureLimits,
+              pendingRequests,
+              performanceObserver
+            );
+          } catch {
+            completeFetchResponseWithoutBody(captureContext, response, config, pendingRequests, performanceObserver);
+          }
+          return response;
+        },
+        (error) => {
+          completeFetchError(captureContext, error, pendingRequests, performanceObserver);
+          throw error;
+        }
+      );
+    };
+    window.fetch = observedFetch;
+    return () => {
+      if (window.fetch === observedFetch) {
+        window.fetch = originalFetch;
+      }
+    };
+  }
+  function registerFetchRequest(input, init, requestUrl, config, limits, pendingRequests, performanceObserver) {
+    const requestId = createRequestId();
+    const startedAt = Date.now();
+    const capturedRequest = createCapturedRequest(input, init);
+    const method = (capturedRequest?.method || init?.method || getInputRequestMethod(input) || "GET").toUpperCase();
+    const effectiveHeaders = capturedRequest?.headers || getInputRequestHeaders(input, init);
+    const capturedHeaders = config.captureRequestHeaders ? captureHeaders(effectiveHeaders) : {};
+    const requestBody = config.captureRequestBody ? createFetchRequestBodyCapture(input, init, capturedRequest, effectiveHeaders, limits) : void 0;
+    const request = {
+      schemaVersion: 1,
+      requestId,
+      currentUrl: getCurrentUrl(),
+      url: requestUrl,
+      method,
+      initiatorType: "fetch",
+      startedAt,
+      requestHeaders: capturedHeaders,
+      responseHeaders: {},
+      performanceEntryFound: false
+    };
+    pendingRequests.register(request, requestBody);
+    performanceObserver?.registerRequest(requestId, requestUrl, "fetch", startedAt);
+    return { requestId, startedAt };
+  }
+  function completeFetchResponse(context, response, config, limits, pendingRequests, performanceObserver) {
+    const completedAt = Date.now();
+    const responseBody = config.captureResponseBody ? captureResponseBody(response.clone(), limits) : void 0;
+    const performanceTask = performanceObserver?.completeRequest(context.requestId, completedAt, response.url);
+    pendingRequests.complete(
+      context.requestId,
+      {
+        completedAt,
+        durationMs: getDurationMs(context.startedAt, completedAt),
+        outcome: getHttpOutcome(response.status),
+        responseHeaders: config.captureResponseHeaders ? captureHeaders(response.headers) : {},
+        status: response.status,
+        statusText: response.statusText
+      },
+      responseBody,
+      performanceTask
+    );
+  }
+  function completeFetchResponseWithoutBody(context, response, config, pendingRequests, performanceObserver) {
+    const completedAt = Date.now();
+    const responseBody = config.captureResponseBody ? Promise.resolve(createUnavailableBody("unreadable", "Response body could not be cloned")) : void 0;
+    const performanceTask = performanceObserver?.completeRequest(context.requestId, completedAt, response.url);
+    pendingRequests.complete(
+      context.requestId,
+      {
+        completedAt,
+        durationMs: getDurationMs(context.startedAt, completedAt),
+        outcome: getHttpOutcome(response.status),
+        responseHeaders: config.captureResponseHeaders ? captureHeaders(response.headers) : {},
+        status: response.status,
+        statusText: response.statusText
+      },
+      responseBody,
+      performanceTask
+    );
+  }
+  function completeFetchError(context, error, pendingRequests, performanceObserver) {
+    const completedAt = Date.now();
+    const performanceTask = performanceObserver?.completeRequest(context.requestId, completedAt);
+    pendingRequests.complete(
+      context.requestId,
+      {
+        completedAt,
+        durationMs: getDurationMs(context.startedAt, completedAt),
+        error: getErrorDetails(error),
+        outcome: isAbortError(error) ? "aborted" : "network_error",
+        responseHeaders: {}
+      },
+      void 0,
+      performanceTask
+    );
+  }
+  function createCapturedRequest(input, init) {
+    try {
+      const captureInput = typeof Request !== "undefined" && input instanceof Request ? input.clone() : input;
+      return new Request(captureInput, init);
+    } catch {
+      return void 0;
+    }
+  }
+  function createFetchRequestBodyCapture(input, init, capturedRequest, headers, limits) {
+    const contentType = captureHeaders(headers)["content-type"];
+    if (init?.body !== void 0 && init.body !== null) {
+      return captureBodyValue(init.body, contentType, limits);
+    }
+    if (capturedRequest) {
+      try {
+        return captureRequestBody(capturedRequest.clone(), limits);
+      } catch {
+        return Promise.resolve(createUnavailableBody("unreadable", "Request body could not be cloned", contentType));
+      }
+    }
+    if (typeof Request !== "undefined" && input instanceof Request && input.body) {
+      return Promise.resolve(createUnavailableBody("unreadable", "Request body could not be cloned", contentType));
+    }
+    return Promise.resolve({ kind: "empty", contentType, sizeBytes: 0 });
+  }
+  function getInputRequestMethod(input) {
+    return typeof Request !== "undefined" && input instanceof Request ? input.method : void 0;
+  }
+  function getInputRequestHeaders(input, init) {
+    if (init?.headers) {
+      return init.headers;
+    }
+    return typeof Request !== "undefined" && input instanceof Request ? input.headers : void 0;
+  }
+  function getHttpOutcome(status) {
+    return status >= 400 ? "http_error" : "success";
+  }
+
+  // networkReplay/pendingRequests.ts
+  var PendingRequests = class {
+    constructor(emit) {
+      this.emit = emit;
+      this.requests = /* @__PURE__ */ new Map();
+    }
+    register(request, requestBody) {
+      const state = {
+        request,
+        networkCompleted: false,
+        finishScheduled: false,
+        emitted: false
+      };
+      if (requestBody) {
+        state.requestBodyTask = this.attachBodyTask(state, "requestBody", requestBody);
+      }
+      this.requests.set(request.requestId, state);
+    }
+    complete(requestId, updates, responseBody, completionTask) {
+      const state = this.requests.get(requestId);
+      if (!state || state.emitted || state.networkCompleted) {
+        return;
+      }
+      Object.assign(state.request, updates);
+      state.networkCompleted = true;
+      if (responseBody) {
+        state.responseBodyTask = this.attachBodyTask(state, "responseBody", responseBody);
+      }
+      if (completionTask) {
+        state.completionTask = completionTask.catch(() => void 0);
+      }
+      this.scheduleCompletedEmission(state);
+    }
+    addPerformance(requestId, timing, sizes) {
+      const state = this.requests.get(requestId);
+      if (!state || state.emitted) {
+        return;
+      }
+      state.request.timing = timing;
+      state.request.sizes = sizes;
+      state.request.performanceEntryFound = true;
+    }
+    finalizePendingOnUnload() {
+      const completedAt = Date.now();
+      for (const state of this.requests.values()) {
+        if (state.emitted) {
+          continue;
+        }
+        if (!state.networkCompleted) {
+          state.request.completedAt = completedAt;
+          state.request.durationMs = getDurationMs(state.request.startedAt, completedAt);
+          state.request.outcome = "pending_on_unload";
+        }
+        if (state.requestBodyTask && !state.request.requestBody) {
+          state.request.requestBody = createUnavailableBody(
+            "unreadable",
+            "Recorder stopped before request body capture completed"
+          );
+        }
+        if (state.responseBodyTask && !state.request.responseBody) {
+          state.request.responseBody = createUnavailableBody(
+            "unreadable",
+            "Recorder stopped before response body capture completed"
+          );
+        }
+        if (state.requestBodyTask || state.responseBodyTask) {
+          state.request.bodyCaptureCompletedAt = completedAt;
+        }
+        this.emitState(state);
+      }
+    }
+    attachBodyTask(state, field, bodyPromise) {
+      return bodyPromise.then(
+        (body) => {
+          if (!state.emitted) {
+            state.request[field] = body;
+          }
+        },
+        (error) => {
+          if (!state.emitted) {
+            state.request[field] = createUnavailableBody(
+              "unreadable",
+              error instanceof Error ? error.message : String(error)
+            );
+          }
+        }
+      );
+    }
+    scheduleCompletedEmission(state) {
+      if (state.finishScheduled) {
+        return;
+      }
+      state.finishScheduled = true;
+      const completionTasks = [state.requestBodyTask, state.responseBodyTask, state.completionTask].filter(
+        (task) => task !== void 0
+      );
+      void Promise.all(completionTasks).then(() => {
+        if (!state.emitted) {
+          if (state.requestBodyTask || state.responseBodyTask) {
+            state.request.bodyCaptureCompletedAt = Date.now();
+          }
+          this.emitState(state);
+        }
+      });
+    }
+    emitState(state) {
+      if (state.emitted || !state.request.outcome) {
+        return;
+      }
+      state.emitted = true;
+      this.requests.delete(state.request.requestId);
+      try {
+        this.emit(state.request);
+      } catch {
+        return;
+      }
+    }
+  };
+
+  // networkReplay/timing.ts
+  function getPerformanceEntryStartedAt(entry) {
+    return getTimeOrigin() + entry.startTime;
+  }
+  function getPerformanceEntryCompletedAt(entry) {
+    const responseEnd = entry.responseEnd > 0 ? entry.responseEnd : entry.startTime + entry.duration;
+    return getTimeOrigin() + responseEnd;
+  }
+  function getPerformanceEntryTiming(entry) {
+    return {
+      startTime: entry.startTime,
+      fetchStart: entry.fetchStart,
+      domainLookupStart: entry.domainLookupStart,
+      domainLookupEnd: entry.domainLookupEnd,
+      connectStart: entry.connectStart,
+      secureConnectionStart: entry.secureConnectionStart,
+      connectEnd: entry.connectEnd,
+      requestStart: entry.requestStart,
+      responseStart: entry.responseStart,
+      responseEnd: entry.responseEnd,
+      duration: entry.duration
+    };
+  }
+  function getPerformanceEntrySizes(entry) {
+    const resourceEntry = entry;
+    if (resourceEntry.transferSize === void 0 && resourceEntry.encodedBodySize === void 0 && resourceEntry.decodedBodySize === void 0) {
+      return void 0;
+    }
+    return {
+      transferSize: resourceEntry.transferSize,
+      encodedBodySize: resourceEntry.encodedBodySize,
+      decodedBodySize: resourceEntry.decodedBodySize
+    };
+  }
+  function getPerformanceEntryStatus(entry) {
+    const responseStatus = entry.responseStatus;
+    return typeof responseStatus === "number" && responseStatus > 0 ? responseStatus : void 0;
+  }
+  function getPerformanceEntryInitiatorType(entry) {
+    return entry.entryType === "navigation" ? "navigation" : entry.initiatorType || "resource";
+  }
+  function isSupportedPerformanceEntry(entry) {
+    return entry.entryType === "resource" || entry.entryType === "navigation";
+  }
+  function getTimeOrigin() {
+    if (typeof performance.timeOrigin === "number" && performance.timeOrigin > 0) {
+      return performance.timeOrigin;
+    }
+    return Date.now() - performance.now();
+  }
+
+  // networkReplay/performanceObserver.ts
+  var MATCH_TOLERANCE_MS = 250;
+  var MATCH_WAIT_MS = 250;
+  var UNMATCHED_ENTRY_WAIT_MS = 250;
+  function observePerformance({
+    analyticsHost,
+    config,
+    emit,
+    pendingRequests
+  }) {
+    const coordinator = new PerformanceObserverCoordinator(analyticsHost, emit, pendingRequests);
+    coordinator.start(config.captureInitialPerformanceResources);
+    return coordinator;
+  }
+  var PerformanceObserverCoordinator = class {
+    constructor(analyticsHost, emit, pendingRequests) {
+      this.analyticsHost = analyticsHost;
+      this.emit = emit;
+      this.pendingRequests = pendingRequests;
+      this.candidates = /* @__PURE__ */ new Map();
+      this.observedEntries = /* @__PURE__ */ new Map();
+      this.seenEntryKeys = /* @__PURE__ */ new Set();
+      this.observers = [];
+      this.matchingEnabled = false;
+      this.stopped = false;
+    }
+    start(captureInitialEntries) {
+      if (typeof PerformanceObserver === "undefined" || typeof performance === "undefined") {
+        return;
+      }
+      this.matchingEnabled = this.observeEntryType("resource", captureInitialEntries);
+      this.observeEntryType("navigation", captureInitialEntries);
+      if (captureInitialEntries) {
+        this.handleEntries(performance.getEntriesByType("resource"));
+        this.handleEntries(performance.getEntriesByType("navigation"));
+      }
+    }
+    registerRequest(requestId, url, initiatorType, startedAt) {
+      if (this.stopped || !this.matchingEnabled) {
+        return;
+      }
+      const candidate = {
+        requestId,
+        urls: /* @__PURE__ */ new Set([toAbsoluteUrl(url)]),
+        initiatorType,
+        startedAt,
+        matched: false
+      };
+      this.candidates.set(requestId, candidate);
+      this.tryMatchCandidate(candidate);
+    }
+    completeRequest(requestId, completedAt, finalUrl) {
+      const candidate = this.candidates.get(requestId);
+      if (!candidate || this.stopped) {
+        return Promise.resolve();
+      }
+      candidate.completedAt = completedAt;
+      if (finalUrl) {
+        candidate.urls.add(toAbsoluteUrl(finalUrl));
+      }
+      this.tryMatchCandidate(candidate);
+      if (candidate.matched) {
+        this.finishCandidate(candidate);
+        return Promise.resolve();
+      }
+      return new Promise((resolve) => {
+        candidate.resolve = resolve;
+        candidate.timeoutId = window.setTimeout(() => this.finishCandidate(candidate), MATCH_WAIT_MS);
+      });
+    }
+    stop() {
+      if (this.stopped) {
+        return;
+      }
+      this.stopped = true;
+      this.observers.forEach((observer) => observer.disconnect());
+      for (const observedEntry of this.observedEntries.values()) {
+        if (!observedEntry.claimed) {
+          this.emitStandaloneEntry(observedEntry);
+        }
+      }
+      for (const candidate of this.candidates.values()) {
+        this.finishCandidate(candidate);
+      }
+      this.observedEntries.clear();
+      this.candidates.clear();
+    }
+    observeEntryType(type, buffered) {
+      if (PerformanceObserver.supportedEntryTypes && !PerformanceObserver.supportedEntryTypes.includes(type)) {
+        return false;
+      }
+      const observer = new PerformanceObserver((list) => this.handleEntries(list.getEntries()));
+      try {
+        observer.observe({ type, buffered });
+      } catch {
+        try {
+          observer.observe({ entryTypes: [type] });
+        } catch {
+          observer.disconnect();
+          return false;
+        }
+      }
+      this.observers.push(observer);
+      return true;
+    }
+    handleEntries(entries) {
+      if (this.stopped) {
+        return;
+      }
+      for (const entry of entries) {
+        if (!isSupportedPerformanceEntry(entry) || isIgnoredTrackerRequest(entry.name, this.analyticsHost)) {
+          continue;
+        }
+        const key = createPerformanceEntryKey(entry);
+        if (this.seenEntryKeys.has(key)) {
+          continue;
+        }
+        this.seenEntryKeys.add(key);
+        const observedEntry = {
+          entry,
+          key,
+          claimed: false
+        };
+        this.observedEntries.set(key, observedEntry);
+        const candidate = this.findMatchingCandidate(entry);
+        if (candidate) {
+          this.claimEntry(observedEntry, candidate);
+        } else if (entry.entryType === "navigation") {
+          this.emitStandaloneEntry(observedEntry);
+        } else {
+          observedEntry.timeoutId = window.setTimeout(
+            () => this.emitStandaloneEntry(observedEntry),
+            UNMATCHED_ENTRY_WAIT_MS
+          );
+        }
+      }
+    }
+    tryMatchCandidate(candidate) {
+      if (candidate.matched) {
+        return;
+      }
+      let closestEntry;
+      let closestDistance = Number.POSITIVE_INFINITY;
+      for (const observedEntry of this.observedEntries.values()) {
+        if (observedEntry.claimed || !this.isEntryMatch(observedEntry.entry, candidate)) {
+          continue;
+        }
+        const distance = Math.abs(getPerformanceEntryStartedAt(observedEntry.entry) - candidate.startedAt);
+        if (distance < closestDistance) {
+          closestEntry = observedEntry;
+          closestDistance = distance;
+        }
+      }
+      if (closestEntry) {
+        this.claimEntry(closestEntry, candidate);
+      }
+    }
+    findMatchingCandidate(entry) {
+      let closestCandidate;
+      let closestDistance = Number.POSITIVE_INFINITY;
+      for (const candidate of this.candidates.values()) {
+        if (!this.isEntryMatch(entry, candidate)) {
+          continue;
+        }
+        const distance = Math.abs(getPerformanceEntryStartedAt(entry) - candidate.startedAt);
+        if (distance < closestDistance) {
+          closestCandidate = candidate;
+          closestDistance = distance;
+        }
+      }
+      return closestCandidate;
+    }
+    isEntryMatch(entry, candidate) {
+      if (candidate.matched || entry.entryType !== "resource") {
+        return false;
+      }
+      const initiatorType = getPerformanceEntryInitiatorType(entry);
+      if (initiatorType !== candidate.initiatorType || !candidate.urls.has(toAbsoluteUrl(entry.name))) {
+        return false;
+      }
+      return Math.abs(getPerformanceEntryStartedAt(entry) - candidate.startedAt) <= MATCH_TOLERANCE_MS;
+    }
+    claimEntry(observedEntry, candidate) {
+      observedEntry.claimed = true;
+      candidate.matched = true;
+      if (observedEntry.timeoutId !== void 0) {
+        window.clearTimeout(observedEntry.timeoutId);
+      }
+      this.pendingRequests.addPerformance(
+        candidate.requestId,
+        getPerformanceEntryTiming(observedEntry.entry),
+        getPerformanceEntrySizes(observedEntry.entry)
+      );
+      this.observedEntries.delete(observedEntry.key);
+      if (candidate.completedAt !== void 0) {
+        this.finishCandidate(candidate);
+      }
+    }
+    finishCandidate(candidate) {
+      if (candidate.timeoutId !== void 0) {
+        window.clearTimeout(candidate.timeoutId);
+        candidate.timeoutId = void 0;
+      }
+      this.candidates.delete(candidate.requestId);
+      candidate.resolve?.();
+      candidate.resolve = void 0;
+    }
+    emitStandaloneEntry(observedEntry) {
+      if (observedEntry.claimed) {
+        return;
+      }
+      observedEntry.claimed = true;
+      if (observedEntry.timeoutId !== void 0) {
+        window.clearTimeout(observedEntry.timeoutId);
+      }
+      this.observedEntries.delete(observedEntry.key);
+      const entry = observedEntry.entry;
+      const status = getPerformanceEntryStatus(entry);
+      const request = {
+        schemaVersion: 1,
+        requestId: createRequestId(),
+        currentUrl: getCurrentUrl(),
+        url: toAbsoluteUrl(entry.name),
+        method: "GET",
+        initiatorType: getPerformanceEntryInitiatorType(entry),
+        startedAt: getPerformanceEntryStartedAt(entry),
+        completedAt: getPerformanceEntryCompletedAt(entry),
+        durationMs: entry.duration,
+        status,
+        outcome: status !== void 0 && status >= 400 ? "http_error" : "success",
+        requestHeaders: {},
+        responseHeaders: {},
+        timing: getPerformanceEntryTiming(entry),
+        sizes: getPerformanceEntrySizes(entry),
+        performanceEntryFound: true
+      };
+      try {
+        this.emit(request);
+      } catch {
+        return;
+      }
+    }
+  };
+  function createPerformanceEntryKey(entry) {
+    return [entry.entryType, entry.name, entry.startTime, entry.duration, getPerformanceEntryInitiatorType(entry)].join(
+      "|"
+    );
+  }
+
+  // networkReplay/xhrObserver.ts
+  function observeXhr({
+    analyticsHost,
+    config,
+    pendingRequests,
+    performanceObserver
+  }) {
+    if (typeof XMLHttpRequest === "undefined") {
+      return () => void 0;
+    }
+    const prototype = XMLHttpRequest.prototype;
+    const originalOpen = prototype.open;
+    const originalSend = prototype.send;
+    const originalSetRequestHeader = prototype.setRequestHeader;
+    const states = /* @__PURE__ */ new WeakMap();
+    const activeStates = /* @__PURE__ */ new Set();
+    const limits = config;
+    const observedOpen = function(...args) {
+      Reflect.apply(originalOpen, this, args);
+      try {
+        const previousState = states.get(this);
+        if (previousState) {
+          cleanupListeners(previousState, activeStates);
+          finalizeReopenedRequest(previousState, pendingRequests, performanceObserver);
+        }
+        const method = String(args[0] || "GET").toUpperCase();
+        const url = toAbsoluteUrl(String(args[1] || ""));
+        states.set(this, {
+          xhr: this,
+          requestId: createRequestId(),
+          method,
+          url,
+          requestHeaders: {},
+          ignored: isIgnoredTrackerRequest(url, analyticsHost),
+          registered: false,
+          finalized: false
+        });
+      } catch {
+        states.delete(this);
+      }
+    };
+    const observedSetRequestHeader = function(name, value) {
+      Reflect.apply(originalSetRequestHeader, this, [name, value]);
+      const state = states.get(this);
+      if (state && !state.ignored) {
+        appendCapturedHeader(state.requestHeaders, name, value);
+      }
+    };
+    const observedSend = function(body) {
+      const state = states.get(this);
+      if (!state || state.ignored) {
+        Reflect.apply(originalSend, this, [body]);
+        return;
+      }
+      try {
+        prepareXhrCapture(state, body, config, limits, pendingRequests, activeStates, performanceObserver);
+      } catch {
+        cleanupListeners(state, activeStates);
+        Reflect.apply(originalSend, this, [body]);
+        return;
+      }
+      try {
+        Reflect.apply(originalSend, this, [body]);
+      } catch (error) {
+        state.outcome = "network_error";
+        state.error = getErrorDetails(error);
+        finalizeXhrRequest(state, config, limits, pendingRequests, activeStates, performanceObserver);
+        throw error;
+      }
+    };
+    prototype.open = observedOpen;
+    prototype.setRequestHeader = observedSetRequestHeader;
+    prototype.send = observedSend;
+    return () => {
+      for (const state of activeStates) {
+        cleanupListeners(state, activeStates);
+      }
+      if (prototype.open === observedOpen) {
+        prototype.open = originalOpen;
+      }
+      if (prototype.setRequestHeader === observedSetRequestHeader) {
+        prototype.setRequestHeader = originalSetRequestHeader;
+      }
+      if (prototype.send === observedSend) {
+        prototype.send = originalSend;
+      }
+    };
+  }
+  function prepareXhrCapture(state, body, config, limits, pendingRequests, activeStates, performanceObserver) {
+    state.startedAt = Date.now();
+    const contentType = getCapturedHeader(state.requestHeaders, "content-type");
+    const requestBody = config.captureRequestBody ? captureBodyValue(body, contentType, limits) : void 0;
+    const request = {
+      schemaVersion: 1,
+      requestId: state.requestId,
+      currentUrl: getCurrentUrl(),
+      url: state.url,
+      method: state.method,
+      initiatorType: "xmlhttprequest",
+      startedAt: state.startedAt,
+      requestHeaders: config.captureRequestHeaders ? { ...state.requestHeaders } : {},
+      responseHeaders: {},
+      performanceEntryFound: false
+    };
+    const listeners = {
+      abort: () => {
+        state.outcome = "aborted";
+        state.error = { name: "AbortError", message: "XMLHttpRequest was aborted" };
+      },
+      error: () => {
+        state.outcome = "network_error";
+        state.error = { name: "NetworkError", message: "XMLHttpRequest failed" };
+      },
+      loadend: () => finalizeXhrRequest(state, config, limits, pendingRequests, activeStates, performanceObserver),
+      timeout: () => {
+        state.outcome = "timeout";
+        state.error = { name: "TimeoutError", message: "XMLHttpRequest timed out" };
+      }
+    };
+    state.listeners = listeners;
+    state.xhr.addEventListener("abort", listeners.abort);
+    state.xhr.addEventListener("error", listeners.error);
+    state.xhr.addEventListener("loadend", listeners.loadend);
+    state.xhr.addEventListener("timeout", listeners.timeout);
+    activeStates.add(state);
+    pendingRequests.register(request, requestBody);
+    performanceObserver?.registerRequest(state.requestId, state.url, "xmlhttprequest", state.startedAt);
+    state.registered = true;
+  }
+  function finalizeXhrRequest(state, config, limits, pendingRequests, activeStates, performanceObserver) {
+    if (state.finalized || !state.registered || state.startedAt === void 0) {
+      return;
+    }
+    state.finalized = true;
+    cleanupListeners(state, activeStates);
+    const completedAt = Date.now();
+    const status = getXhrStatus(state.xhr);
+    const allResponseHeaders = getXhrResponseHeaders(state.xhr);
+    const responseContentType = getCapturedHeader(allResponseHeaders, "content-type");
+    const responseBody = config.captureResponseBody ? captureXhrResponseBody(state.xhr, responseContentType, limits) : void 0;
+    const performanceTask = performanceObserver?.completeRequest(
+      state.requestId,
+      completedAt,
+      getXhrResponseUrl(state.xhr)
+    );
+    pendingRequests.complete(
+      state.requestId,
+      {
+        completedAt,
+        durationMs: getDurationMs(state.startedAt, completedAt),
+        error: state.error,
+        outcome: state.outcome ?? getXhrOutcome(status),
+        responseHeaders: config.captureResponseHeaders ? allResponseHeaders : {},
+        status,
+        statusText: getXhrStatusText(state.xhr)
+      },
+      responseBody,
+      performanceTask
+    );
+  }
+  function finalizeReopenedRequest(state, pendingRequests, performanceObserver) {
+    if (!state.registered || state.finalized || state.startedAt === void 0) {
+      return;
+    }
+    const completedAt = Date.now();
+    state.finalized = true;
+    const performanceTask = performanceObserver?.completeRequest(state.requestId, completedAt);
+    pendingRequests.complete(
+      state.requestId,
+      {
+        completedAt,
+        durationMs: getDurationMs(state.startedAt, completedAt),
+        error: { name: "AbortError", message: "XMLHttpRequest was reopened before completion" },
+        outcome: "aborted",
+        responseHeaders: {}
+      },
+      void 0,
+      performanceTask
+    );
+  }
+  function cleanupListeners(state, activeStates) {
+    if (!state.listeners) {
+      activeStates.delete(state);
+      return;
+    }
+    state.xhr.removeEventListener("abort", state.listeners.abort);
+    state.xhr.removeEventListener("error", state.listeners.error);
+    state.xhr.removeEventListener("loadend", state.listeners.loadend);
+    state.xhr.removeEventListener("timeout", state.listeners.timeout);
+    state.listeners = void 0;
+    activeStates.delete(state);
+  }
+  function getXhrResponseHeaders(xhr) {
+    try {
+      return parseXhrResponseHeaders(xhr.getAllResponseHeaders());
+    } catch {
+      return {};
+    }
+  }
+  function getXhrStatus(xhr) {
+    try {
+      return xhr.status;
+    } catch {
+      return void 0;
+    }
+  }
+  function getXhrStatusText(xhr) {
+    try {
+      return xhr.statusText || void 0;
+    } catch {
+      return void 0;
+    }
+  }
+  function getXhrResponseUrl(xhr) {
+    try {
+      return xhr.responseURL || void 0;
+    } catch {
+      return void 0;
+    }
+  }
+  function getXhrOutcome(status) {
+    if (!status) {
+      return "network_error";
+    }
+    return status >= 400 ? "http_error" : "success";
+  }
+
+  // networkReplay/index.ts
+  function startNetworkReplayRecorder({
+    analyticsHost,
+    config,
+    emit
+  }) {
+    if (!config.enabled) {
+      return () => void 0;
+    }
+    const pendingRequests = new PendingRequests(emit);
+    const cleanupObservers = [];
+    let performanceObserver;
+    if (config.capturePerformanceResources) {
+      try {
+        performanceObserver = observePerformance({ analyticsHost, config, emit, pendingRequests });
+      } catch {
+        performanceObserver = void 0;
+      }
+    }
+    if (config.captureFetch) {
+      try {
+        cleanupObservers.push(observeFetch({ analyticsHost, config, pendingRequests, performanceObserver }));
+      } catch {
+        cleanupObservers.push(() => void 0);
+      }
+    }
+    if (config.captureXhr) {
+      try {
+        cleanupObservers.push(observeXhr({ analyticsHost, config, pendingRequests, performanceObserver }));
+      } catch {
+        cleanupObservers.push(() => void 0);
+      }
+    }
+    let stopped = false;
+    return () => {
+      if (stopped) {
+        return;
+      }
+      stopped = true;
+      performanceObserver?.stop();
+      pendingRequests.finalizePendingOnUnload();
+      cleanupObservers.forEach((cleanup) => {
+        try {
+          cleanup();
+        } catch {
+          return;
+        }
+      });
+    };
+  }
+
+  // networkReplay/networkPlugin.ts
+  var NETWORK_PLUGIN_NAME = "rrweb/network@1";
+  function getRecordNetworkPlugin(config, analyticsHost) {
+    return {
+      name: NETWORK_PLUGIN_NAME,
+      observer: (callback, pluginWindow) => {
+        if (pluginWindow !== window) {
+          return () => void 0;
+        }
+        try {
+          return startNetworkReplayRecorder({
+            analyticsHost,
+            config,
+            emit: (request) => emitNetworkRequest(callback, request, config.maxNetworkEventSizeBytes)
+          });
+        } catch {
+          return () => void 0;
+        }
+      }
+    };
+  }
+  function emitNetworkRequest(callback, request, maxEventSizeBytes) {
+    try {
+      const payload = createPayload(request);
+      if (getPluginEventSizeBytes(payload) <= maxEventSizeBytes) {
+        callback(payload);
+        return;
+      }
+      const reducedPayload = createPayload({
+        ...request,
+        requestBody: removeBodyValue(request.requestBody),
+        responseBody: removeBodyValue(request.responseBody)
+      });
+      if (getPluginEventSizeBytes(reducedPayload) <= maxEventSizeBytes) {
+        callback(reducedPayload);
+        return;
+      }
+      console.warn(`[NetworkReplay] Dropped request ${request.requestId}: event exceeds configured size limit`);
+    } catch {
+      return;
+    }
+  }
+  function createPayload(request) {
+    return {
+      version: 1,
+      requests: [request]
+    };
+  }
+  function getPluginEventSizeBytes(payload) {
+    return getJsonByteSize({
+      type: 6,
+      timestamp: Date.now(),
+      data: {
+        plugin: NETWORK_PLUGIN_NAME,
+        payload
+      }
+    });
+  }
+  function removeBodyValue(body) {
+    if (!body || body.value === void 0) {
+      return body;
+    }
+    return {
+      kind: "too-large",
+      contentType: body.contentType,
+      sizeBytes: body.sizeBytes,
+      truncated: true,
+      reason: "network_event_size_limit"
+    };
+  }
+
   // sessionReplay.ts
   var SAMPLE_STORAGE_KEY = "rybbit-replay-sampled";
   function shouldSampleSession(sampleRate) {
@@ -298,6 +1692,9 @@
     constructor(config, userId, sendBatch) {
       this.isRecording = false;
       this.eventBuffer = [];
+      this.eventBufferSizeBytes = 0;
+      this.pendingBatches = [];
+      this.isSendingBatches = false;
       this.config = config;
       this.userId = userId;
       this.sendBatch = sendBatch;
@@ -393,7 +1790,8 @@
           maskInputOptions: this.config.sessionReplayMaskInputOptions ?? { password: true, email: true },
           collectFonts: this.config.sessionReplayCollectFonts ?? true,
           sampling: this.config.sessionReplaySampling ?? defaultSampling,
-          slimDOMOptions: this.config.sessionReplaySlimDOMOptions ?? defaultSlimDOMOptions
+          slimDOMOptions: this.config.sessionReplaySlimDOMOptions ?? defaultSlimDOMOptions,
+          plugins: this.config.networkReplay?.enabled ? [getRecordNetworkPlugin(this.config.networkReplay, this.config.analyticsHost)] : []
         };
         if (this.config.sessionReplayMaskTextSelectors && this.config.sessionReplayMaskTextSelectors.length > 0) {
           recordingOptions.maskTextSelector = this.config.sessionReplayMaskTextSelectors.join(", ");
@@ -421,8 +1819,14 @@
       return this.isRecording;
     }
     addEvent(event) {
+      const eventSizeBytes = getJsonByteSize(event);
+      const maxBatchSizeBytes = this.config.networkReplay?.maxReplayBatchSizeBytes ?? 7e6;
+      if (this.eventBuffer.length > 0 && this.eventBufferSizeBytes + eventSizeBytes > maxBatchSizeBytes) {
+        this.flushEvents();
+      }
       this.eventBuffer.push(event);
-      if (this.eventBuffer.length >= this.config.sessionReplayBatchSize) {
+      this.eventBufferSizeBytes += eventSizeBytes;
+      if (eventSizeBytes >= maxBatchSizeBytes || this.eventBuffer.length >= this.config.sessionReplayBatchSize) {
         this.flushEvents();
       }
     }
@@ -440,13 +1844,67 @@
         this.batchTimer = void 0;
       }
     }
-    async flushEvents() {
+    flushEvents() {
       if (this.eventBuffer.length === 0) {
         return;
       }
-      const events = [...this.eventBuffer];
+      const events = this.eventBuffer;
       this.eventBuffer = [];
-      const batch = {
+      this.eventBufferSizeBytes = 0;
+      this.pendingBatches.push(events);
+      void this.processPendingBatches();
+    }
+    async processPendingBatches() {
+      if (this.isSendingBatches) {
+        return;
+      }
+      this.isSendingBatches = true;
+      try {
+        while (this.pendingBatches.length > 0) {
+          const events = this.pendingBatches.shift();
+          if (!events) {
+            continue;
+          }
+          const unsentEvents = await this.sendEventsWithPayloadFallback(events);
+          if (unsentEvents) {
+            const queuedEvents = this.pendingBatches.flat();
+            this.pendingBatches = [];
+            this.prependEvents([...unsentEvents, ...queuedEvents]);
+            console.warn(`[SessionReplay] ${unsentEvents.length + queuedEvents.length} events queued for retry`);
+            break;
+          }
+        }
+      } finally {
+        this.isSendingBatches = false;
+      }
+    }
+    async sendEventsWithPayloadFallback(events) {
+      try {
+        await this.sendBatch(this.createBatch(events));
+        return void 0;
+      } catch (error) {
+        if (!this.isPayloadTooLargeError(error)) {
+          return events;
+        }
+        if (events.length === 1) {
+          const event = events[0];
+          console.warn(
+            `[SessionReplay] Dropped event type ${String(event.type)} at ${event.timestamp} after HTTP 413 (${getJsonByteSize(event)} bytes)`
+          );
+          return void 0;
+        }
+        const splitIndex = Math.ceil(events.length / 2);
+        const firstBatch = events.slice(0, splitIndex);
+        const secondBatch = events.slice(splitIndex);
+        const unsentFirstBatch = await this.sendEventsWithPayloadFallback(firstBatch);
+        if (unsentFirstBatch) {
+          return [...unsentFirstBatch, ...secondBatch];
+        }
+        return this.sendEventsWithPayloadFallback(secondBatch);
+      }
+    }
+    createBatch(events) {
+      return {
         userId: this.userId,
         events,
         metadata: {
@@ -456,11 +1914,16 @@
           language: navigator.language
         }
       };
-      try {
-        await this.sendBatch(batch);
-      } catch (error) {
-        this.eventBuffer.unshift(...events);
+    }
+    isPayloadTooLargeError(error) {
+      if (error instanceof SessionReplayTransportError) {
+        return error.status === 413;
       }
+      return typeof error === "object" && error !== null && "status" in error && error.status === 413;
+    }
+    prependEvents(events) {
+      this.eventBuffer = [...events, ...this.eventBuffer];
+      this.eventBufferSizeBytes = this.eventBuffer.reduce((sizeBytes, event) => sizeBytes + getJsonByteSize(event), 0);
     }
     // Update user ID when it changes
     updateUserId(userId) {
@@ -707,20 +2170,18 @@
       }
     }
     async sendSessionReplayBatch(batch) {
-      try {
-        await fetch(`${this.config.analyticsHost}/session-replay/record/${this.config.siteId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(batch),
-          mode: "cors",
-          keepalive: false
-          // Disable keepalive for large session replay requests
-        });
-      } catch (error) {
-        console.error("Failed to send session replay batch:", error);
-        throw error;
+      const response = await fetch(`${this.config.analyticsHost}/session-replay/record/${this.config.siteId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(batch),
+        mode: "cors",
+        keepalive: false
+        // Disable keepalive for large session replay requests
+      });
+      if (!response.ok) {
+        throw new SessionReplayTransportError(response.status, response.statusText);
       }
     }
     createBasePayload() {

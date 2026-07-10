@@ -170,3 +170,13 @@ export interface SessionReplayBatch {
     language?: string;
   };
 }
+
+export class SessionReplayTransportError extends Error {
+  public readonly status: number;
+
+  constructor(status: number, statusText: string) {
+    super(`Session replay transport failed with HTTP ${status}${statusText ? ` ${statusText}` : ""}`);
+    this.name = "SessionReplayTransportError";
+    this.status = status;
+  }
+}

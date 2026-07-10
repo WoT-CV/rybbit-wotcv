@@ -4,6 +4,7 @@ import {
   TrackingPayload,
   WebVitalsData,
   SessionReplayBatch,
+  SessionReplayTransportError,
   ButtonClickProperties,
   CopyProperties,
   FormSubmitProperties,
@@ -115,19 +116,18 @@ export class Tracker {
   }
 
   private async sendSessionReplayBatch(batch: SessionReplayBatch): Promise<void> {
-    try {
-      await fetch(`${this.config.analyticsHost}/session-replay/record/${this.config.siteId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(batch),
-        mode: "cors",
-        keepalive: false, // Disable keepalive for large session replay requests
-      });
-    } catch (error) {
-      console.error("Failed to send session replay batch:", error);
-      throw error;
+    const response = await fetch(`${this.config.analyticsHost}/session-replay/record/${this.config.siteId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(batch),
+      mode: "cors",
+      keepalive: false, // Disable keepalive for large session replay requests
+    });
+
+    if (!response.ok) {
+      throw new SessionReplayTransportError(response.status, response.statusText);
     }
   }
 

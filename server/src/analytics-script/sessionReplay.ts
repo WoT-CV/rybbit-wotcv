@@ -1,4 +1,6 @@
-import { ScriptConfig, SessionReplayEvent, SessionReplayBatch } from "./types.js";
+import { getRecordNetworkPlugin, type NetworkReplayRecordPlugin } from "./networkReplay/networkPlugin.js";
+import { getJsonByteSize } from "./networkReplay/utils.js";
+import { ScriptConfig, SessionReplayBatch, SessionReplayEvent, SessionReplayTransportError } from "./types.js";
 
 const SAMPLE_STORAGE_KEY = "rybbit-replay-sampled";
 
@@ -49,6 +51,7 @@ declare global {
         sampling?: Record<string, any>;
         recordCanvas?: boolean;
         collectFonts?: boolean;
+        plugins?: NetworkReplayRecordPlugin[];
       }) => () => void;
     };
   }
@@ -60,6 +63,9 @@ export class SessionReplayRecorder {
   private stopRecordingFn?: () => void;
   private userId: string;
   private eventBuffer: SessionReplayEvent[] = [];
+  private eventBufferSizeBytes: number = 0;
+  private pendingBatches: SessionReplayEvent[][] = [];
+  private isSendingBatches: boolean = false;
   private batchTimer?: number;
   private sendBatch: (batch: SessionReplayBatch) => Promise<void>;
 
@@ -156,21 +162,24 @@ export class SessionReplayRecorder {
         checkoutEveryNms: 60000, // Checkout every 60 seconds
         checkoutEveryNth: 500, // Checkout every 500 events
         // Use config values with fallbacks to defaults
-        blockClass: this.config.sessionReplayBlockClass ?? 'rr-block',
+        blockClass: this.config.sessionReplayBlockClass ?? "rr-block",
         blockSelector: this.config.sessionReplayBlockSelector ?? null,
-        ignoreClass: this.config.sessionReplayIgnoreClass ?? 'rr-ignore',
+        ignoreClass: this.config.sessionReplayIgnoreClass ?? "rr-ignore",
         ignoreSelector: this.config.sessionReplayIgnoreSelector ?? null,
-        maskTextClass: this.config.sessionReplayMaskTextClass ?? 'rr-mask',
+        maskTextClass: this.config.sessionReplayMaskTextClass ?? "rr-mask",
         maskAllInputs: this.config.sessionReplayMaskAllInputs ?? true,
         maskInputOptions: this.config.sessionReplayMaskInputOptions ?? { password: true, email: true },
         collectFonts: this.config.sessionReplayCollectFonts ?? true,
         sampling: this.config.sessionReplaySampling ?? defaultSampling,
         slimDOMOptions: this.config.sessionReplaySlimDOMOptions ?? defaultSlimDOMOptions,
+        plugins: this.config.networkReplay?.enabled
+          ? [getRecordNetworkPlugin(this.config.networkReplay, this.config.analyticsHost)]
+          : [],
       };
 
       // Add custom text masking selectors if configured
       if (this.config.sessionReplayMaskTextSelectors && this.config.sessionReplayMaskTextSelectors.length > 0) {
-        recordingOptions.maskTextSelector = this.config.sessionReplayMaskTextSelectors.join(', ');
+        recordingOptions.maskTextSelector = this.config.sessionReplayMaskTextSelectors.join(", ");
       }
 
       this.stopRecordingFn = window.rrweb.record(recordingOptions);
@@ -205,10 +214,17 @@ export class SessionReplayRecorder {
   }
 
   private addEvent(event: SessionReplayEvent): void {
-    this.eventBuffer.push(event);
+    const eventSizeBytes = getJsonByteSize(event);
+    const maxBatchSizeBytes = this.config.networkReplay?.maxReplayBatchSizeBytes ?? 7_000_000;
 
-    // Auto-flush if buffer is full
-    if (this.eventBuffer.length >= this.config.sessionReplayBatchSize) {
+    if (this.eventBuffer.length > 0 && this.eventBufferSizeBytes + eventSizeBytes > maxBatchSizeBytes) {
+      this.flushEvents();
+    }
+
+    this.eventBuffer.push(event);
+    this.eventBufferSizeBytes += eventSizeBytes;
+
+    if (eventSizeBytes >= maxBatchSizeBytes || this.eventBuffer.length >= this.config.sessionReplayBatchSize) {
       this.flushEvents();
     }
   }
@@ -229,15 +245,78 @@ export class SessionReplayRecorder {
     }
   }
 
-  private async flushEvents(): Promise<void> {
+  private flushEvents(): void {
     if (this.eventBuffer.length === 0) {
       return;
     }
 
-    const events = [...this.eventBuffer];
+    const events = this.eventBuffer;
     this.eventBuffer = [];
+    this.eventBufferSizeBytes = 0;
+    this.pendingBatches.push(events);
+    void this.processPendingBatches();
+  }
 
-    const batch: SessionReplayBatch = {
+  private async processPendingBatches(): Promise<void> {
+    if (this.isSendingBatches) {
+      return;
+    }
+
+    this.isSendingBatches = true;
+
+    try {
+      while (this.pendingBatches.length > 0) {
+        const events = this.pendingBatches.shift();
+        if (!events) {
+          continue;
+        }
+
+        const unsentEvents = await this.sendEventsWithPayloadFallback(events);
+        if (unsentEvents) {
+          const queuedEvents = this.pendingBatches.flat();
+          this.pendingBatches = [];
+          this.prependEvents([...unsentEvents, ...queuedEvents]);
+          console.warn(`[SessionReplay] ${unsentEvents.length + queuedEvents.length} events queued for retry`);
+          break;
+        }
+      }
+    } finally {
+      this.isSendingBatches = false;
+    }
+  }
+
+  private async sendEventsWithPayloadFallback(events: SessionReplayEvent[]): Promise<SessionReplayEvent[] | undefined> {
+    try {
+      await this.sendBatch(this.createBatch(events));
+      return undefined;
+    } catch (error) {
+      if (!this.isPayloadTooLargeError(error)) {
+        return events;
+      }
+
+      if (events.length === 1) {
+        const event = events[0];
+        console.warn(
+          `[SessionReplay] Dropped event type ${String(event.type)} at ${event.timestamp} after HTTP 413 (${getJsonByteSize(event)} bytes)`
+        );
+        return undefined;
+      }
+
+      const splitIndex = Math.ceil(events.length / 2);
+      const firstBatch = events.slice(0, splitIndex);
+      const secondBatch = events.slice(splitIndex);
+      const unsentFirstBatch = await this.sendEventsWithPayloadFallback(firstBatch);
+
+      if (unsentFirstBatch) {
+        return [...unsentFirstBatch, ...secondBatch];
+      }
+
+      return this.sendEventsWithPayloadFallback(secondBatch);
+    }
+  }
+
+  private createBatch(events: SessionReplayEvent[]): SessionReplayBatch {
+    return {
       userId: this.userId,
       events,
       metadata: {
@@ -247,13 +326,19 @@ export class SessionReplayRecorder {
         language: navigator.language,
       },
     };
+  }
 
-    try {
-      await this.sendBatch(batch);
-    } catch (error) {
-      // Re-queue the events for retry since this batch failed
-      this.eventBuffer.unshift(...events);
+  private isPayloadTooLargeError(error: unknown): boolean {
+    if (error instanceof SessionReplayTransportError) {
+      return error.status === 413;
     }
+
+    return typeof error === "object" && error !== null && "status" in error && error.status === 413;
+  }
+
+  private prependEvents(events: SessionReplayEvent[]): void {
+    this.eventBuffer = [...events, ...this.eventBuffer];
+    this.eventBufferSizeBytes = this.eventBuffer.reduce((sizeBytes, event) => sizeBytes + getJsonByteSize(event), 0);
   }
 
   // Update user ID when it changes
