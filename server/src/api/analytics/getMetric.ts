@@ -107,7 +107,7 @@ const getQuery = (request: FastifyRequest<GetMetricRequest>, isCountQuery: boole
       ${filterStatement}
       ${timeStatement}
       AND type = 'custom_event'
-    GROUP BY event_name ORDER BY count desc
+    GROUP BY event_name ORDER BY count desc, event_name asc
     ${limitStatement}
     ${offsetStatement};
   `;
@@ -175,7 +175,7 @@ const getQuery = (request: FastifyRequest<GetMetricRequest>, isCountQuery: boole
           ) as bounce_rate
       FROM TitleStatsWithSessions
       GROUP BY value
-      ORDER BY count DESC
+      ORDER BY count DESC, value ASC
       ${limitStatement}
       ${offsetStatement};
     `;
@@ -270,7 +270,7 @@ const getQuery = (request: FastifyRequest<GetMetricRequest>, isCountQuery: boole
         avg_time_on_page_seconds as time_on_page_seconds,
         round((bounced_sessions / nullIf(unique_sessions, 0)) * 100, 2) as bounce_rate
     FROM PathStats
-    ORDER BY unique_sessions DESC
+    ORDER BY unique_sessions DESC, pathname ASC
     ${limitStatement}
     ${offsetStatement};`;
   }
@@ -345,7 +345,7 @@ const getQuery = (request: FastifyRequest<GetMetricRequest>, isCountQuery: boole
         avg_time_on_page_seconds as time_on_page_seconds,
         round((bounced_sessions / nullIf(unique_sessions, 0)) * 100, 2) as bounce_rate
     FROM PathStats
-    ORDER BY unique_sessions DESC
+    ORDER BY unique_sessions DESC, pathname ASC
     ${limitStatement}
     ${offsetStatement};
     `;
@@ -412,7 +412,7 @@ const getQuery = (request: FastifyRequest<GetMetricRequest>, isCountQuery: boole
         round((countIf(DISTINCT session_id, pageviews_in_session = 1) / nullIf(COUNT(DISTINCT session_id), 0)) * 100, 2) as bounce_rate
     FROM SessionData
     GROUP BY value
-    ORDER BY count desc
+    ORDER BY count desc, value asc
     ${limitStatement}
     ${offsetStatement};
   `;

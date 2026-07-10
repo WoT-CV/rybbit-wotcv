@@ -87,7 +87,7 @@ export async function getMetricLite(
         )
         GROUP BY ${parameter}
       )
-      ORDER BY count DESC
+      ORDER BY count DESC, value ASC
       LIMIT ${limit}
       ${offsetStatement}
     `;
@@ -133,7 +133,7 @@ export async function getMetricLite(
           ${timeStatement}
         GROUP BY pathname
       )
-      ORDER BY count DESC
+      ORDER BY count DESC, value ASC
       LIMIT ${limit}
       ${offsetStatement}
     `;
@@ -156,7 +156,7 @@ export async function getMetricLite(
           ${timeStatement}
         GROUP BY country
       )
-      ORDER BY count DESC
+      ORDER BY count DESC, value ASC
       LIMIT ${limit}
       ${offsetStatement}
     `;
@@ -180,7 +180,7 @@ export async function getMetricLite(
           ${timeStatement}
         GROUP BY device_type
       )
-      ORDER BY count DESC
+      ORDER BY count DESC, value ASC
       LIMIT ${limit}
       ${offsetStatement}
     `;
