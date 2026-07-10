@@ -1515,15 +1515,15 @@ Przed włączeniem surowego network capture trzeba przeanalizować i ewentualnie
 - zachowanie business analytics,
 - aktualizacja testów.
 
-### PR 10 — pełna polonizacja serwisu (ostatni etap prac)
+### PR 10 — pełna obsługa języka polskiego (ostatni etap prac)
 
-- inwentaryzacja wszystkich treści widocznych dla użytkownika, które nadal są po angielsku,
-- pełne tłumaczenie dashboardu, ustawień, Session Replay, Network Replay, autoryzacji, onboardingu i panelu administracyjnego,
-- tłumaczenie komunikatów walidacji i błędów API prezentowanych użytkownikowi,
-- tłumaczenie wiadomości e-mail, pustych stanów, tooltipów, dialogów i komunikatów systemowych,
-- ujednolicenie polskiej terminologii produktowej w całym serwisie,
-- ustawienie kompletnego języka polskiego dla wdrożenia WoT-CV bez fallbacków do angielskiego,
-- końcowe wyszukiwanie statycznych angielskich tekstów i pełny przegląd najważniejszych ścieżek UI.
+- uzupełnienie polskiego katalogu tłumaczeń `client/messages/pl.json`,
+- zachowanie wszystkich obecnych języków i istniejącego przełącznika języka,
+- tłumaczenie nowych treści dashboardu, ustawień, Session Replay, Network Replay, autoryzacji, onboardingu i panelu administracyjnego,
+- tłumaczenie komunikatów walidacji i błędów API, które są prezentowane użytkownikowi przez istniejące klucze i katalogi i18n,
+- tłumaczenie wiadomości e-mail, pustych stanów, tooltipów, dialogów i komunikatów systemowych, jeśli są objęte katalogami i18n,
+- ujednolicenie polskiej terminologii produktowej w katalogu `pl.json`,
+- sprawdzenie, że polski katalog nie ma pustych kluczy ani niezamierzonych angielskich fallbacków.
 
 Nazwy techniczne w kodzie, kontrakty API, identyfikatory eventów i logi niewidoczne dla użytkownika pozostają po angielsku.
 
@@ -1727,9 +1727,9 @@ Zakres:
 - ograniczenie dostępu,
 - akceptacja kosztu storage.
 
-### Faza F — pełna polonizacja serwisu
+### Faza F — pełna obsługa języka polskiego
 
-Jako ostatni etap prac wykonujemy pełne tłumaczenie wszystkich treści widocznych dla użytkownika z języka angielskiego na polski zgodnie z zakresem PR 10. Etap kończy się przeglądem całego serwisu bez fallbacków do angielskiego w polskiej wersji językowej.
+Jako ostatni etap prac uzupełniamy polski katalog tłumaczeń zgodnie z zakresem PR 10. Etap nie usuwa pozostałych języków i kończy się sprawdzeniem, że `client/messages/pl.json` jest kompletny.
 
 ---
 
@@ -1805,5 +1805,5 @@ Projekt jest zakończony, gdy:
 - upstream remote i proces synchronizacji są udokumentowane,
 - rollback jest przetestowany,
 - decyzja o custom request events w `wot-cv-fe` została podjęta na podstawie danych,
-- wszystkie treści widoczne dla użytkownika są dostępne po polsku bez fallbacków do angielskiego,
+- polski katalog tłumaczeń jest kompletny, a pozostałe obsługiwane języki pozostają dostępne,
 - stare funkcje Rybbit i stare replay nie mają regresji.
