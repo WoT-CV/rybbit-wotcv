@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useReplayStore } from "../../replayStore";
-import { calculateActivityPeriods } from "../utils/replayUtils";
+import { calculateReplayTimeline } from "../utils/replayUtils";
 
 interface UseActivityPeriodsProps {
   data: { events: any[] } | undefined;
@@ -8,7 +8,7 @@ interface UseActivityPeriodsProps {
 }
 
 export const useActivityPeriods = ({ data, player }: UseActivityPeriodsProps) => {
-  const { setActivityPeriods } = useReplayStore();
+  const { setActivityPeriods, setReplayCaptureProfile, setReplaySegments } = useReplayStore();
 
   useEffect(() => {
     if (!data?.events || !player) return;
@@ -18,10 +18,12 @@ export const useActivityPeriods = ({ data, player }: UseActivityPeriodsProps) =>
       if (!data.events || data.events.length === 0) return;
 
       const totalDuration = player.getMetaData().totalTime || 0;
-      const periods = calculateActivityPeriods(data.events, totalDuration);
-      setActivityPeriods(periods);
+      const timeline = calculateReplayTimeline(data.events, totalDuration);
+      setActivityPeriods(timeline.activityPeriods);
+      setReplaySegments(timeline.segments);
+      setReplayCaptureProfile(timeline.captureProfile);
     }, 150); // Run after duration is set
 
     return () => clearTimeout(timeoutId);
-  }, [data, player, setActivityPeriods]);
+  }, [data, player, setActivityPeriods, setReplayCaptureProfile, setReplaySegments]);
 };

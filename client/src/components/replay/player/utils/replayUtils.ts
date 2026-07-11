@@ -10,48 +10,113 @@ export interface ActivityPeriod {
   end: number;
 }
 
+export interface ReplaySegment extends ActivityPeriod {
+  duration: number;
+  eventCount: number;
+  isActive: boolean;
+  kind: "active" | "inactive";
+}
+
+export type ReplayCaptureProfile = "posthog-compatible" | "legacy";
+
+export interface ReplayTimeline {
+  activityPeriods: ActivityPeriod[];
+  activeMs: number;
+  captureProfile: ReplayCaptureProfile;
+  captureVersion: number | null;
+  inactiveMs: number;
+  segments: ReplaySegment[];
+}
+
 export interface InactivitySkipTarget extends ActivityPeriod {
   from: number;
   to: number;
   skippedMs: number;
 }
 
-export const MIN_INACTIVITY_SKIP_MS = 250;
-const PRE_ACTIVITY_PADDING_MS = 500;
-const POST_ACTIVITY_PADDING_MS = 1000;
-const MOUSE_MOVE_SOURCE = 1;
-const MOUSE_INTERACTION_SOURCE = 2;
-const INPUT_SOURCE = 5;
-const TOUCH_MOVE_SOURCE = 6;
-const DRAG_SOURCE = 12;
-const USER_POINTER_MOVEMENT_SOURCES = new Set([MOUSE_MOVE_SOURCE, TOUCH_MOVE_SOURCE, DRAG_SOURCE]);
-const USER_POINTER_INTERACTION_TYPES = new Set([0, 1, 2, 3, 4, 7, 8, 9, 10]);
+export const ACTIVITY_THRESHOLD_MS = 5000;
+export const MIN_INACTIVITY_SKIP_MS = ACTIVITY_THRESHOLD_MS;
 
-export const calculateActivityPeriods = (events: any[], totalDuration: number): ActivityPeriod[] => {
-  if (!events || events.length === 0 || totalDuration <= 0) return [];
+const FULL_SNAPSHOT_EVENT_TYPE = 2;
+const INCREMENTAL_EVENT_TYPE = 3;
+const META_EVENT_TYPE = 4;
+const CUSTOM_EVENT_TYPE = 5;
+const POSTHOG_ACTIVE_SOURCES = new Set([1, 2, 3, 4, 5, 6, 7, 12]);
 
-  const firstEventTime = events.find(event => Number.isFinite(event.timestamp))?.timestamp;
-  if (firstEventTime === undefined) return [];
+export const calculateReplayTimeline = (events: any[], totalDuration: number): ReplayTimeline => {
+  const safeDuration = Math.max(0, Number.isFinite(totalDuration) ? totalDuration : 0);
+  const sortedEvents = [...(events ?? [])]
+    .filter(event => Number.isFinite(event?.timestamp))
+    .sort((first, second) => first.timestamp - second.timestamp);
+  const captureVersion = getCaptureVersion(sortedEvents);
+  const captureProfile: ReplayCaptureProfile =
+    captureVersion !== null && captureVersion >= 2 ? "posthog-compatible" : "legacy";
 
-  const periods: ActivityPeriod[] = [
-    {
-      start: 0,
-      end: Math.min(totalDuration, POST_ACTIVITY_PADDING_MS),
-    },
-  ];
+  if (sortedEvents.length === 0 || safeDuration <= 0) {
+    return {
+      activityPeriods: [],
+      activeMs: 0,
+      captureProfile,
+      captureVersion,
+      inactiveMs: safeDuration,
+      segments: safeDuration > 0 ? [createSegment("inactive", 0, safeDuration, 0)] : [],
+    };
+  }
 
-  events
-    .flatMap(event => getUserActivityOffsets(event, firstEventTime, totalDuration))
-    .sort((first, second) => first - second)
-    .forEach(offset => {
-      periods.push({
-        start: Math.max(0, offset - PRE_ACTIVITY_PADDING_MS),
-        end: Math.min(totalDuration, offset + POST_ACTIVITY_PADDING_MS),
-      });
-    });
+  const firstEventTime = sortedEvents[0].timestamp;
+  const rawSegments: ReplaySegment[] = [];
+  let currentSegment: ReplaySegment | null = null;
+  let lastActiveEventOffset: number | null = null;
 
-  return normalizeActivityPeriods(periods);
+  for (const event of sortedEvents) {
+    const offset = clampOffset(event.timestamp - firstEventTime, safeDuration);
+    const eventIsActive = isActiveReplayEvent(event);
+    const startsNewSegment =
+      currentSegment === null ||
+      (eventIsActive && !currentSegment.isActive) ||
+      (currentSegment.isActive &&
+        lastActiveEventOffset !== null &&
+        lastActiveEventOffset + ACTIVITY_THRESHOLD_MS < offset);
+
+    if (startsNewSegment) {
+      if (currentSegment) {
+        rawSegments.push(finalizeSegment(currentSegment));
+      }
+      currentSegment = createSegment(eventIsActive ? "active" : "inactive", offset, offset, 1);
+    } else if (currentSegment) {
+      currentSegment.end = offset;
+      currentSegment.eventCount += 1;
+    }
+
+    if (eventIsActive) {
+      lastActiveEventOffset = offset;
+    }
+  }
+
+  if (currentSegment) {
+    rawSegments.push(finalizeSegment(currentSegment));
+  }
+
+  const segments = fillAndMergeSegments(rawSegments, safeDuration);
+  const activityPeriods = segments
+    .filter(segment => segment.isActive)
+    .map(segment => ({ start: segment.start, end: segment.end }));
+  const activeMs = segments
+    .filter(segment => segment.isActive)
+    .reduce((total, segment) => total + segment.duration, 0);
+
+  return {
+    activityPeriods,
+    activeMs,
+    captureProfile,
+    captureVersion,
+    inactiveMs: Math.max(0, safeDuration - activeMs),
+    segments,
+  };
 };
+
+export const calculateActivityPeriods = (events: any[], totalDuration: number): ActivityPeriod[] =>
+  calculateReplayTimeline(events, totalDuration).activityPeriods;
 
 export function normalizeActivityPeriods(periods: ActivityPeriod[]): ActivityPeriod[] {
   return periods
@@ -118,48 +183,83 @@ export function findNextActivityPeriod(
   return null;
 }
 
-function getUserActivityOffsets(event: any, firstEventTime: number, totalDuration: number): number[] {
-  const eventType = Number(event.type);
-
-  if (eventType !== 3) {
-    return [];
-  }
-
-  const source = Number(event.data?.source);
-
-  if (USER_POINTER_MOVEMENT_SOURCES.has(source)) {
-    return getPointerMovementOffsets(event, firstEventTime, totalDuration);
-  }
-
-  if (source === MOUSE_INTERACTION_SOURCE) {
-    return USER_POINTER_INTERACTION_TYPES.has(Number(event.data?.type))
-      ? [getEventOffset(event.timestamp, firstEventTime, totalDuration)]
-      : [];
-  }
-
-  if (source === INPUT_SOURCE) {
-    return [getEventOffset(event.timestamp, firstEventTime, totalDuration)];
-  }
-
-  return [];
+export function findSegmentAtTime(segments: ReplaySegment[], currentTime: number): ReplaySegment | null {
+  const safeCurrentTime = Math.max(0, currentTime);
+  return (
+    segments.find(
+      (segment, index) =>
+        safeCurrentTime >= segment.start &&
+        (safeCurrentTime < segment.end || (index === segments.length - 1 && safeCurrentTime <= segment.end))
+    ) ?? null
+  );
 }
 
-function getPointerMovementOffsets(event: any, firstEventTime: number, totalDuration: number): number[] {
-  const baseOffset = getEventOffset(event.timestamp, firstEventTime, totalDuration);
-  const positions = Array.isArray(event.data?.positions) ? event.data.positions : [];
+function getCaptureVersion(events: any[]): number | null {
+  const configEvent = events.find(
+    event =>
+      Number(event?.type) === CUSTOM_EVENT_TYPE &&
+      event?.data?.tag === "wotcv/replay-config" &&
+      Number.isFinite(Number(event?.data?.payload?.activityCaptureVersion))
+  );
 
-  if (positions.length === 0) {
-    return [baseOffset];
-  }
-
-  return positions.map((position: any) => {
-    const timeOffset = Number.isFinite(position?.timeOffset) ? Number(position.timeOffset) : 0;
-    return clampOffset(baseOffset + timeOffset, totalDuration);
-  });
+  return configEvent ? Number(configEvent.data.payload.activityCaptureVersion) : null;
 }
 
-function getEventOffset(timestamp: number, firstEventTime: number, totalDuration: number): number {
-  return clampOffset(timestamp - firstEventTime, totalDuration);
+function isActiveReplayEvent(event: any): boolean {
+  const eventType = Number(event?.type);
+  return (
+    eventType === FULL_SNAPSHOT_EVENT_TYPE ||
+    eventType === META_EVENT_TYPE ||
+    (eventType === INCREMENTAL_EVENT_TYPE && POSTHOG_ACTIVE_SOURCES.has(Number(event?.data?.source)))
+  );
+}
+
+function fillAndMergeSegments(rawSegments: ReplaySegment[], totalDuration: number): ReplaySegment[] {
+  const filled: ReplaySegment[] = [];
+
+  for (const segment of rawSegments) {
+    const previous = filled[filled.length - 1];
+    if (!previous && segment.start > 0) {
+      filled.push(createSegment("inactive", 0, segment.start, 0));
+    } else if (previous && segment.start > previous.end) {
+      filled.push(createSegment("inactive", previous.end, segment.start, 0));
+    }
+    filled.push(finalizeSegment(segment));
+  }
+
+  const latest = filled[filled.length - 1];
+  if (!latest && totalDuration > 0) {
+    filled.push(createSegment("inactive", 0, totalDuration, 0));
+  } else if (latest && latest.end < totalDuration) {
+    filled.push(createSegment("inactive", latest.end, totalDuration, 0));
+  }
+
+  return filled.reduce<ReplaySegment[]>((merged, segment) => {
+    const current = merged[merged.length - 1];
+    if (current && current.isActive === segment.isActive && segment.start <= current.end) {
+      current.end = Math.max(current.end, segment.end);
+      current.duration = current.end - current.start;
+      current.eventCount += segment.eventCount;
+      return merged;
+    }
+    merged.push({ ...segment });
+    return merged;
+  }, []);
+}
+
+function createSegment(kind: ReplaySegment["kind"], start: number, end: number, eventCount: number): ReplaySegment {
+  return {
+    start,
+    end,
+    duration: Math.max(0, end - start),
+    eventCount,
+    isActive: kind === "active",
+    kind,
+  };
+}
+
+function finalizeSegment(segment: ReplaySegment): ReplaySegment {
+  return { ...segment, duration: Math.max(0, segment.end - segment.start) };
 }
 
 function clampOffset(offset: number, totalDuration: number): number {
@@ -179,5 +279,5 @@ export const PLAYBACK_SPEEDS = [
 ];
 
 export const CONTROLS_HEIGHT = 101;
-export const SKIP_SECONDS = 10000; // 10 seconds in milliseconds
-export const OVERLAY_TIMEOUT = 800; // milliseconds
+export const SKIP_SECONDS = 10000;
+export const OVERLAY_TIMEOUT = 800;

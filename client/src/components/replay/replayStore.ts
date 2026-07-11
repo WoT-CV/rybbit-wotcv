@@ -1,6 +1,11 @@
 import { create } from "zustand";
 
-import { MIN_INACTIVITY_SKIP_MS, type ActivityPeriod } from "./player/utils/replayUtils";
+import {
+  MIN_INACTIVITY_SKIP_MS,
+  type ActivityPeriod,
+  type ReplayCaptureProfile,
+  type ReplaySegment,
+} from "./player/utils/replayUtils";
 
 interface InactivitySkipNotice {
   from: number;
@@ -36,6 +41,12 @@ export const useReplayStore = create<{
 
   activityPeriods: ActivityPeriod[];
   setActivityPeriods: (periods: ActivityPeriod[]) => void;
+
+  replaySegments: ReplaySegment[];
+  setReplaySegments: (segments: ReplaySegment[]) => void;
+
+  replayCaptureProfile: ReplayCaptureProfile;
+  setReplayCaptureProfile: (profile: ReplayCaptureProfile) => void;
 
   skipInactivityEnabled: boolean;
   setSkipInactivityEnabled: (enabled: boolean) => void;
@@ -79,6 +90,12 @@ export const useReplayStore = create<{
   activityPeriods: [],
   setActivityPeriods: activityPeriods => set({ activityPeriods }),
 
+  replaySegments: [],
+  setReplaySegments: replaySegments => set({ replaySegments }),
+
+  replayCaptureProfile: "legacy",
+  setReplayCaptureProfile: replayCaptureProfile => set({ replayCaptureProfile }),
+
   skipInactivityEnabled: true,
   setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
 
@@ -100,6 +117,8 @@ export const useReplayStore = create<{
       duration: 0,
       playbackSpeed: "1",
       activityPeriods: [],
+      replaySegments: [],
+      replayCaptureProfile: "legacy",
       inactivitySkipNotice: null,
       manualSeekVersion: 0,
     }),
