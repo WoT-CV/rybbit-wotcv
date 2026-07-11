@@ -144,7 +144,8 @@ export class SessionReplayQueryService {
           event_type as type,
           event_data as data,
           event_data_key,
-          batch_index
+          batch_index,
+          sequence_number
         FROM session_replay_events
         WHERE site_id = {siteId:UInt16} 
           AND session_id = {sessionId:String}
@@ -160,6 +161,7 @@ export class SessionReplayQueryService {
       data: string;
       event_data_key: string | null;
       batch_index: number | null;
+      sequence_number: number;
     };
 
     const eventsResults = await processResults<EventRow>(eventsResult);
@@ -175,7 +177,14 @@ export class SessionReplayQueryService {
     });
 
     // Process batches and reconstruct events
-    const events = [];
+    const events: Array<{
+      timestamp: number;
+      type: string;
+      data: any;
+      eventDataKey: string | null;
+      batchIndex: number | null;
+      sequenceNumber: number;
+    }> = [];
 
     // Separate R2 and ClickHouse batches
     const r2Batches: Array<[string, EventRow[]]> = [];
@@ -196,6 +205,9 @@ export class SessionReplayQueryService {
           timestamp: event.timestamp,
           type: event.type,
           data: JSON.parse(event.data),
+          eventDataKey: event.event_data_key,
+          batchIndex: event.batch_index,
+          sequenceNumber: event.sequence_number,
         });
       }
     }
@@ -230,17 +242,39 @@ export class SessionReplayQueryService {
               timestamp: event.timestamp,
               type: event.type,
               data: data[event.batch_index],
+              eventDataKey: event.event_data_key,
+              batchIndex: event.batch_index,
+              sequenceNumber: event.sequence_number,
             });
           }
         }
       }
     }
 
-    // Sort events by timestamp (in case batches were processed out of order)
-    events.sort((a, b) => a.timestamp - b.timestamp);
+    events.sort(
+      (first, second) =>
+        first.timestamp - second.timestamp ||
+        first.sequenceNumber - second.sequenceNumber ||
+        (first.eventDataKey ?? "").localeCompare(second.eventDataKey ?? "") ||
+        (first.batchIndex ?? -1) - (second.batchIndex ?? -1)
+    );
+
+    const seenEvents = new Set<string>();
+    const orderedEvents = events.flatMap(event => {
+      const storageKey = event.eventDataKey
+        ? `r2:${event.eventDataKey}:${event.batchIndex ?? -1}`
+        : `ch:${event.timestamp}:${event.type}:${event.sequenceNumber}:${JSON.stringify(event.data)}`;
+
+      if (seenEvents.has(storageKey)) {
+        return [];
+      }
+
+      seenEvents.add(storageKey);
+      return [{ timestamp: event.timestamp, type: event.type, data: event.data }];
+    });
 
     return {
-      events,
+      events: orderedEvents,
       metadata,
     };
   }
