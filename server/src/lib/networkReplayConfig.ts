@@ -1,20 +1,6 @@
-import type { NetworkReplayConfig } from "@rybbit/shared";
+import { DEFAULT_NETWORK_REPLAY_CONFIG, type NetworkReplayConfig } from "@rybbit/shared";
 
-export const DEFAULT_NETWORK_REPLAY_CONFIG: NetworkReplayConfig = {
-  enabled: false,
-  captureFetch: true,
-  captureXhr: true,
-  capturePerformanceResources: true,
-  captureInitialPerformanceResources: true,
-  captureRequestHeaders: true,
-  captureResponseHeaders: true,
-  captureRequestBody: true,
-  captureResponseBody: true,
-  maxBodySizeBytes: 1_000_000,
-  bodyReadTimeoutMs: 1_000,
-  maxNetworkEventSizeBytes: 2_500_000,
-  maxReplayBatchSizeBytes: 7_000_000,
-};
+export { DEFAULT_NETWORK_REPLAY_CONFIG } from "@rybbit/shared";
 
 export function normalizeNetworkReplayConfig(config?: Partial<NetworkReplayConfig> | null): NetworkReplayConfig {
   return {

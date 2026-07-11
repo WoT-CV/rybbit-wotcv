@@ -1,5 +1,6 @@
 import { createReadStream } from "node:fs";
 
+import { MAX_REPLAY_EXPORT_DURATION_MS } from "@rybbit/shared";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
@@ -13,7 +14,7 @@ const exportOptionsSchema = z
     playbackSpeed: z.union([z.literal(1), z.literal(2), z.literal(4)]).default(1),
   })
   .refine(value => value.endMs > value.startMs, { message: "Export end must be after export start" })
-  .refine(value => value.endMs - value.startMs <= 2 * 60_000, {
+  .refine(value => value.endMs - value.startMs <= MAX_REPLAY_EXPORT_DURATION_MS, {
     message: "Replay export range cannot exceed 2 minutes",
   });
 

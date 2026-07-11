@@ -1,32 +1,150 @@
 /*! Modified WoT-CV fork of Rybbit | GNU AGPL-3.0 | Source: https://github.com/WoT-CV/rybbit-wotcv */
 "use strict";
 (() => {
+  var __create = Object.create;
   var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __getProtoOf = Object.getPrototypeOf;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __commonJS = (cb, mod) => function __require() {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+    // If the importer is in node compatibility mode or this is not an ESM
+    // file that has been converted to a CommonJS file using a Babel-
+    // compatible transform (i.e. "__esModule" has not been set), then set
+    // "default" to the CommonJS "module.exports" for node compatibility.
+    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+    mod
+  ));
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+  // ../../../shared/dist/dashboards.js
+  var require_dashboards = __commonJS({
+    "../../../shared/dist/dashboards.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+    }
+  });
+
+  // ../../../shared/dist/filters.js
+  var require_filters = __commonJS({
+    "../../../shared/dist/filters.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+    }
+  });
+
+  // ../../../shared/dist/networkReplay.js
+  var require_networkReplay = __commonJS({
+    "../../../shared/dist/networkReplay.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.DEFAULT_NETWORK_REPLAY_CONFIG = exports.NETWORK_REPLAY_SCHEMA_VERSION = void 0;
+      exports.NETWORK_REPLAY_SCHEMA_VERSION = 1;
+      exports.DEFAULT_NETWORK_REPLAY_CONFIG = {
+        enabled: false,
+        captureFetch: true,
+        captureXhr: true,
+        capturePerformanceResources: true,
+        captureInitialPerformanceResources: true,
+        captureRequestHeaders: true,
+        captureResponseHeaders: true,
+        captureRequestBody: true,
+        captureResponseBody: true,
+        maxBodySizeBytes: 1e6,
+        bodyReadTimeoutMs: 1e3,
+        maxNetworkEventSizeBytes: 25e5,
+        maxReplayBatchSizeBytes: 7e6
+      };
+    }
+  });
+
+  // ../../../shared/dist/params.js
+  var require_params = __commonJS({
+    "../../../shared/dist/params.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+    }
+  });
+
+  // ../../../shared/dist/time.js
+  var require_time = __commonJS({
+    "../../../shared/dist/time.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+    }
+  });
+
+  // ../../../shared/dist/performance.js
+  var require_performance = __commonJS({
+    "../../../shared/dist/performance.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+    }
+  });
+
+  // ../../../shared/dist/replayExport.js
+  var require_replayExport = __commonJS({
+    "../../../shared/dist/replayExport.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.REPLAY_EXPORT_NETWORK_HOST = exports.MAX_REPLAY_EXPORT_DURATION_MS = void 0;
+      exports.MAX_REPLAY_EXPORT_DURATION_MS = 2 * 6e4;
+      exports.REPLAY_EXPORT_NETWORK_HOST = "api.wot-cv.com";
+    }
+  });
+
+  // ../../../shared/dist/index.js
+  var require_dist = __commonJS({
+    "../../../shared/dist/index.js"(exports) {
+      "use strict";
+      var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o2, m2, k2, k22) {
+        if (k22 === void 0) k22 = k2;
+        var desc = Object.getOwnPropertyDescriptor(m2, k2);
+        if (!desc || ("get" in desc ? !m2.__esModule : desc.writable || desc.configurable)) {
+          desc = { enumerable: true, get: function() {
+            return m2[k2];
+          } };
+        }
+        Object.defineProperty(o2, k22, desc);
+      }) : (function(o2, m2, k2, k22) {
+        if (k22 === void 0) k22 = k2;
+        o2[k22] = m2[k2];
+      }));
+      var __exportStar = exports && exports.__exportStar || function(m2, exports2) {
+        for (var p2 in m2) if (p2 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, p2)) __createBinding(exports2, m2, p2);
+      };
+      Object.defineProperty(exports, "__esModule", { value: true });
+      __exportStar(require_dashboards(), exports);
+      __exportStar(require_filters(), exports);
+      __exportStar(require_networkReplay(), exports);
+      __exportStar(require_params(), exports);
+      __exportStar(require_time(), exports);
+      __exportStar(require_performance(), exports);
+      __exportStar(require_replayExport(), exports);
+    }
+  });
+
   // networkReplay/config.ts
-  var DEFAULT_NETWORK_REPLAY_CONFIG = {
-    enabled: false,
-    captureFetch: true,
-    captureXhr: true,
-    capturePerformanceResources: true,
-    captureInitialPerformanceResources: true,
-    captureRequestHeaders: true,
-    captureResponseHeaders: true,
-    captureRequestBody: true,
-    captureResponseBody: true,
-    maxBodySizeBytes: 1e6,
-    bodyReadTimeoutMs: 1e3,
-    maxNetworkEventSizeBytes: 25e5,
-    maxReplayBatchSizeBytes: 7e6
-  };
+  var import_shared = __toESM(require_dist(), 1);
+  var import_shared2 = __toESM(require_dist(), 1);
   function normalizeNetworkReplayConfig(config) {
     if (!config || typeof config !== "object" || Array.isArray(config)) {
-      return DEFAULT_NETWORK_REPLAY_CONFIG;
+      return import_shared.DEFAULT_NETWORK_REPLAY_CONFIG;
     }
     return {
-      ...DEFAULT_NETWORK_REPLAY_CONFIG,
+      ...import_shared.DEFAULT_NETWORK_REPLAY_CONFIG,
       ...config,
       enabled: config.enabled === true
     };
@@ -224,7 +342,7 @@
       enableWebVitals: false,
       trackErrors: false,
       enableSessionReplay: false,
-      networkReplay: DEFAULT_NETWORK_REPLAY_CONFIG,
+      networkReplay: import_shared2.DEFAULT_NETWORK_REPLAY_CONFIG,
       trackButtonClicks: false,
       trackCopy: false,
       trackFormInteractions: false,

@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
+import { REPLAY_EXPORT_NETWORK_HOST } from "@rybbit/shared";
 import JSZip from "jszip";
 import puppeteer, { type Browser, type Page } from "puppeteer";
 
@@ -13,7 +14,6 @@ const REPLAY_WIDTH = 1280;
 const REPLAY_HEIGHT = 720;
 const ACTIVE_PRE_ROLL_MS = 500;
 const ACTIVE_POST_ROLL_MS = 1000;
-const TARGET_NETWORK_HOST = "api.wot-cv.com";
 const SENSITIVE_NAME_PATTERN = /(authorization|cookie|token|secret|password|api[-_]?key|credential)/i;
 const NETWORK_PLUGIN_NAME = "rrweb/network@1";
 const EXPORT_FILE_NAMES = {
@@ -105,7 +105,7 @@ export class ReplayExportRenderer {
             range: options,
             session: getExportMetadata(metadata),
             network: {
-              host: TARGET_NETWORK_HOST,
+              host: REPLAY_EXPORT_NETWORK_HOST,
               requestCount: requests.length,
             },
           },
@@ -295,7 +295,7 @@ function parseNetworkRequests(events: any[], firstTimestamp: number): ExportNetw
 
 function isTargetNetworkHost(value: string) {
   try {
-    return new URL(value).hostname.toLowerCase() === TARGET_NETWORK_HOST;
+    return new URL(value).hostname.toLowerCase() === REPLAY_EXPORT_NETWORK_HOST;
   } catch {
     return false;
   }
@@ -405,7 +405,7 @@ function redactSensitiveText(value: string) {
 
 function buildNetworkTextLog(requests: ExportNetworkRequest[]) {
   if (requests.length === 0) {
-    return `Brak żądań sieciowych dla hosta ${TARGET_NETWORK_HOST} w wybranym zakresie.\n`;
+    return `Brak żądań sieciowych dla hosta ${REPLAY_EXPORT_NETWORK_HOST} w wybranym zakresie.\n`;
   }
 
   return requests

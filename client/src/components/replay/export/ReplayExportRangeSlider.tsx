@@ -1,11 +1,10 @@
 "use client";
 
 import * as SliderPrimitive from "@radix-ui/react-slider";
+import { MAX_REPLAY_EXPORT_DURATION_MS } from "@rybbit/shared";
 import { useExtracted } from "next-intl";
 
 import { formatTime } from "../player/utils/replayUtils";
-
-const MAX_EXPORT_DURATION_MS = 2 * 60_000;
 
 interface ReplayExportRangeSliderProps {
   duration: number;
@@ -61,7 +60,7 @@ export function ReplayExportRangeSlider({ duration, range, onRangeChange }: Repl
 }
 
 export function createInitialExportRange(currentTime: number, duration: number): [number, number] {
-  const rangeDuration = Math.min(MAX_EXPORT_DURATION_MS, duration);
+  const rangeDuration = Math.min(MAX_REPLAY_EXPORT_DURATION_MS, duration);
   const start = clamp(currentTime - rangeDuration / 2, 0, Math.max(0, duration - rangeDuration));
   return [start, start + rangeDuration];
 }
@@ -73,12 +72,12 @@ function constrainExportRange(
 ): [number, number] {
   const start = clamp(nextRange[0], 0, duration);
   const end = clamp(nextRange[1], start, duration);
-  if (end - start <= MAX_EXPORT_DURATION_MS) return [start, end];
+  if (end - start <= MAX_REPLAY_EXPORT_DURATION_MS) return [start, end];
 
   const startMovedMore = Math.abs(start - currentRange[0]) > Math.abs(end - currentRange[1]);
   return startMovedMore
-    ? [start, Math.min(duration, start + MAX_EXPORT_DURATION_MS)]
-    : [Math.max(0, end - MAX_EXPORT_DURATION_MS), end];
+    ? [start, Math.min(duration, start + MAX_REPLAY_EXPORT_DURATION_MS)]
+    : [Math.max(0, end - MAX_REPLAY_EXPORT_DURATION_MS), end];
 }
 
 function clamp(value: number, min: number, max: number) {

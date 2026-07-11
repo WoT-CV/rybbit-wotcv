@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import type { DashboardConfig, NetworkReplayConfig } from "@rybbit/shared";
+import { DEFAULT_NETWORK_REPLAY_CONFIG, type DashboardConfig, type NetworkReplayConfig } from "@rybbit/shared";
 import {
   boolean,
   check,
@@ -17,22 +17,6 @@ import {
   pgEnum,
   uuid,
 } from "drizzle-orm/pg-core";
-
-const defaultNetworkReplayConfig: NetworkReplayConfig = {
-  enabled: false,
-  captureFetch: true,
-  captureXhr: true,
-  capturePerformanceResources: true,
-  captureInitialPerformanceResources: true,
-  captureRequestHeaders: true,
-  captureResponseHeaders: true,
-  captureRequestBody: true,
-  captureResponseBody: true,
-  maxBodySizeBytes: 1_000_000,
-  bodyReadTimeoutMs: 1_000,
-  maxNetworkEventSizeBytes: 2_500_000,
-  maxReplayBatchSizeBytes: 7_000_000,
-};
 
 // User table (BetterAuth)
 export const user = pgTable(
@@ -99,7 +83,7 @@ export const sites = pgTable(
     sessionReplay: boolean().default(false),
     networkReplayConfig: jsonb("network_replay_config")
       .$type<NetworkReplayConfig>()
-      .default(defaultNetworkReplayConfig)
+      .default(DEFAULT_NETWORK_REPLAY_CONFIG)
       .notNull(),
     webVitals: boolean().default(false),
     trackErrors: boolean().default(false),
