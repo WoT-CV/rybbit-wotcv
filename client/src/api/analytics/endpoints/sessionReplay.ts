@@ -1,3 +1,5 @@
+import type { ReplayExportRange } from "@rybbit/shared";
+
 import { authedFetch } from "../../utils";
 import { CommonApiParams, toQueryParams } from "./types";
 
@@ -76,12 +78,7 @@ export interface GetSessionReplayEventsResponse {
   metadata: SessionReplayMetadata;
 }
 
-export interface ReplayExportOptions {
-  startMs: number;
-  endMs: number;
-  skipInactivity: boolean;
-  playbackSpeed: 1 | 2 | 4;
-}
+export type { ReplayExportRange } from "@rybbit/shared";
 
 export interface ReplayExportStatus {
   exportId: string;
@@ -145,7 +142,7 @@ export async function deleteSessionReplay(site: string | number, sessionId: stri
 export async function createReplayExport(
   site: string | number,
   sessionId: string,
-  options: ReplayExportOptions
+  options: ReplayExportRange
 ): Promise<{ exportId: string }> {
   return authedFetch<{ exportId: string }>(`/sites/${site}/session-replay/${sessionId}/exports`, undefined, {
     method: "POST",

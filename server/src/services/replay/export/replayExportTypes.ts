@@ -1,15 +1,10 @@
-export interface ReplayExportOptions {
-  startMs: number;
-  endMs: number;
-  skipInactivity: boolean;
-  playbackSpeed: 1 | 2 | 4;
-}
+import type { ReplayExportRange } from "@rybbit/shared";
 
 export interface ReplayExportJobData {
   siteId: number;
   sessionId: string;
   requestedBy: string;
-  options: ReplayExportOptions;
+  options: ReplayExportRange;
   cancelRequested?: boolean;
 }
 

@@ -5,12 +5,12 @@ import {
   createReplayExport,
   downloadReplayExport,
   fetchReplayExportStatus,
-  type ReplayExportOptions,
+  type ReplayExportRange,
 } from "../../endpoints";
 
 export function useCreateReplayExport() {
   return useMutation({
-    mutationFn: ({ siteId, sessionId, options }: { siteId: number; sessionId: string; options: ReplayExportOptions }) =>
+    mutationFn: ({ siteId, sessionId, options }: { siteId: number; sessionId: string; options: ReplayExportRange }) =>
       createReplayExport(siteId, sessionId, options),
   });
 }

@@ -69,8 +69,6 @@ export function ReplayExportButton({ disabled, range, sessionId }: ReplayExportB
         options: {
           startMs: range[0],
           endMs: range[1],
-          skipInactivity: true,
-          playbackSpeed: 1,
         },
       });
       setExportId(result.exportId);

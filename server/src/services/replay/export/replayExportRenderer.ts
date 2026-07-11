@@ -77,6 +77,7 @@ export class ReplayExportRenderer {
       browser = await puppeteer.launch({
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
         headless: true,
+        protocolTimeout: 120_000,
         args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
       });
 
@@ -188,9 +189,7 @@ async function recordReplayRange(
   });
 
   try {
-    const windows = options.skipInactivity
-      ? getActivePlaybackWindows(events, options.startMs, options.endMs)
-      : [{ start: options.startMs, end: options.endMs }];
+    const windows = getActivePlaybackWindows(events, options.startMs, options.endMs);
     const playbackWindows = windows.length > 0 ? windows : [{ start: options.startMs, end: options.endMs }];
 
     for (const playbackWindow of playbackWindows) {
@@ -202,11 +201,9 @@ async function recordReplayRange(
           replayer.setConfig({ speed });
           replayer.play(offset);
         },
-        { offset: playbackWindow.start, speed: options.playbackSpeed }
+        { offset: playbackWindow.start, speed: 1 }
       );
-      await new Promise(resolve =>
-        setTimeout(resolve, Math.max(50, (playbackWindow.end - playbackWindow.start) / options.playbackSpeed))
-      );
+      await new Promise(resolve => setTimeout(resolve, Math.max(50, playbackWindow.end - playbackWindow.start)));
       await page.evaluate(offset => (window as any).__replayer.pause(offset), playbackWindow.end);
     }
   } finally {

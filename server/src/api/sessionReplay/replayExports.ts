@@ -1,22 +1,9 @@
 import { createReadStream } from "node:fs";
 
-import { MAX_REPLAY_EXPORT_DURATION_MS } from "@rybbit/shared";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
 
 import { replayExportQueueService } from "../../services/replay/export/replayExportQueueService.js";
-
-const exportOptionsSchema = z
-  .object({
-    startMs: z.number().finite().min(0),
-    endMs: z.number().finite().positive(),
-    skipInactivity: z.boolean().default(true),
-    playbackSpeed: z.union([z.literal(1), z.literal(2), z.literal(4)]).default(1),
-  })
-  .refine(value => value.endMs > value.startMs, { message: "Export end must be after export start" })
-  .refine(value => value.endMs - value.startMs <= MAX_REPLAY_EXPORT_DURATION_MS, {
-    message: "Replay export range cannot exceed 2 minutes",
-  });
+import { replayExportRangeSchema } from "./replayExportSchema.js";
 
 type ReplayExportParams = { siteId: string; sessionId: string };
 type ReplayExportIdParams = ReplayExportParams & { exportId: string };
@@ -25,7 +12,7 @@ export async function createReplayExport(
   request: FastifyRequest<{ Params: ReplayExportParams; Body: unknown }>,
   reply: FastifyReply
 ) {
-  const parsed = exportOptionsSchema.safeParse(request.body);
+  const parsed = replayExportRangeSchema.safeParse(request.body);
   if (!parsed.success) {
     return reply.status(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid replay export options" });
   }

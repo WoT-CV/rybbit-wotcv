@@ -1,6 +1,7 @@
 import { mkdir, readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 
+import type { ReplayExportRange } from "@rybbit/shared";
 import { Job, Queue, Worker } from "bullmq";
 import { nanoid } from "nanoid";
 
@@ -8,7 +9,6 @@ import { createServiceLogger } from "../../../lib/logger/logger.js";
 import { ReplayExportCancelledError, ReplayExportRenderer } from "./replayExportRenderer.js";
 import type {
   ReplayExportJobData,
-  ReplayExportOptions,
   ReplayExportResult,
   ReplayExportStatus,
 } from "./replayExportTypes.js";
@@ -72,7 +72,7 @@ class ReplayExportQueueService {
     siteId: number,
     sessionId: string,
     requestedBy: string,
-    options: ReplayExportOptions
+    options: ReplayExportRange
   ): Promise<string> {
     const jobs = await this.queue.getJobs(["waiting", "active", "delayed"]);
     const userJobCount = jobs.filter(job => job.data.requestedBy === requestedBy).length;

@@ -242,7 +242,7 @@ export type {
   SessionReplayEvent,
   SessionReplayMetadata,
   GetSessionReplayEventsResponse,
-  ReplayExportOptions,
+  ReplayExportRange,
   ReplayExportStatus,
   SessionReplaysParams,
 } from "./sessionReplay";
