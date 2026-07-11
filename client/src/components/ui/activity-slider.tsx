@@ -3,10 +3,11 @@
 import * as React from "react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 
-import { cn } from "@/lib/utils";
-import { getMeaningfulEvents, type MeaningfulEvent, type MeaningfulKind } from "@/components/replay/replayEvents";
 import { NetworkWaterfall } from "@/components/replay/network/NetworkWaterfall";
 import type { ParsedNetworkRequest } from "@/components/replay/network/types";
+import { getReplayActivityOffsets, type ReplaySegment } from "@/components/replay/player/utils/replayUtils";
+import { getMeaningfulEvents, type MeaningfulEvent, type MeaningfulKind } from "@/components/replay/replayEvents";
+import { cn } from "@/lib/utils";
 
 interface ActivityPeriod {
   start: number;
@@ -15,6 +16,7 @@ interface ActivityPeriod {
 
 interface ActivitySliderProps extends React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> {
   activityPeriods?: ActivityPeriod[];
+  replaySegments?: ReplaySegment[];
   duration?: number;
   events?: Array<{ timestamp: number; type: string | number; data?: any }>;
   networkRequests?: ParsedNetworkRequest[];
@@ -35,6 +37,7 @@ const MARKER_COLOR: Record<MeaningfulKind, string> = {
 };
 
 const MAX_MARKERS = 160;
+const ACTIVITY_BUCKETS = 160;
 
 function markerColor(e: MeaningfulEvent): string {
   if (e.kind === "console") {
@@ -76,6 +79,7 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
     {
       className,
       activityPeriods = [],
+      replaySegments = [],
       duration = 100,
       events = [],
       networkRequests = [],
@@ -95,11 +99,29 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
       const sampled = rest.filter((_, i) => i % stride === 0);
       return [...notable, ...sampled].sort((a, b) => a.offset - b.offset);
     }, [events]);
+    const activityDensity = React.useMemo(() => {
+      const buckets = Array.from({ length: ACTIVITY_BUCKETS }, () => 0);
+      for (const offset of getReplayActivityOffsets(events, duration)) {
+        const index = Math.min(ACTIVITY_BUCKETS - 1, Math.floor((offset / Math.max(1, duration)) * ACTIVITY_BUCKETS));
+        buckets[index] += 1;
+      }
+      const maximum = Math.max(1, ...buckets);
+      return buckets.map(count => count / maximum);
+    }, [duration, events]);
 
     return (
       <div className="w-full">
         {/* Event markers */}
         <div className="relative h-6 w-full mb-2">
+          <div className="pointer-events-none absolute inset-0 flex items-end gap-px overflow-hidden">
+            {activityDensity.map((density, index) => (
+              <div
+                key={index}
+                className="min-w-0 flex-1 rounded-t-sm bg-neutral-400/65 dark:bg-neutral-500/70"
+                style={{ height: density === 0 ? 0 : `${Math.max(12, density * 100)}%` }}
+              />
+            ))}
+          </div>
           <NetworkWaterfall
             requests={networkRequests}
             duration={duration}
@@ -134,13 +156,17 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
             <div className="absolute h-full w-full bg-neutral-300 dark:bg-neutral-700" />
 
             {/* Activity periods */}
-            {activityPeriods.map((period, index) => {
+            {(replaySegments.length > 0 ? replaySegments : activityPeriods).map((period, index) => {
               const startPercent = duration > 0 ? (period.start / duration) * 100 : 0;
               const widthPercent = duration > 0 ? ((period.end - period.start) / duration) * 100 : 0;
+              const isActive = "isActive" in period ? period.isActive : true;
               return (
                 <div
                   key={index}
-                  className="absolute h-full bg-neutral-400 dark:bg-neutral-600"
+                  className={cn(
+                    "absolute h-full",
+                    isActive ? "bg-neutral-400 dark:bg-neutral-500" : "bg-neutral-300/40 dark:bg-neutral-800"
+                  )}
                   style={{ left: `${startPercent}%`, width: `${widthPercent}%` }}
                 />
               );

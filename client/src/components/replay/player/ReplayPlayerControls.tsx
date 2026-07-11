@@ -37,6 +37,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
     playbackSpeed,
     player,
     registerManualSeek,
+    replaySegments,
     sessionId,
     setCurrentTime,
     setSkipInactivityEnabled,
@@ -50,6 +51,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
       playbackSpeed: s.playbackSpeed,
       player: s.player,
       registerManualSeek: s.registerManualSeek,
+      replaySegments: s.replaySegments,
       sessionId: s.sessionId,
       setCurrentTime: s.setCurrentTime,
       setSkipInactivityEnabled: s.setSkipInactivityEnabled,
@@ -90,6 +92,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
             max={100}
             step={0.1}
             activityPeriods={activityPeriods}
+            replaySegments={replaySegments}
             duration={duration}
             events={events}
             networkRequests={networkRequests}

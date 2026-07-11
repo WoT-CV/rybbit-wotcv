@@ -194,6 +194,19 @@ export function findSegmentAtTime(segments: ReplaySegment[], currentTime: number
   );
 }
 
+export function getReplayActivityOffsets(events: any[], totalDuration: number): number[] {
+  const sortedEvents = [...(events ?? [])]
+    .filter(event => Number.isFinite(event?.timestamp))
+    .sort((first, second) => first.timestamp - second.timestamp);
+  const firstEventTime = sortedEvents[0]?.timestamp;
+
+  if (firstEventTime === undefined) return [];
+
+  return sortedEvents
+    .filter(isActiveReplayEvent)
+    .map(event => clampOffset(event.timestamp - firstEventTime, totalDuration));
+}
+
 function getCaptureVersion(events: any[]): number | null {
   const configEvent = events.find(
     event =>
