@@ -4,6 +4,7 @@ import { ResponsiveTimeRange } from "@nivo/calendar";
 import type { DashboardCardMapping } from "@rybbit/shared";
 import sortBy from "lodash/sortBy";
 import { useTheme } from "next-themes";
+import { useExtracted } from "next-intl";
 import { useMemo } from "react";
 import type { CustomQueryRow } from "@/api/analytics/endpoints";
 import { ChartTooltip } from "@/components/charts/ChartTooltip";
@@ -17,6 +18,7 @@ type DashboardCalendarProps = {
 };
 
 export function DashboardCalendar({ rows, mapping }: DashboardCalendarProps) {
+  const t = useExtracted();
   const { resolvedTheme } = useTheme();
   const nivoTheme = useNivoTheme();
   const isDark = resolvedTheme === "dark";
@@ -37,8 +39,8 @@ export function DashboardCalendar({ rows, mapping }: DashboardCalendarProps) {
       <ChartEmpty
         message={
           dateColumn
-            ? `Couldn't read dates in "${dateColumn}". Expect YYYY-MM-DD values.`
-            : "Select a date column (YYYY-MM-DD)."
+            ? t('Couldn\'t read dates in "{column}". Expect YYYY-MM-DD values.', { column: dateColumn })
+            : t("Select a date column (YYYY-MM-DD).")
         }
       />
     );

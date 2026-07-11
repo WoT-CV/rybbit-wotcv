@@ -2,6 +2,7 @@
 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Expand } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { ReactNode, useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/basic-tabs";
 import { Button } from "../../../../components/ui/button";
@@ -45,6 +46,7 @@ export function TabbedSectionCard<TValue extends string>({
   dialogClassName,
   renderTabsListEnd,
 }: TabbedSectionCardProps<TValue>) {
+  const t = useExtracted();
   const [value, setValue] = useState<TValue>(defaultValue);
   const [expanded, setExpanded] = useState(false);
 
@@ -82,7 +84,7 @@ export function TabbedSectionCard<TValue extends string>({
               <div className="overflow-x-auto">{renderTabsList(false)}</div>
               <div className="w-7">
                 {canExpand && (
-                  <Button size="smIcon" onClick={() => setExpanded(true)} aria-label="Expand section">
+                  <Button size="smIcon" onClick={() => setExpanded(true)} aria-label={t("Expand section")}>
                     <Expand className="w-4 h-4" />
                   </Button>
                 )}

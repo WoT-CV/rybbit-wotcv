@@ -2,6 +2,7 @@
 
 import type { DashboardCardMapping } from "@rybbit/shared";
 import * as d3 from "d3";
+import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CustomQueryRow } from "@/api/analytics/endpoints";
@@ -14,6 +15,7 @@ type DashboardPieProps = {
 };
 
 export function DashboardPie({ rows, mapping }: DashboardPieProps) {
+  const t = useExtracted();
   const slices = useMemo(() => buildPieData(rows, mapping), [rows, mapping]);
   const format = mapping.valueFormat ?? "number";
 
@@ -60,7 +62,9 @@ export function DashboardPie({ rows, mapping }: DashboardPieProps) {
 
   if (slices.length === 0) {
     return (
-      <ChartEmpty message={mapping.xColumn ? "No positive values to chart." : "Select a slice label and a value column."} />
+      <ChartEmpty
+        message={mapping.xColumn ? t("No positive values to chart.") : t("Select a slice label and a value column.")}
+      />
     );
   }
 

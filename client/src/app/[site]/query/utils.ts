@@ -7,7 +7,7 @@ const DEFAULT_QUERY = "";
 export function createQueryTab(index: number): QueryTab {
   return {
     id: `${Date.now()}-${index}`,
-    name: `Query ${index}`,
+    name: "",
     prompt: "",
     query: DEFAULT_QUERY,
     generationHistory: [],

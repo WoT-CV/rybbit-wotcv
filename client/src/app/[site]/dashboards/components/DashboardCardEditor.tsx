@@ -1,7 +1,8 @@
 "use client";
 
 import type { DashboardCard, DashboardCardMapping, DashboardValueFormat, DashboardVizType } from "@rybbit/shared";
-import { useMemo, useState } from "react";
+import { useExtracted } from "next-intl";
+import { type ReactNode, useMemo, useState } from "react";
 import { useDashboardCard } from "../../../../api/analytics/hooks/useDashboardCard";
 import { Button } from "../../../../components/ui/button";
 import {
@@ -110,8 +111,64 @@ const FORMAT_OPTIONS: { value: DashboardValueFormat; label: string }[] = [
 ];
 
 type EditorMode = "visual" | "json";
+type Translator = (message: string, values?: Record<string, string>) => string;
 
 const VIZ_TYPES: DashboardVizType[] = ["table", "line", "area", "bar", "hbar", "pie", "stat", "map", "calendar"];
+
+function translateVizGroup(t: Translator, label: string) {
+  switch (label) {
+    case "Trends over time":
+      return t("Trends over time");
+    case "Comparisons":
+      return t("Comparisons");
+    case "Single value & table":
+      return t("Single value & table");
+    case "Maps & calendars":
+      return t("Maps & calendars");
+    default:
+      return label;
+  }
+}
+
+function translateVizOption(t: Translator, label: string) {
+  switch (label) {
+    case "Line":
+      return t("Line");
+    case "Area":
+      return t("Area");
+    case "Bar":
+      return t("Bar");
+    case "Bar list":
+      return t("Bar list");
+    case "Donut":
+      return t("Donut");
+    case "Stat":
+      return t("Stat");
+    case "Table":
+      return t("Table");
+    case "Map":
+      return t("Map");
+    case "Calendar":
+      return t("Calendar");
+    default:
+      return label;
+  }
+}
+
+function translateFormatOption(t: Translator, label: string) {
+  switch (label) {
+    case "Number":
+      return t("Number");
+    case "Percent":
+      return t("Percent");
+    case "Duration":
+      return t("Duration");
+    case "Bytes":
+      return t("Bytes");
+    default:
+      return label;
+  }
+}
 
 /**
  * Validate a raw card edited in the JSON view. `id` is always taken from the
@@ -189,24 +246,26 @@ function ColumnSelect({
   columns,
   onChange,
   includeNone,
-  placeholder = "Select column",
+  placeholder,
 }: {
-  label: string;
+  label: ReactNode;
   value: string | undefined;
   columns: string[];
   onChange: (value: string | undefined) => void;
   includeNone?: boolean;
   placeholder?: string;
 }) {
+  const t = useExtracted();
+
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
       <Select value={value ?? NONE_VALUE} onValueChange={next => onChange(next === NONE_VALUE ? undefined : next)}>
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder ?? t("Select column")} />
         </SelectTrigger>
         <SelectContent>
-          {includeNone && <SelectItem value={NONE_VALUE}>None</SelectItem>}
+          {includeNone && <SelectItem value={NONE_VALUE}>{t("None")}</SelectItem>}
           {columns.map(column => (
             <SelectItem key={column} value={column}>
               {column}
@@ -226,9 +285,11 @@ function FormatSelect({
   value: DashboardValueFormat;
   onChange: (value: DashboardValueFormat) => void;
 }) {
+  const t = useExtracted();
+
   return (
     <div className="space-y-1.5">
-      <Label>Value format</Label>
+      <Label>{t("Value format")}</Label>
       <Select value={value} onValueChange={next => onChange(next as DashboardValueFormat)}>
         <SelectTrigger>
           <SelectValue />
@@ -236,7 +297,7 @@ function FormatSelect({
         <SelectContent>
           {FORMAT_OPTIONS.map(option => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {translateFormatOption(t, option.label)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -246,6 +307,7 @@ function FormatSelect({
 }
 
 export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: DashboardCardEditorProps) {
+  const t = useExtracted();
   const [title, setTitle] = useState(card.title);
   const [sql, setSql] = useState(card.sql);
   const [vizType, setVizType] = useState<DashboardVizType>(card.vizType);
@@ -392,7 +454,7 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
           className="h-7 gap-1 px-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
         >
           <Lightbulb className="h-3.5 w-3.5" />
-          Examples
+          {t("Examples")}
           <ChevronDown className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
@@ -411,7 +473,7 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
                     {example.title}
                     {example.beyondPrebuilt && (
                       <span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
-                        advanced
+                        {t("advanced")}
                       </span>
                     )}
                   </span>
@@ -429,23 +491,23 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
     <>
       {kind === "xy" && (
         <>
-          <ColumnSelect label="X axis" value={xColumn} columns={columns} onChange={setXColumn} />
+          <ColumnSelect label={t("X axis")} value={xColumn} columns={columns} onChange={setXColumn} />
           <div className="space-y-1.5">
-            <Label>Y values</Label>
+            <Label>{t("Y values")}</Label>
             <MultiSelect
               options={columns.map(column => ({ value: column, label: column }))}
               value={yColumns}
               onValueChange={setYColumns}
-              placeholder="Select numeric columns"
+              placeholder={t("Select numeric columns")}
             />
           </div>
           <ColumnSelect
-            label="Split by series (optional)"
+            label={t("Split by series (optional)")}
             value={seriesColumn}
             columns={columns}
             onChange={setSeriesColumn}
             includeNone
-            placeholder="None"
+            placeholder={t("None")}
           />
         </>
       )}
@@ -453,18 +515,18 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
       {kind === "categoryValue" && (
         <>
           <ColumnSelect
-            label={vizType === "pie" ? "Slice label" : "Category"}
+            label={vizType === "pie" ? t("Slice label") : t("Category")}
             value={xColumn}
             columns={columns}
             onChange={setXColumn}
           />
           <ColumnSelect
-            label="Value"
+            label={t("Value")}
             value={valueColumn}
             columns={columns}
             onChange={setValueColumn}
             includeNone
-            placeholder="Auto (first numeric)"
+            placeholder={t("Auto (first numeric)")}
           />
           <FormatSelect value={valueFormat} onChange={setValueFormat} />
         </>
@@ -473,20 +535,20 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
       {kind === "stat" && (
         <>
           <ColumnSelect
-            label="Value"
+            label={t("Value")}
             value={valueColumn}
             columns={columns}
             onChange={setValueColumn}
             includeNone
-            placeholder="Auto (first numeric)"
+            placeholder={t("Auto (first numeric)")}
           />
           <ColumnSelect
-            label="Label (optional)"
+            label={t("Label (optional)")}
             value={xColumn}
             columns={columns}
             onChange={setXColumn}
             includeNone
-            placeholder="None"
+            placeholder={t("None")}
           />
           <FormatSelect value={valueFormat} onChange={setValueFormat} />
         </>
@@ -495,18 +557,18 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
       {kind === "map" && (
         <>
           <ColumnSelect
-            label="Country column (ISO-2 codes)"
+            label={t("Country column (ISO-2 codes)")}
             value={countryColumn}
             columns={columns}
             onChange={setCountryColumn}
           />
           <ColumnSelect
-            label="Value"
+            label={t("Value")}
             value={valueColumn}
             columns={columns}
             onChange={setValueColumn}
             includeNone
-            placeholder="Auto (first numeric)"
+            placeholder={t("Auto (first numeric)")}
           />
           <FormatSelect value={valueFormat} onChange={setValueFormat} />
         </>
@@ -514,14 +576,14 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
 
       {kind === "calendar" && (
         <>
-          <ColumnSelect label="Date column" value={dateColumn} columns={columns} onChange={setDateColumn} />
+          <ColumnSelect label={t("Date column")} value={dateColumn} columns={columns} onChange={setDateColumn} />
           <ColumnSelect
-            label="Value"
+            label={t("Value")}
             value={valueColumn}
             columns={columns}
             onChange={setValueColumn}
             includeNone
-            placeholder="Auto (first numeric)"
+            placeholder={t("Auto (first numeric)")}
           />
           <FormatSelect value={valueFormat} onChange={setValueFormat} />
         </>
@@ -538,12 +600,12 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
       >
         {/* Header: the card title is the heading, edited in place. */}
         <div className="flex shrink-0 items-center gap-2 border-b border-neutral-150 px-4 py-2.5 dark:border-neutral-850">
-          <SheetTitle className="sr-only">Edit card</SheetTitle>
+          <SheetTitle className="sr-only">{t("Edit card")}</SheetTitle>
           <input
             value={title}
             onChange={event => setTitle(event.target.value)}
-            placeholder="Untitled card"
-            aria-label="Card title"
+            placeholder={t("Untitled card")}
+            aria-label={t("Card title")}
             disabled={mode === "json"}
             className="min-w-0 flex-1 rounded-md bg-transparent px-2 py-1 text-base font-semibold text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 hover:bg-neutral-100 focus:bg-neutral-100 focus-visible:ring-1 focus-visible:ring-neutral-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent dark:text-neutral-50 dark:placeholder:text-neutral-600 dark:hover:bg-neutral-900 dark:focus:bg-neutral-900 dark:focus-visible:ring-neutral-700"
           />
@@ -563,12 +625,12 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
                 )}
               >
                 {value === "json" && <Braces className="h-3.5 w-3.5" />}
-                {value === "visual" ? "Visual" : "JSON"}
+                {value === "visual" ? t("Visual") : "JSON"}
               </button>
             ))}
           </div>
           <SheetClose asChild>
-            <Button variant="ghost" size="smIcon" aria-label="Close editor" className="shrink-0 text-neutral-500">
+            <Button variant="ghost" size="smIcon" aria-label={t("Close editor")} className="shrink-0 text-neutral-500">
               <X className="h-4 w-4" />
             </Button>
           </SheetClose>
@@ -578,10 +640,10 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
           /* Raw card object: the full escape hatch, including gridPos. */
           <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
             <div className="flex shrink-0 items-center justify-between gap-2">
-              <span className="text-xs font-medium text-neutral-500">Card JSON</span>
+              <span className="text-xs font-medium text-neutral-500">{t("Card JSON")}</span>
               <span className="text-[11px] text-neutral-500">
-                Edit any field. <code className="font-mono text-neutral-600 dark:text-neutral-400">id</code> stays
-                fixed.
+                {t("Edit any field.")}{" "}
+                <code className="font-mono text-neutral-600 dark:text-neutral-400">id</code> {t("stays fixed.")}
               </span>
             </div>
             <div className="min-h-0 flex-1">
@@ -591,7 +653,7 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
                   setJsonText(next);
                   setJsonError(parseCardJson(next, card.id).error || null);
                 }}
-                ariaLabel="Card JSON"
+                ariaLabel={t("Card JSON")}
                 height="100%"
               />
             </div>
@@ -600,7 +662,9 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
                 {jsonError}
               </p>
             ) : (
-              <p className="shrink-0 text-[11px] text-neutral-500">Valid. Switch to Visual or save to apply.</p>
+              <p className="shrink-0 text-[11px] text-neutral-500">
+                {t("Valid. Switch to Visual or save to apply.")}
+              </p>
             )}
           </div>
         ) : (
@@ -618,43 +682,45 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
                 headerActions={examplesMenu}
               />
               <p className="shrink-0 text-[11px] leading-relaxed text-neutral-500">
-                Queries read from{" "}
-                <code className="font-mono text-neutral-600 dark:text-neutral-400">scoped_events</code>, scoped to the
-                dashboard time range. Use{" "}
-                <code className="font-mono text-neutral-600 dark:text-neutral-400">{"{{bucket}}"}</code> for the
-                selected granularity.
+                {t("Queries read from")}{" "}
+                <code className="font-mono text-neutral-600 dark:text-neutral-400">scoped_events</code>
+                {t(", scoped to the dashboard time range. Use")}{" "}
+                <code className="font-mono text-neutral-600 dark:text-neutral-400">{"{{bucket}}"}</code>{" "}
+                {t("for the selected granularity.")}
               </p>
               {error && (
                 <p className="shrink-0 rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-                  {error instanceof Error ? error.message : "Query failed"}
+                  {error instanceof Error ? error.message : t("Query failed")}
                 </p>
               )}
 
               <div className="flex min-h-0 flex-1 flex-col gap-2">
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-xs font-medium text-neutral-500">Results</span>
+                  <span className="text-xs font-medium text-neutral-500">{t("Results")}</span>
                   {previewSql && !error && isFetching && (
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-400" />
                   )}
                   {previewSql && !error && !isFetching && (
                     <span className="text-[11px] text-neutral-500">
-                      {data?.meta.rowCount ?? 0} {data?.meta.rowCount === 1 ? "row" : "rows"}
+                      {data?.meta.rowCount === 1
+                        ? t("{count} row", { count: String(data?.meta.rowCount ?? 0) })
+                        : t("{count} rows", { count: String(data?.meta.rowCount ?? 0) })}
                     </span>
                   )}
                   {truncated && (
                     <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-                      capped at {data?.meta.maxRows}
+                      {t("capped at {count}", { count: String(data?.meta.maxRows) })}
                     </span>
                   )}
                 </div>
                 <div className="flex h-72 flex-col overflow-hidden rounded-lg border border-neutral-150 lg:h-auto lg:min-h-0 lg:flex-1 dark:border-neutral-850">
                   {!previewSql ? (
                     <div className="flex h-full flex-col items-center justify-center gap-1 px-6 text-center">
-                      <span className="text-xs text-neutral-500">Run the query to see results</span>
+                      <span className="text-xs text-neutral-500">{t("Run the query to see results")}</span>
                     </div>
                   ) : error ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-xs text-neutral-500">
-                      Fix the query above to see results.
+                      {t("Fix the query above to see results.")}
                     </div>
                   ) : isFetching && rows.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
@@ -662,7 +728,7 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
                     </div>
                   ) : rows.length === 0 ? (
                     <div className="flex h-full items-center justify-center text-xs text-neutral-500">
-                      No rows returned
+                      {t("No rows returned")}
                     </div>
                   ) : (
                     <ResultsTable columns={columns} rows={sortedRows} sort={activeSort} onSortChange={setSort} />
@@ -674,7 +740,7 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
             {/* Right — chart type, live preview, column mapping */}
             <div className="flex min-h-0 flex-col gap-4 p-4 lg:overflow-y-auto">
               <div className="flex flex-col gap-1.5">
-                <Label>Chart type</Label>
+                <Label>{t("Chart type")}</Label>
                 <Select value={vizType} onValueChange={next => setVizType(next as DashboardVizType)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -682,14 +748,14 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
                   <SelectContent>
                     {VIZ_GROUPS.map(group => (
                       <SelectGroup key={group.label}>
-                        <SelectLabel>{group.label}</SelectLabel>
+                        <SelectLabel>{translateVizGroup(t, group.label)}</SelectLabel>
                         {group.options.map(option => {
                           const Icon = option.icon;
                           return (
                             <SelectItem key={option.value} value={option.value}>
                               <span className="flex items-center gap-2">
                                 <Icon className="h-4 w-4" />
-                                {option.label}
+                                {translateVizOption(t, option.label)}
                               </span>
                             </SelectItem>
                           );
@@ -701,15 +767,15 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-neutral-500">Preview</span>
+                <span className="text-xs font-medium text-neutral-500">{t("Preview")}</span>
                 <div className="h-72 overflow-hidden rounded-lg border border-neutral-150 p-1 dark:border-neutral-850">
                   {vizType === "table" ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-xs text-neutral-500">
-                      Table cards render the results from the left.
+                      {t("Table cards render the results from the left.")}
                     </div>
                   ) : rows.length === 0 ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-xs text-neutral-500">
-                      {previewSql ? "No rows to visualize." : "Run the query to preview the chart."}
+                      {previewSql ? t("No rows to visualize.") : t("Run the query to preview the chart.")}
                     </div>
                   ) : (
                     <div key={vizType} className="h-full animate-in fade-in-0 duration-200 motion-reduce:animate-none">
@@ -721,12 +787,12 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
 
               {kind === "none" ? (
                 <p className="text-xs text-neutral-500">
-                  Table cards show every result column. Pick another chart type to map columns.
+                  {t("Table cards show every result column. Pick another chart type to map columns.")}
                 </p>
               ) : (
                 <div className="flex flex-col gap-3">
                   <span className="text-xs font-medium text-neutral-500">
-                    {columns.length === 0 ? "Map columns (run the query first)" : "Map columns"}
+                    {columns.length === 0 ? t("Map columns (run the query first)") : t("Map columns")}
                   </span>
                   {mappingControls}
                 </div>
@@ -738,10 +804,10 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
         {/* Footer: actions pinned so they stay reachable regardless of scroll. */}
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-neutral-150 px-4 py-3 dark:border-neutral-850">
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button onClick={handleSave} disabled={mode === "json" && !!jsonError}>
-            Save card
+            {t("Save card")}
           </Button>
         </div>
       </SheetContent>

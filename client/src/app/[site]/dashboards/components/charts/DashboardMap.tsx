@@ -13,6 +13,7 @@ import VectorSource from "ol/source/Vector";
 import { Fill, Stroke, Style } from "ol/style";
 import View from "ol/View";
 import { useTheme } from "next-themes";
+import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CustomQueryRow } from "@/api/analytics/endpoints";
@@ -32,6 +33,7 @@ const EMPTY_FILL = "rgba(140, 140, 140, 0.15)";
 const EMPTY_STROKE = "rgba(140, 140, 140, 0.3)";
 
 export function DashboardMap({ rows, mapping }: DashboardMapProps) {
+  const t = useExtracted();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const format = mapping.valueFormat ?? "number";
@@ -137,9 +139,9 @@ export function DashboardMap({ rows, mapping }: DashboardMapProps) {
   // Keep the map container mounted (the init effect runs once) and surface
   // configuration problems as an overlay instead of unmounting.
   const overlay = !mapping.countryColumn
-    ? "Select a country column with 2-letter ISO codes (US, GB)."
+    ? t("Select a country column with 2-letter ISO codes (US, GB).")
     : byCode.size === 0
-      ? "No rows matched 2-letter country codes. Use ISO-2 codes (US, GB), not full names."
+      ? t("No rows matched 2-letter country codes. Use ISO-2 codes (US, GB), not full names.")
       : null;
 
   return (
@@ -164,7 +166,7 @@ export function DashboardMap({ rows, mapping }: DashboardMapProps) {
               {tooltip.name}
             </div>
             <div className="tabular-nums text-neutral-600 dark:text-neutral-300">
-              {tooltip.value !== null ? formatValue(tooltip.value, format) : "No data"}
+              {tooltip.value !== null ? formatValue(tooltip.value, format) : t("No data")}
             </div>
           </div>,
           document.body

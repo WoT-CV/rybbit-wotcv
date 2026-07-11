@@ -61,7 +61,7 @@ const FunnelRowSkeleton = () => (
 
 export default function FunnelsPage() {
   const t = useExtracted();
-  useSetPageTitle("Funnels");
+  useSetPageTitle(t("Funnels"));
 
   const { site } = useStore();
   const { data: funnels, isLoading, error } = useGetFunnels(site);
@@ -85,7 +85,7 @@ export default function FunnelsPage() {
   }, [funnels, searchQuery]);
 
   return (
-    <DisabledOverlay message="Funnels" featurePath="funnels">
+    <DisabledOverlay message={t("Funnels")} featurePath="funnels">
       <div className="p-2 md:p-4 max-w-[1300px] mx-auto space-y-3">
         <SubHeader availableFilters={GOALS_PAGE_FILTERS} />
         <div className="flex justify-between items-center">

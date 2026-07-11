@@ -5,6 +5,7 @@ import "react-resizable/css/styles.css";
 
 import type { DashboardCard } from "@rybbit/shared";
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, Loader2, Pencil, Plus } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Responsive, WidthProvider, type Layout } from "react-grid-layout";
@@ -38,7 +39,8 @@ const GRID_COLS = { lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 };
 const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
 
 export default function DashboardDetailPage() {
-  useSetPageTitle("Dashboard");
+  const t = useExtracted();
+  useSetPageTitle(t("Dashboard"));
   const params = useParams<{ site: string; dashboardId: string }>();
   const siteId = Number(params.site);
   const dashboardId = Number(params.dashboardId);
@@ -122,7 +124,7 @@ export default function DashboardDetailPage() {
   const handleCreateCard = useCallback(
     (example: DashboardExample | null) => {
       if (workingCards.length >= MAX_CARDS_PER_DASHBOARD) {
-        toast.error(`A dashboard can have at most ${MAX_CARDS_PER_DASHBOARD} cards`);
+        toast.error(t("A dashboard can have at most {count} cards", { count: String(MAX_CARDS_PER_DASHBOARD) }));
         setAddingCard(false);
         return;
       }
@@ -138,13 +140,13 @@ export default function DashboardDetailPage() {
         setEditingCardId(newCard.id);
       }
     },
-    [workingCards, flashNewCard]
+    [workingCards, flashNewCard, t]
   );
 
   const handleCloneCard = useCallback(
     (cardId: string) => {
       if (workingCards.length >= MAX_CARDS_PER_DASHBOARD) {
-        toast.error(`A dashboard can have at most ${MAX_CARDS_PER_DASHBOARD} cards`);
+        toast.error(t("A dashboard can have at most {count} cards", { count: String(MAX_CARDS_PER_DASHBOARD) }));
         return;
       }
       const index = workingCards.findIndex(card => card.id === cardId);
@@ -156,7 +158,7 @@ export default function DashboardDetailPage() {
       setDirty(true);
       flashNewCard(newCard.id);
     },
-    [workingCards, flashNewCard]
+    [workingCards, flashNewCard, t]
   );
 
   const handleRemoveCard = (cardId: string) => {
@@ -208,13 +210,13 @@ export default function DashboardDetailPage() {
         name: workingName,
         config: { cards: workingCards },
       });
-      toast.success("Dashboard saved");
+      toast.success(t("Dashboard saved"));
       resetWorkingCopy();
       setEditMode(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Couldn't save dashboard");
+      toast.error(error instanceof Error ? error.message : t("Couldn't save dashboard"));
     }
-  }, [updateDashboard, siteId, dashboardId, workingName, workingCards, resetWorkingCopy]);
+  }, [updateDashboard, siteId, dashboardId, workingName, workingCards, resetWorkingCopy, t]);
 
   // Warn before a full reload / tab close with unsaved edits.
   useEffect(() => {
@@ -313,21 +315,21 @@ export default function DashboardDetailPage() {
   }
 
   if (!dashboard) {
-    return <div className="p-4 text-sm text-neutral-500">Dashboard not found.</div>;
+    return <div className="p-4 text-sm text-neutral-500">{t("Dashboard not found.")}</div>;
   }
 
   return (
     <div className="mx-auto flex max-w-[1600px] flex-col gap-3 p-2 md:p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <Button size="smIcon" variant="ghost" onClick={handleBack} aria-label="Back to dashboards">
+          <Button size="smIcon" variant="ghost" onClick={handleBack} aria-label={t("Back to dashboards")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           {editMode ? (
             <input
               value={workingName}
-              placeholder="Dashboard name"
-              aria-label="Dashboard name"
+              placeholder={t("Dashboard name")}
+              aria-label={t("Dashboard name")}
               onChange={event => {
                 setName(event.target.value);
                 setDirty(true);
@@ -348,7 +350,7 @@ export default function DashboardDetailPage() {
               onClick={goBack}
               disabled={time.mode === "past-minutes"}
               className="h-8 w-8 rounded-r-none"
-              aria-label="Previous date range"
+              aria-label={t("Previous date range")}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -358,7 +360,7 @@ export default function DashboardDetailPage() {
               onClick={goForward}
               disabled={!canGoForward(time)}
               className="-ml-px h-8 w-8 rounded-l-none"
-              aria-label="Next date range"
+              aria-label={t("Next date range")}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -372,13 +374,17 @@ export default function DashboardDetailPage() {
                 size="sm"
                 onClick={handleAddCard}
                 disabled={atCardLimit}
-                title={atCardLimit ? `A dashboard can have at most ${MAX_CARDS_PER_DASHBOARD} cards` : undefined}
+                title={
+                  atCardLimit
+                    ? t("A dashboard can have at most {count} cards", { count: String(MAX_CARDS_PER_DASHBOARD) })
+                    : undefined
+                }
               >
                 <Plus className="h-4 w-4" />
-                Add card
+                {t("Add card")}
               </Button>
               <Button variant="ghost" size="sm" onClick={handleCancel}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button size="sm" onClick={handleSave} disabled={!dirty || updateDashboard.isPending}>
                 {updateDashboard.isPending ? (
@@ -386,13 +392,13 @@ export default function DashboardDetailPage() {
                 ) : (
                   <Check className="h-4 w-4" />
                 )}
-                Save
+                {t("Save")}
               </Button>
             </>
           ) : (
             <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
               <Pencil className="h-4 w-4" />
-              Edit
+              {t("Edit")}
             </Button>
           )}
         </div>
@@ -401,15 +407,16 @@ export default function DashboardDetailPage() {
       {workingCards.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-neutral-200 py-20 text-center dark:border-neutral-800">
           <div className="max-w-sm space-y-1">
-            <div className="font-medium text-neutral-900 dark:text-neutral-100">This dashboard is empty</div>
+            <div className="font-medium text-neutral-900 dark:text-neutral-100">{t("This dashboard is empty")}</div>
             <p className="text-sm text-neutral-500">
-              Add a card, write a query (or pick an example), and choose how to visualize it. Cards respect the time
-              range above and can be dragged and resized.
+              {t(
+                "Add a card, write a query (or pick an example), and choose how to visualize it. Cards respect the time range above and can be dragged and resized."
+              )}
             </p>
           </div>
           <Button variant="outline" onClick={handleAddCard}>
             <Plus className="h-4 w-4" />
-            Add a card
+            {t("Add a card")}
           </Button>
         </div>
       ) : (
@@ -472,18 +479,18 @@ export default function DashboardDetailPage() {
       <AlertDialog open={pendingRemoveId !== null} onOpenChange={open => !open && setPendingRemoveId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove this card?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Remove this card?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {(() => {
                 const title = workingCards.find(card => card.id === pendingRemoveId)?.title?.trim();
                 return title
-                  ? `"${title}" will be removed from this dashboard. You can still cancel before saving.`
-                  : "This card will be removed from this dashboard. You can still cancel before saving.";
+                  ? t('"{title}" will be removed from this dashboard. You can still cancel before saving.', { title })
+                  : t("This card will be removed from this dashboard. You can still cancel before saving.");
               })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep card</AlertDialogCancel>
+            <AlertDialogCancel>{t("Keep card")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -491,7 +498,7 @@ export default function DashboardDetailPage() {
                 setPendingRemoveId(null);
               }}
             >
-              Remove card
+              {t("Remove card")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -508,13 +515,13 @@ export default function DashboardDetailPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Discard unsaved changes?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              You have edits that haven&apos;t been saved. Leaving now will revert them.
+              {t("You have edits that haven't been saved. Leaving now will revert them.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogCancel>{t("Keep editing")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -524,7 +531,7 @@ export default function DashboardDetailPage() {
                 action();
               }}
             >
-              Discard changes
+              {t("Discard changes")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

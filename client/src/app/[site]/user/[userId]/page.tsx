@@ -30,8 +30,8 @@ import { getUserDisplayName } from "../../../../lib/utils";
 const LIMIT = 25;
 
 export default function UserPage() {
-  useSetPageTitle("User");
   const t = useExtracted();
+  useSetPageTitle(t("User"));
 
   const { userId: rawUserId, site } = useParams();
   const userId = (() => {

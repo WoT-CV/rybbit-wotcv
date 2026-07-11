@@ -15,8 +15,8 @@ import type { QueryTab } from "./types";
 import { createQueryTab, formatQuery, getColumns, getErrorMessage, isAbortError, sortRows } from "./utils";
 
 export default function QueryPage() {
-  useSetPageTitle("Query");
   const t = useExtracted();
+  useSetPageTitle(t("Query"));
   const params = useParams<{ site: string }>();
   const siteId = Number(params.site);
   const { data: siteMetadata, isLoading: isLoadingSite } = useGetSite(siteId);

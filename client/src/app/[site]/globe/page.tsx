@@ -1,6 +1,7 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useExtracted } from "next-intl";
 import { useEffect, useRef } from "react";
 import "./globe.css";
 
@@ -30,7 +31,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { WINDOW_SIZE_OPTIONS } from "./timelineUtils";
 
 export default function GlobePage() {
-  useSetPageTitle("Globe");
+  const t = useExtracted();
+  useSetPageTitle(t("Globe"));
   const mapContainer = useRef<HTMLDivElement>(null);
   const { windowSize, setManualWindowSize } = useTimelineStore(
     useShallow(s => ({ windowSize: s.windowSize, setManualWindowSize: s.setManualWindowSize }))

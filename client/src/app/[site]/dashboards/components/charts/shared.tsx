@@ -2,6 +2,7 @@
 
 import { ChartTooltip } from "@/components/charts/ChartTooltip";
 import { formatter } from "@/lib/utils";
+import { useExtracted } from "next-intl";
 import { CARD_PALETTE } from "../../utils";
 
 export type CardSeries = { key: string; color: string; label: string };
@@ -65,10 +66,12 @@ export function CardLegend({ series }: { series: CardSeries[] }) {
   );
 }
 
-export function ChartEmpty({ message = "Configure chart columns to render this card" }: { message?: string }) {
+export function ChartEmpty({ message }: { message?: string }) {
+  const t = useExtracted();
+
   return (
     <div className="flex h-full items-center justify-center px-3 text-center text-xs text-neutral-500">
-      {message}
+      {message ?? t("Configure chart columns to render this card")}
     </div>
   );
 }

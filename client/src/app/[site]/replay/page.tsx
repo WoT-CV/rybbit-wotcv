@@ -20,7 +20,7 @@ import { ReplayList } from "./components/ReplayList";
 
 export default function SessionReplayPage() {
   const t = useExtracted();
-  useSetPageTitle("Session Replay");
+  useSetPageTitle(t("Session Replay"));
 
   const { minDuration, sessionId } = useReplayStore(
     useShallow(s => ({ minDuration: s.minDuration, sessionId: s.sessionId }))
@@ -37,7 +37,7 @@ export default function SessionReplayPage() {
   const [playerRef, { width: playerWidth, height: playerHeight }] = useMeasure();
 
   return (
-    <DisabledOverlay message="Replay" featurePath="replay" requiredPlan="pro">
+    <DisabledOverlay message={t("Replay")} featurePath="replay" requiredPlan="pro">
       <div className="flex flex-col h-dvh overflow-hidden p-2 md:p-4 gap-3 max-w-[2000px] mx-auto">
         <div className="shrink-0">
           <SubHeader availableFilters={SESSION_REPLAY_PAGE_FILTERS} />

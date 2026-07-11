@@ -4,6 +4,7 @@ import { getTimezone } from "@/lib/store";
 import NumberFlow from "@number-flow/react";
 import { Info } from "lucide-react";
 import { DateTime } from "luxon";
+import { useExtracted } from "next-intl";
 import { memo } from "react";
 import { OutboundLink } from "../../../../api/analytics/endpoints";
 import { Favicon } from "../../../../components/Favicon";
@@ -71,6 +72,8 @@ interface OutboundLinksListProps {
 }
 
 export function OutboundLinksList({ outboundLinks, isLoading, size = "small" }: OutboundLinksListProps) {
+  const t = useExtracted();
+
   if (isLoading) {
     return <OutboundLinksListSkeleton size={size} />;
   }
@@ -79,7 +82,7 @@ export function OutboundLinksList({ outboundLinks, isLoading, size = "small" }: 
     return (
       <div className="text-neutral-500 dark:text-neutral-300 w-full text-center mt-6 flex flex-row gap-2 items-center justify-center">
         <Info className="w-5 h-5" />
-        No Data
+        {t("No Data")}
       </div>
     );
   }

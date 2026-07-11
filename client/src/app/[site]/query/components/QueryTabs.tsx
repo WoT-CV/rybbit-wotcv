@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, Loader2, Plus, X } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { Button } from "../../../../components/ui/button";
 import { cn } from "../../../../lib/utils";
 import type { QueryTab } from "../types";
@@ -24,6 +25,8 @@ export function QueryTabs({
   onCloseTab,
   onAddTab,
 }: QueryTabsProps) {
+  const t = useExtracted();
+
   return (
     <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-neutral-150 bg-neutral-50 p-1 dark:border-neutral-850 dark:bg-neutral-950">
       {tabs.map((tab, index) => {
@@ -45,7 +48,7 @@ export function QueryTabs({
             <span className="flex min-w-0 items-center gap-1.5">
               {tabIsBusy && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-neutral-400" />}
               {tab.resultError && !tabIsBusy && <AlertCircle className="h-3 w-3 shrink-0 text-red-500" />}
-              <span className="truncate">{tab.name || `Query ${index + 1}`}</span>
+              <span className="truncate">{tab.name || t("Query {index}", { index: String(index + 1) })}</span>
             </span>
             {tabs.length > 1 && (
               <span
@@ -56,7 +59,7 @@ export function QueryTabs({
                   onCloseTab(tab.id);
                 }}
                 className="rounded p-0.5 text-neutral-400 opacity-70 hover:bg-neutral-100 hover:text-neutral-700 group-hover:opacity-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
-                aria-label="Close query tab"
+                aria-label={t("Close query tab")}
               >
                 <X className="h-3 w-3" />
               </span>
@@ -64,7 +67,14 @@ export function QueryTabs({
           </button>
         );
       })}
-      <Button type="button" size="smIcon" variant="ghost" onClick={onAddTab} className="shrink-0" aria-label="New query">
+      <Button
+        type="button"
+        size="smIcon"
+        variant="ghost"
+        onClick={onAddTab}
+        className="shrink-0"
+        aria-label={t("New query")}
+      >
         <Plus className="h-4 w-4" />
       </Button>
     </div>

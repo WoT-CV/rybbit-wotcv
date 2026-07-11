@@ -2,6 +2,7 @@
 
 import { LayoutGrid, Loader2, Plus, Trash2 } from "lucide-react";
 import { DateTime } from "luxon";
+import { useExtracted } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCreateDashboard, useDeleteDashboard, useGetDashboards } from "../../../api/analytics/hooks/useDashboards";
@@ -28,7 +29,8 @@ function relativeUpdated(updatedAt: string | null | undefined): string | null {
 }
 
 export default function DashboardsListPage() {
-  useSetPageTitle("Dashboards");
+  const t = useExtracted();
+  useSetPageTitle(t("Dashboards"));
   const params = useParams<{ site: string }>();
   const siteId = Number(params.site);
   const router = useRouter();
@@ -39,7 +41,7 @@ export default function DashboardsListPage() {
   const [pendingDelete, setPendingDelete] = useState<number | null>(null);
 
   const handleCreate = async () => {
-    const result = await createDashboard.mutateAsync({ siteId, name: "Untitled dashboard" });
+    const result = await createDashboard.mutateAsync({ siteId, name: t("Untitled dashboard") });
     router.push(`/${siteId}/dashboards/${result.dashboardId}`);
   };
 
@@ -47,14 +49,14 @@ export default function DashboardsListPage() {
     <div className="mx-auto flex max-w-[1400px] flex-col gap-4 p-2 md:p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold">Dashboards</h1>
+          <h1 className="text-lg font-semibold">{t("Dashboards")}</h1>
           <p className="text-sm text-neutral-500">
-            Build views from custom SQL queries, scoped to the site time range.
+            {t("Build views from custom SQL queries, scoped to the site time range.")}
           </p>
         </div>
         <Button onClick={handleCreate} disabled={createDashboard.isPending}>
           {createDashboard.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-          New dashboard
+          {t("New dashboard")}
         </Button>
       </div>
 
@@ -76,15 +78,16 @@ export default function DashboardsListPage() {
             <LayoutGrid className="h-6 w-6" />
           </div>
           <div className="max-w-sm space-y-1">
-            <div className="font-medium text-neutral-900 dark:text-neutral-100">No dashboards yet</div>
+            <div className="font-medium text-neutral-900 dark:text-neutral-100">{t("No dashboards yet")}</div>
             <p className="text-sm text-neutral-500">
-              A dashboard is a grid of cards, each backed by its own query. Start with a built-in example, then resize
-              and arrange the cards to fit how you read your data.
+              {t(
+                "A dashboard is a grid of cards, each backed by its own query. Start with a built-in example, then resize and arrange the cards to fit how you read your data."
+              )}
             </p>
           </div>
           <Button variant="outline" onClick={handleCreate} disabled={createDashboard.isPending}>
             <Plus className="h-4 w-4" />
-            Create your first dashboard
+            {t("Create your first dashboard")}
           </Button>
         </div>
       ) : (
@@ -104,8 +107,10 @@ export default function DashboardsListPage() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{dashboard.name}</div>
                   <div className="text-xs text-neutral-500">
-                    {cardCount} {cardCount === 1 ? "card" : "cards"}
-                    {updated && ` · updated ${updated}`}
+                    {cardCount === 1
+                      ? t("{count} card", { count: String(cardCount) })
+                      : t("{count} cards", { count: String(cardCount) })}
+                    {updated && ` · ${t("updated {time}", { time: updated })}`}
                   </div>
                 </div>
                 <Button
@@ -116,7 +121,7 @@ export default function DashboardsListPage() {
                     event.stopPropagation();
                     setPendingDelete(dashboard.dashboardId);
                   }}
-                  aria-label={`Delete ${dashboard.name}`}
+                  aria-label={t("Delete {name}", { name: dashboard.name })}
                 >
                   <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
@@ -129,13 +134,13 @@ export default function DashboardsListPage() {
       <AlertDialog open={pendingDelete !== null} onOpenChange={open => !open && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete dashboard?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete dashboard?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the dashboard and all of its cards. This action cannot be undone.
+              {t("This permanently removes the dashboard and all of its cards. This action cannot be undone.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -145,7 +150,7 @@ export default function DashboardsListPage() {
                 setPendingDelete(null);
               }}
             >
-              Delete dashboard
+              {t("Delete dashboard")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

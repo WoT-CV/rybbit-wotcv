@@ -5,7 +5,7 @@ import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 export default function ReportsPage() {
   const t = useExtracted();
-  useSetPageTitle("Reports");
+  useSetPageTitle(t("Reports"));
 
   return (
     <div className="p-6">

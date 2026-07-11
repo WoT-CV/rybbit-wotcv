@@ -2,6 +2,7 @@
 
 import type { DashboardCard } from "@rybbit/shared";
 import { Copy, GripVertical, Loader2, Pencil, Trash2 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useMemo, useState } from "react";
 import { useDashboardCard } from "../../../../api/analytics/hooks/useDashboardCard";
 import { cn } from "../../../../lib/utils";
@@ -28,6 +29,7 @@ type DashboardCardViewProps = {
 };
 
 export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onRemove }: DashboardCardViewProps) {
+  const t = useExtracted();
   const { data, isLoading, isFetching, error } = useDashboardCard(siteId, card.id, card.sql);
   const [sort, setSort] = useState<SortState>(null);
 
@@ -58,11 +60,11 @@ export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onR
           {editMode && <GripVertical className="h-4 w-4 shrink-0 text-neutral-400" />}
           <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">{card.title}</span>
           {isFetching && !isLoading && (
-            <Loader2 className="h-3 w-3 shrink-0 animate-spin text-neutral-400" aria-label="Updating" />
+            <Loader2 className="h-3 w-3 shrink-0 animate-spin text-neutral-400" aria-label={t("Updating")} />
           )}
           {truncated && (
             <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-              {data?.meta.maxRows} row limit
+              {t("{count} row limit", { count: String(data?.meta.maxRows) })}
             </span>
           )}
         </div>
@@ -78,13 +80,19 @@ export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onR
             )}
             {editMode && (
               <>
-                <Button type="button" size="smIcon" variant="ghost" onClick={onEdit} aria-label="Edit card">
+                <Button type="button" size="smIcon" variant="ghost" onClick={onEdit} aria-label={t("Edit card")}>
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
-                <Button type="button" size="smIcon" variant="ghost" onClick={onClone} aria-label="Duplicate card">
+                <Button
+                  type="button"
+                  size="smIcon"
+                  variant="ghost"
+                  onClick={onClone}
+                  aria-label={t("Duplicate card")}
+                >
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
-                <Button type="button" size="smIcon" variant="ghost" onClick={onRemove} aria-label="Remove card">
+                <Button type="button" size="smIcon" variant="ghost" onClick={onRemove} aria-label={t("Remove card")}>
                   <Trash2 className="h-3.5 w-3.5 text-red-500" />
                 </Button>
               </>
@@ -102,10 +110,10 @@ export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onR
           </div>
         ) : error ? (
           <div className="flex h-full items-center justify-center px-3 text-center text-xs text-red-500">
-            {error instanceof Error ? error.message : "Failed to run query"}
+            {error instanceof Error ? error.message : t("Failed to run query")}
           </div>
         ) : rows.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-xs text-neutral-500">No data</div>
+          <div className="flex h-full items-center justify-center text-xs text-neutral-500">{t("No data")}</div>
         ) : card.vizType === "table" ? (
           <ResultsTable columns={columns} rows={sortedRows} sort={activeSort} onSortChange={setSort} />
         ) : (

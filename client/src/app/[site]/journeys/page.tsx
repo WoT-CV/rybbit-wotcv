@@ -19,7 +19,7 @@ import { SankeyDiagram } from "./components/SankeyDiagram";
 
 export default function JourneysPage() {
   const t = useExtracted();
-  useSetPageTitle("Journeys");
+  useSetPageTitle(t("Journeys"));
 
   const [steps, setSteps] = useState<number>(4);
   const [maxJourneys, setMaxJourneys] = useState<number>(50);
@@ -52,7 +52,7 @@ export default function JourneysPage() {
   });
 
   return (
-    <DisabledOverlay message="User Journeys" featurePath="journeys">
+    <DisabledOverlay message={t("User Journeys")} featurePath="journeys">
       <div className="container mx-auto p-2 md:p-4">
         <SubHeader availableFilters={JOURNEY_PAGE_FILTERS} />
         <div className="flex items-center gap-6 my-1">

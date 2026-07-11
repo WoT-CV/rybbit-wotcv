@@ -10,8 +10,8 @@ import { TraitsExplorer } from "./components/TraitsExplorer";
 import { UsersTable } from "./components/UsersTable";
 
 export default function UsersPage() {
-  useSetPageTitle("Users");
   const t = useExtracted();
+  useSetPageTitle(t("Users"));
 
   return (
     <DisabledOverlay message={t("Users")} featurePath="users">

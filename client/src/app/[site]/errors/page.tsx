@@ -27,7 +27,7 @@ export default function Errors() {
   });
   const [totalPages, setTotalPages] = useState(0);
 
-  useSetPageTitle("Errors");
+  useSetPageTitle(t("Errors"));
 
   // Get page number (1-based) from pageIndex (0-based)
   const pageNumber = pagination.pageIndex + 1;

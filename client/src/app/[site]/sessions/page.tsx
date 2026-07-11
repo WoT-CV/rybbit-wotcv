@@ -19,7 +19,7 @@ const LIMIT = 100;
 
 export default function SessionsPage() {
   const t = useExtracted();
-  useSetPageTitle("Sessions");
+  useSetPageTitle(t("Sessions"));
   const [page, setPage] = useState(1);
   const [identifiedOnly, setIdentifiedOnly] = useState(false);
   const [minPageviews, setMinPageviews] = useState<number | undefined>(undefined);

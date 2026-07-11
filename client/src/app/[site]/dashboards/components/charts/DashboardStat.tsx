@@ -2,6 +2,7 @@
 
 import type { DashboardCardMapping } from "@rybbit/shared";
 import NumberFlow from "@number-flow/react";
+import { useExtracted } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CustomQueryRow } from "@/api/analytics/endpoints";
 import { formatValue, getStatValue } from "../../utils";
@@ -14,6 +15,7 @@ type DashboardStatProps = {
 
 /** Single big-number KPI, sized to fill the card. */
 export function DashboardStat({ rows, mapping }: DashboardStatProps) {
+  const t = useExtracted();
   const stat = useMemo(() => getStatValue(rows, mapping), [rows, mapping]);
   const format = mapping.valueFormat ?? "number";
 
@@ -32,7 +34,7 @@ export function DashboardStat({ rows, mapping }: DashboardStatProps) {
   }, []);
 
   if (!stat) {
-    return <ChartEmpty message="No numeric value to display. Return a single number, e.g. SELECT count() AS total." />;
+    return <ChartEmpty message={t("No numeric value to display. Return a single number, e.g. SELECT count() AS total.")} />;
   }
 
   const text = formatValue(stat.value, format);

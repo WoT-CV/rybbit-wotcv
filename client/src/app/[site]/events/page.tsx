@@ -12,7 +12,7 @@ import { EventsChart } from "./components/EventsChart";
 
 export default function EventsPage() {
   const t = useExtracted();
-  useSetPageTitle("Events");
+  useSetPageTitle(t("Events"));
 
   const { data: eventNamesData, isLoading: isLoadingEventNames } = useGetEventNames();
 

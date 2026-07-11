@@ -68,7 +68,7 @@ const GoalCardSkeleton = () => (
 
 export default function GoalsPage() {
   const t = useExtracted();
-  useSetPageTitle("Goals");
+  useSetPageTitle(t("Goals"));
 
   const { site } = useStore();
   const [searchQuery, setSearchQuery] = useState("");

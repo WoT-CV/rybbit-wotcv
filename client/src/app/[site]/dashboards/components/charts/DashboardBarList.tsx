@@ -1,6 +1,7 @@
 "use client";
 
 import type { DashboardCardMapping } from "@rybbit/shared";
+import { useExtracted } from "next-intl";
 import { useMemo } from "react";
 import type { CustomQueryRow } from "@/api/analytics/endpoints";
 import { coerceNumber, firstNumericColumn, formatAxisValue, formatValue } from "../../utils";
@@ -15,6 +16,7 @@ type BarRow = { label: string; value: number };
 
 /** Horizontal "top N" list: one proportional bar per category, value right-aligned. */
 export function DashboardBarList({ rows, mapping }: DashboardBarListProps) {
+  const t = useExtracted();
   const { bars, max } = useMemo(() => {
     const labelColumn = mapping.xColumn;
     const valueColumn = mapping.valueColumn ?? mapping.yColumns?.[0] ?? firstNumericColumn(rows);
@@ -31,7 +33,7 @@ export function DashboardBarList({ rows, mapping }: DashboardBarListProps) {
   const fill = "hsl(var(--dataviz))";
 
   if (bars.length === 0) {
-    return <ChartEmpty message={mapping.xColumn ? "No rows to rank." : "Select a category and a value column."} />;
+    return <ChartEmpty message={mapping.xColumn ? t("No rows to rank.") : t("Select a category and a value column.")} />;
   }
 
   return (

@@ -14,7 +14,7 @@ import { FeatureFlagTable } from "./components/FeatureFlagTable";
 
 export default function FeatureFlagsPage() {
   const t = useExtracted();
-  useSetPageTitle("Feature Flags");
+  useSetPageTitle(t("Feature Flags"));
   const { data: flags, isLoading } = useFeatureFlags();
   const [search, setSearch] = useState("");
 

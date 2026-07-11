@@ -14,6 +14,7 @@ import {
   Table2,
   X,
 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useMemo, useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "../../../../components/ui/dialog";
@@ -50,6 +51,7 @@ const ICON_CLASS =
   "h-4 w-4 shrink-0 text-neutral-400 transition-colors group-hover:text-neutral-600 dark:text-neutral-500 dark:group-hover:text-neutral-300";
 
 function PresetRow({ example, onSelect }: { example: DashboardExample; onSelect: () => void }) {
+  const t = useExtracted();
   const Icon = VIZ_ICON[example.vizType];
   return (
     <button type="button" onClick={onSelect} title={example.description} className={ROW_CLASS}>
@@ -60,7 +62,7 @@ function PresetRow({ example, onSelect }: { example: DashboardExample; onSelect:
       </span>
       {example.beyondPrebuilt && (
         <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-          Advanced
+          {t("Advanced")}
         </span>
       )}
     </button>
@@ -68,6 +70,7 @@ function PresetRow({ example, onSelect }: { example: DashboardExample; onSelect:
 }
 
 export function NewCardDialog({ open, onClose, onSelect }: NewCardDialogProps) {
+  const t = useExtracted();
   const [query, setQuery] = useState("");
 
   const q = query.trim().toLowerCase();
@@ -93,8 +96,10 @@ export function NewCardDialog({ open, onClose, onSelect }: NewCardDialogProps) {
     <button type="button" onClick={() => handleSelect(null)} className={ROW_CLASS}>
       <Plus className={ICON_CLASS} />
       <span className="flex min-w-0 flex-1 items-baseline gap-2">
-        <span className="shrink-0 text-sm font-medium text-neutral-900 dark:text-neutral-100">Blank card</span>
-        <span className="truncate text-xs text-neutral-500">Start from scratch</span>
+        <span className="shrink-0 text-sm font-medium text-neutral-900 dark:text-neutral-100">
+          {t("Blank card")}
+        </span>
+        <span className="truncate text-xs text-neutral-500">{t("Start from scratch")}</span>
       </span>
     </button>
   );
@@ -113,11 +118,13 @@ export function NewCardDialog({ open, onClose, onSelect }: NewCardDialogProps) {
         <div className="flex shrink-0 flex-col gap-3 border-b border-neutral-150 px-4 pb-3 pt-4 dark:border-neutral-850">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <DialogTitle className="mb-0 text-base">Add a card</DialogTitle>
-              <DialogDescription className="mt-0.5 text-xs">Start from a preset, or a blank query.</DialogDescription>
+              <DialogTitle className="mb-0 text-base">{t("Add a card")}</DialogTitle>
+              <DialogDescription className="mt-0.5 text-xs">
+                {t("Start from a preset, or a blank query.")}
+              </DialogDescription>
             </div>
             <DialogClose asChild>
-              <Button variant="ghost" size="smIcon" aria-label="Close" className="shrink-0 text-neutral-500">
+              <Button variant="ghost" size="smIcon" aria-label={t("Close")} className="shrink-0 text-neutral-500">
                 <X className="h-4 w-4" />
               </Button>
             </DialogClose>
@@ -125,7 +132,7 @@ export function NewCardDialog({ open, onClose, onSelect }: NewCardDialogProps) {
           <Input
             isSearch
             autoFocus
-            placeholder="Search presets…"
+            placeholder={t("Search presets…")}
             value={query}
             onChange={event => setQuery(event.target.value)}
           />
@@ -142,7 +149,7 @@ export function NewCardDialog({ open, onClose, onSelect }: NewCardDialogProps) {
           {q ? (
             filtered.length === 0 ? (
               <div className="px-4 py-10 text-center text-sm text-neutral-500">
-                No presets match &ldquo;{query.trim()}&rdquo;.
+                {t('No presets match "{query}".', { query: query.trim() })}
               </div>
             ) : (
               <div className="px-2 pt-2">

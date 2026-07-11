@@ -59,7 +59,7 @@ const getRetentionColor = (
 
 export default function RetentionPage() {
   const t = useExtracted();
-  useSetPageTitle("Retention");
+  useSetPageTitle(t("Retention"));
 
   // State for the retention mode (day or week)
   const [mode, setMode] = useState<RetentionMode>("week");

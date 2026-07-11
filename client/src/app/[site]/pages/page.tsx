@@ -11,14 +11,14 @@ export default function Pages() {
   const t = useExtracted();
   const { site } = useStore();
 
-  useSetPageTitle("Pages");
+  useSetPageTitle(t("Pages"));
 
   if (!site) {
     return null;
   }
 
   return (
-    <DisabledOverlay message={t("pages")} featurePath="pages">
+    <DisabledOverlay message={t("Pages")} featurePath="pages">
       <div className="p-2 md:p-4 max-w-[1400px] mx-auto space-y-3">
         <SubHeader />
         <PagesTable />

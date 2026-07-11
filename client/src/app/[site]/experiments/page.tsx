@@ -17,7 +17,7 @@ import { ExperimentSkeleton } from "./components/ExperimentSkeleton";
 
 export default function ExperimentsPage() {
   const t = useExtracted();
-  useSetPageTitle("Experiments");
+  useSetPageTitle(t("Experiments"));
   const { site } = useStore();
   const { data: experiments, isLoading } = useExperiments();
   const [search, setSearch] = useState("");

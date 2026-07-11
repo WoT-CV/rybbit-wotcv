@@ -71,8 +71,8 @@ export function QueryEditor({
             variant="ghost"
             onClick={onFormat}
             disabled={disabled || !value.trim()}
-            title="Format query"
-            aria-label="Format query"
+            title={t("Format query")}
+            aria-label={t("Format query")}
           >
             <AlignLeft className="h-4 w-4" />
           </Button>
@@ -149,8 +149,8 @@ export function QueryEditor({
       </div>
 
       <div className="flex h-7 items-center justify-between border-t border-neutral-150 bg-neutral-50 px-3 text-[11px] text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-500">
-        <span>{lineCount} lines</span>
-        <span>{value.length.toLocaleString()} chars</span>
+        <span>{t("{count} lines", { count: String(lineCount) })}</span>
+        <span>{t("{count} chars", { count: value.length.toLocaleString() })}</span>
       </div>
     </div>
   );
