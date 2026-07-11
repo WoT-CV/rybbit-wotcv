@@ -158,6 +158,7 @@ export interface SessionReplayEvent {
   type: string | number;
   data: any;
   timestamp: number;
+  sequenceNumber?: number;
 }
 
 export interface SessionReplayBatch {

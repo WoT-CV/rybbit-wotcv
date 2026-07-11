@@ -65,6 +65,7 @@ export class SessionReplayRecorder {
   private userId: string;
   private eventBuffer: SessionReplayEvent[] = [];
   private eventBufferSizeBytes: number = 0;
+  private nextSequenceNumber: number = 0;
   private pendingBatches: SessionReplayEvent[][] = [];
   private isSendingBatches: boolean = false;
   private batchTimer?: number;
@@ -210,14 +211,18 @@ export class SessionReplayRecorder {
   }
 
   private addEvent(event: SessionReplayEvent): void {
-    const eventSizeBytes = getJsonByteSize(event);
+    const sequencedEvent = {
+      ...event,
+      sequenceNumber: event.sequenceNumber ?? this.nextSequenceNumber++,
+    };
+    const eventSizeBytes = getJsonByteSize(sequencedEvent);
     const maxBatchSizeBytes = this.config.networkReplay?.maxReplayBatchSizeBytes ?? 7_000_000;
 
     if (this.eventBuffer.length > 0 && this.eventBufferSizeBytes + eventSizeBytes > maxBatchSizeBytes) {
       this.flushEvents();
     }
 
-    this.eventBuffer.push(event);
+    this.eventBuffer.push(sequencedEvent);
     this.eventBufferSizeBytes += eventSizeBytes;
 
     if (eventSizeBytes >= maxBatchSizeBytes || this.eventBuffer.length >= this.config.sessionReplayBatchSize) {

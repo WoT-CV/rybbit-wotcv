@@ -51,6 +51,7 @@ export interface RecordSessionReplayRequest {
     type: string | number;
     data: any;
     timestamp: number;
+    sequenceNumber?: number;
   }>;
   metadata?: {
     pageUrl: string;

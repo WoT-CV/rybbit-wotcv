@@ -81,7 +81,7 @@ export class SessionReplayIngestService {
           event_data: "", // Empty string when using R2
           event_data_key: r2BatchKey,
           batch_index: index,
-          sequence_number: index,
+          sequence_number: event.sequenceNumber ?? index,
           event_size_bytes: serializedData.length,
           viewport_width: metadata?.viewportWidth || null,
           viewport_height: metadata?.viewportHeight || null,
@@ -99,7 +99,7 @@ export class SessionReplayIngestService {
           event_data: serializedData,
           event_data_key: null,
           batch_index: null,
-          sequence_number: index,
+          sequence_number: event.sequenceNumber ?? index,
           event_size_bytes: serializedData.length,
           viewport_width: metadata?.viewportWidth || null,
           viewport_height: metadata?.viewportHeight || null,

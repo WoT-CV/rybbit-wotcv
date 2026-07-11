@@ -1760,6 +1760,7 @@
       this.isRecording = false;
       this.eventBuffer = [];
       this.eventBufferSizeBytes = 0;
+      this.nextSequenceNumber = 0;
       this.pendingBatches = [];
       this.isSendingBatches = false;
       this.config = config;
@@ -1876,12 +1877,16 @@
       return this.isRecording;
     }
     addEvent(event) {
-      const eventSizeBytes = getJsonByteSize(event);
+      const sequencedEvent = {
+        ...event,
+        sequenceNumber: event.sequenceNumber ?? this.nextSequenceNumber++
+      };
+      const eventSizeBytes = getJsonByteSize(sequencedEvent);
       const maxBatchSizeBytes = this.config.networkReplay?.maxReplayBatchSizeBytes ?? 7e6;
       if (this.eventBuffer.length > 0 && this.eventBufferSizeBytes + eventSizeBytes > maxBatchSizeBytes) {
         this.flushEvents();
       }
-      this.eventBuffer.push(event);
+      this.eventBuffer.push(sequencedEvent);
       this.eventBufferSizeBytes += eventSizeBytes;
       if (eventSizeBytes >= maxBatchSizeBytes || this.eventBuffer.length >= this.config.sessionReplayBatchSize) {
         this.flushEvents();
