@@ -22,7 +22,6 @@ export type ReplayCaptureProfile = "posthog-compatible" | "legacy";
 export interface ReplayTimeline {
   activityPeriods: ActivityPeriod[];
   activeMs: number;
-  canSkipInactivity: boolean;
   captureProfile: ReplayCaptureProfile;
   captureVersion: number | null;
   inactiveMs: number;
@@ -57,7 +56,6 @@ export const calculateReplayTimeline = (events: any[], totalDuration: number): R
     return {
       activityPeriods: [],
       activeMs: 0,
-      canSkipInactivity: captureProfile === "posthog-compatible",
       captureProfile,
       captureVersion,
       inactiveMs: safeDuration,
@@ -110,7 +108,6 @@ export const calculateReplayTimeline = (events: any[], totalDuration: number): R
   return {
     activityPeriods,
     activeMs,
-    canSkipInactivity: captureProfile === "posthog-compatible",
     captureProfile,
     captureVersion,
     inactiveMs: Math.max(0, safeDuration - activeMs),

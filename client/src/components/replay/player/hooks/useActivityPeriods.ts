@@ -12,14 +12,12 @@ export const useActivityPeriods = ({ data }: UseActivityPeriodsProps) => {
   const {
     duration,
     setActivityPeriods,
-    setCanSkipInactivity,
     setReplayCaptureProfile,
     setReplaySegments,
   } = useReplayStore(
     useShallow(state => ({
       duration: state.duration,
       setActivityPeriods: state.setActivityPeriods,
-      setCanSkipInactivity: state.setCanSkipInactivity,
       setReplayCaptureProfile: state.setReplayCaptureProfile,
       setReplaySegments: state.setReplaySegments,
     }))
@@ -30,8 +28,7 @@ export const useActivityPeriods = ({ data }: UseActivityPeriodsProps) => {
 
     const timeline = calculateReplayTimeline(data.events, duration);
     setActivityPeriods(timeline.activityPeriods);
-    setCanSkipInactivity(timeline.canSkipInactivity);
     setReplaySegments(timeline.segments);
     setReplayCaptureProfile(timeline.captureProfile);
-  }, [data, duration, setActivityPeriods, setCanSkipInactivity, setReplayCaptureProfile, setReplaySegments]);
+  }, [data, duration, setActivityPeriods, setReplayCaptureProfile, setReplaySegments]);
 };

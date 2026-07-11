@@ -8,13 +8,13 @@ interface UseSkipInactivityProps {
   player: any;
 }
 
-const MIN_SKIP_SPEED = 50;
+const MIN_SKIP_SPEED = 200;
+const SKIP_TARGET_DURATION_SECONDS = 0.2;
 
 export function useSkipInactivity({ player }: UseSkipInactivityProps) {
   const appliedSpeedRef = useRef<number | null>(null);
   const skippingSegmentRef = useRef<string | null>(null);
   const {
-    canSkipInactivity,
     currentTime,
     duration,
     isPlaying,
@@ -26,7 +26,6 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
     skipInactivityEnabled,
   } = useReplayStore(
     useShallow(state => ({
-      canSkipInactivity: state.canSkipInactivity,
       currentTime: state.currentTime,
       duration: state.duration,
       isPlaying: state.isPlaying,
@@ -44,9 +43,7 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
 
     const selectedSpeed = Number.parseFloat(playbackSpeed) || 1;
     const currentSegment = findSegmentAtTime(replaySegments, currentTime);
-    const shouldSkip = Boolean(
-      canSkipInactivity && skipInactivityEnabled && isPlaying && currentSegment && !currentSegment.isActive
-    );
+    const shouldSkip = Boolean(skipInactivityEnabled && isPlaying && currentSegment && !currentSegment.isActive);
 
     if (!isPlaying) {
       skippingSegmentRef.current = null;
@@ -60,7 +57,7 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
       const segmentKey = `${currentSegment.start}:${currentSegment.end}`;
       if (skippingSegmentRef.current !== segmentKey) {
         const secondsRemaining = Math.max(0, (currentSegment.end - currentTime) / 1000);
-        const skipSpeed = Math.max(MIN_SKIP_SPEED, secondsRemaining);
+        const skipSpeed = Math.max(MIN_SKIP_SPEED, secondsRemaining / SKIP_TARGET_DURATION_SECONDS);
         skippingSegmentRef.current = segmentKey;
         applySpeed(player, skipSpeed, appliedSpeedRef, setEffectivePlaybackSpeed);
       }
@@ -74,7 +71,6 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
     setIsSkippingInactivity(false);
     setPlaybackState("playing");
   }, [
-    canSkipInactivity,
     currentTime,
     duration,
     isPlaying,

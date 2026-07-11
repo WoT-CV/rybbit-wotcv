@@ -53,9 +53,6 @@ export const useReplayStore = create<{
   replayCaptureProfile: ReplayCaptureProfile;
   setReplayCaptureProfile: (profile: ReplayCaptureProfile) => void;
 
-  canSkipInactivity: boolean;
-  setCanSkipInactivity: (canSkip: boolean) => void;
-
   skipInactivityEnabled: boolean;
   setSkipInactivityEnabled: (enabled: boolean) => void;
 
@@ -104,9 +101,6 @@ export const useReplayStore = create<{
   replayCaptureProfile: "legacy",
   setReplayCaptureProfile: replayCaptureProfile => set({ replayCaptureProfile }),
 
-  canSkipInactivity: false,
-  setCanSkipInactivity: canSkipInactivity => set({ canSkipInactivity }),
-
   skipInactivityEnabled: true,
   setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
 
@@ -124,6 +118,5 @@ export const useReplayStore = create<{
       activityPeriods: [],
       replaySegments: [],
       replayCaptureProfile: "legacy",
-      canSkipInactivity: false,
     }),
 }));
