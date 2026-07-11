@@ -5,3 +5,4 @@ export * from "./params";
 export * from "./time";
 export * from "./performance";
 export * from "./replayExport";
+export * from "./replayActivity";

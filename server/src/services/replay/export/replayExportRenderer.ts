@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
-import { REPLAY_EXPORT_NETWORK_HOST } from "@rybbit/shared";
+import { calculateReplayActivityWindows, REPLAY_EXPORT_NETWORK_HOST } from "@rybbit/shared";
 import JSZip from "jszip";
 import puppeteer, { type Browser, type Page } from "puppeteer";
 
@@ -12,8 +12,6 @@ import type { ReplayExportJobData, ReplayExportResult } from "./replayExportType
 
 const REPLAY_WIDTH = 1280;
 const REPLAY_HEIGHT = 720;
-const ACTIVE_PRE_ROLL_MS = 500;
-const ACTIVE_POST_ROLL_MS = 1000;
 const SENSITIVE_NAME_PATTERN = /(authorization|cookie|token|secret|password|api[-_]?key|credential)/i;
 const NETWORK_PLUGIN_NAME = "rrweb/network@1";
 const EXPORT_FILE_NAMES = {
@@ -217,31 +215,14 @@ async function recordReplayRange(
 }
 
 function getActivePlaybackWindows(events: any[], startMs: number, endMs: number): PlaybackWindow[] {
-  const firstTimestamp = events[0]?.timestamp;
-  if (!Number.isFinite(firstTimestamp)) return [];
-
-  const activeOffsets = events
-    .filter(isActiveEvent)
-    .map(event => event.timestamp - firstTimestamp)
-    .filter(offset => offset >= startMs - ACTIVE_POST_ROLL_MS && offset <= endMs + ACTIVE_PRE_ROLL_MS)
-    .map(offset => ({
-      start: Math.max(startMs, offset - ACTIVE_PRE_ROLL_MS),
-      end: Math.min(endMs, offset + ACTIVE_POST_ROLL_MS),
-    }))
-    .sort((first, second) => first.start - second.start);
-
-  return activeOffsets.reduce<PlaybackWindow[]>((merged, window) => {
-    const current = merged.at(-1);
-    if (!current || window.start > current.end) merged.push({ ...window });
-    else current.end = Math.max(current.end, window.end);
-    return merged;
-  }, []);
-}
-
-function isActiveEvent(event: any): boolean {
-  const type = Number(event?.type);
-  const source = Number(event?.data?.source);
-  return type === 2 || type === 4 || (type === 3 && [1, 2, 3, 4, 5, 6, 7, 12].includes(source));
+  const firstTimestamp = Number(events[0]?.timestamp);
+  const lastTimestamp = Number(events.at(-1)?.timestamp);
+  if (!Number.isFinite(firstTimestamp) || !Number.isFinite(lastTimestamp)) return [];
+  const totalDuration = Math.max(endMs, lastTimestamp - firstTimestamp);
+  return calculateReplayActivityWindows(events, totalDuration, startMs, endMs).map(({ start, end }) => ({
+    start,
+    end,
+  }));
 }
 
 function normalizeOptions(options: ReplayExportJobData["options"], totalDuration: number) {
