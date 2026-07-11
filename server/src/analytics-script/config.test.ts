@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { DEFAULT_NETWORK_REPLAY_CONFIG } from "@rybbit/shared";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseScriptConfig } from "./config.js";
 
 // Mock fetch globally
@@ -72,6 +73,7 @@ describe("parseScriptConfig", () => {
       enableWebVitals: true, // webVitals from API
       trackErrors: false, // trackErrors from API
       enableSessionReplay: true, // sessionReplay from API
+      networkReplay: DEFAULT_NETWORK_REPLAY_CONFIG,
       trackButtonClicks: false,
       trackCopy: false,
       trackFormInteractions: false,
@@ -137,6 +139,7 @@ describe("parseScriptConfig", () => {
       enableWebVitals: false,
       trackErrors: false,
       enableSessionReplay: false,
+      networkReplay: DEFAULT_NETWORK_REPLAY_CONFIG,
       trackButtonClicks: false,
       trackCopy: false,
       trackFormInteractions: false,
@@ -185,6 +188,7 @@ describe("parseScriptConfig", () => {
       enableWebVitals: false,
       trackErrors: false,
       enableSessionReplay: false,
+      networkReplay: DEFAULT_NETWORK_REPLAY_CONFIG,
       trackButtonClicks: false,
       trackCopy: false,
       trackFormInteractions: false,
