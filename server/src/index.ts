@@ -42,6 +42,7 @@ import {
   getGoalSessions,
   getGoalTimeSeries,
   getGoals,
+  getGrowthAccounting,
   getJourneys,
   getLiveUsercount,
   getMetric,
@@ -297,6 +298,7 @@ async function analyticsRoutes(fastify: FastifyInstance) {
   fastify.get("/sites/:siteId/errors/events", publicSite, getErrorEvents);
   fastify.get("/sites/:siteId/errors/time-series", publicSite, getErrorBucketed);
   fastify.get("/sites/:siteId/retention", publicSite, getRetention);
+  fastify.get("/sites/:siteId/growth-accounting", publicSite, getGrowthAccounting);
   fastify.get("/sites/:siteId/has-data", publicSite, getSiteHasData);
   fastify.get("/sites/:siteId/is-public", publicSite, getSiteIsPublic);
   fastify.get("/sites/:siteId/sessions", publicSite, getSessions);

@@ -48,6 +48,7 @@ export { getErrorBucketed } from "./getErrorBucketed.js";
 export { getErrorEvents } from "./getErrorEvents.js";
 export { getErrorNames } from "./getErrorNames.js";
 export { generateCustomQuery } from "./generateCustomQuery.js";
+export { getGrowthAccounting } from "./getGrowthAccounting.js";
 export { getJourneys } from "./getJourneys.js";
 export { getLiveUsercount } from "./getLiveUsercount.js";
 export { getMetric } from "./getMetric.js";
