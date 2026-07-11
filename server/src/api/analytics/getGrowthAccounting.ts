@@ -130,13 +130,29 @@ DormantAccounting AS (
     GROUP BY period
 )
 SELECT
-    formatDateTime(coalesce(active.period, dormant.period), '%F') AS period,
-    active.new_users AS new_users,
-    active.returning_users AS returning_users,
-    active.resurrecting_users AS resurrecting_users,
-    dormant.dormant_users AS dormant_users
-FROM ActiveAccounting active
-FULL OUTER JOIN DormantAccounting dormant ON dormant.period = active.period
+    formatDateTime(period, '%F') AS period,
+    sum(new_users) AS new_users,
+    sum(returning_users) AS returning_users,
+    sum(resurrecting_users) AS resurrecting_users,
+    sum(dormant_users) AS dormant_users
+FROM (
+    SELECT
+        period,
+        new_users,
+        returning_users,
+        resurrecting_users,
+        toUInt64(0) AS dormant_users
+    FROM ActiveAccounting
+    UNION ALL
+    SELECT
+        period,
+        toUInt64(0) AS new_users,
+        toUInt64(0) AS returning_users,
+        toUInt64(0) AS resurrecting_users,
+        dormant_users
+    FROM DormantAccounting
+)
+GROUP BY period
 ORDER BY period ASC
     `,
     format: "JSONEachRow",
