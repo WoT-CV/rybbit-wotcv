@@ -37,7 +37,7 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
 
       let newPlayer: any = null;
       let handleVisibilityChange: (() => void) | null = null;
-      let autoplayTimeoutId: ReturnType<typeof setTimeout> | null = null;
+      const autoplayTimeoutIds: ReturnType<typeof setTimeout>[] = [];
 
       try {
         // Initialize rrweb player
@@ -73,15 +73,27 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
         });
 
         newPlayer.addEventListener("ui-update-player-state", (event: any) => {
-          setIsPlaying(event.payload === "playing");
+          const isNowPlaying = event.payload === "playing";
+          setIsPlaying(isNowPlaying);
+
+          if (isNowPlaying) {
+            const state = useReplayStore.getState();
+            if (
+              state.sessionId === initializedSessionId &&
+              state.autoplaySessionId === initializedSessionId &&
+              state.player === newPlayer
+            ) {
+              state.setPlaybackState("playing");
+              state.consumeAutoplay(initializedSessionId);
+            }
+          }
         });
 
         newPlayer.addEventListener("ui-update-duration", (event: any) => {
           setDuration(event.payload);
         });
 
-        // Get the initial duration from the player
-        autoplayTimeoutId = setTimeout(() => {
+        const syncDurationAndAutoplay = () => {
           const playerDuration = newPlayer.getMetaData().totalTime;
           if (playerDuration) {
             setDuration(playerDuration);
@@ -93,12 +105,17 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
             state.autoplaySessionId === initializedSessionId &&
             state.player === newPlayer
           ) {
-            newPlayer.play();
-            state.setIsPlaying(true);
-            state.setPlaybackState("playing");
-            state.consumeAutoplay(initializedSessionId);
+            try {
+              newPlayer.play();
+            } catch {
+              return;
+            }
           }
-        }, 100);
+        };
+
+        [0, 100, 300, 750, 1500].forEach(delay => {
+          autoplayTimeoutIds.push(setTimeout(syncDurationAndAutoplay, delay));
+        });
 
         // Handle page visibility changes to prevent tab-switching issues
         let wasPlayingBeforeHidden = false;
@@ -138,9 +155,7 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
       }
 
       return () => {
-        if (autoplayTimeoutId) {
-          clearTimeout(autoplayTimeoutId);
-        }
+        autoplayTimeoutIds.forEach(clearTimeout);
         // Proper cleanup
         if (newPlayer) {
           newPlayer.pause();

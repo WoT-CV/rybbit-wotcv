@@ -16,6 +16,7 @@ interface ReplayDrawerProps {
 export function ReplayDrawer({ sessionId, open, onOpenChange }: ReplayDrawerProps) {
   const { selectSession, resetPlayerState } = useReplayStore();
   const containerRef = useRef<HTMLDivElement>(null);
+  const wasOpenRef = useRef(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   // Set sessionId in store when drawer opens
@@ -25,9 +26,11 @@ export function ReplayDrawer({ sessionId, open, onOpenChange }: ReplayDrawerProp
     }
   }, [open, sessionId, selectSession]);
 
-  // Reset player state when drawer closes
   useEffect(() => {
-    if (!open) {
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = open;
+
+    if (wasOpen && !open) {
       resetPlayerState();
     }
   }, [open, resetPlayerState]);

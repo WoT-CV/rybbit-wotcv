@@ -46,16 +46,18 @@ export function SessionsList({
       </div>
 
       {sessions.length === 0 && !isLoading && (
-        <NothingFound icon={<Rewind className="w-10 h-10" />} title={t("No sessions found")} description={emptyMessage || t("Try a different date range or filter")} />
+        <NothingFound
+          icon={<Rewind className="w-10 h-10" />}
+          title={t("No sessions found")}
+          description={emptyMessage || t("Try a different date range or filter")}
+        />
       )}
 
       {/* Session cards */}
       {isLoading ? (
         <SessionCardSkeleton userId={userId} count={pageSize} />
       ) : (
-        sessions.map((session, index) => (
-          <SessionCard key={`${session.session_id}-${index}`} session={session} userId={userId} />
-        ))
+        sessions.map(session => <SessionCard key={session.session_id} session={session} userId={userId} />)
       )}
     </div>
   );

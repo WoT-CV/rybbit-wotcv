@@ -64,7 +64,7 @@ export default function RetentionPage() {
   useSetPageTitle(t("Retention"));
 
   // State for the retention mode (day or week)
-  const [mode, setMode] = useState<RetentionMode>("week");
+  const [mode, setMode] = useState<RetentionMode>("day");
   // State for the data time range (days)
   const [timeRange, setTimeRange] = useState<number>(30);
 
