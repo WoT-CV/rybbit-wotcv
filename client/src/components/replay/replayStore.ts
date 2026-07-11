@@ -59,7 +59,7 @@ export const useReplayStore = create<{
   // Reset all player state when session changes
   resetPlayerState: () => void;
 }>(set => ({
-  minDuration: 30,
+  minDuration: 5,
   setMinDuration: minDuration => set({ minDuration }),
 
   // Session selection

@@ -8,7 +8,7 @@ type UseGetSessionReplaysOptions = {
   minDuration?: number;
 };
 
-export function useGetSessionReplays({ limit = 20, minDuration = 30 }: UseGetSessionReplaysOptions = {}) {
+export function useGetSessionReplays({ limit = 20, minDuration = 5 }: UseGetSessionReplaysOptions = {}) {
   const { time, site, filters, timezone } = useStore();
   const params = buildApiParams(time, { filters });
 
