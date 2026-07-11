@@ -194,6 +194,16 @@ export function findSegmentAtTime(segments: ReplaySegment[], currentTime: number
   );
 }
 
+export function findPreviousActiveSegment(segments: ReplaySegment[], beforeTime: number): ReplaySegment | null {
+  for (let index = segments.length - 1; index >= 0; index -= 1) {
+    const segment = segments[index];
+    if (segment.isActive && segment.start < beforeTime) {
+      return segment;
+    }
+  }
+  return null;
+}
+
 export function getReplayActivityOffsets(events: any[], totalDuration: number): number[] {
   const sortedEvents = [...(events ?? [])]
     .filter(event => Number.isFinite(event?.timestamp))

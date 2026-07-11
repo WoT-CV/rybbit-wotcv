@@ -13,7 +13,7 @@ import { useSkipInactivity } from "./hooks/useSkipInactivity";
 import { ReplayPlayerControls } from "./ReplayPlayerControls";
 import { ReplayPlayerCore } from "./ReplayPlayerCore";
 import { ReplayPlayerTopbar } from "./ReplayPlayerTopbar";
-import { SKIP_SECONDS } from "./utils/replayUtils";
+import { findPreviousActiveSegment, findSegmentAtTime, SKIP_SECONDS } from "./utils/replayUtils";
 
 export function ReplayPlayer({ width, height, isDrawer }: { width: number; height: number; isDrawer?: boolean }) {
   const params = useParams();
@@ -27,8 +27,9 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
     setCurrentTime,
     duration,
     setPlaybackSpeed,
-    registerManualSeek,
+    replaySegments,
     resetPlayerState,
+    skipInactivityEnabled,
   } = useReplayStore(
     useShallow(s => ({
       sessionId: s.sessionId,
@@ -39,8 +40,9 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
       setCurrentTime: s.setCurrentTime,
       duration: s.duration,
       setPlaybackSpeed: s.setPlaybackSpeed,
-      registerManualSeek: s.registerManualSeek,
+      replaySegments: s.replaySegments,
       resetPlayerState: s.resetPlayerState,
+      skipInactivityEnabled: s.skipInactivityEnabled,
     }))
   );
 
@@ -70,17 +72,25 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
 
   const handleSkipBack = useCallback(() => {
     if (!player) return;
-    const newTime = Math.max(0, currentTime - SKIP_SECONDS);
-    registerManualSeek();
+    const requestedTime = Math.max(0, currentTime - SKIP_SECONDS);
+    const requestedSegment = findSegmentAtTime(replaySegments, requestedTime);
+    const previousActiveSegment =
+      skipInactivityEnabled && requestedSegment && !requestedSegment.isActive && requestedSegment.duration > 3000
+        ? findPreviousActiveSegment(replaySegments, requestedSegment.start)
+        : null;
+    const newTime = previousActiveSegment
+      ? Math.max(previousActiveSegment.start, previousActiveSegment.end - 1)
+      : requestedTime;
     player.goto(newTime);
-  }, [player, currentTime, registerManualSeek]);
+    setCurrentTime(newTime);
+  }, [currentTime, player, replaySegments, setCurrentTime, skipInactivityEnabled]);
 
   const handleSkipForward = useCallback(() => {
     if (!player) return;
     const newTime = Math.min(duration, currentTime + SKIP_SECONDS);
-    registerManualSeek();
     player.goto(newTime);
-  }, [player, duration, currentTime, registerManualSeek]);
+    setCurrentTime(newTime);
+  }, [player, duration, currentTime, setCurrentTime]);
 
   const handleSliderChange = useCallback(
     (value: number[]) => {
@@ -91,11 +101,10 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
       setIsPlaying(false);
 
       const newTime = (value[0] / 100) * duration;
-      registerManualSeek();
       player.goto(newTime);
       setCurrentTime(newTime);
     },
-    [player, duration, registerManualSeek, setIsPlaying, setCurrentTime]
+    [player, duration, setIsPlaying, setCurrentTime]
   );
 
   const handleSpeedChange = useCallback(

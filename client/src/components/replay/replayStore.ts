@@ -56,9 +56,6 @@ export const useReplayStore = create<{
   skipInactivityEnabled: boolean;
   setSkipInactivityEnabled: (enabled: boolean) => void;
 
-  manualSeekVersion: number;
-  registerManualSeek: () => void;
-
   // Reset all player state when session changes
   resetPlayerState: () => void;
 }>(set => ({
@@ -107,9 +104,6 @@ export const useReplayStore = create<{
   skipInactivityEnabled: true,
   setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
 
-  manualSeekVersion: 0,
-  registerManualSeek: () => set(state => ({ manualSeekVersion: state.manualSeekVersion + 1 })),
-
   // Reset all player state when session changes
   resetPlayerState: () =>
     set({
@@ -124,6 +118,5 @@ export const useReplayStore = create<{
       activityPeriods: [],
       replaySegments: [],
       replayCaptureProfile: "legacy",
-      manualSeekVersion: 0,
     }),
 }));

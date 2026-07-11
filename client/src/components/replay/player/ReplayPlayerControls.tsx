@@ -36,10 +36,10 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
     isPlaying,
     playbackSpeed,
     player,
-    registerManualSeek,
     replaySegments,
     sessionId,
     setCurrentTime,
+    setIsPlaying,
     setSkipInactivityEnabled,
     skipInactivityEnabled,
   } = useReplayStore(
@@ -50,10 +50,10 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
       isPlaying: s.isPlaying,
       playbackSpeed: s.playbackSpeed,
       player: s.player,
-      registerManualSeek: s.registerManualSeek,
       replaySegments: s.replaySegments,
       sessionId: s.sessionId,
       setCurrentTime: s.setCurrentTime,
+      setIsPlaying: s.setIsPlaying,
       setSkipInactivityEnabled: s.setSkipInactivityEnabled,
       skipInactivityEnabled: s.skipInactivityEnabled,
     }))
@@ -68,11 +68,12 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   const handleNetworkSeek = useCallback(
     (offset: number) => {
       if (!player) return;
-      registerManualSeek();
+      player.pause();
+      setIsPlaying(false);
       player.goto(offset);
       setCurrentTime(offset);
     },
-    [player, registerManualSeek, setCurrentTime]
+    [player, setCurrentTime, setIsPlaying]
   );
 
   return (
