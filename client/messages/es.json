@@ -1,4 +1,8 @@
 {
+  "HHiBSk": "Usuarios activos tanto en este período como en el período inmediatamente anterior.",
+  "Sjf2j6": "Usuarios activos de nuevo después de al menos un período de inactividad.",
+  "VbobJi": "Usuarios activos por primera vez en este período.",
+  "vdkTIT": "Usuarios activos en el período anterior, pero inactivos en este período.",
   "Q5w7w4": "Los eventos personalizados no se capturan automáticamente. Tu sitio debe enviarlos con rybbit.event().",
   "/Z2fqW": "Enlace saliente",
   "/6bl6s": "Clic en botón",

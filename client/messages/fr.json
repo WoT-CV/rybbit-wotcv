@@ -1,4 +1,8 @@
 {
+  "HHiBSk": "Utilisateurs actifs pendant cette période et la période précédente.",
+  "Sjf2j6": "Utilisateurs de nouveau actifs après au moins une période d’inactivité.",
+  "VbobJi": "Utilisateurs actifs pour la première fois pendant cette période.",
+  "vdkTIT": "Utilisateurs actifs pendant la période précédente, mais inactifs pendant cette période.",
   "Q5w7w4": "Les événements personnalisés ne sont pas capturés automatiquement. Votre site doit les envoyer avec rybbit.event().",
   "/Z2fqW": "Lien sortant",
   "/6bl6s": "Clic sur bouton",

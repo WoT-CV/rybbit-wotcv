@@ -1,6 +1,7 @@
 "use client";
 
 import { ResponsiveBar } from "@nivo/bar";
+import { Info } from "lucide-react";
 import { DateTime } from "luxon";
 import { useExtracted, useLocale } from "next-intl";
 import { useMemo, useState } from "react";
@@ -10,6 +11,7 @@ import type { GrowthAccountingPoint, RetentionMode } from "@/api/analytics/endpo
 import { ChartTooltip } from "@/components/charts/ChartTooltip";
 import { ErrorState } from "@/components/ErrorState";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNivoTheme } from "@/lib/nivo";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +51,12 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode, classNam
     returningUsers: t("Returning users"),
     resurrectingUsers: t("Resurrected users"),
     dormantUsers: t("Dormant users"),
+  };
+  const descriptions: Record<GrowthSeriesKey, string> = {
+    newUsers: t("Users active in this period for the first time."),
+    returningUsers: t("Users active in both this period and the immediately preceding period."),
+    resurrectingUsers: t("Users active again after at least one inactive period."),
+    dormantUsers: t("Users active in the preceding period but inactive in this period."),
   };
 
   const chartData = useMemo(
@@ -111,10 +119,22 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode, classNam
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-neutral-600 dark:text-neutral-300">
         {SERIES.map(series => (
-          <div key={series.key} className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: series.color }} />
-            <span>{labels[series.key]}</span>
-          </div>
+          <Tooltip key={series.key}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="-mx-1 inline-flex items-center gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 dark:hover:bg-neutral-800"
+              >
+                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: series.color }} />
+                <span>{labels[series.key]}</span>
+                <Info className="h-3 w-3 text-neutral-400" aria-hidden="true" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-72">
+              <div className="mb-1 font-medium">{labels[series.key]}</div>
+              <div className="leading-relaxed text-neutral-600 dark:text-neutral-300">{descriptions[series.key]}</div>
+            </TooltipContent>
+          </Tooltip>
         ))}
       </div>
       <div className="min-h-0 flex-1">
