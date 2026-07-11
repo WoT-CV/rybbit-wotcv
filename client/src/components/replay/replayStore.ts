@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import type { ActivityPeriod, ReplayCaptureProfile, ReplaySegment } from "./player/utils/replayUtils";
+import type { ReplayPlayerAdapter } from "./player/ReplayPlayerAdapter";
 
 export type ReplayPlaybackState = "paused" | "playing" | "skipping-inactivity" | "seeking" | "buffering" | "ended";
 
@@ -16,8 +17,8 @@ export const useReplayStore = create<{
   consumeAutoplay: (sessionId: string) => void;
 
   // Player state
-  player: any;
-  setPlayer: (player: any) => void;
+  player: ReplayPlayerAdapter | null;
+  setPlayer: (player: ReplayPlayerAdapter | null) => void;
 
   // Playback state
   isPlaying: boolean;
@@ -71,7 +72,7 @@ export const useReplayStore = create<{
       if (state.sessionId === sessionId && state.player) {
         if (autoplay) {
           if (state.duration > 0 && state.currentTime >= state.duration) {
-            state.player.goto(0);
+            state.player.seek(0);
           }
           state.player.play();
         }

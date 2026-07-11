@@ -15,7 +15,7 @@ export function useReplaySeek() {
 
     player.pause();
     state.setPlaybackState("seeking");
-    player.goto(safeOffset);
+    player.seek(safeOffset);
     state.setCurrentTime(safeOffset);
 
     if (resumePlayback) {
@@ -40,7 +40,7 @@ export function useReplaySeek() {
     }
 
     const safeOffset = Math.max(0, Math.min(state.duration, offset));
-    state.player.goto(safeOffset);
+    state.player.seek(safeOffset);
     state.setCurrentTime(safeOffset);
   }, []);
 

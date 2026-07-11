@@ -1,8 +1,9 @@
 import { useReplayPlayer } from "./hooks/useReplayPlayer";
 import { ReplayPlayerOverlay } from "./ReplayPlayerOverlay";
+import type { ReplayEventLike } from "../network/types";
 
 interface ReplayPlayerCoreProps {
-  data: { events: any[] } | undefined;
+  data: { events: ReplayEventLike[] } | undefined;
   width: number;
   height: number;
   onPlayPause: () => void;

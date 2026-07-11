@@ -3,9 +3,10 @@ import { useShallow } from "zustand/react/shallow";
 
 import { useReplayStore } from "../../replayStore";
 import { findSegmentAtTime } from "../utils/replayUtils";
+import type { ReplayPlayerAdapter } from "../ReplayPlayerAdapter";
 
 interface UseSkipInactivityProps {
-  player: any;
+  player: ReplayPlayerAdapter | null;
 }
 
 const MIN_SKIP_SPEED = 200;
@@ -85,7 +86,7 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
 }
 
 function applySpeed(
-  player: any,
+  player: ReplayPlayerAdapter,
   speed: number,
   appliedSpeedRef: { current: number | null },
   setEffectivePlaybackSpeed: (speed: number) => void

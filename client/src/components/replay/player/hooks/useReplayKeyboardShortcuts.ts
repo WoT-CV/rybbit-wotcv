@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 
+import type { ReplayPlayerAdapter } from "../ReplayPlayerAdapter";
+
 interface UseReplayKeyboardShortcutsProps {
-  player: any;
+  player: ReplayPlayerAdapter | null;
   onSkipBack: () => void;
   onSkipForward: () => void;
   onPlayPause: () => void;
