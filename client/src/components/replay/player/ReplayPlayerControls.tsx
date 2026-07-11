@@ -1,4 +1,4 @@
-import { Maximize2, Pause, Play, SkipForward } from "lucide-react";
+import { Download, Maximize2, Pause, Play, SkipForward } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { memo, useCallback, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -8,15 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { ReplayDrawer } from "../../Sessions/ReplayDrawer";
+import { ReplayExportDialog } from "../export/ReplayExportDialog";
 import { parseNetworkEvents } from "../network/parseNetworkEvents";
 import type { ReplayEventLike } from "../network/types";
 import { useReplayStore } from "../replayStore";
+import { useReplaySeek } from "./hooks/useReplaySeek";
 import { formatTime, PLAYBACK_SPEEDS } from "./utils/replayUtils";
 
 interface ReplayPlayerControlsProps {
   events: ReplayEventLike[];
   onPlayPause: () => void;
   onSliderChange: (value: number[]) => void;
+  onSliderCommit: (value: number[]) => void;
   onSpeedChange: (speed: string) => void;
   isDrawer?: boolean;
 }
@@ -25,6 +28,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   events,
   onPlayPause,
   onSliderChange,
+  onSliderCommit,
   onSpeedChange,
   isDrawer,
 }: ReplayPlayerControlsProps) {
@@ -33,13 +37,12 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
     activityPeriods,
     currentTime,
     duration,
+    exportRange,
     isPlaying,
     playbackSpeed,
     player,
     replaySegments,
     sessionId,
-    setCurrentTime,
-    setIsPlaying,
     setSkipInactivityEnabled,
     skipInactivityEnabled,
   } = useReplayStore(
@@ -47,19 +50,20 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
       activityPeriods: s.activityPeriods,
       currentTime: s.currentTime,
       duration: s.duration,
+      exportRange: s.exportRange,
       isPlaying: s.isPlaying,
       playbackSpeed: s.playbackSpeed,
       player: s.player,
       replaySegments: s.replaySegments,
       sessionId: s.sessionId,
-      setCurrentTime: s.setCurrentTime,
-      setIsPlaying: s.setIsPlaying,
       setSkipInactivityEnabled: s.setSkipInactivityEnabled,
       skipInactivityEnabled: s.skipInactivityEnabled,
     }))
   );
   const [replayDrawerOpen, setReplayDrawerOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const networkRequests = useMemo(() => parseNetworkEvents(events), [events]);
+  const { seekTo } = useReplaySeek();
 
   const handleSkipInactivityToggle = useCallback(() => {
     setSkipInactivityEnabled(!skipInactivityEnabled);
@@ -67,13 +71,9 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
 
   const handleNetworkSeek = useCallback(
     (offset: number) => {
-      if (!player) return;
-      player.pause();
-      setIsPlaying(false);
-      player.goto(offset);
-      setCurrentTime(offset);
+      seekTo(offset);
     },
-    [player, setCurrentTime, setIsPlaying]
+    [seekTo]
   );
 
   return (
@@ -90,6 +90,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
           <ActivitySlider
             value={[duration > 0 ? (currentTime / duration) * 100 : 0]}
             onValueChange={onSliderChange}
+            onValueCommit={onSliderCommit}
             max={100}
             step={0.1}
             activityPeriods={activityPeriods}
@@ -98,6 +99,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
             events={events}
             networkRequests={networkRequests}
             currentTime={currentTime}
+            exportRange={exportRange}
             onNetworkSeek={handleNetworkSeek}
             className="w-full"
           />
@@ -106,6 +108,17 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
         <div className="flex min-w-0 items-center gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            disabled={!player || duration <= 0}
+            onClick={() => setExportDialogOpen(true)}
+            title={t("Export replay range")}
+          >
+            <Download className="h-3 w-3" aria-hidden="true" />
+            <span className="hidden 2xl:inline">{t("Export")}</span>
+          </Button>
           <Button
             type="button"
             variant={skipInactivityEnabled ? "secondary" : "outline"}
@@ -137,6 +150,13 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
           </Button>
         )}
         <ReplayDrawer sessionId={sessionId} open={replayDrawerOpen} onOpenChange={setReplayDrawerOpen} />
+        <ReplayExportDialog
+          currentTime={currentTime}
+          duration={duration}
+          open={exportDialogOpen}
+          sessionId={sessionId}
+          onOpenChange={setExportDialogOpen}
+        />
       </div>
     </div>
   );

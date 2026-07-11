@@ -1,5 +1,5 @@
 import { useParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import "rrweb-player/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
 
@@ -9,6 +9,7 @@ import { ThreeDotLoader } from "@/components/Loaders";
 import { useReplayStore } from "../replayStore";
 import { useActivityPeriods } from "./hooks/useActivityPeriods";
 import { useReplayKeyboardShortcuts } from "./hooks/useReplayKeyboardShortcuts";
+import { useReplaySeek } from "./hooks/useReplaySeek";
 import { useSkipInactivity } from "./hooks/useSkipInactivity";
 import { ReplayPlayerControls } from "./ReplayPlayerControls";
 import { ReplayPlayerCore } from "./ReplayPlayerCore";
@@ -28,7 +29,6 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
     duration,
     setPlaybackSpeed,
     replaySegments,
-    resetPlayerState,
     skipInactivityEnabled,
   } = useReplayStore(
     useShallow(s => ({
@@ -41,21 +41,16 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
       duration: s.duration,
       setPlaybackSpeed: s.setPlaybackSpeed,
       replaySegments: s.replaySegments,
-      resetPlayerState: s.resetPlayerState,
       skipInactivityEnabled: s.skipInactivityEnabled,
     }))
   );
 
   const { data, isLoading, error } = useGetSessionReplayEvents(siteId, sessionId);
 
-  // Reset player state when session changes
-  useEffect(() => {
-    resetPlayerState();
-  }, [sessionId, resetPlayerState]);
-
   // Calculate activity periods when player and data are ready
   useActivityPeriods({ data });
   useSkipInactivity({ player });
+  const { commitPreviewSeek, previewSeek, seekTo } = useReplaySeek();
 
   const handlePlayPause = useCallback(() => {
     if (!player) return;
@@ -81,30 +76,31 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
     const newTime = previousActiveSegment
       ? Math.max(previousActiveSegment.start, previousActiveSegment.end - 1)
       : requestedTime;
-    player.goto(newTime);
-    setCurrentTime(newTime);
-  }, [currentTime, player, replaySegments, setCurrentTime, skipInactivityEnabled]);
+    seekTo(newTime);
+  }, [currentTime, player, replaySegments, seekTo, skipInactivityEnabled]);
 
   const handleSkipForward = useCallback(() => {
     if (!player) return;
     const newTime = Math.min(duration, currentTime + SKIP_SECONDS);
-    player.goto(newTime);
-    setCurrentTime(newTime);
-  }, [player, duration, currentTime, setCurrentTime]);
+    seekTo(newTime);
+  }, [player, duration, currentTime, seekTo]);
 
   const handleSliderChange = useCallback(
     (value: number[]) => {
       if (!player || !duration) return;
 
-      // Pause the player when user scrubs manually
-      player.pause();
-      setIsPlaying(false);
-
       const newTime = (value[0] / 100) * duration;
-      player.goto(newTime);
-      setCurrentTime(newTime);
+      previewSeek(newTime);
     },
-    [player, duration, setIsPlaying, setCurrentTime]
+    [player, duration, previewSeek]
+  );
+
+  const handleSliderCommit = useCallback(
+    (value: number[]) => {
+      if (!player || !duration) return;
+      commitPreviewSeek((value[0] / 100) * duration);
+    },
+    [commitPreviewSeek, duration, player]
   );
 
   const handleSpeedChange = useCallback(
@@ -152,6 +148,7 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
         events={data?.events || []}
         onPlayPause={handlePlayPause}
         onSliderChange={handleSliderChange}
+        onSliderCommit={handleSliderCommit}
         onSpeedChange={handleSpeedChange}
         isDrawer={isDrawer}
       />

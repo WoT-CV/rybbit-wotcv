@@ -42,6 +42,7 @@ ENV WOTCV_BUILD_TIME=${WOTCV_BUILD_TIME}
 RUN apk add --no-cache \
     postgresql-client \
     chromium \
+    ffmpeg \
     nss \
     freetype \
     harfbuzz \

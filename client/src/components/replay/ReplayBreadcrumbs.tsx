@@ -54,6 +54,7 @@ import {
   type TechnicalGroup,
 } from "./replayEvents";
 import { useReplayStore } from "./replayStore";
+import { useReplaySeek } from "./player/hooks/useReplaySeek";
 
 const SEVERITY_COLOR: Record<EventSeverity, string> = {
   default: "text-neutral-500 dark:text-neutral-400",
@@ -173,14 +174,12 @@ export function ReplayBreadcrumbs() {
   const params = useParams();
   const siteId = Number(params.site);
   const [timelineView, setTimelineView] = useState<"key" | "network" | "all">("key");
-  const { sessionId, player, setCurrentTime, setIsPlaying } = useReplayStore(
+  const { sessionId } = useReplayStore(
     useShallow(s => ({
       sessionId: s.sessionId,
-      player: s.player,
-      setCurrentTime: s.setCurrentTime,
-      setIsPlaying: s.setIsPlaying,
     }))
   );
+  const { seekTo } = useReplaySeek();
 
   const { data, isLoading, error } = useGetSessionReplayEvents(siteId, sessionId);
 
@@ -190,13 +189,9 @@ export function ReplayBreadcrumbs() {
 
   const handleSeek = useCallback(
     (offset: number) => {
-      if (!player) return;
-      player.pause();
-      setIsPlaying(false);
-      player.goto(offset);
-      setCurrentTime(offset);
+      seekTo(offset);
     },
-    [player, setCurrentTime, setIsPlaying]
+    [seekTo]
   );
 
   // Resolve labels here, where `t` is the real useExtracted() binding, so the

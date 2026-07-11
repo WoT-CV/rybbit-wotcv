@@ -2,13 +2,7 @@ import { create } from "zustand";
 
 import type { ActivityPeriod, ReplayCaptureProfile, ReplaySegment } from "./player/utils/replayUtils";
 
-export type ReplayPlaybackState =
-  | "paused"
-  | "playing"
-  | "skipping-inactivity"
-  | "seeking"
-  | "buffering"
-  | "ended";
+export type ReplayPlaybackState = "paused" | "playing" | "skipping-inactivity" | "seeking" | "buffering" | "ended";
 
 export const useReplayStore = create<{
   minDuration: number;
@@ -17,6 +11,9 @@ export const useReplayStore = create<{
   // Session selection
   sessionId: string;
   setSessionId: (sessionId: string) => void;
+  autoplaySessionId: string | null;
+  selectSession: (sessionId: string, autoplay: boolean) => void;
+  consumeAutoplay: (sessionId: string) => void;
 
   // Player state
   player: any;
@@ -56,6 +53,9 @@ export const useReplayStore = create<{
   skipInactivityEnabled: boolean;
   setSkipInactivityEnabled: (enabled: boolean) => void;
 
+  exportRange: [number, number] | null;
+  setExportRange: (range: [number, number] | null) => void;
+
   // Reset all player state when session changes
   resetPlayerState: () => void;
 }>(set => ({
@@ -65,6 +65,42 @@ export const useReplayStore = create<{
   // Session selection
   sessionId: "",
   setSessionId: sessionId => set({ sessionId }),
+  autoplaySessionId: null,
+  selectSession: (sessionId, autoplay) =>
+    set(state => {
+      if (state.sessionId === sessionId && state.player) {
+        if (autoplay) {
+          if (state.duration > 0 && state.currentTime >= state.duration) {
+            state.player.goto(0);
+          }
+          state.player.play();
+        }
+        return {
+          autoplaySessionId: null,
+          currentTime: autoplay && state.duration > 0 && state.currentTime >= state.duration ? 0 : state.currentTime,
+          isPlaying: autoplay ? true : state.isPlaying,
+          playbackState: autoplay ? "playing" : state.playbackState,
+        };
+      }
+
+      state.player?.pause();
+      return {
+        sessionId,
+        autoplaySessionId: autoplay ? sessionId : null,
+        player: null,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        effectivePlaybackSpeed: 1,
+        playbackState: "paused",
+        isSkippingInactivity: false,
+        activityPeriods: [],
+        replaySegments: [],
+        replayCaptureProfile: "legacy",
+      };
+    }),
+  consumeAutoplay: sessionId =>
+    set(state => ({ autoplaySessionId: state.autoplaySessionId === sessionId ? null : state.autoplaySessionId })),
 
   // Player state
   player: null,
@@ -104,6 +140,9 @@ export const useReplayStore = create<{
   skipInactivityEnabled: true,
   setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
 
+  exportRange: null,
+  setExportRange: exportRange => set({ exportRange }),
+
   // Reset all player state when session changes
   resetPlayerState: () =>
     set({
@@ -118,5 +157,7 @@ export const useReplayStore = create<{
       activityPeriods: [],
       replaySegments: [],
       replayCaptureProfile: "legacy",
+      autoplaySessionId: null,
+      exportRange: null,
     }),
 }));

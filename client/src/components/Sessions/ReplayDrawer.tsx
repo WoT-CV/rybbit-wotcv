@@ -14,16 +14,16 @@ interface ReplayDrawerProps {
 }
 
 export function ReplayDrawer({ sessionId, open, onOpenChange }: ReplayDrawerProps) {
-  const { setSessionId, resetPlayerState } = useReplayStore();
+  const { selectSession, resetPlayerState } = useReplayStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   // Set sessionId in store when drawer opens
   useEffect(() => {
     if (open && sessionId) {
-      setSessionId(sessionId);
+      selectSession(sessionId, true);
     }
-  }, [open, sessionId, setSessionId]);
+  }, [open, sessionId, selectSession]);
 
   // Reset player state when drawer closes
   useEffect(() => {

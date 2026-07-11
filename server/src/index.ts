@@ -100,7 +100,11 @@ import {
 import { updateMemberSiteAccess } from "./api/memberAccess/index.js";
 import { listTeams, createTeam, updateTeam, deleteTeam } from "./api/teams/index.js";
 import {
+  cancelReplayExport,
+  createReplayExport,
   deleteSessionReplay,
+  downloadReplayExport,
+  getReplayExportStatus,
   getSessionReplayEvents,
   getSessionReplays,
   recordSessionReplay,
@@ -173,6 +177,7 @@ import { telemetryService } from "./services/telemetryService.js";
 import { handleIdentify } from "./services/tracker/identifyService.js";
 import { trackEvent } from "./services/tracker/trackEvent.js";
 import { usageService } from "./services/usageService.js";
+import { replayExportQueueService } from "./services/replay/export/replayExportQueueService.js";
 import { weeklyReportService } from "./services/weekyReports/weeklyReportService.js";
 import { handleAppSumoWebhook, activateAppSumoLicense } from "./api/as/index.js";
 
@@ -365,6 +370,10 @@ async function sessionReplayRoutes(fastify: FastifyInstance) {
   fastify.get("/sites/:siteId/session-replay/list", publicSite, getSessionReplays);
   fastify.get("/sites/:siteId/session-replay/:sessionId", publicSite, getSessionReplayEvents);
   fastify.delete("/sites/:siteId/session-replay/:sessionId", authSite, deleteSessionReplay);
+  fastify.post("/sites/:siteId/session-replay/:sessionId/exports", authSite, createReplayExport);
+  fastify.get("/sites/:siteId/session-replay/:sessionId/exports/:exportId", authSite, getReplayExportStatus);
+  fastify.get("/sites/:siteId/session-replay/:sessionId/exports/:exportId/download", authSite, downloadReplayExport);
+  fastify.delete("/sites/:siteId/session-replay/:sessionId/exports/:exportId", authSite, cancelReplayExport);
 }
 
 async function sitesRoutes(fastify: FastifyInstance) {
@@ -497,6 +506,7 @@ const start = async () => {
     if (!cluster.isWorker) {
       await Promise.all([initializeClickhouse(), initPostgres()]);
     }
+    await replayExportQueueService.initialize();
 
     // Cron jobs should only run on the primary process (or in single-process mode)
     if (!cluster.isWorker) {
@@ -566,6 +576,7 @@ const shutdown = async (signal: string) => {
   try {
     // Stop accepting new connections
     await server.close();
+    await replayExportQueueService.shutdown();
     server.log.info("Server closed");
 
     // Shutdown uptime service

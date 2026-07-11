@@ -66,10 +66,10 @@ function cleanUrl(url: string) {
 export function ReplayCard({ replay, onSelect }: { replay: SessionReplayListItem; onSelect?: () => void }) {
   const t = useExtracted();
   const { formatRelative } = useDateTimeFormat();
-  const { sessionId, setSessionId, resetPlayerState } = useReplayStore(
+  const { sessionId, selectSession, resetPlayerState } = useReplayStore(
     useShallow(s => ({
       sessionId: s.sessionId,
-      setSessionId: s.setSessionId,
+      selectSession: s.selectSession,
       resetPlayerState: s.resetPlayerState,
     }))
   );
@@ -103,13 +103,13 @@ export function ReplayCard({ replay, onSelect }: { replay: SessionReplayListItem
         isSelected && "bg-neutral-100 dark:bg-neutral-800/70"
       )}
       onClick={() => {
-        setSessionId(replay.session_id);
+        selectSession(replay.session_id, true);
         onSelect?.();
       }}
       onKeyDown={e => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          setSessionId(replay.session_id);
+          selectSession(replay.session_id, true);
           onSelect?.();
         }
       }}
@@ -193,7 +193,10 @@ export function ReplayCard({ replay, onSelect }: { replay: SessionReplayListItem
           screen_height={replay.screen_height}
         />
         <div className="ml-auto flex items-center gap-2 text-[11px] tabular-nums">
-          <span className="flex items-center gap-1" title={t("{count} events", { count: formatter(replay.event_count) })}>
+          <span
+            className="flex items-center gap-1"
+            title={t("{count} events", { count: formatter(replay.event_count) })}
+          >
             <MousePointerClick className="w-3 h-3" />
             {formatter(replay.event_count)}
           </span>

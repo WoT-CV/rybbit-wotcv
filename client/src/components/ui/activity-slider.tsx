@@ -22,6 +22,7 @@ interface ActivitySliderProps extends React.ComponentPropsWithoutRef<typeof Slid
   networkRequests?: ParsedNetworkRequest[];
   currentTime?: number;
   onNetworkSeek?: (offset: number) => void;
+  exportRange?: [number, number] | null;
 }
 
 const MARKER_COLOR: Record<MeaningfulKind, string> = {
@@ -85,6 +86,7 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
       networkRequests = [],
       currentTime = 0,
       onNetworkSeek = () => undefined,
+      exportRange,
       ...props
     },
     ref
@@ -174,6 +176,16 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
 
             {/* Progress range */}
             <SliderPrimitive.Range className="absolute h-full bg-accent-500" />
+
+            {exportRange && duration > 0 && (
+              <div
+                className="pointer-events-none absolute inset-y-0 rounded-sm border border-amber-400 bg-amber-400/25"
+                style={{
+                  left: `${(exportRange[0] / duration) * 100}%`,
+                  width: `${((exportRange[1] - exportRange[0]) / duration) * 100}%`,
+                }}
+              />
+            )}
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-accent-500 bg-white shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-500 disabled:pointer-events-none disabled:opacity-50" />
         </SliderPrimitive.Root>

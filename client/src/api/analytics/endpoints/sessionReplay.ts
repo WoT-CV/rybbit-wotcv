@@ -76,6 +76,26 @@ export interface GetSessionReplayEventsResponse {
   metadata: SessionReplayMetadata;
 }
 
+export interface ReplayExportOptions {
+  startMs: number;
+  endMs: number;
+  captureMs: number;
+  skipInactivity: boolean;
+  includeNetwork: boolean;
+  includeBodies: boolean;
+  playbackSpeed: 1 | 2 | 4;
+}
+
+export interface ReplayExportStatus {
+  exportId: string;
+  state: "queued" | "rendering" | "packaging" | "ready" | "failed" | "cancelled";
+  progress: number;
+  filename?: string;
+  sizeBytes?: number;
+  expiresAt?: string;
+  error?: string;
+}
+
 // Session replays params
 export interface SessionReplaysParams extends CommonApiParams {
   limit?: number;
@@ -123,4 +143,43 @@ export async function deleteSessionReplay(site: string | number, sessionId: stri
     method: "DELETE",
   });
   return response;
+}
+
+export async function createReplayExport(
+  site: string | number,
+  sessionId: string,
+  options: ReplayExportOptions
+): Promise<{ exportId: string }> {
+  return authedFetch<{ exportId: string }>(`/sites/${site}/session-replay/${sessionId}/exports`, undefined, {
+    method: "POST",
+    data: options,
+  });
+}
+
+export async function fetchReplayExportStatus(
+  site: string | number,
+  sessionId: string,
+  exportId: string
+): Promise<ReplayExportStatus> {
+  return authedFetch<ReplayExportStatus>(`/sites/${site}/session-replay/${sessionId}/exports/${exportId}`);
+}
+
+export async function downloadReplayExport(site: string | number, sessionId: string, exportId: string): Promise<Blob> {
+  return authedFetch<Blob>(`/sites/${site}/session-replay/${sessionId}/exports/${exportId}/download`, undefined, {
+    responseType: "blob",
+  });
+}
+
+export async function cancelReplayExport(
+  site: string | number,
+  sessionId: string,
+  exportId: string
+): Promise<{ success: boolean }> {
+  return authedFetch<{ success: boolean }>(
+    `/sites/${site}/session-replay/${sessionId}/exports/${exportId}`,
+    undefined,
+    {
+      method: "DELETE",
+    }
+  );
 }

@@ -227,13 +227,23 @@ export type {
 } from "./misc";
 
 // Session Replay endpoints
-export { fetchSessionReplays, fetchSessionReplayEvents, deleteSessionReplay } from "./sessionReplay";
+export {
+  cancelReplayExport,
+  createReplayExport,
+  deleteSessionReplay,
+  downloadReplayExport,
+  fetchReplayExportStatus,
+  fetchSessionReplayEvents,
+  fetchSessionReplays,
+} from "./sessionReplay";
 export type {
   SessionReplayListItem,
   SessionReplayListResponse,
   SessionReplayEvent,
   SessionReplayMetadata,
   GetSessionReplayEventsResponse,
+  ReplayExportOptions,
+  ReplayExportStatus,
   SessionReplaysParams,
 } from "./sessionReplay";
 

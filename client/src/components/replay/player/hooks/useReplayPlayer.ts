@@ -31,11 +31,13 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
   // Initialize player when data changes
   useEffect(() => {
     if (data?.events && playerContainerRef.current) {
+      const initializedSessionId = useReplayStore.getState().sessionId;
       // Clear any existing content first
       playerContainerRef.current.innerHTML = "";
 
       let newPlayer: any = null;
       let handleVisibilityChange: (() => void) | null = null;
+      let autoplayTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
       try {
         // Initialize rrweb player
@@ -79,10 +81,22 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
         });
 
         // Get the initial duration from the player
-        setTimeout(() => {
+        autoplayTimeoutId = setTimeout(() => {
           const playerDuration = newPlayer.getMetaData().totalTime;
           if (playerDuration) {
             setDuration(playerDuration);
+          }
+
+          const state = useReplayStore.getState();
+          if (
+            state.sessionId === initializedSessionId &&
+            state.autoplaySessionId === initializedSessionId &&
+            state.player === newPlayer
+          ) {
+            newPlayer.play();
+            state.setIsPlaying(true);
+            state.setPlaybackState("playing");
+            state.consumeAutoplay(initializedSessionId);
           }
         }, 100);
 
@@ -124,6 +138,9 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
       }
 
       return () => {
+        if (autoplayTimeoutId) {
+          clearTimeout(autoplayTimeoutId);
+        }
         // Proper cleanup
         if (newPlayer) {
           newPlayer.pause();
