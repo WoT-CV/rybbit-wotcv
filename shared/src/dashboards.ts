@@ -14,6 +14,8 @@ export type DashboardVizType =
 /** How a single numeric value is formatted in stat / map / calendar cards. */
 export type DashboardValueFormat = "number" | "percent" | "duration" | "bytes";
 
+export type DashboardCardDataSource = "custom-query" | "growth-accounting";
+
 /**
  * Allowlisted bucket values for the {{bucket}} template variable. Mirrors the
  * server-side bucketIntervalMap keys (which are derived from TimeBucket).
@@ -50,6 +52,8 @@ export interface DashboardCard {
   title: string;
   /** Embedded ClickHouse SQL, executed against scoped_events. */
   sql: string;
+  /** Optional built-in source. Missing values use the custom SQL query. */
+  dataSource?: DashboardCardDataSource;
   vizType: DashboardVizType;
   mapping: DashboardCardMapping;
   gridPos: DashboardGridPos;

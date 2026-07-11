@@ -80,6 +80,12 @@ export interface RetentionParams {
 
 export interface GrowthAccountingParams extends RetentionParams {
   timeZone?: string;
+  startDate?: string;
+  endDate?: string;
+  startDateTime?: string;
+  endDateTime?: string;
+  pastMinutesStart?: number;
+  pastMinutesEnd?: number;
 }
 
 export interface JourneysParams extends CommonApiParams {
@@ -109,12 +115,13 @@ export async function fetchGrowthAccounting(
   site: string | number,
   params: GrowthAccountingParams = {}
 ): Promise<GrowthAccountingResponse> {
-  const { mode = "week", range = 90, timeZone = "UTC" } = params;
+  const { mode = "week", range = 90, timeZone = "UTC", ...timeRange } = params;
 
   return authedFetch<GrowthAccountingResponse>(`/sites/${site}/growth-accounting`, {
     mode,
     range,
     timeZone,
+    ...timeRange,
   });
 }
 

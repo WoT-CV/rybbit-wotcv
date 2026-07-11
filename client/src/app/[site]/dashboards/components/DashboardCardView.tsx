@@ -5,12 +5,14 @@ import { Copy, GripVertical, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useMemo, useState } from "react";
 import { useDashboardCard } from "../../../../api/analytics/hooks/useDashboardCard";
+import { useDashboardGrowthAccounting } from "../../../../api/analytics/hooks/useGetGrowthAccounting";
 import { cn } from "../../../../lib/utils";
 import { Button } from "../../../../components/ui/button";
 import { QueryResultsExportMenu } from "../../query/components/QueryResultsExportMenu";
 import { ResultsTable } from "../../query/components/ResultsTable";
 import type { SortState } from "../../query/types";
 import { getColumns, sortRows } from "../../query/utils";
+import { GrowthAccountingChart } from "../../retention/GrowthAccountingChart";
 import { DashboardBarChart } from "./charts/DashboardBarChart";
 import { DashboardBarList } from "./charts/DashboardBarList";
 import { DashboardCalendar } from "./charts/DashboardCalendar";
@@ -30,9 +32,14 @@ type DashboardCardViewProps = {
 
 export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onRemove }: DashboardCardViewProps) {
   const t = useExtracted();
-  const { data, isLoading, isFetching, error } = useDashboardCard(siteId, card.id, card.sql);
+  const isGrowthAccounting = card.dataSource === "growth-accounting";
+  const queryResult = useDashboardCard(siteId, card.id, card.sql, !isGrowthAccounting);
+  const growthAccountingResult = useDashboardGrowthAccounting(siteId, card.id, isGrowthAccounting);
   const [sort, setSort] = useState<SortState>(null);
 
+  const { data, isLoading, isFetching, error } = queryResult;
+  const cardIsFetching = isGrowthAccounting ? growthAccountingResult.isFetching : isFetching;
+  const cardIsLoading = isGrowthAccounting ? growthAccountingResult.isLoading : isLoading;
   const rows = data?.data ?? [];
   const columns = useMemo(() => getColumns(rows), [rows]);
   const activeSort = sort && columns.includes(sort.column) ? sort : null;
@@ -59,7 +66,7 @@ export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onR
         <div className="flex min-w-0 items-center gap-1.5">
           {editMode && <GripVertical className="h-4 w-4 shrink-0 text-neutral-400" />}
           <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">{card.title}</span>
-          {isFetching && !isLoading && (
+          {cardIsFetching && !cardIsLoading && (
             <Loader2 className="h-3 w-3 shrink-0 animate-spin text-neutral-400" aria-label={t("Updating")} />
           )}
           {truncated && (
@@ -68,9 +75,9 @@ export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onR
             </span>
           )}
         </div>
-        {(rows.length > 0 || editMode) && (
+        {((!isGrowthAccounting && rows.length > 0) || editMode) && (
           <div className="dashboard-card-no-drag flex shrink-0 items-center gap-0.5">
-            {rows.length > 0 && (
+            {!isGrowthAccounting && rows.length > 0 && (
               <QueryResultsExportMenu
                 rows={sortedRows}
                 columns={columns}
@@ -80,9 +87,11 @@ export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onR
             )}
             {editMode && (
               <>
-                <Button type="button" size="smIcon" variant="ghost" onClick={onEdit} aria-label={t("Edit card")}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
+                {!isGrowthAccounting && (
+                  <Button type="button" size="smIcon" variant="ghost" onClick={onEdit} aria-label={t("Edit card")}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                )}
                 <Button
                   type="button"
                   size="smIcon"
@@ -104,7 +113,15 @@ export function DashboardCardView({ siteId, card, editMode, onEdit, onClone, onR
       <div
         className={cn("relative flex min-h-0 flex-1 flex-col p-1", isTable ? "overflow-hidden" : "overflow-visible")}
       >
-        {isLoading ? (
+        {isGrowthAccounting ? (
+          <GrowthAccountingChart
+            className="h-full min-h-0"
+            data={growthAccountingResult.data?.data}
+            isError={growthAccountingResult.isError}
+            isLoading={growthAccountingResult.isLoading}
+            mode={growthAccountingResult.data?.mode ?? "week"}
+          />
+        ) : isLoading ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
           </div>

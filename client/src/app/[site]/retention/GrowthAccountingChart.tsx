@@ -3,19 +3,22 @@
 import { ResponsiveBar } from "@nivo/bar";
 import { DateTime } from "luxon";
 import { useExtracted, useLocale } from "next-intl";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type { GrowthAccountingPoint, RetentionMode } from "@/api/analytics/endpoints";
 import { ChartTooltip } from "@/components/charts/ChartTooltip";
 import { ErrorState } from "@/components/ErrorState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNivoTheme } from "@/lib/nivo";
+import { cn } from "@/lib/utils";
 
 interface GrowthAccountingChartProps {
   data: GrowthAccountingPoint[] | undefined;
   isError: boolean;
   isLoading: boolean;
   mode: RetentionMode;
+  className?: string;
 }
 
 const SERIES = [
@@ -27,10 +30,20 @@ const SERIES = [
 
 type GrowthSeriesKey = (typeof SERIES)[number]["key"];
 
-export function GrowthAccountingChart({ data, isError, isLoading, mode }: GrowthAccountingChartProps) {
+interface GrowthTooltipState {
+  color: string;
+  period: string;
+  seriesKey: GrowthSeriesKey;
+  value: number;
+  x: number;
+  y: number;
+}
+
+export function GrowthAccountingChart({ data, isError, isLoading, mode, className }: GrowthAccountingChartProps) {
   const t = useExtracted();
   const locale = useLocale();
   const nivoTheme = useNivoTheme();
+  const [tooltip, setTooltip] = useState<GrowthTooltipState | null>(null);
   const labels: Record<GrowthSeriesKey, string> = {
     newUsers: t("New users"),
     returningUsers: t("Returning users"),
@@ -57,12 +70,12 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode }: Growth
   };
 
   if (isLoading) {
-    return <Skeleton className="h-[360px] w-full" />;
+    return <Skeleton className={cn("h-full min-h-[240px] w-full", className)} />;
   }
 
   if (isError) {
     return (
-      <div className="flex h-[360px] items-center justify-center">
+      <div className={cn("flex h-full min-h-[240px] items-center justify-center", className)}>
         <ErrorState
           title={t("Failed to load growth accounting data")}
           message={t("There was a problem fetching growth accounting data. Please try again later.")}
@@ -73,14 +86,29 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode }: Growth
 
   if (chartData.length === 0) {
     return (
-      <div className="flex h-[360px] items-center justify-center text-sm text-neutral-500 dark:text-neutral-400">
+      <div
+        className={cn(
+          "flex h-full min-h-[240px] items-center justify-center text-sm text-neutral-500 dark:text-neutral-400",
+          className
+        )}
+      >
         {t("No growth accounting data available")}
       </div>
     );
   }
 
+  const tooltipWidth = 240;
+  const tooltipLeft = tooltip ? Math.max(8, Math.min(tooltip.x + 12, window.innerWidth - tooltipWidth - 8)) : 0;
+  const tooltipTop = tooltip ? Math.max(8, Math.min(tooltip.y + 12, window.innerHeight - 96)) : 0;
+
   return (
-    <div className="space-y-3">
+    <div
+      className={cn("relative flex h-full min-h-0 flex-col gap-3", className)}
+      onMouseMove={event =>
+        setTooltip(current => (current ? { ...current, x: event.clientX, y: event.clientY } : current))
+      }
+      onMouseLeave={() => setTooltip(null)}
+    >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-neutral-600 dark:text-neutral-300">
         {SERIES.map(series => (
           <div key={series.key} className="flex items-center gap-2">
@@ -89,7 +117,7 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode }: Growth
           </div>
         ))}
       </div>
-      <div className="h-[360px] min-w-[640px]">
+      <div className="min-h-0 flex-1">
         <ResponsiveBar
           data={chartData}
           keys={SERIES.map(series => series.key)}
@@ -123,29 +151,47 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode }: Growth
             tickRotation: 0,
             format: value => Math.abs(Number(value)).toLocaleString(locale),
           }}
-          tooltip={({ id, value, indexValue, color }) => {
-            const seriesKey = String(id) as GrowthSeriesKey;
-            return (
-              <ChartTooltip className="min-w-48 p-2">
-                <div className="mb-2 font-medium text-neutral-700 dark:text-neutral-200">
-                  {formatPeriod(String(indexValue))}
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-300">
-                    <span className="h-3 w-1 rounded-sm" style={{ backgroundColor: color }} />
-                    <span>{labels[seriesKey]}</span>
-                  </div>
-                  <span className="font-medium tabular-nums text-neutral-700 dark:text-neutral-200">
-                    {Math.abs(Number(value)).toLocaleString(locale)}
-                  </span>
-                </div>
-              </ChartTooltip>
-            );
+          onMouseEnter={(datum, event) => {
+            const seriesKey = String(datum.id) as GrowthSeriesKey;
+            setTooltip({
+              color: SERIES.find(series => series.key === seriesKey)?.color ?? "hsl(var(--neutral-500))",
+              period: String(datum.indexValue),
+              seriesKey,
+              value: Math.abs(Number(datum.value)),
+              x: event.clientX,
+              y: event.clientY,
+            });
           }}
+          onMouseLeave={() => setTooltip(null)}
+          tooltip={() => <></>}
           role="img"
           ariaLabel={t("Growth accounting chart")}
         />
       </div>
+      {tooltip &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="pointer-events-none fixed z-[9999]"
+            style={{ left: tooltipLeft, top: tooltipTop, width: tooltipWidth }}
+          >
+            <ChartTooltip className="p-2">
+              <div className="mb-2 font-medium text-neutral-700 dark:text-neutral-200">
+                {formatPeriod(tooltip.period)}
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-2 text-neutral-600 dark:text-neutral-300">
+                  <span className="h-3 w-1 shrink-0 rounded-sm" style={{ backgroundColor: tooltip.color }} />
+                  <span className="truncate">{labels[tooltip.seriesKey]}</span>
+                </div>
+                <span className="shrink-0 font-medium tabular-nums text-neutral-700 dark:text-neutral-200">
+                  {tooltip.value.toLocaleString(locale)}
+                </span>
+              </div>
+            </ChartTooltip>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -214,6 +214,7 @@ export default function RetentionPage() {
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <GrowthAccountingChart
+              className="h-[360px] min-w-[640px]"
               data={growthAccounting?.data}
               isError={isGrowthAccountingError}
               isLoading={isGrowthAccountingLoading}

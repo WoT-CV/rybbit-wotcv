@@ -65,11 +65,13 @@ export function createCardFromExample(
   existing: DashboardCard[],
   example: DashboardExample
 ): DashboardCard {
-  const size = VIZ_DEFAULT_SIZE[example.vizType] ?? { w: 6, h: 6 };
+  const size =
+    example.dataSource === "growth-accounting" ? { w: 8, h: 5 } : (VIZ_DEFAULT_SIZE[example.vizType] ?? { w: 6, h: 6 });
   return {
     id: `card-${Date.now()}-${index}`,
     title: example.title,
     sql: example.sql,
+    dataSource: example.dataSource,
     vizType: example.vizType,
     mapping: {
       ...example.mapping,

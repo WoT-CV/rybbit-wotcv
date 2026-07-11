@@ -29,6 +29,7 @@ const cardSchema = z.object({
   // SQL is intentionally NOT validated here (validated only at execution time),
   // so in-progress / draft queries can be saved.
   sql: z.string(),
+  dataSource: z.enum(["custom-query", "growth-accounting"]).optional(),
   vizType: z.enum(["table", "line", "area", "bar", "hbar", "pie", "stat", "map", "calendar"]),
   mapping: cardMappingSchema,
   gridPos: gridPosSchema,

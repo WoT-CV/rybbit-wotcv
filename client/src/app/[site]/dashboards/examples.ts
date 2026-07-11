@@ -1,4 +1,4 @@
-import type { DashboardCardMapping, DashboardVizType } from "@rybbit/shared";
+import type { DashboardCardDataSource, DashboardCardMapping, DashboardVizType } from "@rybbit/shared";
 
 export type DashboardExample = {
   id: string;
@@ -7,6 +7,7 @@ export type DashboardExample = {
   category: string;
   /** True for analyses that aren't available on the prebuilt analytics pages. */
   beyondPrebuilt?: boolean;
+  dataSource?: DashboardCardDataSource;
   sql: string;
   vizType: DashboardVizType;
   mapping: DashboardCardMapping;
@@ -19,6 +20,16 @@ export type DashboardExample = {
  * '/pricing') are placeholders meant to be edited.
  */
 export const DASHBOARD_EXAMPLES: DashboardExample[] = [
+  {
+    id: "growth-accounting",
+    title: "Analiza wzrostu",
+    description: "Nowi, powracający, reaktywowani i uśpieni użytkownicy w kolejnych okresach.",
+    category: "Retencja i wzrost",
+    dataSource: "growth-accounting",
+    vizType: "bar",
+    mapping: {},
+    sql: "",
+  },
   // ── Overview ─────────────────────────────────────────────────────────────--
   {
     id: "total-pageviews-stat",

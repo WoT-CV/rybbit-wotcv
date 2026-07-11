@@ -459,27 +459,31 @@ export function DashboardCardEditor({ siteId, card, open, onClose, onSave }: Das
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {DASHBOARD_EXAMPLE_CATEGORIES.map(category => (
+        {DASHBOARD_EXAMPLE_CATEGORIES.filter(category =>
+          DASHBOARD_EXAMPLES.some(example => example.category === category && !example.dataSource)
+        ).map(category => (
           <DropdownMenuSub key={category}>
             <DropdownMenuSubTrigger className="text-sm">{category}</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="max-h-[60vh] w-72 overflow-y-auto">
-              {DASHBOARD_EXAMPLES.filter(example => example.category === category).map(example => (
-                <DropdownMenuItem
-                  key={example.id}
-                  className="flex flex-col items-start gap-0.5"
-                  onSelect={() => applyExample(example)}
-                >
-                  <span className="flex items-center gap-1.5">
-                    {example.title}
-                    {example.beyondPrebuilt && (
-                      <span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
-                        {t("advanced")}
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-[11px] text-neutral-500">{example.description}</span>
-                </DropdownMenuItem>
-              ))}
+              {DASHBOARD_EXAMPLES.filter(example => example.category === category && !example.dataSource).map(
+                example => (
+                  <DropdownMenuItem
+                    key={example.id}
+                    className="flex flex-col items-start gap-0.5"
+                    onSelect={() => applyExample(example)}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {example.title}
+                      {example.beyondPrebuilt && (
+                        <span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                          {t("advanced")}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[11px] text-neutral-500">{example.description}</span>
+                  </DropdownMenuItem>
+                )
+              )}
             </DropdownMenuSubContent>
           </DropdownMenuSub>
         ))}
