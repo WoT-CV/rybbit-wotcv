@@ -16,21 +16,25 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
   const {
     activityPeriods,
     currentTime,
+    duration,
     inactivitySkipThresholdMs,
     isPlaying,
     manualSeekVersion,
     setCurrentTime,
     setInactivitySkipNotice,
+    setIsPlaying,
     skipInactivityEnabled,
   } = useReplayStore(
     useShallow(state => ({
       activityPeriods: state.activityPeriods,
       currentTime: state.currentTime,
+      duration: state.duration,
       inactivitySkipThresholdMs: state.inactivitySkipThresholdMs,
       isPlaying: state.isPlaying,
       manualSeekVersion: state.manualSeekVersion,
       setCurrentTime: state.setCurrentTime,
       setInactivitySkipNotice: state.setInactivitySkipNotice,
+      setIsPlaying: state.setIsPlaying,
       skipInactivityEnabled: state.skipInactivityEnabled,
     }))
   );
@@ -52,7 +56,7 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
       return;
     }
 
-    const nextActivity = findNextActivityPeriod(currentTime, activityPeriods, inactivitySkipThresholdMs);
+    const nextActivity = findNextActivityPeriod(currentTime, activityPeriods, inactivitySkipThresholdMs, duration);
 
     if (!nextActivity) {
       lastSkippedTargetRef.current = null;
@@ -65,9 +69,13 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
 
     lastSkippedTargetRef.current = nextActivity.start;
     player.goto(nextActivity.start);
-    window.requestAnimationFrame(() => {
-      player.play?.();
-    });
+    if (nextActivity.start < duration) {
+      window.requestAnimationFrame(() => {
+        player.play?.();
+      });
+    } else {
+      setIsPlaying(false);
+    }
     setCurrentTime(nextActivity.start);
     setInactivitySkipNotice({
       from: nextActivity.from,
@@ -78,11 +86,13 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
   }, [
     activityPeriods,
     currentTime,
+    duration,
     inactivitySkipThresholdMs,
     isPlaying,
     player,
     setCurrentTime,
     setInactivitySkipNotice,
+    setIsPlaying,
     skipInactivityEnabled,
   ]);
 }

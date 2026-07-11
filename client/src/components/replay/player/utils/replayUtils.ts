@@ -16,7 +16,7 @@ export interface InactivitySkipTarget extends ActivityPeriod {
   skippedMs: number;
 }
 
-export const INACTIVITY_SKIP_THRESHOLD_MS = 5000;
+export const MIN_INACTIVITY_SKIP_MS = 250;
 const PRE_ACTIVITY_PADDING_MS = 500;
 const POST_ACTIVITY_PADDING_MS = 1000;
 const MOUSE_MOVE_SOURCE = 1;
@@ -73,7 +73,8 @@ export function normalizeActivityPeriods(periods: ActivityPeriod[]): ActivityPer
 export function findNextActivityPeriod(
   currentTime: number,
   periods: ActivityPeriod[],
-  minInactiveDurationMs = INACTIVITY_SKIP_THRESHOLD_MS
+  minInactiveDurationMs = MIN_INACTIVITY_SKIP_MS,
+  totalDuration?: number
 ): InactivitySkipTarget | null {
   const normalizedPeriods = normalizeActivityPeriods(periods);
   const safeCurrentTime = Math.max(0, currentTime);
@@ -94,6 +95,21 @@ export function findNextActivityPeriod(
         ...period,
         from: safeCurrentTime,
         to: period.start,
+        skippedMs,
+      };
+    }
+  }
+
+  if (Number.isFinite(totalDuration) && totalDuration !== undefined && safeCurrentTime < totalDuration) {
+    const safeTotalDuration = Math.max(0, totalDuration);
+    const skippedMs = safeTotalDuration - safeCurrentTime;
+
+    if (skippedMs >= minInactiveDurationMs) {
+      return {
+        start: safeTotalDuration,
+        end: safeTotalDuration,
+        from: safeCurrentTime,
+        to: safeTotalDuration,
         skippedMs,
       };
     }

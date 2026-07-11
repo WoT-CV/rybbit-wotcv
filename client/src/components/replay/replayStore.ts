@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { INACTIVITY_SKIP_THRESHOLD_MS, type ActivityPeriod } from "./player/utils/replayUtils";
+import { MIN_INACTIVITY_SKIP_MS, type ActivityPeriod } from "./player/utils/replayUtils";
 
 interface InactivitySkipNotice {
   from: number;
@@ -82,7 +82,7 @@ export const useReplayStore = create<{
   skipInactivityEnabled: true,
   setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
 
-  inactivitySkipThresholdMs: INACTIVITY_SKIP_THRESHOLD_MS,
+  inactivitySkipThresholdMs: MIN_INACTIVITY_SKIP_MS,
   setInactivitySkipThresholdMs: inactivitySkipThresholdMs => set({ inactivitySkipThresholdMs }),
 
   inactivitySkipNotice: null,

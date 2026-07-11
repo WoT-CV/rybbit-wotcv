@@ -1,4 +1,4 @@
-import { FastForward, Maximize2, Pause, Play } from "lucide-react";
+import { Maximize2, Pause, Play, SkipForward } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -133,7 +133,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
             onClick={handleSkipInactivityToggle}
             title={t("Skip inactivity")}
           >
-            <FastForward className="h-3 w-3" aria-hidden="true" />
+            <SkipForward className="h-3 w-3" aria-hidden="true" />
             <span className="hidden xl:inline">{t("Skip inactivity")}</span>
           </Button>
         </div>
