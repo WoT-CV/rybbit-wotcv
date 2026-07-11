@@ -7,7 +7,7 @@ export type UserIdentityLike = {
 };
 
 const DISPLAY_NAME_TRAIT_KEYS = ["username", "name", "email"] as const;
-const AVATAR_TRAIT_KEYS = ["avatarUrl", "clanLogoUrl", "logoUrl", "imageUrl", "avatar_url", "picture"] as const;
+const AVATAR_TRAIT_KEYS = ["avatarUrl", "logoUrl", "imageUrl", "avatar_url", "picture"] as const;
 
 function getTraitString(traits: Record<string, unknown> | null | undefined, key: string) {
   const value = traits?.[key];
