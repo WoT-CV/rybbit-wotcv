@@ -255,6 +255,26 @@ bash scripts/wotcv-self-hosted-analytics-smoke.sh
 
 `Wydajność` zaczyna pokazywać dane po włączeniu Web Vitals w ustawieniach strony i zebraniu zdarzeń `performance`. `Boty` pokazują dane, gdy tracker zapisuje zdarzenia botów dla danej strony.
 
+## Weryfikacja źródła AGPL-3.0
+
+Każdy build klienta otrzymuje `WOTCV_GIT_SHA` i generuje link do odpowiadającego mu commita w `WoT-CV/rybbit-wotcv`. Backend udostępnia ten sam link przez `/api/source`, nagłówek `X-Source-Code` oraz standardowy nagłówek `Link` z relacją `source`.
+
+Po wdrożeniu sprawdź zgodność SHA i źródła:
+
+```bash
+curl -fsS https://tracking.wot-cv.com/api/health
+curl -fsSI https://tracking.wot-cv.com/api/source | grep -i '^location:'
+curl -fsS -D - -o /dev/null https://tracking.wot-cv.com/api/health \
+  | grep -Ei '^(link|x-source-code):'
+curl -fsS https://tracking.wot-cv.com/api/script.js | head -n 1
+```
+
+Wynik powinien wskazywać publiczny commit zgodny z `gitSha` zwróconym przez health endpoint. Interfejs aplikacji pokazuje ten sam link jako `Kod źródłowy (AGPL-3.0)` w stałym pasku bocznym, stopce oraz na ekranach logowania i rejestracji.
+
+Repozytorium i wskazany commit muszą pozostać publicznie dostępne. Jeżeli repozytorium zostanie ustawione jako prywatne, trzeba udostępnić publiczne archiwum kompletnego odpowiadającego kodu źródłowego i skierować do niego wszystkie powyższe linki.
+
+Nie publikuj `.env`, danych użytkowników, kluczy API ani innych sekretów. Nie są one częścią kodu źródłowego i nie są wymagane do spełnienia obowiązku udostępnienia Corresponding Source.
+
 ## Rollback
 
 Automatyczny rollback jest wykonywany po nieudanym health checku, jeżeli `.wotcv-deployment.env` zawiera poprzedni tag i lokalne obrazy nadal istnieją.

@@ -1,3 +1,5 @@
+import { getSourceCodeUrl } from "./sourceCode.js";
+
 export interface BuildMetadata {
   status: "ok";
   version: string;
@@ -6,6 +8,7 @@ export interface BuildMetadata {
   imageDigest: string;
   buildTime: string;
   deployedAt: string;
+  sourceCodeUrl: string;
 }
 
 export function getBuildMetadata(): BuildMetadata {
@@ -17,5 +20,6 @@ export function getBuildMetadata(): BuildMetadata {
     imageDigest: process.env.WOTCV_IMAGE_DIGEST || "unknown",
     buildTime: process.env.WOTCV_BUILD_TIME || "unknown",
     deployedAt: process.env.WOTCV_DEPLOYED_AT || "unknown",
+    sourceCodeUrl: getSourceCodeUrl(),
   };
 }

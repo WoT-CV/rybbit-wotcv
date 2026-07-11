@@ -7,6 +7,7 @@ type CorsOptions = {
   origin: boolean;
   methods: string[];
   allowedHeaders: string[];
+  exposedHeaders: string[];
   credentials: boolean;
 };
 
@@ -15,6 +16,7 @@ type CorsDelegateCallback = (error: Error | null, options?: CorsOptions) => void
 const commonCorsOptions = {
   methods: corsMethods,
   allowedHeaders: corsAllowedHeaders,
+  exposedHeaders: ["Link", "X-Source-Code"],
 };
 
 const devTrustedOrigins = ["http://localhost:3002", "http://127.0.0.1:3002"];
@@ -83,6 +85,7 @@ export function isPublicCorsPath(path: string): boolean {
   return (
     path === "/api/track" ||
     path === "/api/identify" ||
+    path === "/api/source" ||
     path === "/api/version" ||
     path.startsWith("/api/session-replay/record/") ||
     path.startsWith("/api/site/tracking-config/") ||

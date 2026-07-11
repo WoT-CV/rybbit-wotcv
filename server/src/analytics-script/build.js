@@ -7,6 +7,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Ensure public directory exists
 const publicDir = "../../public";
+const sourceNotice =
+  "/*! Modified WoT-CV fork of Rybbit | GNU AGPL-3.0 | Source: https://github.com/WoT-CV/rybbit-wotcv */";
 if (!existsSync(publicDir)) {
   mkdirSync(publicDir, { recursive: true });
 }
@@ -23,6 +25,7 @@ async function buildScript() {
       minify: false,
       sourcemap: false,
       platform: "browser",
+      banner: { js: sourceNotice },
     });
 
     console.log("✅ Built script-full.js");
@@ -37,6 +40,7 @@ async function buildScript() {
       minify: true,
       sourcemap: false,
       platform: "browser",
+      banner: { js: sourceNotice },
     });
 
     console.log("✅ Built script.js (minified)");

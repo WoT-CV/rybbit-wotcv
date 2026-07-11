@@ -1,3 +1,4 @@
+/*! Modified WoT-CV fork of Rybbit | GNU AGPL-3.0 | Source: https://github.com/WoT-CV/rybbit-wotcv */
 "use strict";
 (() => {
   var __defProp = Object.defineProperty;

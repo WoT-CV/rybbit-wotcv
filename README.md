@@ -6,13 +6,18 @@
   </picture>
     <p align="center">Open Source Web & Product Analytics</p>
 
+> [!IMPORTANT]
+> This repository is a modified fork of [Rybbit](https://github.com/rybbit-io/rybbit), maintained by WoT-CV since 2026-07-10.
+> The complete modified work is licensed under the [GNU Affero General Public License v3.0](LICENSE.md).
+> See [NOTICE.md](NOTICE.md) for modification and source information.
+
 <p align="center">
     <a href="https://rybbit.com" target="_blank">Website</a> |
     <a href="https://demo.rybbit.com/81" target="_blank">Demo</a> |
     <a href="https://rybbit.com/docs" target="_blank">Documentation</a> |
     <a href="https://discord.gg/DEhGb4hYBj" target="_blank">Discord</a> |
-    <a href="https://github.com/rybbit-io/rybbit?tab=AGPL-3.0-1-ov-file" target="_blank">License (AGPL-3)</a> |
-    <a href="https://github.com/rybbit-io/rybbit/blob/master/CONTRIBUTE.md" target="_blank">Contribute</a>
+    <a href="https://github.com/WoT-CV/rybbit-wotcv/blob/feat/wotcv/LICENSE.md" target="_blank">License (AGPL-3)</a> |
+    <a href="https://github.com/WoT-CV/rybbit-wotcv/blob/feat/wotcv/CONTRIBUTE.md" target="_blank">Contribute</a>
 </p>
 
 <a href="https://rybbit.com/" target="_blank">Rybbit</a> is the modern open source and privacy friendly alternative to Google Analytics. It takes only a couple minutes to setup and is super intuitive to use.

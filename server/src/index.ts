@@ -171,6 +171,7 @@ import { mapHeaders } from "./lib/auth-utils.js";
 import { auth } from "./lib/auth.js";
 import { getBuildMetadata } from "./lib/buildMetadata.js";
 import { createCorsOptionsDelegate, createRejectUntrustedOriginHook } from "./lib/cors.js";
+import { getSourceCodeUrl } from "./lib/sourceCode.js";
 import { IS_CLOUD } from "./lib/const.js";
 import { reengagementService } from "./services/reengagement/reengagementService.js";
 import { telemetryService } from "./services/telemetryService.js";
@@ -244,6 +245,12 @@ server.register(cors, {
   delegator: createCorsOptionsDelegate(),
 });
 server.addHook("onRequest", createRejectUntrustedOriginHook());
+server.addHook("onSend", async (_request, reply, payload) => {
+  const sourceCodeUrl = getSourceCodeUrl();
+  reply.header("Link", `<${sourceCodeUrl}>; rel="source"`);
+  reply.header("X-Source-Code", sourceCodeUrl);
+  return payload;
+});
 
 // Serve static files
 server.register(fastifyStatic, {
@@ -285,6 +292,7 @@ server.register(
 server.get("/api/script.js", async (_, reply) => reply.sendFile("script.js", { maxAge: "1h" }));
 server.get("/api/replay.js", async (_, reply) => reply.sendFile("rrweb.min.js", { maxAge: "1d" }));
 server.get("/api/metrics.js", async (_, reply) => reply.sendFile("web-vitals.iife.js", { maxAge: "1d" }));
+server.get("/api/source", { logLevel: "silent" }, async (_, reply) => reply.redirect(getSourceCodeUrl()));
 
 // Domain-specific route plugins
 async function analyticsRoutes(fastify: FastifyInstance) {

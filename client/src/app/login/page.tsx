@@ -15,6 +15,7 @@ import { useSetPageTitle } from "../../hooks/useSetPageTitle";
 import { authClient } from "../../lib/auth";
 import { useConfigs } from "../../lib/configs";
 import { IS_CLOUD } from "../../lib/const";
+import { sourceCodeUrl } from "../../lib/sourceCode";
 import { userStore } from "../../lib/userStore";
 
 export default function Page() {
@@ -152,14 +153,15 @@ export default function Page() {
         </div>
 
         {!IS_CLOUD && (
-          <div className="text-xs text-muted-foreground mt-8">
+          <div className="mt-8 space-y-1 text-center text-xs text-muted-foreground">
+            <div>{t("Modified WoT-CV fork of Rybbit")}</div>
             <a
-              href="https://rybbit.com"
+              href={sourceCodeUrl}
               target="_blank"
-              rel="noopener"
-              title={t("Rybbit - Open Source Privacy-Focused Web Analytics")}
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 hover:text-foreground"
             >
-              {t("Open source web analytics powered by Rybbit")}
+              {t("Source code (AGPL-3.0)")}
             </a>
           </div>
         )}

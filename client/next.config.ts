@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_DISABLE_SIGNUP: process.env.NEXT_PUBLIC_DISABLE_SIGNUP,
     NEXT_PUBLIC_LITE_DASHBOARD: process.env.NEXT_PUBLIC_LITE_DASHBOARD,
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version,
+    NEXT_PUBLIC_WOTCV_GIT_SHA: process.env.NEXT_PUBLIC_WOTCV_GIT_SHA,
   },
 };
 

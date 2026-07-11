@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Building2, HelpCircle, LogOut, Moon, ShieldUser, Sun, User } from "lucide-react";
+import { BookOpen, Building2, CodeXml, HelpCircle, LogOut, Moon, ShieldUser, Sun, User } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -11,6 +11,7 @@ import { useAdminPermission } from "../app/admin/hooks/useAdminPermission";
 import { useSignout } from "../hooks/useSignout";
 import { authClient } from "../lib/auth";
 import { DEPLOYMENT, IS_CLOUD } from "../lib/const";
+import { sourceCodeUrl } from "../lib/sourceCode";
 import { useStripeSubscription } from "../lib/subscription/useStripeSubscription";
 import { cn } from "../lib/utils";
 import { RybbitLogo } from "./RybbitLogo";
@@ -56,6 +57,12 @@ function AppSidebarContent() {
           href="https://rybbit.com/docs"
           icon={<BookOpen className="w-5 h-5" />}
           label={t("Documentation")}
+          target="_blank"
+        />
+        <RailLink
+          href={sourceCodeUrl}
+          icon={<CodeXml className="w-5 h-5" />}
+          label={t("Source code (AGPL-3.0)")}
           target="_blank"
         />
         {IS_CLOUD && (subscription?.status === "active" || subscription?.status === "trialing") && (
