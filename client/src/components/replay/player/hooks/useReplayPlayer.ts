@@ -33,8 +33,9 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
     const target = playerContainerRef.current;
     if (!data?.events || !target) return;
 
-    const initializedSessionId = useReplayStore.getState().sessionId;
-    const autoplayTimeoutIds: ReturnType<typeof setTimeout>[] = [];
+    const initializedState = useReplayStore.getState();
+    const initializedSessionId = initializedState.sessionId;
+    const initializedSelectionVersion = initializedState.selectionVersion;
     let handleVisibilityChange: (() => void) | undefined;
     let adapter: ReplayPlayerAdapter;
 
@@ -69,15 +70,14 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
         const state = useReplayStore.getState();
         if (
           state.sessionId === initializedSessionId &&
-          state.autoplaySessionId === initializedSessionId &&
+          state.autoplayRequest?.sessionId === initializedSessionId &&
+          state.autoplayRequest.selectionVersion === initializedSelectionVersion &&
           state.player === adapter
         ) {
           state.setPlaybackState("playing");
-          state.consumeAutoplay(initializedSessionId);
+          state.consumeAutoplay(state.autoplayRequest);
         }
       });
-
-      adapter.onDuration(setDuration);
 
       const syncDurationAndAutoplay = () => {
         const playerDuration = adapter.getDuration();
@@ -86,16 +86,19 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
         const state = useReplayStore.getState();
         if (
           state.sessionId === initializedSessionId &&
-          state.autoplaySessionId === initializedSessionId &&
+          state.autoplayRequest?.sessionId === initializedSessionId &&
+          state.autoplayRequest.selectionVersion === initializedSelectionVersion &&
           state.player === adapter
         ) {
           adapter.play();
         }
       };
 
-      [0, 100, 300, 750, 1500].forEach(delay => {
-        autoplayTimeoutIds.push(setTimeout(syncDurationAndAutoplay, delay));
+      adapter.onDuration(playerDuration => {
+        setDuration(playerDuration);
+        syncDurationAndAutoplay();
       });
+      queueMicrotask(syncDurationAndAutoplay);
 
       let wasPlayingBeforeHidden = false;
       handleVisibilityChange = () => {
@@ -124,7 +127,6 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
     }
 
     return () => {
-      autoplayTimeoutIds.forEach(clearTimeout);
       if (handleVisibilityChange) document.removeEventListener("visibilitychange", handleVisibilityChange);
       adapter.destroy();
       playerRef.current = null;

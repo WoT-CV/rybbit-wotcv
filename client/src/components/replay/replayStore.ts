@@ -4,6 +4,10 @@ import type { ActivityPeriod, ReplayCaptureProfile, ReplaySegment } from "./play
 import type { ReplayPlayerAdapter } from "./player/ReplayPlayerAdapter";
 
 export type ReplayPlaybackState = "paused" | "playing" | "skipping-inactivity" | "seeking" | "buffering" | "ended";
+export interface ReplayAutoplayRequest {
+  sessionId: string;
+  selectionVersion: number;
+}
 
 export const useReplayStore = create<{
   minDuration: number;
@@ -12,9 +16,10 @@ export const useReplayStore = create<{
   // Session selection
   sessionId: string;
   setSessionId: (sessionId: string) => void;
-  autoplaySessionId: string | null;
+  selectionVersion: number;
+  autoplayRequest: ReplayAutoplayRequest | null;
   selectSession: (sessionId: string, autoplay: boolean) => void;
-  consumeAutoplay: (sessionId: string) => void;
+  consumeAutoplay: (request: ReplayAutoplayRequest) => void;
 
   // Player state
   player: ReplayPlayerAdapter | null;
@@ -66,7 +71,8 @@ export const useReplayStore = create<{
   // Session selection
   sessionId: "",
   setSessionId: sessionId => set({ sessionId }),
-  autoplaySessionId: null,
+  selectionVersion: 0,
+  autoplayRequest: null,
   selectSession: (sessionId, autoplay) =>
     set(state => {
       if (state.sessionId === sessionId && state.player) {
@@ -77,7 +83,7 @@ export const useReplayStore = create<{
           state.player.play();
         }
         return {
-          autoplaySessionId: null,
+          autoplayRequest: null,
           currentTime: autoplay && state.duration > 0 && state.currentTime >= state.duration ? 0 : state.currentTime,
           isPlaying: autoplay ? true : state.isPlaying,
           playbackState: autoplay ? "playing" : state.playbackState,
@@ -85,9 +91,11 @@ export const useReplayStore = create<{
       }
 
       state.player?.pause();
+      const selectionVersion = state.selectionVersion + 1;
       return {
         sessionId,
-        autoplaySessionId: autoplay ? sessionId : null,
+        selectionVersion,
+        autoplayRequest: autoplay ? { sessionId, selectionVersion } : null,
         player: null,
         isPlaying: false,
         currentTime: 0,
@@ -101,8 +109,14 @@ export const useReplayStore = create<{
         exportRange: null,
       };
     }),
-  consumeAutoplay: sessionId =>
-    set(state => ({ autoplaySessionId: state.autoplaySessionId === sessionId ? null : state.autoplaySessionId })),
+  consumeAutoplay: request =>
+    set(state => ({
+      autoplayRequest:
+        state.autoplayRequest?.sessionId === request.sessionId &&
+        state.autoplayRequest.selectionVersion === request.selectionVersion
+          ? null
+          : state.autoplayRequest,
+    })),
 
   // Player state
   player: null,
@@ -159,7 +173,7 @@ export const useReplayStore = create<{
       activityPeriods: [],
       replaySegments: [],
       replayCaptureProfile: "legacy",
-      autoplaySessionId: null,
+      autoplayRequest: null,
       exportRange: null,
     }),
 }));
