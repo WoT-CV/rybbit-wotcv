@@ -157,6 +157,16 @@ Repozytorium i wskazane SHA muszą pozostać publicznie dostępne. Sekrety, `.en
 - `server/Dockerfile`
 - `docker-compose.yml`
 
+### Zasady rozwiązywania konfliktów
+
+1. Zachować kontrakty i nowe pola z upstreamu, a następnie ponownie nałożyć rozszerzenia WoT-CV zamiast przywracać całe stare pliki.
+2. Dla `shared` oraz schematu Postgresa najpierw uzgodnić typy i nazwy kolumn; dopiero potem poprawiać klienta, API i tracker.
+3. W trackerze zachować aktualny lifecycle Session Replay z upstreamu oraz dołączyć recorder `rrweb/network@1` przez istniejące punkty rozszerzeń.
+4. W playerze zachować API rrweb używane przez aktualny upstream i dostosować `ReplayPlayerAdapter`, nie omijać adaptera bezpośrednimi wywołaniami.
+5. Katalogów językowych nie scalać ręcznie blokami. Najpierw rozwiązać komunikaty źródłowe, potem uruchomić extractor i uzupełnić wyłącznie nowe polskie wartości.
+6. W Dockerfile i Compose zachować wersje bazowe upstreamu, ale nie usuwać metadanych OCI, niezmiennych tagów SHA ani nazw istniejących wolumenów.
+7. Nie akceptować konfliktu przez `ours` dla całego katalogu. Każdy hotspot wymaga przeglądu różnic funkcjonalnych.
+
 ## Checklista po merge z upstreamem
 
 1. Zbudować `shared`, klienta, serwer i tracker.
@@ -169,3 +179,5 @@ Repozytorium i wskazane SHA muszą pozostać publicznie dostępne. Sekrety, `.en
 8. Uruchomić audyt polskich tłumaczeń.
 9. Sprawdzić `/api/health`, `/api/source` i banner trackera.
 10. Zweryfikować Compose i nazwy istniejących wolumenów.
+11. Porównać `git diff upstream/master...feat/wotcv` z tabelą funkcji w tym dokumencie.
+12. Dopiero po pełnej walidacji pushować `master` i `feat/wotcv`.

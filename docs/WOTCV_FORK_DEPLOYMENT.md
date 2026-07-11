@@ -325,6 +325,14 @@ Push po udanej synchronizacji:
 WOTCV_PUSH=1 bash scripts/wotcv-sync-upstream-master.sh
 ```
 
+Synchronizacja `master`, a następnie automatyczne scalenie go do gałęzi wdrożeniowej bez pushowania:
+
+```bash
+WOTCV_MERGE_FEATURE=1 bash scripts/wotcv-sync-upstream-master.sh
+```
+
+Skrypt tworzy osobny backup przed merge do `master` oraz przed merge `master` do `feat/wotcv`. Przy konflikcie zatrzymuje się bez pushowania. Po rozwiązaniu konfliktów należy wykonać checklistę z `WOTCV_FORK_DIFFERENCES.md`; dopiero potem można wypchnąć obie gałęzie ręcznie albo ponowić procedurę z `WOTCV_PUSH=1`.
+
 Jeżeli oficjalny Rybbit używa innej głównej gałęzi:
 
 ```bash
