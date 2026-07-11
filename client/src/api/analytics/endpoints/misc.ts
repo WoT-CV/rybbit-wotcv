@@ -1,3 +1,9 @@
+import type {
+  GrowthAccountingMode,
+  GrowthAccountingPoint,
+  GrowthAccountingResponse,
+} from "@rybbit/shared";
+
 import { authedFetch } from "../../utils";
 import { CommonApiParams, PaginationParams, toQueryParams } from "./types";
 
@@ -9,21 +15,8 @@ export interface ProcessedRetentionData {
   range: number;
 }
 
-export type RetentionMode = "day" | "week";
-
-export interface GrowthAccountingPoint {
-  period: string;
-  newUsers: number;
-  returningUsers: number;
-  resurrectingUsers: number;
-  dormantUsers: number;
-}
-
-export interface GrowthAccountingResponse {
-  data: GrowthAccountingPoint[];
-  mode: RetentionMode;
-  range: number;
-}
+export type { GrowthAccountingPoint, GrowthAccountingResponse } from "@rybbit/shared";
+export type RetentionMode = GrowthAccountingMode;
 
 // Journey types
 export interface Journey {
@@ -115,7 +108,7 @@ export async function fetchGrowthAccounting(
   site: string | number,
   params: GrowthAccountingParams = {}
 ): Promise<GrowthAccountingResponse> {
-  const { mode = "week", range = 90, timeZone = "UTC", ...timeRange } = params;
+  const { mode = "day", range = 90, timeZone = "UTC", ...timeRange } = params;
 
   return authedFetch<GrowthAccountingResponse>(`/sites/${site}/growth-accounting`, {
     mode,

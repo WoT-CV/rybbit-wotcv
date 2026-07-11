@@ -6,3 +6,4 @@ export * from "./time";
 export * from "./performance";
 export * from "./replayExport";
 export * from "./replayActivity";
+export * from "./growthAccounting";

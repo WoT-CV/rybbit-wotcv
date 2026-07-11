@@ -1,13 +1,12 @@
 import { DateTime } from "luxon";
 import { FastifyReply, FastifyRequest } from "fastify";
+import type { GrowthAccountingMode, GrowthAccountingPoint } from "@rybbit/shared";
 import { z } from "zod";
 
 import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { processResults } from "./utils/utils.js";
 
-type GrowthAccountingMode = "day" | "week";
-
-interface GrowthAccountingRow {
+export interface GrowthAccountingRow {
   period: string;
   new_users: number;
   returning_users: number;
@@ -15,16 +14,8 @@ interface GrowthAccountingRow {
   dormant_users: number;
 }
 
-export interface GrowthAccountingPoint {
-  period: string;
-  newUsers: number;
-  returningUsers: number;
-  resurrectingUsers: number;
-  dormantUsers: number;
-}
-
 const querySchema = z.object({
-  mode: z.enum(["day", "week"]).default("week"),
+  mode: z.enum(["day", "week"]).default("day"),
   range: z.coerce.number().int().min(7).max(365).default(90),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -235,13 +226,24 @@ ORDER BY period ASC
   });
 
   const rows = await processResults<GrowthAccountingRow>(result);
+  const data = mapGrowthAccountingRows(rows, displayStart, displayEnd, mode);
+
+  return reply.send({ data, mode, range });
+};
+
+export function mapGrowthAccountingRows(
+  rows: GrowthAccountingRow[],
+  displayStart: DateTime,
+  displayEnd: DateTime,
+  mode: GrowthAccountingMode
+): GrowthAccountingPoint[] {
   const rowsByPeriod = new Map(rows.map(row => [row.period, row]));
+  const periodUnit = mode === "day" ? "day" : "week";
   const data: GrowthAccountingPoint[] = [];
 
   for (let period = displayStart; period <= displayEnd; period = period.plus({ [periodUnit]: 1 })) {
     const periodKey = period.toISODate() ?? period.toFormat("yyyy-MM-dd");
     const row = rowsByPeriod.get(periodKey);
-
     data.push({
       period: periodKey,
       newUsers: row?.new_users ?? 0,
@@ -250,6 +252,5 @@ ORDER BY period ASC
       dormantUsers: row?.dormant_users ?? 0,
     });
   }
-
-  return reply.send({ data, mode, range });
-};
+  return data;
+}
