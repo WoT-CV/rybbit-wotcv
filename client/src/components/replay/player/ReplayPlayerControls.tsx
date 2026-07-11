@@ -85,7 +85,29 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
 
   return (
     <div className="border border-neutral-100 dark:border-neutral-800 p-2 pb-3 bg-white dark:bg-neutral-900 rounded-b-lg pt-6">
-      <div className="flex items-end">
+      <div className="-mt-8">
+        <ActivitySlider
+          value={[duration > 0 ? (currentTime / duration) * 100 : 0]}
+          onValueChange={onSliderChange}
+          onValueCommit={onSliderCommit}
+          max={100}
+          step={0.1}
+          activityPeriods={activityPeriods}
+          replaySegments={replaySegments}
+          duration={duration}
+          events={events}
+          networkRequests={networkRequests}
+          currentTime={currentTime}
+          exportRange={exportRange}
+          onNetworkSeek={handleNetworkSeek}
+          className="w-full"
+        />
+        {exportRange && (
+          <ReplayExportRangeSlider duration={duration} range={exportRange} onRangeChange={setExportRange} />
+        )}
+      </div>
+
+      <div className="mt-2 flex items-center gap-2">
         <Button variant="ghost" size="smIcon" onClick={onPlayPause} disabled={!player}>
           {isPlaying ? (
             <Pause className="w-4 h-4" fill="currentColor" />
@@ -93,28 +115,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
             <Play className="w-4 h-4" fill="currentColor" />
           )}
         </Button>
-        <div className="mx-2 -mt-8 flex-1">
-          <ActivitySlider
-            value={[duration > 0 ? (currentTime / duration) * 100 : 0]}
-            onValueChange={onSliderChange}
-            onValueCommit={onSliderCommit}
-            max={100}
-            step={0.1}
-            activityPeriods={activityPeriods}
-            replaySegments={replaySegments}
-            duration={duration}
-            events={events}
-            networkRequests={networkRequests}
-            currentTime={currentTime}
-            exportRange={exportRange}
-            onNetworkSeek={handleNetworkSeek}
-            className="w-full"
-          />
-          {exportRange && (
-            <ReplayExportRangeSlider duration={duration} range={exportRange} onRangeChange={setExportRange} />
-          )}
-        </div>
-        <div className="text-xs text-neutral-700 dark:text-neutral-300 w-20 text-center">
+        <div className="ml-auto whitespace-nowrap text-center text-xs text-neutral-700 dark:text-neutral-300">
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
         <div className="flex min-w-0 items-center gap-1.5">
