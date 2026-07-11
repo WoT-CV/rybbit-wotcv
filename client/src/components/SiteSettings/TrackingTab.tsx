@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useExtracted } from "next-intl";
 import { useState, useCallback, ReactNode } from "react";
 import { toast } from "@/components/ui/sonner";
@@ -52,6 +53,7 @@ interface ToggleConfig {
 
 export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps) {
   const t = useExtracted();
+  const queryClient = useQueryClient();
   const { refetch } = useGetSitesFromOrg(siteMetadata?.organizationId ?? "");
   const isMobileSite = siteMetadata.type === "mobile";
 
@@ -84,6 +86,8 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
           : `${key.replace(/([A-Z])/g, " $1").toLowerCase()} ${checked ? "enabled" : "disabled"}`;
         toast.success(message);
         refetch();
+        // Prefix match so both string- and number-keyed useGetSite instances update
+        queryClient.invalidateQueries({ queryKey: ["get-site"] });
       } catch (error) {
         console.error(`Error updating ${key}:`, error);
         toast.error(`Failed to update ${key.replace(/([A-Z])/g, " $1").toLowerCase()}`);
@@ -92,7 +96,7 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
         setLoadingStates(prev => ({ ...prev, [key]: false }));
       }
     },
-    [siteMetadata.siteId, refetch]
+    [siteMetadata.siteId, refetch, queryClient]
   );
 
   const { data: subscription, isLoading: isSubscriptionLoading } = useStripeSubscription();

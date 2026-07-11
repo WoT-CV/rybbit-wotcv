@@ -1,4 +1,11 @@
 {
+  "Q5w7w4": "Custom events aren't captured automatically. Your site has to send them with rybbit.event().",
+  "/Z2fqW": "Outbound link",
+  "/6bl6s": "Button click",
+  "bsPwts": "Form submission",
+  "DP+/qk": "{type} tracking is turned off for this site, so these events aren't being collected. You can turn it on in the Tracking tab of the site settings.",
+  "k71IKL": "Day {day} of {total}",
+  "hO42EP": "Daily Events",
   "zqyslY": "Export range",
   "/zFP1/": "Start time",
   "6VOP8W": "Replay export failed",

@@ -1,4 +1,11 @@
 {
+  "Q5w7w4": "사용자 지정 이벤트는 자동으로 수집되지 않습니다. 사이트에서 rybbit.event()로 직접 전송해야 합니다.",
+  "/Z2fqW": "외부 링크",
+  "/6bl6s": "버튼 클릭",
+  "bsPwts": "폼 제출",
+  "DP+/qk": "이 사이트에서는 {type} 추적이 꺼져 있어 해당 이벤트가 수집되지 않습니다. 사이트 설정의 추적 탭에서 켤 수 있습니다.",
+  "k71IKL": "{total}일 중 {day}일째",
+  "hO42EP": "일별 이벤트",
   "zqyslY": "Export range",
   "/zFP1/": "Start time",
   "6VOP8W": "Replay export failed",

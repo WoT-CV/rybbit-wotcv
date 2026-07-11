@@ -1,4 +1,11 @@
 {
+  "Q5w7w4": "Custom Events werden nicht automatisch erfasst. Ihre Website muss sie mit rybbit.event() senden.",
+  "/Z2fqW": "Ausgehender Link",
+  "/6bl6s": "Button-Klick",
+  "bsPwts": "Formularübermittlung",
+  "DP+/qk": "Das {type}-Tracking ist für diese Website deaktiviert, daher werden diese Events nicht erfasst. Sie können es im Tracking-Tab der Website-Einstellungen aktivieren.",
+  "k71IKL": "Tag {day} von {total}",
+  "hO42EP": "Tägliche Events",
   "zqyslY": "Export range",
   "/zFP1/": "Start time",
   "6VOP8W": "Replay export failed",

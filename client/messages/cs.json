@@ -1,4 +1,11 @@
 {
+  "Q5w7w4": "Vlastní události se nezaznamenávají automaticky. Váš web je musí odesílat pomocí rybbit.event().",
+  "/Z2fqW": "Odchozí odkaz",
+  "/6bl6s": "Kliknutí na tlačítko",
+  "bsPwts": "Odeslání formuláře",
+  "DP+/qk": "Sledování typu {type} je pro tento web vypnuté, takže se tyto události neshromažďují. Můžete ho zapnout na kartě Sledování v nastavení webu.",
+  "k71IKL": "",
+  "hO42EP": "",
   "zqyslY": "Export range",
   "/zFP1/": "Start time",
   "6VOP8W": "Replay export failed",

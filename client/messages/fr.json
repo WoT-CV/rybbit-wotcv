@@ -1,4 +1,11 @@
 {
+  "Q5w7w4": "Les événements personnalisés ne sont pas capturés automatiquement. Votre site doit les envoyer avec rybbit.event().",
+  "/Z2fqW": "Lien sortant",
+  "/6bl6s": "Clic sur bouton",
+  "bsPwts": "Soumission de formulaire",
+  "DP+/qk": "Le suivi {type} est désactivé pour ce site, donc ces événements ne sont pas collectés. Vous pouvez l'activer dans l'onglet Suivi des paramètres du site.",
+  "k71IKL": "Jour {day} sur {total}",
+  "hO42EP": "Événements quotidiens",
   "zqyslY": "Export range",
   "/zFP1/": "Start time",
   "6VOP8W": "Replay export failed",

@@ -1,4 +1,11 @@
 {
+  "Q5w7w4": "Gli eventi personalizzati non vengono acquisiti automaticamente. Il tuo sito deve inviarli con rybbit.event().",
+  "/Z2fqW": "Link in uscita",
+  "/6bl6s": "Clic su pulsante",
+  "bsPwts": "Invio modulo",
+  "DP+/qk": "Il tracciamento di {type} è disattivato per questo sito, quindi questi eventi non vengono raccolti. Puoi attivarlo nella scheda Tracciamento delle impostazioni del sito.",
+  "k71IKL": "Giorno {day} di {total}",
+  "hO42EP": "Eventi Giornalieri",
   "zqyslY": "Export range",
   "/zFP1/": "Start time",
   "6VOP8W": "Replay export failed",
