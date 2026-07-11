@@ -97,6 +97,7 @@ export const useReplayStore = create<{
         activityPeriods: [],
         replaySegments: [],
         replayCaptureProfile: "legacy",
+        exportRange: null,
       };
     }),
   consumeAutoplay: sessionId =>

@@ -101,9 +101,7 @@ export const calculateReplayTimeline = (events: any[], totalDuration: number): R
   const activityPeriods = segments
     .filter(segment => segment.isActive)
     .map(segment => ({ start: segment.start, end: segment.end }));
-  const activeMs = segments
-    .filter(segment => segment.isActive)
-    .reduce((total, segment) => total + segment.duration, 0);
+  const activeMs = segments.filter(segment => segment.isActive).reduce((total, segment) => total + segment.duration, 0);
 
   return {
     activityPeriods,
@@ -301,6 +299,6 @@ export const PLAYBACK_SPEEDS = [
   { value: "4", label: "4x" },
 ];
 
-export const CONTROLS_HEIGHT = 101;
+export const CONTROLS_HEIGHT = 128;
 export const SKIP_SECONDS = 10000;
 export const OVERLAY_TIMEOUT = 800;

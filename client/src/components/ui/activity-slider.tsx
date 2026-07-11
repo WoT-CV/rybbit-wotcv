@@ -179,7 +179,7 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
 
             {exportRange && duration > 0 && (
               <div
-                className="pointer-events-none absolute inset-y-0 rounded-sm border border-amber-400 bg-amber-400/25"
+                className="pointer-events-none absolute inset-y-0 rounded-sm border border-accent-400 bg-accent-400/20"
                 style={{
                   left: `${(exportRange[0] / duration) * 100}%`,
                   width: `${((exportRange[1] - exportRange[0]) / duration) * 100}%`,
