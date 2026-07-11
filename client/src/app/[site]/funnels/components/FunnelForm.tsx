@@ -21,6 +21,7 @@ import { ThreeDotLoader } from "../../../../components/Loaders";
 import { Label } from "../../../../components/ui/label";
 import { Switch } from "../../../../components/ui/switch";
 import { EventTypeIcon } from "../../../../components/EventIcons";
+import { EventTrackingNotice } from "../../../../components/EventTrackingNotice";
 import { isAutocaptureTargetType, targetTypeToEventType } from "../../../../lib/events";
 import { Funnel } from "./Funnel";
 
@@ -147,6 +148,7 @@ function StepCard({
           onChange={e => onFieldChange("value", e.target.value)}
         />
         {urlError && <p className="mt-1 text-xs text-red-500">{t("Enter a path (e.g., /checkout), not a full URL.")}</p>}
+        <EventTrackingNotice type={step.type} className="mt-2" />
       </div>
 
       {expanded && (
