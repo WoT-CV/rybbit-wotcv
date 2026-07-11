@@ -4,6 +4,7 @@ import { useExtracted } from "next-intl";
 import { ChartColumnDecreasing } from "lucide-react";
 import { DateTime } from "luxon"; // Import Luxon for date formatting
 import { Fragment, useMemo, useState } from "react";
+import { useGetGrowthAccounting } from "../../../api/analytics/hooks/useGetGrowthAccounting";
 import { useGetRetention } from "../../../api/analytics/hooks/useGetRetention";
 import { RetentionMode } from "../../../api/analytics/endpoints";
 import { DisabledOverlay } from "../../../components/DisabledOverlay";
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 import { MobileSidebar } from "../components/Sidebar/MobileSidebar";
+import { GrowthAccountingChart } from "./GrowthAccountingChart";
 import { RetentionChart } from "./RetentionChart";
 import { ErrorState } from "../../../components/ErrorState";
 
@@ -82,6 +84,11 @@ export default function RetentionPage() {
 
   // Use the updated hook without the limit parameter
   const { data, isLoading, isError } = useGetRetention(mode, timeRange);
+  const {
+    data: growthAccounting,
+    isError: isGrowthAccountingError,
+    isLoading: isGrowthAccountingLoading,
+  } = useGetGrowthAccounting(mode, timeRange);
 
   // Get sorted cohort keys (oldest first)
   const cohortKeys = useMemo(
@@ -198,6 +205,22 @@ export default function RetentionPage() {
       <div className="p-2 md:p-4 max-w-[1300px] mx-auto flex flex-col gap-3">
         {/* Single Card containing both chart and grid */}
         <FilterControls />
+        <Card className="overflow-hidden">
+          <CardHeader className="space-y-1 pb-2">
+            <CardTitle>{t("Growth accounting")}</CardTitle>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              {t("How many of your users are new, returning, resurrecting, or dormant each period.")}
+            </p>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <GrowthAccountingChart
+              data={growthAccounting?.data}
+              isError={isGrowthAccountingError}
+              isLoading={isGrowthAccountingLoading}
+              mode={mode}
+            />
+          </CardContent>
+        </Card>
         <Card className="overflow-visible">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle>{t("Retention")}</CardTitle>

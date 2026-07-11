@@ -11,6 +11,20 @@ export interface ProcessedRetentionData {
 
 export type RetentionMode = "day" | "week";
 
+export interface GrowthAccountingPoint {
+  period: string;
+  newUsers: number;
+  returningUsers: number;
+  resurrectingUsers: number;
+  dormantUsers: number;
+}
+
+export interface GrowthAccountingResponse {
+  data: GrowthAccountingPoint[];
+  mode: RetentionMode;
+  range: number;
+}
+
 // Journey types
 export interface Journey {
   path: string[];
@@ -64,6 +78,10 @@ export interface RetentionParams {
   range?: number;
 }
 
+export interface GrowthAccountingParams extends RetentionParams {
+  timeZone?: string;
+}
+
 export interface JourneysParams extends CommonApiParams {
   steps?: number;
   limit?: number;
@@ -85,6 +103,19 @@ export async function fetchRetention(
     { mode, range }
   );
   return response.data;
+}
+
+export async function fetchGrowthAccounting(
+  site: string | number,
+  params: GrowthAccountingParams = {}
+): Promise<GrowthAccountingResponse> {
+  const { mode = "week", range = 90, timeZone = "UTC" } = params;
+
+  return authedFetch<GrowthAccountingResponse>(`/sites/${site}/growth-accounting`, {
+    mode,
+    range,
+    timeZone,
+  });
 }
 
 /**

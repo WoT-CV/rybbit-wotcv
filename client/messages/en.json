@@ -2024,5 +2024,15 @@
   "xxQxLE": "Email Address",
   "y3qSZf": "Phone number must be in E.164 format (e.g., +14155552671)",
   "zEdCI3": "Email address is required",
-  "zs64oC": "Channel enabled"
+  "zs64oC": "Channel enabled",
+  "34RPix": "Returning users",
+  "7/ryhH": "Dormant users",
+  "Gl++ZR": "Growth accounting chart",
+  "Gx5Rfw": "No growth accounting data available",
+  "IFc+8p": "How many of your users are new, returning, resurrecting, or dormant each period.",
+  "J3Emo9": "Failed to load growth accounting data",
+  "MWT9a9": "Growth accounting",
+  "OlFcwc": "New users",
+  "aIYedf": "Resurrected users",
+  "cOPjPZ": "There was a problem fetching growth accounting data. Please try again later."
 }

@@ -2024,5 +2024,15 @@
   "xxQxLE": "Adres e-mail",
   "y3qSZf": "Numer telefonu musi być w formacie E.164 (np. +48123456789)",
   "zEdCI3": "Adres e-mail jest wymagany",
-  "zs64oC": "Kanał włączony"
+  "zs64oC": "Kanał włączony",
+  "34RPix": "Powracający użytkownicy",
+  "7/ryhH": "Uśpieni użytkownicy",
+  "Gl++ZR": "Wykres analizy wzrostu",
+  "Gx5Rfw": "Brak danych analizy wzrostu",
+  "IFc+8p": "Ilu użytkowników jest nowych, powracających, reaktywowanych lub uśpionych w każdym okresie.",
+  "J3Emo9": "Nie udało się wczytać danych analizy wzrostu",
+  "MWT9a9": "Analiza wzrostu",
+  "OlFcwc": "Nowi użytkownicy",
+  "aIYedf": "Reaktywowani użytkownicy",
+  "cOPjPZ": "Wystąpił problem podczas pobierania danych analizy wzrostu. Spróbuj ponownie później."
 }

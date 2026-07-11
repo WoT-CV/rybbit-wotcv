@@ -206,8 +206,11 @@ export type {
 } from "./users";
 
 // Misc endpoints (retention, journeys, page titles, org event count)
-export { fetchRetention, fetchJourneys, fetchPageTitles, fetchOrgEventCount } from "./misc";
+export { fetchGrowthAccounting, fetchRetention, fetchJourneys, fetchPageTitles, fetchOrgEventCount } from "./misc";
 export type {
+  GrowthAccountingParams,
+  GrowthAccountingPoint,
+  GrowthAccountingResponse,
   ProcessedRetentionData,
   RetentionMode,
   Journey,
