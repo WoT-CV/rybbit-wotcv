@@ -54,7 +54,7 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
   }, [sessionId, resetPlayerState]);
 
   // Calculate activity periods when player and data are ready
-  useActivityPeriods({ data, player });
+  useActivityPeriods({ data });
   useSkipInactivity({ player });
 
   const handlePlayPause = useCallback(() => {
