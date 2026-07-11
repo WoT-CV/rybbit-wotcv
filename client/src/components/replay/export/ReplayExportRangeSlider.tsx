@@ -5,7 +5,7 @@ import { useExtracted } from "next-intl";
 
 import { formatTime } from "../player/utils/replayUtils";
 
-const MAX_EXPORT_DURATION_MS = 30_000;
+const MAX_EXPORT_DURATION_MS = 2 * 60_000;
 
 interface ReplayExportRangeSliderProps {
   duration: number;

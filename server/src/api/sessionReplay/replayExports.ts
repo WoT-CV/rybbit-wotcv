@@ -13,8 +13,8 @@ const exportOptionsSchema = z
     playbackSpeed: z.union([z.literal(1), z.literal(2), z.literal(4)]).default(1),
   })
   .refine(value => value.endMs > value.startMs, { message: "Export end must be after export start" })
-  .refine(value => value.endMs - value.startMs <= 30_000, {
-    message: "Replay export range cannot exceed 30 seconds",
+  .refine(value => value.endMs - value.startMs <= 2 * 60_000, {
+    message: "Replay export range cannot exceed 2 minutes",
   });
 
 type ReplayExportParams = { siteId: string; sessionId: string };
