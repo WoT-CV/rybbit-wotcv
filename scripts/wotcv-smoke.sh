@@ -13,12 +13,12 @@ START_DATE="${WOTCV_START_DATE:-$(date -u -d '6 days ago' +%F 2>/dev/null || dat
 END_DATE="${WOTCV_END_DATE:-$(date -u +%F)}"
 BUCKET="${WOTCV_BUCKET:-hour}"
 
-if [[ ! "${MODE}" =~ ^(all|analytics|growth)$ ]]; then
-  echo "Usage: WOTCV_SITE_ID=<id> $0 [all|analytics|growth]" >&2
+if [[ ! "${MODE}" =~ ^(all|analytics|growth|source)$ ]]; then
+  echo "Usage: WOTCV_SITE_ID=<id> $0 [all|analytics|growth|source]" >&2
   exit 2
 fi
 
-if [[ -z "${SITE_ID}" ]]; then
+if [[ "${MODE}" != "source" && -z "${SITE_ID}" ]]; then
   echo "WOTCV_SITE_ID is required." >&2
   exit 2
 fi
@@ -90,12 +90,44 @@ check_growth() {
   done
 }
 
+check_source() {
+  local health_headers_file
+  local headers_file
+  local status
+  health_headers_file="$(mktemp)"
+  headers_file="$(mktemp)"
+
+  curl --fail --silent --show-error --max-time 15 --output /dev/null --dump-header "${health_headers_file}" "${API_BASE_URL%/}/health"
+  status="$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "${headers_file}" --write-out "%{http_code}" "${API_BASE_URL%/}/source")"
+  if ! grep -Eiq '^link: <https?://.+/tree/(feat/wotcv|[0-9a-f]{7,40})>; rel="source"' "${health_headers_file}" ||
+    ! grep -Eiq '^x-source-code: https?://.+/tree/(feat/wotcv|[0-9a-f]{7,40})' "${health_headers_file}" ||
+    [[ ! "${status}" =~ ^3 ]] ||
+    ! grep -Eiq '^location: https?://.+/tree/(feat/wotcv|[0-9a-f]{7,40})' "${headers_file}"; then
+    echo "FAIL source availability (${status})" >&2
+    cat "${health_headers_file}" >&2
+    cat "${headers_file}" >&2
+    rm -f "${health_headers_file}"
+    rm -f "${headers_file}"
+    return 1
+  fi
+
+  echo "OK   source availability (${status})"
+  grep -Ei '^location:' "${headers_file}"
+  rm -f "${health_headers_file}"
+  rm -f "${headers_file}"
+}
+
 echo "Checking WoT-CV endpoints (${MODE})"
 echo "API base: ${API_BASE_URL%/}"
-echo "Site ID: ${SITE_ID}"
+[[ -z "${SITE_ID}" ]] || echo "Site ID: ${SITE_ID}"
 request "health" "/health"
 
-[[ "${MODE}" == "growth" ]] || check_analytics
-[[ "${MODE}" == "analytics" ]] || check_growth
+if [[ "${MODE}" == "source" ]]; then
+  check_source
+else
+  [[ "${MODE}" == "growth" ]] || check_analytics
+  [[ "${MODE}" == "analytics" ]] || check_growth
+  [[ "${MODE}" != "all" ]] || check_source
+fi
 
 echo "WoT-CV smoke check completed."

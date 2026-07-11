@@ -275,6 +275,13 @@ curl -fsS -D - -o /dev/null https://tracking.wot-cv.com/api/health \
 curl -fsS https://tracking.wot-cv.com/api/script.js | head -n 1
 ```
 
+Ten sam kontrakt można sprawdzić skryptem operacyjnym:
+
+```bash
+WOTCV_API_BASE_URL=https://tracking.wot-cv.com/api \
+bash scripts/wotcv-smoke.sh source
+```
+
 Wynik powinien wskazywać publiczny commit zgodny z `gitSha` zwróconym przez health endpoint. Interfejs aplikacji pokazuje ten sam link jako `Kod źródłowy (AGPL-3.0)` w stałym pasku bocznym, stopce oraz na ekranach logowania i rejestracji.
 
 Repozytorium i wskazany commit muszą pozostać publicznie dostępne. Jeżeli repozytorium zostanie ustawione jako prywatne, trzeba udostępnić publiczne archiwum kompletnego odpowiadającego kodu źródłowego i skierować do niego wszystkie powyższe linki.
