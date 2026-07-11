@@ -27,7 +27,8 @@ import { Suspense } from "react";
 import { useGetSite } from "../../../../api/admin/hooks/useSites";
 import { Sidebar as SidebarComponents } from "../../../../components/sidebar/Sidebar";
 import { SiteSettings } from "../../../../components/SiteSettings/SiteSettings";
-import { DEMO_HOSTNAME, IS_CLOUD, SHOW_EXTENDED_WEB_ANALYTICS } from "../../../../lib/const";
+import { ANALYTICS_CAPABILITIES } from "../../../../lib/capabilities";
+import { DEMO_HOSTNAME } from "../../../../lib/const";
 import { getSiteRouteContext } from "../../../../lib/siteRoute";
 import { useEmbedPageOptions } from "../../utils";
 import { SiteSelector } from "./SiteSelector";
@@ -88,7 +89,7 @@ function SidebarContent() {
           href={getTabPath("globe")}
           icon={<Globe2 className="w-4 h-4" />}
         />
-        {SHOW_EXTENDED_WEB_ANALYTICS && (
+        {ANALYTICS_CAPABILITIES.pageAnalytics && (
           <SidebarComponents.Item
             label={t("Pages")}
             active={isActiveTab("pages")}
@@ -96,7 +97,7 @@ function SidebarContent() {
             icon={<File className="w-4 h-4" />}
           />
         )}
-        {SHOW_EXTENDED_WEB_ANALYTICS && !isMobileSite && (
+        {ANALYTICS_CAPABILITIES.performanceAnalytics && !isMobileSite && (
           <SidebarComponents.Item
             label={t("Performance")}
             active={isActiveTab("performance")}
@@ -104,7 +105,7 @@ function SidebarContent() {
             icon={<Gauge className="w-4 h-4" />}
           />
         )}
-        {SHOW_EXTENDED_WEB_ANALYTICS && (
+        {ANALYTICS_CAPABILITIES.botAnalytics && (
           <SidebarComponents.Item
             label={t("Bots")}
             active={isActiveTab("bots")}
@@ -126,20 +127,24 @@ function SidebarContent() {
             icon={<Code className="w-4 h-4" />}
           />
         </div>
-        {!IS_CLOUD && (
+        {(ANALYTICS_CAPABILITIES.customQueries || ANALYTICS_CAPABILITIES.customDashboards) && (
           <>
-            <SidebarComponents.Item
-              label={t("Query")}
-              active={isActiveTab("query")}
-              href={getTabPath("query")}
-              icon={<Database className="w-4 h-4" />}
-            />
-            <SidebarComponents.Item
-              label={t("Dashboards")}
-              active={isActiveTab("dashboards")}
-              href={getTabPath("dashboards")}
-              icon={<LayoutGrid className="w-4 h-4" />}
-            />
+            {ANALYTICS_CAPABILITIES.customQueries && (
+              <SidebarComponents.Item
+                label={t("Query")}
+                active={isActiveTab("query")}
+                href={getTabPath("query")}
+                icon={<Database className="w-4 h-4" />}
+              />
+            )}
+            {ANALYTICS_CAPABILITIES.customDashboards && (
+              <SidebarComponents.Item
+                label={t("Dashboards")}
+                active={isActiveTab("dashboards")}
+                href={getTabPath("dashboards")}
+                icon={<LayoutGrid className="w-4 h-4" />}
+              />
+            )}
           </>
         )}
         <SidebarComponents.SectionHeader>{t("Product Analytics")}</SidebarComponents.SectionHeader>

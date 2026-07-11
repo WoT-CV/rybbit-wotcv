@@ -8,7 +8,6 @@ export const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE
 export const IS_CLOUD = process.env.NEXT_PUBLIC_CLOUD === "true";
 export const DEPLOYMENT = process.env.NEXT_PUBLIC_DEPLOYMENT;
 export const LITE_DASHBOARD = process.env.NEXT_PUBLIC_LITE_DASHBOARD === "true";
-export const SHOW_EXTENDED_WEB_ANALYTICS = IS_CLOUD || DEPLOYMENT === "self-hosted";
 
 // Time constants
 export const MINUTES_IN_24_HOURS = 24 * 60; // 1440 minutes
