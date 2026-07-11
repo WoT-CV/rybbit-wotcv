@@ -1,5 +1,7 @@
 # Wdrożenie forka Rybbit WoT-CV
 
+Opis funkcjonalnych i architektonicznych różnic forka znajduje się w [WOTCV_FORK_DIFFERENCES.md](WOTCV_FORK_DIFFERENCES.md). Ten plik zawiera wyłącznie procedury operacyjne.
+
 Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-CV bez zmiany nazw volume, domen ani reverse proxy.
 
 ## Założenia

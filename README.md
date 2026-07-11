@@ -10,6 +10,7 @@
 > This repository is a modified fork of [Rybbit](https://github.com/rybbit-io/rybbit), maintained by WoT-CV since 2026-07-10.
 > The complete modified work is licensed under the [GNU Affero General Public License v3.0](LICENSE.md).
 > See [NOTICE.md](NOTICE.md) for modification and source information.
+> Fork-specific behavior is documented in [docs/WOTCV_FORK_DIFFERENCES.md](docs/WOTCV_FORK_DIFFERENCES.md), and server operations are covered by [docs/WOTCV_FORK_DEPLOYMENT.md](docs/WOTCV_FORK_DEPLOYMENT.md).
 
 <p align="center">
     <a href="https://rybbit.com" target="_blank">Website</a> |
