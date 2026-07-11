@@ -48,7 +48,7 @@ export function TimingWaterfall({ event }: TimingWaterfallProps) {
 
   return (
     <div className="w-full">
-      <div className="text-sm font-medium mb-2">{t("Czasy")}</div>
+      <div className="text-sm font-medium mb-2">{t("Timings")}</div>
       <div className="relative h-6 bg-neutral-800 rounded overflow-hidden">
         {renderTimingSegments(timings, totalTime, renderWaterfallSegment)}
       </div>

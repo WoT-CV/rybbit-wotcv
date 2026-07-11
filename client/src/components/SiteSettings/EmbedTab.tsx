@@ -151,7 +151,7 @@ export function EmbedTab({ siteMetadata, embedEnabled }: EmbedTabProps) {
                   maxWidth: "100%",
                   background: "transparent",
                 }}
-                title={t("Podgląd widgetu")}
+                title={t("Widget preview")}
               />
             ) : (
               <div

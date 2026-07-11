@@ -2015,13 +2015,12 @@
   "M9lgWJ": "Monitor HTTP",
   "McCVWH": "Nie udało się utworzyć kanału",
   "MrEdJI": "Kanał wyłączony",
-  "Ojdt2E": "Czasy",
   "Rw7iI7": "Wyłącz",
   "SfOYcN": "Aktualizuj kanał",
   "TBp9+C": "Szukaj monitorów...",
   "UHu1T/": "Numer telefonu jest wymagany",
   "UPyTdE": "Kanał powiadomień zaktualizowany",
-  "W0kNW4": "Podgląd widgetu",
+  "ZSnslh": "Podgląd widżetu",
   "WY145/": "Skonfiguruj sposób otrzymywania powiadomień o incydentach monitorów",
   "XUYMbZ": "Kanał powiadomień utworzony",
   "Xi8Qv7": "Kanał (opcjonalnie)",
@@ -2056,5 +2055,6 @@
   "MWT9a9": "Analiza wzrostu",
   "OlFcwc": "Nowi użytkownicy",
   "aIYedf": "Reaktywowani użytkownicy",
-  "cOPjPZ": "Wystąpił problem podczas pobierania danych analizy wzrostu. Spróbuj ponownie później."
+  "cOPjPZ": "Wystąpił problem podczas pobierania danych analizy wzrostu. Spróbuj ponownie później.",
+  "SVwJTM": "Eksport"
 }

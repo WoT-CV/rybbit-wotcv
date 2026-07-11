@@ -2015,13 +2015,12 @@
   "M9lgWJ": "HTTP Monitor",
   "McCVWH": "Failed to create channel",
   "MrEdJI": "Channel disabled",
-  "Ojdt2E": "Czasy",
   "Rw7iI7": "Disable",
   "SfOYcN": "Update Channel",
   "TBp9+C": "Search monitors...",
   "UHu1T/": "Phone number is required",
   "UPyTdE": "Notification channel updated",
-  "W0kNW4": "Podgląd widgetu",
+  "ZSnslh": "Widget preview",
   "WY145/": "Configure how you want to be notified about monitor incidents",
   "XUYMbZ": "Notification channel created",
   "Xi8Qv7": "Channel (optional)",
@@ -2056,5 +2055,6 @@
   "MWT9a9": "Growth accounting",
   "OlFcwc": "New users",
   "aIYedf": "Resurrected users",
-  "cOPjPZ": "There was a problem fetching growth accounting data. Please try again later."
+  "cOPjPZ": "There was a problem fetching growth accounting data. Please try again later.",
+  "SVwJTM": "Export"
 }
