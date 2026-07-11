@@ -17,12 +17,20 @@ export interface InactivitySkipTarget extends ActivityPeriod {
 }
 
 export const INACTIVITY_SKIP_THRESHOLD_MS = 5000;
-const USER_ACTIVITY_INCREMENTAL_SOURCES = new Set([1, 2, 3, 5, 6, 7, 12, 14]);
+const MOUSE_MOVE_SOURCE = 1;
+const MOUSE_INTERACTION_SOURCE = 2;
+const INPUT_SOURCE = 5;
+const TOUCH_MOVE_SOURCE = 6;
+const DRAG_SOURCE = 12;
+const USER_POINTER_MOVEMENT_SOURCES = new Set([MOUSE_MOVE_SOURCE, TOUCH_MOVE_SOURCE, DRAG_SOURCE]);
+const USER_POINTER_INTERACTION_TYPES = new Set([0, 1, 2, 3, 4, 7, 8, 9, 10]);
 
 export const calculateActivityPeriods = (events: any[], totalDuration: number): ActivityPeriod[] => {
   if (!events || events.length === 0 || totalDuration <= 0) return [];
 
-  const firstEventTime = events[0].timestamp;
+  const firstEventTime = events.find(event => Number.isFinite(event.timestamp))?.timestamp;
+  if (firstEventTime === undefined) return [];
+
   const periods: ActivityPeriod[] = [
     {
       start: 0,
@@ -31,8 +39,7 @@ export const calculateActivityPeriods = (events: any[], totalDuration: number): 
   ];
 
   events
-    .filter(isUserActivityEvent)
-    .map(event => Math.max(0, Math.min(totalDuration, event.timestamp - firstEventTime)))
+    .flatMap(event => getUserActivityOffsets(event, firstEventTime, totalDuration))
     .sort((first, second) => first - second)
     .forEach(offset => {
       periods.push({
@@ -93,18 +100,56 @@ export function findNextActivityPeriod(
   return null;
 }
 
-function isUserActivityEvent(event: any): boolean {
+function getUserActivityOffsets(event: any, firstEventTime: number, totalDuration: number): number[] {
   const eventType = Number(event.type);
 
-  if (eventType === 4 && event.data?.href) {
-    return true;
-  }
-
   if (eventType !== 3) {
-    return false;
+    return [];
   }
 
-  return USER_ACTIVITY_INCREMENTAL_SOURCES.has(Number(event.data?.source));
+  const source = Number(event.data?.source);
+
+  if (USER_POINTER_MOVEMENT_SOURCES.has(source)) {
+    return getPointerMovementOffsets(event, firstEventTime, totalDuration);
+  }
+
+  if (source === MOUSE_INTERACTION_SOURCE) {
+    return USER_POINTER_INTERACTION_TYPES.has(Number(event.data?.type))
+      ? [getEventOffset(event.timestamp, firstEventTime, totalDuration)]
+      : [];
+  }
+
+  if (source === INPUT_SOURCE) {
+    return [getEventOffset(event.timestamp, firstEventTime, totalDuration)];
+  }
+
+  return [];
+}
+
+function getPointerMovementOffsets(event: any, firstEventTime: number, totalDuration: number): number[] {
+  const baseOffset = getEventOffset(event.timestamp, firstEventTime, totalDuration);
+  const positions = Array.isArray(event.data?.positions) ? event.data.positions : [];
+
+  if (positions.length === 0) {
+    return [baseOffset];
+  }
+
+  return positions.map((position: any) => {
+    const timeOffset = Number.isFinite(position?.timeOffset) ? Number(position.timeOffset) : 0;
+    return clampOffset(baseOffset + timeOffset, totalDuration);
+  });
+}
+
+function getEventOffset(timestamp: number, firstEventTime: number, totalDuration: number): number {
+  return clampOffset(timestamp - firstEventTime, totalDuration);
+}
+
+function clampOffset(offset: number, totalDuration: number): number {
+  if (!Number.isFinite(offset)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(totalDuration, offset));
 }
 
 export const PLAYBACK_SPEEDS = [
