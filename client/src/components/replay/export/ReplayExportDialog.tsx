@@ -156,7 +156,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
         <DialogHeader>
           <DialogTitle>{t("Export replay range")}</DialogTitle>
           <DialogDescription>
-            {t("Generate a WebM replay, evidence screenshot, HAR and CSV network logs.")}
+            {t("Generate a GitHub-ready diagnostic package with a replay, screenshot and readable logs.")}
           </DialogDescription>
         </DialogHeader>
 

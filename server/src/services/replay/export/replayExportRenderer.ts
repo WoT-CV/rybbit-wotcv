@@ -17,6 +17,16 @@ const ACTIVE_PRE_ROLL_MS = 500;
 const ACTIVE_POST_ROLL_MS = 1000;
 const SENSITIVE_NAME_PATTERN = /(authorization|cookie|token|secret|password|api[-_]?key|credential)/i;
 const NETWORK_PLUGIN_NAME = "rrweb/network@1";
+const EXPORT_FILE_NAMES = {
+  video: "01-powtorka.webm",
+  screenshot: "02-zrzut-diagnostyczny.png",
+  githubReport: "03-raport-do-zgloszenia-github.md",
+  networkLog: "04-logi-sieciowe.txt",
+  networkHar: "05-logi-sieciowe.har",
+  networkCsv: "06-logi-sieciowe.csv",
+  metadata: "07-metadane.json",
+  readme: "README.md",
+} as const;
 
 interface ExportNetworkRequest {
   requestId: string;
@@ -93,7 +103,7 @@ export class ReplayExportRenderer {
       await onProgress(70);
 
       const frame = await readFile(framePath);
-      const evidencePath = join(workDirectory, "evidence.png");
+      const evidencePath = join(workDirectory, EXPORT_FILE_NAMES.screenshot);
       const evidencePage = await browser.newPage();
       await evidencePage.setViewport({ width: EVIDENCE_WIDTH, height: EVIDENCE_HEIGHT, deviceScaleFactor: 1 });
       await evidencePage.setContent(
@@ -114,33 +124,49 @@ export class ReplayExportRenderer {
         throw new ReplayExportCancelledError();
       }
 
+      const generatedAt = new Date().toISOString();
+      const exportMetadata = getExportMetadata(metadata);
       const zip = new JSZip();
-      zip.file("replay.webm", await readFile(videoPath));
-      zip.file("evidence.png", await readFile(evidencePath));
-      zip.file("network.har", JSON.stringify(buildHar(requests), null, 2));
-      zip.file("network.csv", buildNetworkCsv(requests));
+      zip.file(EXPORT_FILE_NAMES.video, await readFile(videoPath));
+      zip.file(EXPORT_FILE_NAMES.screenshot, await readFile(evidencePath));
       zip.file(
-        "manifest.json",
+        EXPORT_FILE_NAMES.githubReport,
+        buildGithubIssueReport({
+          generatedAt,
+          metadata: exportMetadata,
+          options,
+          requests,
+          sessionId: jobData.sessionId,
+          siteId: jobData.siteId,
+        })
+      );
+
+      if (options.includeNetwork) {
+        zip.file(EXPORT_FILE_NAMES.networkLog, buildNetworkTextLog(requests));
+        zip.file(EXPORT_FILE_NAMES.networkHar, JSON.stringify(buildHar(requests), null, 2));
+        zip.file(EXPORT_FILE_NAMES.networkCsv, buildNetworkCsv(requests));
+      }
+
+      zip.file(
+        EXPORT_FILE_NAMES.metadata,
         JSON.stringify(
           {
-            schemaVersion: 1,
+            schemaVersion: 2,
             sessionId: jobData.sessionId,
             siteId: jobData.siteId,
-            generatedAt: new Date().toISOString(),
+            generatedAt,
             range: options,
-            metadata: getExportMetadata(metadata),
+            metadata: exportMetadata,
             networkRequestCount: requests.length,
+            files: getIncludedFileNames(options.includeNetwork),
           },
           null,
           2
         )
       );
-      zip.file(
-        "README.txt",
-        "WoT-CV Rybbit replay export\n\nreplay.webm - selected replay range\nevidence.png - replay frame and network summary\nnetwork.har/network.csv - redacted requests from the selected range\n"
-      );
+      zip.file(EXPORT_FILE_NAMES.readme, buildPackageReadme(options.includeNetwork));
 
-      const filename = `rybbit-replay-${safeFilename(jobData.sessionId)}-${Math.floor(options.startMs)}-${Math.floor(options.endMs)}.zip`;
+      const filename = `rybbit-github-report-${safeFilename(jobData.sessionId)}-${Math.floor(options.startMs)}-${Math.floor(options.endMs)}.zip`;
       const filePath = join(outputDirectory, `${Date.now()}-${filename}`);
       await writeFile(filePath, await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }));
       const fileStats = await stat(filePath);
@@ -335,8 +361,8 @@ function sanitizeNetworkRequest(request: ExportNetworkRequest, includeBodies: bo
     url: redactUrl(request.url),
     requestHeaders: redactHeaders(request.requestHeaders),
     responseHeaders: redactHeaders(request.responseHeaders),
-    requestBody: includeBodies ? request.requestBody : redactBody(request.requestBody),
-    responseBody: includeBodies ? request.responseBody : redactBody(request.responseBody),
+    requestBody: sanitizeBody(request.requestBody, includeBodies),
+    responseBody: sanitizeBody(request.responseBody, includeBodies),
   };
 }
 
@@ -384,10 +410,54 @@ function redactHeaders(headers: Record<string, string>) {
   );
 }
 
-function redactBody(body?: Record<string, unknown>) {
+function sanitizeBody(body: Record<string, unknown> | undefined, includeBody: boolean) {
   if (!body) return undefined;
-  const { value: _value, ...metadata } = body;
-  return { ...metadata, value: "[redacted]" };
+  const { value, ...metadata } = body;
+  if (!includeBody) return { ...metadata, value: "[redacted]" };
+
+  return {
+    ...metadata,
+    value: sanitizeBodyValue(value, String(body.contentType ?? "")),
+  };
+}
+
+function sanitizeBodyValue(value: unknown, contentType: string): unknown {
+  if (typeof value !== "string") return redactSensitiveFields(value);
+
+  if (contentType.includes("json") || /^\s*[\[{]/.test(value)) {
+    try {
+      return JSON.stringify(redactSensitiveFields(JSON.parse(value)), null, 2);
+    } catch {
+      return redactSensitiveText(value);
+    }
+  }
+
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const params = new URLSearchParams(value);
+    for (const key of params.keys()) {
+      if (SENSITIVE_NAME_PATTERN.test(key)) params.set(key, "[redacted]");
+    }
+    return params.toString();
+  }
+
+  return redactSensitiveText(value);
+}
+
+function redactSensitiveFields(value: unknown, key = ""): unknown {
+  if (key && SENSITIVE_NAME_PATTERN.test(key)) return "[redacted]";
+  if (Array.isArray(value)) return value.map(entry => redactSensitiveFields(entry));
+  if (!value || typeof value !== "object") return value;
+
+  return Object.fromEntries(
+    Object.entries(value).map(([entryKey, entryValue]) => [entryKey, redactSensitiveFields(entryValue, entryKey)])
+  );
+}
+
+function redactSensitiveText(value: string) {
+  return value.replace(
+    /((?:authorization|cookie|token|secret|password|api[-_]?key|credential)\s*[=:]\s*)([^&\s,;]+)/gi,
+    "$1[redacted]"
+  );
 }
 
 function buildEvidenceHtml({
@@ -403,7 +473,9 @@ function buildEvidenceHtml({
   requests: ExportNetworkRequest[];
   sessionId: string;
 }) {
-  const visibleRequests = requests.slice(0, 18);
+  const visibleRequests = [...requests]
+    .sort((first, second) => requestPriority(second) - requestPriority(first) || first.startedAt - second.startedAt)
+    .slice(0, 8);
   const rows = visibleRequests
     .map(request => {
       const correlationId = findHeader(request.responseHeaders, "x-correlation-id") || "—";
@@ -412,15 +484,265 @@ function buildEvidenceHtml({
     .join("");
   const overflow =
     requests.length > visibleRequests.length
-      ? `<div class="more">+${requests.length - visibleRequests.length} additional requests in HAR/CSV</div>`
+      ? `<div class="more">+${requests.length - visibleRequests.length} dodatkowych żądań w pełnych logach</div>`
       : "";
 
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     *{box-sizing:border-box}body{margin:0;background:#0b0b0d;color:#f5f5f5;font-family:Inter,Arial,sans-serif;width:${EVIDENCE_WIDTH}px;height:${EVIDENCE_HEIGHT}px;padding:30px}
-    header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px}.title{font-size:28px;font-weight:700}.meta{font-size:15px;color:#a3a3a3;margin-top:8px}.range{font-size:18px;font-weight:600;color:#34d399}
-    .frame{height:610px;background:#000;border:1px solid #303036;border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}.frame img{width:100%;height:100%;object-fit:contain}
+    header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px}.title{font-size:28px;font-weight:700}.meta{max-width:1450px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;color:#a3a3a3;margin-top:8px}.range{font-size:18px;font-weight:600;color:#34d399}
+    .frame{height:540px;background:#000;border:1px solid #303036;border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}.frame img{width:100%;height:100%;object-fit:contain}
     .logs{margin-top:18px;background:#151518;border:1px solid #303036;border-radius:12px;overflow:hidden}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 10px;border-bottom:1px solid #2a2a2f;text-align:left;white-space:nowrap}th{background:#202024;color:#bdbdc7;font-weight:600}.url{max-width:720px;overflow:hidden;text-overflow:ellipsis}.correlation{max-width:260px;overflow:hidden;text-overflow:ellipsis}.status.ok{color:#34d399}.status.error{color:#fb7185}.more{padding:10px;text-align:center;color:#fbbf24;background:#201b10;font-size:13px}
-  </style></head><body><header><div><div class="title">Session replay evidence</div><div class="meta">${escapeHtml(sessionId)} · ${escapeHtml(metadata?.page_url ?? "")} · ${escapeHtml(metadata?.browser ?? "")} ${escapeHtml(metadata?.browser_version ?? "")}</div></div><div class="range">${escapeHtml(formatOffset(options.startMs))} – ${escapeHtml(formatOffset(options.endMs))}</div></header><div class="frame"><img src="data:image/png;base64,${frameBase64}"></div><div class="logs"><table><thead><tr><th>Time</th><th>Method</th><th>URL</th><th>Status</th><th>Duration</th><th>Transfer</th><th>Correlation ID</th></tr></thead><tbody>${rows || `<tr><td colspan="7">No network requests in selected range</td></tr>`}</tbody></table>${overflow}</div></body></html>`;
+  </style></head><body><header><div><div class="title">Raport diagnostyczny powtórki</div><div class="meta">Sesja: ${escapeHtml(sessionId)} · Użytkownik: ${escapeHtml(metadata?.identified_user_id || metadata?.user_id || "—")} · ${escapeHtml(metadata?.page_url ?? "")}</div></div><div class="range">${escapeHtml(formatOffset(options.startMs))} – ${escapeHtml(formatOffset(options.endMs))}</div></header><div class="frame"><img src="data:image/png;base64,${frameBase64}"></div><div class="logs"><table><thead><tr><th>Czas</th><th>Metoda</th><th>URL</th><th>Status</th><th>Czas trwania</th><th>Transfer</th><th>Correlation ID</th></tr></thead><tbody>${rows || `<tr><td colspan="7">Brak żądań sieciowych w wybranym zakresie</td></tr>`}</tbody></table>${overflow}</div></body></html>`;
+}
+
+function buildGithubIssueReport({
+  generatedAt,
+  metadata,
+  options,
+  requests,
+  sessionId,
+  siteId,
+}: {
+  generatedAt: string;
+  metadata: Record<string, unknown>;
+  options: ReturnType<typeof normalizeOptions>;
+  requests: ExportNetworkRequest[];
+  sessionId: string;
+  siteId: number;
+}) {
+  const networkSummary = summarizeNetworkRequests(requests);
+  const highlightedRequests = [...requests]
+    .sort((first, second) => requestPriority(second) - requestPriority(first) || first.startedAt - second.startedAt)
+    .slice(0, 25);
+  const requestRows = highlightedRequests
+    .map(request => {
+      const correlationId = findHeader(request.responseHeaders, "x-correlation-id") || "—";
+      return `| ${formatOffset(request.startOffset)} | ${escapeMarkdownTable(request.method)} | ${request.status ?? "—"} | ${Math.round(request.durationMs)} ms | ${formatBytes(request.sizes?.transferSize)} | ${escapeMarkdownTable(formatRequestTarget(request.url))} | ${escapeMarkdownTable(correlationId)} |`;
+    })
+    .join("\n");
+  const correlationIds = [
+    ...new Set(requests.map(request => findHeader(request.responseHeaders, "x-correlation-id")).filter(Boolean)),
+  ];
+  const attachments = getIncludedFileNames(options.includeNetwork)
+    .filter(filename => filename !== EXPORT_FILE_NAMES.githubReport && filename !== EXPORT_FILE_NAMES.readme)
+    .map(filename => `- \`${filename}\``)
+    .join("\n");
+
+  return `# [Błąd] Krótki opis problemu
+
+## Opis problemu
+<!-- Opisz, co nie działa i jaki jest wpływ problemu. -->
+
+## Kroki do odtworzenia
+1. <!-- Pierwszy krok -->
+2. <!-- Drugi krok -->
+3. <!-- Trzeci krok -->
+
+## Oczekiwany rezultat
+<!-- Co powinno się wydarzyć? -->
+
+## Rzeczywisty rezultat
+<!-- Co wydarzyło się zamiast tego? -->
+
+## Załączniki
+${attachments}
+
+## Dane diagnostyczne
+
+| Pole | Wartość |
+| --- | --- |
+| Data wygenerowania | ${escapeMarkdownTable(generatedAt)} |
+| ID witryny | ${siteId} |
+| ID sesji | ${escapeMarkdownTable(sessionId)} |
+| ID użytkownika | ${escapeMarkdownTable(metadata.identified_user_id || metadata.user_id || "—")} |
+| Strona | ${escapeMarkdownTable(metadata.page_url || "—")} |
+| Zakres powtórki | ${formatOffset(options.startMs)} – ${formatOffset(options.endMs)} |
+| Przeglądarka | ${escapeMarkdownTable(joinMetadataValues(metadata.browser, metadata.browser_version))} |
+| System operacyjny | ${escapeMarkdownTable(joinMetadataValues(metadata.operating_system, metadata.operating_system_version))} |
+| Urządzenie | ${escapeMarkdownTable(metadata.device_type || "—")} |
+| Rozdzielczość | ${escapeMarkdownTable(formatScreenSize(metadata.screen_width, metadata.screen_height))} |
+| Lokalizacja | ${escapeMarkdownTable(joinMetadataValues(metadata.city, metadata.region, metadata.country))} |
+
+## Podsumowanie żądań sieciowych
+
+| Wszystkie | Sukces | Błędy 4xx | Błędy 5xx | Brak statusu | Transfer |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| ${networkSummary.total} | ${networkSummary.success} | ${networkSummary.clientErrors} | ${networkSummary.serverErrors} | ${networkSummary.unknown} | ${formatBytes(networkSummary.transferBytes)} |
+
+${correlationIds.length > 0 ? `**Correlation ID:** ${correlationIds.map(value => `\`${escapeMarkdownInlineCode(value)}\``).join(", ")}` : "**Correlation ID:** brak"}
+
+## Najważniejsze żądania sieciowe
+
+${requests.length > highlightedRequests.length ? `Poniżej pokazano ${highlightedRequests.length} z ${requests.length} żądań. Pełne dane znajdują się w załącznikach sieciowych.` : `Liczba żądań: ${requests.length}.`}
+
+| Czas | Metoda | Status | Czas trwania | Transfer | Adres | Correlation ID |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+${requestRows || "| — | — | — | — | — | Brak żądań w wybranym zakresie | — |"}
+
+## Informacje dodatkowe
+<!-- Dodaj komunikaty błędów, obserwacje lub inne informacje pomocne przy analizie. -->
+`;
+}
+
+function buildNetworkTextLog(requests: ExportNetworkRequest[]) {
+  if (requests.length === 0) return "Brak żądań sieciowych w wybranym zakresie.\n";
+
+  return requests
+    .map((request, index) => {
+      const correlationId = findHeader(request.responseHeaders, "x-correlation-id") || "—";
+      return `${"=".repeat(100)}
+ŻĄDANIE ${index + 1} Z ${requests.length}
+${"=".repeat(100)}
+Czas: ${formatOffset(request.startOffset)}
+Metoda: ${request.method}
+URL: ${request.url}
+Strona źródłowa: ${request.currentUrl || "—"}
+Status: ${request.status ?? "—"} ${request.statusText ?? ""}
+Wynik: ${request.outcome}
+Czas trwania: ${Math.round(request.durationMs)} ms
+Transfer: ${formatBytes(request.sizes?.transferSize)}
+Correlation ID: ${correlationId}
+ID żądania: ${request.requestId}
+Inicjator: ${request.initiatorType}
+
+NAGŁÓWKI ŻĄDANIA
+${formatHeadersForText(request.requestHeaders)}
+
+TREŚĆ ŻĄDANIA
+${formatBodyForText(request.requestBody)}
+
+NAGŁÓWKI ODPOWIEDZI
+${formatHeadersForText(request.responseHeaders)}
+
+TREŚĆ ODPOWIEDZI
+${formatBodyForText(request.responseBody)}
+`;
+    })
+    .join("\n");
+}
+
+function buildPackageReadme(includeNetwork: boolean) {
+  return `# Eksport diagnostyczny WoT-CV Rybbit
+
+Paczka została przygotowana do utworzenia zgłoszenia GitHub.
+
+## Najszybszy sposób użycia
+
+1. Otwórz plik \`${EXPORT_FILE_NAMES.githubReport}\`.
+2. Skopiuj jego treść do nowego zgłoszenia GitHub.
+3. Uzupełnij sekcje opisujące problem, kroki oraz oczekiwany rezultat.
+4. Dołącz pliki \`${EXPORT_FILE_NAMES.video}\` i \`${EXPORT_FILE_NAMES.screenshot}\`.
+${includeNetwork ? `5. W razie potrzeby dołącz \`${EXPORT_FILE_NAMES.networkLog}\` lub cały plik ZIP.` : "5. W razie potrzeby dołącz cały plik ZIP."}
+
+## Zawartość paczki
+
+${getIncludedFileNames(includeNetwork)
+  .map(filename => `- \`${filename}\` – ${getFileDescription(filename)}`)
+  .join("\n")}
+
+> Dane uwierzytelniające i typowe pola zawierające tokeny, hasła lub sekrety są automatycznie maskowane.
+`;
+}
+
+function getIncludedFileNames(includeNetwork: boolean) {
+  return [
+    EXPORT_FILE_NAMES.video,
+    EXPORT_FILE_NAMES.screenshot,
+    EXPORT_FILE_NAMES.githubReport,
+    ...(includeNetwork
+      ? [EXPORT_FILE_NAMES.networkLog, EXPORT_FILE_NAMES.networkHar, EXPORT_FILE_NAMES.networkCsv]
+      : []),
+    EXPORT_FILE_NAMES.metadata,
+    EXPORT_FILE_NAMES.readme,
+  ];
+}
+
+function getFileDescription(filename: string) {
+  const descriptions: Record<string, string> = {
+    [EXPORT_FILE_NAMES.video]: "film przedstawiający wybrany zakres powtórki",
+    [EXPORT_FILE_NAMES.screenshot]: "czytelny zrzut ekranu z podsumowaniem żądań",
+    [EXPORT_FILE_NAMES.githubReport]: "gotowa treść zgłoszenia GitHub do skopiowania",
+    [EXPORT_FILE_NAMES.networkLog]: "pełny, czytelny dziennik żądań i odpowiedzi",
+    [EXPORT_FILE_NAMES.networkHar]: "dane sieciowe do importu w narzędziach deweloperskich",
+    [EXPORT_FILE_NAMES.networkCsv]: "tabela żądań do analizy w arkuszu kalkulacyjnym",
+    [EXPORT_FILE_NAMES.metadata]: "metadane techniczne eksportu",
+    [EXPORT_FILE_NAMES.readme]: "instrukcja użycia paczki",
+  };
+  return descriptions[filename] ?? "plik diagnostyczny";
+}
+
+function summarizeNetworkRequests(requests: ExportNetworkRequest[]) {
+  return requests.reduce(
+    (summary, request) => {
+      const status = request.status ?? 0;
+      summary.total += 1;
+      summary.transferBytes += request.sizes?.transferSize ?? 0;
+      if (status >= 200 && status < 400) summary.success += 1;
+      else if (status >= 400 && status < 500) summary.clientErrors += 1;
+      else if (status >= 500) summary.serverErrors += 1;
+      else summary.unknown += 1;
+      return summary;
+    },
+    { total: 0, success: 0, clientErrors: 0, serverErrors: 0, unknown: 0, transferBytes: 0 }
+  );
+}
+
+function requestPriority(request: ExportNetworkRequest) {
+  const status = request.status ?? 0;
+  if (status >= 500) return 4;
+  if (status >= 400) return 3;
+  if (status < 200) return 2;
+  return 1;
+}
+
+function formatRequestTarget(value: string) {
+  try {
+    const url = new URL(value);
+    return truncateText(`${url.host}${url.pathname}${url.search}`, 160);
+  } catch {
+    return truncateText(value, 160);
+  }
+}
+
+function formatHeadersForText(headers: Record<string, string>) {
+  const entries = Object.entries(headers).sort(([first], [second]) => first.localeCompare(second));
+  if (entries.length === 0) return "(brak)";
+  return entries.map(([name, value]) => `${name}: ${value}`).join("\n");
+}
+
+function formatBodyForText(body?: Record<string, unknown>) {
+  if (!body) return "(brak)";
+  const { value, ...metadata } = body;
+  const metadataText = Object.entries(metadata)
+    .map(([name, entryValue]) => `${name}: ${String(entryValue ?? "")}`)
+    .join("\n");
+  const bodyText = typeof value === "string" ? value : JSON.stringify(value ?? "", null, 2);
+  return `${metadataText || "metadane: brak"}\n\n${truncateText(bodyText, 100_000)}`;
+}
+
+function joinMetadataValues(...values: unknown[]) {
+  const parts = values.map(value => String(value ?? "").trim()).filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : "—";
+}
+
+function formatScreenSize(width: unknown, height: unknown) {
+  return width && height ? `${String(width)} × ${String(height)}` : "—";
+}
+
+function escapeMarkdownTable(value: unknown) {
+  return String(value ?? "")
+    .replace(/\|/g, "\\|")
+    .replace(/\r?\n/g, " ");
+}
+
+function escapeMarkdownInlineCode(value: unknown) {
+  return String(value ?? "").replace(/`/g, "'");
+}
+
+function truncateText(value: string, maxLength: number) {
+  return value.length <= maxLength
+    ? value
+    : `${value.slice(0, maxLength)}\n...[skrócono ${value.length - maxLength} znaków]`;
 }
 
 function buildHar(requests: ExportNetworkRequest[]) {
