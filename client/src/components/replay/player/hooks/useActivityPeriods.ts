@@ -8,7 +8,7 @@ interface UseActivityPeriodsProps {
 }
 
 export const useActivityPeriods = ({ data, player }: UseActivityPeriodsProps) => {
-  const { setActivityPeriods, setReplayCaptureProfile, setReplaySegments } = useReplayStore();
+  const { setActivityPeriods, setCanSkipInactivity, setReplayCaptureProfile, setReplaySegments } = useReplayStore();
 
   useEffect(() => {
     if (!data?.events || !player) return;
@@ -20,10 +20,11 @@ export const useActivityPeriods = ({ data, player }: UseActivityPeriodsProps) =>
       const totalDuration = player.getMetaData().totalTime || 0;
       const timeline = calculateReplayTimeline(data.events, totalDuration);
       setActivityPeriods(timeline.activityPeriods);
+      setCanSkipInactivity(timeline.canSkipInactivity);
       setReplaySegments(timeline.segments);
       setReplayCaptureProfile(timeline.captureProfile);
     }, 150); // Run after duration is set
 
     return () => clearTimeout(timeoutId);
-  }, [data, player, setActivityPeriods, setReplayCaptureProfile, setReplaySegments]);
+  }, [data, player, setActivityPeriods, setCanSkipInactivity, setReplayCaptureProfile, setReplaySegments]);
 };

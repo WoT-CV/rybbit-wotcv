@@ -31,6 +31,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   const t = useExtracted();
   const {
     activityPeriods,
+    canSkipInactivity,
     currentTime,
     duration,
     isPlaying,
@@ -45,6 +46,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   } = useReplayStore(
     useShallow(s => ({
       activityPeriods: s.activityPeriods,
+      canSkipInactivity: s.canSkipInactivity,
       currentTime: s.currentTime,
       duration: s.duration,
       isPlaying: s.isPlaying,
@@ -108,11 +110,16 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
         <div className="flex min-w-0 items-center gap-1.5">
           <Button
             type="button"
-            variant={skipInactivityEnabled ? "secondary" : "outline"}
+            variant={skipInactivityEnabled && canSkipInactivity ? "secondary" : "outline"}
             size="xs"
-            aria-pressed={skipInactivityEnabled}
+            aria-pressed={skipInactivityEnabled && canSkipInactivity}
+            disabled={!canSkipInactivity}
             onClick={handleSkipInactivityToggle}
-            title={t("Skip inactivity")}
+            title={
+              canSkipInactivity
+                ? t("Skip inactivity")
+                : t("Inactivity skipping is unavailable for legacy recordings")
+            }
           >
             <SkipForward className="h-3 w-3" aria-hidden="true" />
             <span className="hidden xl:inline">{t("Skip inactivity")}</span>
