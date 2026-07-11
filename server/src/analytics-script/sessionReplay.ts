@@ -1,9 +1,11 @@
 import { getRecordNetworkPlugin, type NetworkReplayRecordPlugin } from "./networkReplay/networkPlugin.js";
 import { getJsonByteSize } from "./networkReplay/utils.js";
+import { getReplayBatchKey, getReplayEventsByteSize } from "./replayBatching.js";
 import { ScriptConfig, SessionReplayBatch, SessionReplayEvent, SessionReplayTransportError } from "./types.js";
 
 const SAMPLE_STORAGE_KEY = "rybbit-replay-sampled";
 const ACTIVITY_CAPTURE_VERSION = 2;
+const MAX_BATCH_SEND_ATTEMPTS = 3;
 
 /**
  * Determines if this session should have replay enabled based on sample rate.
@@ -68,6 +70,7 @@ export class SessionReplayRecorder {
   private nextSequenceNumber: number = 0;
   private pendingBatches: SessionReplayEvent[][] = [];
   private isSendingBatches: boolean = false;
+  private retryAttempts = new Map<string, number>();
   private batchTimer?: number;
   private sendBatch: (batch: SessionReplayBatch) => Promise<void>;
 
@@ -274,11 +277,24 @@ export class SessionReplayRecorder {
 
         const unsentEvents = await this.sendEventsWithPayloadFallback(events);
         if (unsentEvents) {
+          const batchKey = getReplayBatchKey(unsentEvents);
+          const attempts = (this.retryAttempts.get(batchKey) ?? 0) + 1;
+          if (attempts >= MAX_BATCH_SEND_ATTEMPTS) {
+            this.retryAttempts.delete(batchKey);
+            console.warn(
+              `[SessionReplay] Dropped ${unsentEvents.length} events after ${MAX_BATCH_SEND_ATTEMPTS} failed send attempts`
+            );
+            continue;
+          }
+
+          this.retryAttempts.set(batchKey, attempts);
           const queuedEvents = this.pendingBatches.flat();
           this.pendingBatches = [];
           this.prependEvents([...unsentEvents, ...queuedEvents]);
           console.warn(`[SessionReplay] ${unsentEvents.length + queuedEvents.length} events queued for retry`);
           break;
+        } else {
+          this.retryAttempts.delete(getReplayBatchKey(events));
         }
       }
     } finally {
@@ -339,7 +355,7 @@ export class SessionReplayRecorder {
 
   private prependEvents(events: SessionReplayEvent[]): void {
     this.eventBuffer = [...events, ...this.eventBuffer];
-    this.eventBufferSizeBytes = this.eventBuffer.reduce((sizeBytes, event) => sizeBytes + getJsonByteSize(event), 0);
+    this.eventBufferSizeBytes = getReplayEventsByteSize(this.eventBuffer);
   }
 
   // Update user ID when it changes

@@ -1883,9 +1883,19 @@
     };
   }
 
+  // replayBatching.ts
+  function getReplayEventsByteSize(events) {
+    return events.reduce((total, event) => total + getJsonByteSize(event), 0);
+  }
+  function getReplayBatchKey(events) {
+    const first = events[0];
+    return String(first?.sequenceNumber ?? first?.timestamp ?? "empty");
+  }
+
   // sessionReplay.ts
   var SAMPLE_STORAGE_KEY = "rybbit-replay-sampled";
   var ACTIVITY_CAPTURE_VERSION = 2;
+  var MAX_BATCH_SEND_ATTEMPTS = 3;
   function shouldSampleSession(sampleRate) {
     if (sampleRate >= 100) return true;
     if (sampleRate <= 0) return false;
@@ -1909,6 +1919,7 @@
       this.nextSequenceNumber = 0;
       this.pendingBatches = [];
       this.isSendingBatches = false;
+      this.retryAttempts = /* @__PURE__ */ new Map();
       this.config = config;
       this.userId = userId;
       this.sendBatch = sendBatch;
@@ -2075,11 +2086,23 @@
           }
           const unsentEvents = await this.sendEventsWithPayloadFallback(events);
           if (unsentEvents) {
+            const batchKey = getReplayBatchKey(unsentEvents);
+            const attempts = (this.retryAttempts.get(batchKey) ?? 0) + 1;
+            if (attempts >= MAX_BATCH_SEND_ATTEMPTS) {
+              this.retryAttempts.delete(batchKey);
+              console.warn(
+                `[SessionReplay] Dropped ${unsentEvents.length} events after ${MAX_BATCH_SEND_ATTEMPTS} failed send attempts`
+              );
+              continue;
+            }
+            this.retryAttempts.set(batchKey, attempts);
             const queuedEvents = this.pendingBatches.flat();
             this.pendingBatches = [];
             this.prependEvents([...unsentEvents, ...queuedEvents]);
             console.warn(`[SessionReplay] ${unsentEvents.length + queuedEvents.length} events queued for retry`);
             break;
+          } else {
+            this.retryAttempts.delete(getReplayBatchKey(events));
           }
         }
       } finally {
@@ -2131,7 +2154,7 @@
     }
     prependEvents(events) {
       this.eventBuffer = [...events, ...this.eventBuffer];
-      this.eventBufferSizeBytes = this.eventBuffer.reduce((sizeBytes, event) => sizeBytes + getJsonByteSize(event), 0);
+      this.eventBufferSizeBytes = getReplayEventsByteSize(this.eventBuffer);
     }
     // Update user ID when it changes
     updateUserId(userId) {
