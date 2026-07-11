@@ -9,18 +9,12 @@ const exportOptionsSchema = z
   .object({
     startMs: z.number().finite().min(0),
     endMs: z.number().finite().positive(),
-    captureMs: z.number().finite().min(0),
     skipInactivity: z.boolean().default(true),
-    includeNetwork: z.boolean().default(true),
-    includeBodies: z.boolean().default(false),
     playbackSpeed: z.union([z.literal(1), z.literal(2), z.literal(4)]).default(1),
   })
   .refine(value => value.endMs > value.startMs, { message: "Export end must be after export start" })
-  .refine(value => value.endMs - value.startMs <= 5 * 60 * 1000, {
-    message: "Replay export range cannot exceed 5 minutes",
-  })
-  .refine(value => value.captureMs >= value.startMs && value.captureMs <= value.endMs, {
-    message: "Screenshot time must be inside the export range",
+  .refine(value => value.endMs - value.startMs <= 30_000, {
+    message: "Replay export range cannot exceed 30 seconds",
   });
 
 type ReplayExportParams = { siteId: string; sessionId: string };

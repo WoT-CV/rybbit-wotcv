@@ -1,10 +1,7 @@
 export interface ReplayExportOptions {
   startMs: number;
   endMs: number;
-  captureMs: number;
   skipInactivity: boolean;
-  includeNetwork: boolean;
-  includeBodies: boolean;
   playbackSpeed: 1 | 2 | 4;
 }
 

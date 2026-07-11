@@ -30,7 +30,7 @@ import { downloadBlob } from "@/lib/export";
 import { formatTime } from "../player/utils/replayUtils";
 import { useReplayStore } from "../replayStore";
 
-const MAX_EXPORT_DURATION_MS = 5 * 60 * 1000;
+const MAX_EXPORT_DURATION_MS = 30_000;
 
 interface ReplayExportDialogProps {
   currentTime: number;
@@ -46,7 +46,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const siteId = Number(params.site);
   const [range, setRange] = useState<[number, number]>([0, Math.min(duration, 30_000)]);
   const [skipInactivity, setSkipInactivity] = useState(true);
-  const [includeNetwork, setIncludeNetwork] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4>(1);
   const [exportId, setExportId] = useState<string | null>(null);
   const setExportRange = useReplayStore(state => state.setExportRange);
@@ -56,7 +55,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const cancelExport = useCancelReplayExport();
   const { data: exportStatus } = useReplayExportStatus(siteId, sessionId, exportId);
   const rangeDuration = range[1] - range[0];
-  const captureMs = Math.max(range[0], Math.min(range[1], currentTime));
   const isRangeValid = rangeDuration > 0 && rangeDuration <= MAX_EXPORT_DURATION_MS;
   const isExporting = Boolean(
     exportId && exportStatus && !["ready", "failed", "cancelled"].includes(exportStatus.state)
@@ -120,10 +118,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
         options: {
           startMs: range[0],
           endMs: range[1],
-          captureMs,
           skipInactivity,
-          includeNetwork,
-          includeBodies: includeNetwork,
           playbackSpeed,
         },
       });
@@ -156,7 +151,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
         <DialogHeader>
           <DialogTitle>{t("Export replay range")}</DialogTitle>
           <DialogDescription>
-            {t("Generate a GitHub-ready diagnostic package with a replay, screenshot and readable logs.")}
+            {t("Generate a replay, metadata and network logs limited to api.wot-cv.com.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -184,7 +179,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
               variant="outline"
               onClick={() => setQuickRange(0, Math.min(duration, MAX_EXPORT_DURATION_MS))}
             >
-              {duration <= MAX_EXPORT_DURATION_MS ? t("Full replay") : t("First 5 minutes")}
+              {duration <= MAX_EXPORT_DURATION_MS ? t("Full replay") : t("First 30 seconds")}
             </Button>
           </div>
 
@@ -210,7 +205,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
               <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-accent-500 bg-white shadow" />
             </SliderPrimitive.Root>
             {!isRangeValid && (
-              <p className="text-xs text-red-500">{t("The export range must be between 1 second and 5 minutes.")}</p>
+              <p className="text-xs text-red-500">{t("The export range must be between 1 second and 30 seconds.")}</p>
             )}
             <div className="grid grid-cols-2 gap-3 pt-1">
               <ReplayTimeInput
@@ -231,11 +226,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
               checked={skipInactivity}
               onCheckedChange={setSkipInactivity}
               label={t("Skip inactivity in video")}
-            />
-            <ExportCheckbox
-              checked={includeNetwork}
-              onCheckedChange={setIncludeNetwork}
-              label={t("Include network logs with request and response bodies")}
             />
             <label className="flex items-center justify-between gap-3 text-sm">
               <span>{t("Video speed")}</span>
