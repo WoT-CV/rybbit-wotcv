@@ -31,7 +31,6 @@ import { formatTime } from "../player/utils/replayUtils";
 import { useReplayStore } from "../replayStore";
 
 const MAX_EXPORT_DURATION_MS = 30_000;
-const MIN_EXPORT_DURATION_MS = 1_000;
 
 interface ReplayExportDialogProps {
   currentTime: number;
@@ -57,7 +56,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const cancelExport = useCancelReplayExport();
   const { data: exportStatus } = useReplayExportStatus(siteId, sessionId, exportId);
   const rangeDuration = range[1] - range[0];
-  const isRangeValid = rangeDuration >= MIN_EXPORT_DURATION_MS && rangeDuration <= MAX_EXPORT_DURATION_MS;
+  const isRangeValid = rangeDuration > 0 && rangeDuration <= MAX_EXPORT_DURATION_MS;
   const isExporting = Boolean(
     exportId && exportStatus && !["ready", "failed", "cancelled"].includes(exportStatus.state)
   );
@@ -141,8 +140,8 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
     setExportId(null);
   };
 
-  const setQuickRange = (start: number, end: number) => {
-    setRange(constrainRangeFromStart(start, end, duration));
+  const setQuickRange = (start: number) => {
+    setRange(constrainRangeFromStart(start, duration));
   };
 
   const handleOpenChange = (value: boolean) => {
@@ -163,28 +162,13 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
 
         <div className="space-y-5">
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="xs"
-              variant="outline"
-              onClick={() => setQuickRange(currentTime - 15_000, currentTime + 15_000)}
-            >
+            <Button type="button" size="xs" variant="outline" onClick={() => setQuickRange(currentTime - 15_000)}>
               {t("Current ±15 s")}
             </Button>
-            <Button
-              type="button"
-              size="xs"
-              variant="outline"
-              onClick={() => setQuickRange(currentTime, currentTime + 30_000)}
-            >
+            <Button type="button" size="xs" variant="outline" onClick={() => setQuickRange(currentTime)}>
               {t("From current time")}
             </Button>
-            <Button
-              type="button"
-              size="xs"
-              variant="outline"
-              onClick={() => setQuickRange(0, Math.min(duration, MAX_EXPORT_DURATION_MS))}
-            >
+            <Button type="button" size="xs" variant="outline" onClick={() => setQuickRange(0)}>
               {duration <= MAX_EXPORT_DURATION_MS ? t("Full replay") : t("First 30 seconds")}
             </Button>
           </div>
@@ -215,16 +199,18 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
                 label={t("Start time")}
                 value={range[0]}
                 onChange={value => {
-                  const nextStart = clamp(value, 0, range[1] - MIN_EXPORT_DURATION_MS);
-                  setRange([nextStart, Math.min(range[1], nextStart + MAX_EXPORT_DURATION_MS)]);
+                  const windowDuration = getExportWindowDuration(duration);
+                  const nextStart = clamp(value, 0, Math.max(0, duration - windowDuration));
+                  setRange([nextStart, nextStart + windowDuration]);
                 }}
               />
               <ReplayTimeInput
                 label={t("End time")}
                 value={range[1]}
                 onChange={value => {
-                  const nextEnd = clamp(value, range[0] + MIN_EXPORT_DURATION_MS, duration);
-                  setRange([Math.max(range[0], nextEnd - MAX_EXPORT_DURATION_MS), nextEnd]);
+                  const windowDuration = getExportWindowDuration(duration);
+                  const nextEnd = clamp(value, windowDuration, duration);
+                  setRange([nextEnd - windowDuration, nextEnd]);
                 }}
               />
             </div>
@@ -287,19 +273,15 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
 }
 
 function createInitialRange(currentTime: number, duration: number): [number, number] {
-  const rangeDuration = Math.min(MAX_EXPORT_DURATION_MS, duration);
+  const rangeDuration = getExportWindowDuration(duration);
   const start = clamp(currentTime - rangeDuration / 2, 0, Math.max(0, duration - rangeDuration));
   return [start, start + rangeDuration];
 }
 
-function constrainRangeFromStart(start: number, end: number, duration: number): [number, number] {
-  const nextStart = clamp(start, 0, Math.max(0, duration - MIN_EXPORT_DURATION_MS));
-  const nextEnd = clamp(
-    end,
-    Math.min(duration, nextStart + MIN_EXPORT_DURATION_MS),
-    Math.min(duration, nextStart + MAX_EXPORT_DURATION_MS)
-  );
-  return [nextStart, nextEnd];
+function constrainRangeFromStart(start: number, duration: number): [number, number] {
+  const windowDuration = getExportWindowDuration(duration);
+  const nextStart = clamp(start, 0, Math.max(0, duration - windowDuration));
+  return [nextStart, nextStart + windowDuration];
 }
 
 function constrainSliderRange(
@@ -307,14 +289,19 @@ function constrainSliderRange(
   currentRange: [number, number],
   duration: number
 ): [number, number] {
-  const start = clamp(nextRange[0], 0, duration);
-  const end = clamp(nextRange[1], start, duration);
-  if (end - start <= MAX_EXPORT_DURATION_MS) return [start, end];
+  const windowDuration = getExportWindowDuration(duration);
+  const startMovedMore = Math.abs(nextRange[0] - currentRange[0]) > Math.abs(nextRange[1] - currentRange[1]);
+  if (startMovedMore) {
+    const start = clamp(nextRange[0], 0, Math.max(0, duration - windowDuration));
+    return [start, start + windowDuration];
+  }
 
-  const startMovedMore = Math.abs(start - currentRange[0]) > Math.abs(end - currentRange[1]);
-  return startMovedMore
-    ? [Math.max(0, end - MAX_EXPORT_DURATION_MS), end]
-    : [start, Math.min(duration, start + MAX_EXPORT_DURATION_MS)];
+  const end = clamp(nextRange[1], windowDuration, duration);
+  return [end - windowDuration, end];
+}
+
+function getExportWindowDuration(duration: number) {
+  return Math.min(MAX_EXPORT_DURATION_MS, duration);
 }
 
 function clamp(value: number, min: number, max: number) {
