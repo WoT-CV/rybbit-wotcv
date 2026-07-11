@@ -24,8 +24,7 @@ import { Avatar } from "../../../../components/Avatar";
 import { Badge } from "../../../../components/ui/badge";
 import { IdentifiedBadge } from "../../../../components/IdentifiedBadge";
 import { UserTopPages } from "./components/UserTopPages";
-import { getUserAvatarUrl } from "../../../../lib/userIdentity";
-import { getUserDisplayName } from "../../../../lib/utils";
+import { getUserAvatarUrl, getUserDisplayName } from "../../../../lib/userIdentity";
 
 const LIMIT = 25;
 

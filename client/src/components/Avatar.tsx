@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useDateTimeFormat } from "../hooks/useDateTimeFormat";
 import { AVATAR_COLORS } from "../lib/avatar";
 import { getTimezone } from "../lib/store";
+import { isSafeAvatarUrl } from "../lib/userIdentity";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function Avatar({
@@ -25,18 +26,19 @@ export function Avatar({
   const t = useExtracted();
   const { formatRelative } = useDateTimeFormat();
   const [imageFailed, setImageFailed] = useState(false);
+  const safeImageUrl = isSafeAvatarUrl(imageUrl) ? imageUrl : undefined;
   const timeSinceEnd = lastActiveTime ? -lastActiveTime.setZone(getTimezone()).diffNow().toMillis() / 1000 : 0;
   const online = lastActiveTime ? timeSinceEnd < 300 : false;
 
   useEffect(() => {
     setImageFailed(false);
-  }, [imageUrl]);
+  }, [safeImageUrl]);
 
   return (
     <div className="relative">
-      {imageUrl && !imageFailed ? (
+      {safeImageUrl && !imageFailed ? (
         <img
-          src={imageUrl}
+          src={safeImageUrl}
           alt={alt || ""}
           className="rounded-full object-cover bg-neutral-200 dark:bg-neutral-800"
           style={{ width: size, height: size }}

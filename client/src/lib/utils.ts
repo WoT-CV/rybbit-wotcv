@@ -2,7 +2,6 @@ import { clsx, type ClassValue } from "clsx";
 import { Duration } from "luxon";
 import { twMerge } from "tailwind-merge";
 import { userLocale } from "./dateTimeUtils";
-export { getUserDisplayName } from "./userIdentity";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

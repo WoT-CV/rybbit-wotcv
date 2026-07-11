@@ -41,8 +41,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThreeDotLoader } from "@/components/Loaders";
 import { getTimezone } from "@/lib/store";
-import { getUserAvatarUrl } from "@/lib/userIdentity";
-import { cn, getUserDisplayName } from "@/lib/utils";
+import { getUserAvatarUrl, getUserDisplayName } from "@/lib/userIdentity";
+import { cn } from "@/lib/utils";
 import { NetworkTimeline } from "./network/NetworkTimeline";
 import { parseNetworkEvents } from "./network/parseNetworkEvents";
 import {

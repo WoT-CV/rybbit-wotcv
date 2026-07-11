@@ -26,8 +26,8 @@ import {
 } from "../../../../components/ui/alert-dialog";
 import { Button } from "../../../../components/ui/button";
 import { Skeleton } from "../../../../components/ui/skeleton";
-import { getUserAvatarUrl } from "../../../../lib/userIdentity";
-import { cn, formatter, getUserDisplayName } from "../../../../lib/utils";
+import { getUserAvatarUrl, getUserDisplayName } from "../../../../lib/userIdentity";
+import { cn, formatter } from "../../../../lib/utils";
 import { useShallow } from "zustand/react/shallow";
 import { useReplayStore } from "@/components/replay/replayStore";
 

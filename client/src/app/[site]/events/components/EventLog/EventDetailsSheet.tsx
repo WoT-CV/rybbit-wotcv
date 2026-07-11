@@ -12,7 +12,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../../../../../com
 import { hour12, userLocale } from "../../../../../lib/dateTimeUtils";
 import { getRegionName } from "../../../../../lib/geo";
 import { getTimezone } from "../../../../../lib/store";
-import { getCountryName, getUserDisplayName, truncateString } from "../../../../../lib/utils";
+import { getUserDisplayName } from "../../../../../lib/userIdentity";
+import { getCountryName, truncateString } from "../../../../../lib/utils";
 import { Browser } from "../../../components/shared/icons/Browser";
 import { CountryFlag } from "../../../components/shared/icons/CountryFlag";
 import { DeviceIcon } from "../../../components/shared/icons/Device";

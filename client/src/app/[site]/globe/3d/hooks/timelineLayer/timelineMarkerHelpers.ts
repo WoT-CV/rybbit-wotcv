@@ -8,9 +8,7 @@ import { AVATAR_COLORS } from "../../../../../../lib/avatar";
 import { getChannelIconComponent } from "../../../../../../components/Channel";
 import {
   escapeHtmlAttribute,
-  getUserAvatarId,
-  getUserAvatarUrl,
-  getUserDisplayName,
+  resolveUserIdentity,
   type UserIdentityLike,
 } from "../../../../../../lib/userIdentity";
 
@@ -26,14 +24,15 @@ export function generateAvatarSVG(userId: string, size: number): string {
 }
 
 export function generateUserAvatarHTML(user: UserIdentityLike, size: number): string {
-  const fallbackAvatar = generateAvatarSVG(getUserAvatarId(user), size);
-  const avatarUrl = getUserAvatarUrl(user);
+  const identity = resolveUserIdentity(user);
+  const fallbackAvatar = generateAvatarSVG(identity.avatarId, size);
+  const avatarUrl = identity.avatarUrl;
 
   if (!avatarUrl) return fallbackAvatar;
 
   const fallbackDataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(fallbackAvatar)}`;
   const escapedUrl = escapeHtmlAttribute(avatarUrl);
-  const escapedAlt = escapeHtmlAttribute(getUserDisplayName(user));
+  const escapedAlt = escapeHtmlAttribute(identity.displayName);
 
   return `
     <span

@@ -16,8 +16,7 @@ import {
   OperatingSystemTooltipIcon,
   DeviceTypeTooltipIcon,
 } from "../../../../components/TooltipIcons/TooltipIcons";
-import { getUserAvatarUrl } from "../../../../lib/userIdentity";
-import { getUserDisplayName } from "../../../../lib/utils";
+import { getUserAvatarUrl, getUserDisplayName } from "../../../../lib/userIdentity";
 
 export function TraitValueUsersList({
   traitKey,

@@ -6,6 +6,12 @@ export type UserIdentityLike = {
   traits?: Record<string, unknown> | null;
 };
 
+export interface ResolvedUserIdentity {
+  avatarId: string;
+  avatarUrl?: string;
+  displayName: string;
+}
+
 const DISPLAY_NAME_TRAIT_KEYS = ["username", "name", "email"] as const;
 const AVATAR_TRAIT_KEYS = ["avatarUrl", "logoUrl", "imageUrl", "avatar_url", "picture"] as const;
 
@@ -46,6 +52,14 @@ export function getUserDisplayName(data: UserIdentityLike | null | undefined) {
 
 export function getUserAvatarId(data: UserIdentityLike | null | undefined) {
   return data?.identified_user_id || data?.user_id || "";
+}
+
+export function resolveUserIdentity(data: UserIdentityLike | null | undefined): ResolvedUserIdentity {
+  return {
+    avatarId: getUserAvatarId(data),
+    avatarUrl: getUserAvatarUrl(data),
+    displayName: getUserDisplayName(data),
+  };
 }
 
 export function escapeHtml(value: string | number | null | undefined) {

@@ -23,8 +23,8 @@ import { Dialog, DialogContent, DialogTitle } from "../../../../components/ui/di
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../components/ui/tooltip";
 import { useDateTimeFormat } from "../../../../hooks/useDateTimeFormat";
 import { formatShortDuration } from "../../../../lib/dateTimeUtils";
-import { getUserAvatarUrl } from "../../../../lib/userIdentity";
-import { cn, formatter, getUserDisplayName, truncateString } from "../../../../lib/utils";
+import { getUserAvatarUrl, getUserDisplayName } from "../../../../lib/userIdentity";
+import { cn, formatter, truncateString } from "../../../../lib/utils";
 
 function SessionCardSkeleton() {
   return (

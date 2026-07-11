@@ -10,8 +10,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../../componen
 import { useDateTimeFormat } from "../../../../../hooks/useDateTimeFormat";
 import { useEventDisplayName } from "../../../../../lib/events";
 import { getTimezone } from "../../../../../lib/store";
-import { getUserAvatarUrl } from "../../../../../lib/userIdentity";
-import { getCountryName, getUserDisplayName, truncateString } from "../../../../../lib/utils";
+import { getUserAvatarUrl, getUserDisplayName } from "../../../../../lib/userIdentity";
+import { getCountryName, truncateString } from "../../../../../lib/utils";
 import { Browser } from "../../../components/shared/icons/Browser";
 import { CountryFlag } from "../../../components/shared/icons/CountryFlag";
 import { OperatingSystem } from "../../../components/shared/icons/OperatingSystem";
