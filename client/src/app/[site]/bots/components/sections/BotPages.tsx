@@ -1,5 +1,6 @@
 "use client";
 
+import { useExtracted } from "next-intl";
 import { useGetSite } from "../../../../../api/admin/hooks/useSites";
 import { truncateString } from "../../../../../lib/utils";
 import { BotSectionTabs, type BotSectionTab } from "../BotSectionTabs";
@@ -7,18 +8,19 @@ import { BotSectionTabs, type BotSectionTab } from "../BotSectionTabs";
 type Tab = "pages" | "hostnames";
 
 export function BotPages() {
+  const t = useExtracted();
   const { data: siteMetadata } = useGetSite();
 
   const tabs: BotSectionTab<Tab>[] = [
     {
       value: "pages",
-      label: "Pages",
+      label: t("Pages"),
       section: {
         dimension: "pathname",
-        title: "Pages",
+        title: t("Pages"),
         getValue: item => item.value,
         getKey: item => item.value || "unknown",
-        getLabel: item => truncateString(item.value, 50) || "Other",
+        getLabel: item => truncateString(item.value, 50) || t("Other"),
         getLink: item => {
           const host = item.hostname || siteMetadata?.domain;
           return host && item.value ? `https://${host}${item.value}` : undefined;
@@ -27,13 +29,13 @@ export function BotPages() {
     },
     {
       value: "hostnames",
-      label: "Hostnames",
+      label: t("Hostnames"),
       section: {
         dimension: "hostname",
-        title: "Hostnames",
+        title: t("Hostnames"),
         getValue: item => item.value,
         getKey: item => item.value || "unknown",
-        getLabel: item => item.value || "Other",
+        getLabel: item => item.value || t("Other"),
       },
     },
   ];

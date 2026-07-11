@@ -2,6 +2,7 @@
 
 import { DateTime } from "luxon";
 import Link from "next/link";
+import { useExtracted } from "next-intl";
 import { useMemo } from "react";
 
 import { useGetBotTimeSeries } from "../../../../api/analytics/hooks/bots/useGetBotTimeSeries";
@@ -23,6 +24,7 @@ type BotPoint = TimeSeriesChartPoint & {
 };
 
 export function BotChart() {
+  const t = useExtracted();
   const session = authClient.useSession();
   const { site, bucket, time } = useStore();
   const timezone = getTimezone();
@@ -78,7 +80,7 @@ export function BotChart() {
               </Link>
             )}
           </div>
-          <span className="text-sm text-neutral-700 dark:text-neutral-200">Bot requests</span>
+          <span className="text-sm text-neutral-700 dark:text-neutral-200">{t("Bot requests")}</span>
           <BucketSelection />
         </div>
         {isLoading ? (
@@ -88,8 +90,8 @@ export function BotChart() {
         ) : current.length === 0 ? (
           <div className="h-[300px] w-full flex items-center justify-center text-neutral-500">
             <div className="text-center">
-              <p className="text-lg font-medium">No bot data available</p>
-              <p className="text-sm">Try adjusting your date range or filters</p>
+              <p className="text-lg font-medium">{t("No bot data available")}</p>
+              <p className="text-sm">{t("Try adjusting your date range or filters")}</p>
             </div>
           </div>
         ) : (
@@ -108,7 +110,7 @@ export function BotChart() {
                     <div className="flex justify-between items-center gap-4">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-3 rounded-[3px]" style={{ backgroundColor: "hsl(var(--red-400))" }} />
-                        <span>Bot requests</span>
+                        <span>{t("Bot requests")}</span>
                       </div>
                       <span className="font-medium">{point.y.toLocaleString()}</span>
                     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { useExtracted } from "next-intl";
 import { BOT_AVAILABLE_FILTERS } from "../../../api/analytics/hooks/bots/constants";
 import { useInView } from "../../../hooks/useInView";
 import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
@@ -24,8 +25,9 @@ function LazySection({ children, height = "405px" }: { children: ReactNode; heig
 }
 
 export default function BotsPage() {
+  const t = useExtracted();
   const { site } = useStore();
-  useSetPageTitle("Bots");
+  useSetPageTitle(t("Bots"));
 
   if (!site) {
     return null;

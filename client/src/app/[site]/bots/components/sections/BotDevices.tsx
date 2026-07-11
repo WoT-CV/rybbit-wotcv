@@ -1,5 +1,6 @@
 "use client";
 
+import { useExtracted } from "next-intl";
 import { Browser } from "../../../components/shared/icons/Browser";
 import { DeviceIcon } from "../../../components/shared/icons/Device";
 import { OperatingSystem } from "../../../components/shared/icons/OperatingSystem";
@@ -8,29 +9,32 @@ import { BotSectionTabs, type BotSectionTab } from "../BotSectionTabs";
 type Tab = "browsers" | "browser_versions" | "devices" | "os" | "os_versions" | "dimensions";
 
 export function BotDevices() {
+  const t = useExtracted();
+  const otherLabel = t("Other");
+
   const tabs: BotSectionTab<Tab>[] = [
     {
       value: "browsers",
-      label: "Browsers",
+      label: t("Browsers"),
       section: {
         dimension: "browser",
-        title: "Browsers",
+        title: t("Browsers"),
         getValue: item => item.value,
         getKey: item => item.value || "other",
         getLabel: item => (
           <div className="flex gap-2 items-center">
             <Browser browser={item.value || "Other"} />
-            {item.value || "Other"}
+            {item.value || otherLabel}
           </div>
         ),
       },
     },
     {
       value: "browser_versions",
-      label: "Versions",
+      label: t("Versions"),
       section: {
         dimension: "browser_version",
-        title: "Browser Versions",
+        title: t("Browser Versions"),
         getValue: item => item.value,
         getKey: item => item.value || "other",
         getLabel: item => {
@@ -38,7 +42,7 @@ export function BotDevices() {
           return (
             <div className="flex gap-2 items-center">
               <Browser browser={browser || "Other"} />
-              {item.value || "Other"}
+              {item.value || otherLabel}
             </div>
           );
         },
@@ -46,16 +50,16 @@ export function BotDevices() {
     },
     {
       value: "devices",
-      label: "Devices",
+      label: t("Devices"),
       section: {
         dimension: "device_type",
-        title: "Devices",
+        title: t("Devices"),
         getValue: item => item.value,
         getKey: item => item.value || "other",
         getLabel: item => (
           <div className="flex gap-2 items-center">
             <DeviceIcon deviceType={item.value || ""} size={16} />
-            {item.value || "Other"}
+            {item.value || otherLabel}
           </div>
         ),
       },
@@ -65,23 +69,23 @@ export function BotDevices() {
       label: "OS",
       section: {
         dimension: "operating_system",
-        title: "Operating Systems",
+        title: t("Operating Systems"),
         getValue: item => item.value,
         getKey: item => item.value || "other",
         getLabel: item => (
           <div className="flex gap-2 items-center">
             <OperatingSystem os={item.value || "Other"} />
-            {item.value || "Other"}
+            {item.value || otherLabel}
           </div>
         ),
       },
     },
     {
       value: "os_versions",
-      label: "OS Versions",
+      label: t("OS Versions"),
       section: {
         dimension: "operating_system_version",
-        title: "OS Versions",
+        title: t("OS Versions"),
         getValue: item => item.value,
         getKey: item => item.value || "other",
         getLabel: item => {
@@ -89,7 +93,7 @@ export function BotDevices() {
           return (
             <div className="flex gap-2 items-center">
               <OperatingSystem os={os || "Other"} />
-              {item.value || "Other"}
+              {item.value || otherLabel}
             </div>
           );
         },
@@ -97,13 +101,13 @@ export function BotDevices() {
     },
     {
       value: "dimensions",
-      label: "Dimensions",
+      label: t("Dimensions"),
       section: {
         dimension: "dimensions",
-        title: "Screen Dimensions",
+        title: t("Screen Dimensions"),
         getValue: item => item.value,
         getKey: item => item.value || "other",
-        getLabel: item => item.value || "Other",
+        getLabel: item => item.value || otherLabel,
       },
     },
   ];

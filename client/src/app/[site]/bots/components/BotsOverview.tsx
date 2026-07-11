@@ -2,6 +2,7 @@
 
 import NumberFlow from "@number-flow/react";
 import { HelpCircle } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { type BotLayerKey } from "../../../../api/analytics/endpoints";
 import { useGetBotOverview } from "../../../../api/analytics/hooks/bots/useGetBotOverview";
 import { Card, CardContent, CardLoader } from "../../../../components/ui/card";
@@ -10,35 +11,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../components/
 import { useStore } from "../../../../lib/store";
 import { cn } from "../../../../lib/utils";
 import { useBotsStore } from "../botsStore";
-
-const layerLabels: { key: BotLayerKey; label: string; description: string }[] = [
-  {
-    key: "ua_pattern",
-    label: "UA pattern",
-    description: "Matches known crawler, bot, scanner, and automation strings in the request user agent.",
-  },
-  {
-    key: "header_heuristics",
-    label: "Header heuristics",
-    description: "Flags requests with browser-like user agents but missing or unusual browser request headers.",
-  },
-  {
-    key: "client_signals",
-    label: "Client signals",
-    description:
-      "Uses browser-side and dimension fingerprints such as automation APIs, impossible dimensions, default automation viewports, outer dimension anomalies, and missing plugin/API traits.",
-  },
-  {
-    key: "bot_asn",
-    label: "Bot ASN",
-    description: "Flags traffic from ASNs categorized as hosting, cloud, proxy, or other datacenter networks.",
-  },
-  {
-    key: "rate_anomaly",
-    label: "Rate anomaly",
-    description: "Flags users or IPs that exceed the request volume thresholds for the current site.",
-  },
-];
 
 function BotLayerTooltip({ description }: { description: string }) {
   return (
@@ -113,19 +85,49 @@ function StatCard({
 }
 
 export function BotsOverview() {
+  const t = useExtracted();
   const { site } = useStore();
   const { selectedLayer, setSelectedLayer } = useBotsStore();
   const { data, isLoading, isFetching } = useGetBotOverview({ site });
   const overview = data?.data;
+  const layerLabels: { key: BotLayerKey; label: string; description: string }[] = [
+    {
+      key: "ua_pattern",
+      label: t("UA pattern"),
+      description: t("Matches known crawler, bot, scanner, and automation strings in the request user agent."),
+    },
+    {
+      key: "header_heuristics",
+      label: t("Header heuristics"),
+      description: t("Flags requests with browser-like user agents but missing or unusual browser request headers."),
+    },
+    {
+      key: "client_signals",
+      label: t("Client signals"),
+      description: t(
+        "Uses browser-side and dimension fingerprints such as automation APIs, impossible dimensions, default automation viewports, outer dimension anomalies, and missing plugin/API traits."
+      ),
+    },
+    {
+      key: "bot_asn",
+      label: t("Bot ASN"),
+      description: t("Flags traffic from ASNs categorized as hosting, cloud, proxy, or other datacenter networks."),
+    },
+    {
+      key: "rate_anomaly",
+      label: t("Rate anomaly"),
+      description: t("Flags users or IPs that exceed the request volume thresholds for the current site."),
+    },
+  ];
 
   return (
     <Card>
       {isFetching && <CardLoader />}
       <CardContent className="p-0">
         <div className="grid grid-cols-2 md:grid-cols-4">
-          <StatCard label="Bot requests blocked" value={overview?.bot_requests ?? 0} isLoading={isLoading} />
+          <StatCard label={t("Bot requests blocked")} value={overview?.bot_requests ?? 0} isLoading={isLoading} />
           <StatCard
-            label="Bot share of total events"
+            label={t("Bot share of total events")}
             value={overview?.bot_percentage ?? 0}
             suffix="%"
             isLoading={isLoading}

@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useSubdivisions } from "../../../../../lib/geo";
 import { getCountryName } from "../../../../../lib/utils";
 import { CountryFlag } from "../../../components/shared/icons/CountryFlag";
@@ -18,35 +19,36 @@ function getCountryCity(value: string) {
 }
 
 export function BotCountries() {
+  const t = useExtracted();
   const { data: subdivisions } = useSubdivisions();
 
   const tabs: BotSectionTab<Tab>[] = [
     {
       value: "countries",
-      label: "Countries",
+      label: t("Countries"),
       section: {
         dimension: "country",
-        title: "Countries",
+        title: t("Countries"),
         getValue: item => item.value,
         getKey: item => item.value || "unknown",
         getLabel: item => (
           <div className="flex gap-2 items-center">
             {item.value && <CountryFlag country={item.value} />}
-            {item.value ? getCountryName(item.value) : "Unknown"}
+            {item.value ? getCountryName(item.value) : t("Unknown")}
           </div>
         ),
       },
     },
     {
       value: "regions",
-      label: "Regions",
+      label: t("Regions"),
       section: {
         dimension: "region",
-        title: "Regions",
+        title: t("Regions"),
         getValue: item => item.value,
         getKey: item => item.value || "unknown",
         getLabel: item => {
-          if (!item.value) return "Unknown";
+          if (!item.value) return t("Unknown");
           const region = subdivisions?.features.find(
             feature => feature.properties.iso_3166_2 === item.value
           )?.properties;
@@ -65,14 +67,14 @@ export function BotCountries() {
     },
     {
       value: "cities",
-      label: "Cities",
+      label: t("Cities"),
       section: {
         dimension: "city",
-        title: "Cities",
+        title: t("Cities"),
         getValue: item => item.value,
         getKey: item => item.value || "unknown",
         getLabel: item => {
-          if (!item.value || item.value === "-") return "Unknown";
+          if (!item.value || item.value === "-") return t("Unknown");
           const { country, region, city } = getCountryCity(item.value);
           const regionName = subdivisions?.features.find(
             feature => feature.properties.iso_3166_2 === `${country}-${region}`

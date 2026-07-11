@@ -3,6 +3,7 @@
 import { FilterParameter } from "@rybbit/shared";
 import NumberFlow from "@number-flow/react";
 import { Info, SquareArrowOutUpRight } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { ReactNode, useCallback } from "react";
 import { type BotDimensionItem, type BotDimensionKey } from "../../../../api/analytics/endpoints";
 import { useGetBotDimension } from "../../../../api/analytics/hooks/bots/useGetBotDimension";
@@ -154,10 +155,12 @@ function useBotSectionData(dimension: BotDimensionKey) {
 }
 
 function EmptyBotSection() {
+  const t = useExtracted();
+
   return (
     <div className="text-neutral-600 dark:text-neutral-300 w-full text-center mt-6 flex flex-row gap-2 items-center justify-center">
       <Info className="w-5 h-5" />
-      No Data
+      {t("No Data")}
     </div>
   );
 }
@@ -186,6 +189,7 @@ export function BotSectionDialogBody({
   getLink,
   filterable = true,
 }: BotSectionBaseProps) {
+  const t = useExtracted();
   const { items, ratio, isLoading, error, refetch } = useBotSectionData(dimension);
   const filterParameter = filterable ? (dimension as FilterParameter) : undefined;
 
@@ -198,7 +202,7 @@ export function BotSectionDialogBody({
   }
 
   if (error) {
-    return <ErrorState title="Failed to load data" message={error.message} refetch={refetch} />;
+    return <ErrorState title={t("Failed to load data")} message={error.message} refetch={refetch} />;
   }
 
   if (!items.length) {
@@ -232,6 +236,7 @@ export function BotSection({
   filterable = true,
   renderDialog = true,
 }: BotSectionProps) {
+  const t = useExtracted();
   const { items, ratio, isLoading, isFetching, error, refetch } = useBotSectionData(dimension);
   const filterParameter = filterable ? (dimension as FilterParameter) : undefined;
 
@@ -256,7 +261,7 @@ export function BotSection({
       )}
       <div className="flex flex-row gap-2 justify-between pr-1 text-xs text-neutral-600 dark:text-neutral-400 mb-2">
         <div>{title}</div>
-        <div>Requests</div>
+        <div>{t("Requests")}</div>
       </div>
       <ScrollArea className="h-[314px]">
         {isLoading ? (
@@ -264,7 +269,7 @@ export function BotSection({
             <StandardSkeleton />
           </div>
         ) : error ? (
-          <ErrorState title="Failed to load data" message={error.message} refetch={refetch} />
+          <ErrorState title={t("Failed to load data")} message={error.message} refetch={refetch} />
         ) : items.length ? (
           content
         ) : (

@@ -1,12 +1,13 @@
 "use client";
 
+import { useExtracted } from "next-intl";
 import { truncateString } from "../../../../../lib/utils";
 import { BotSectionTabs, type BotSectionTab } from "../BotSectionTabs";
 
 type Tab = "asn_orgs" | "bot_categories" | "ua_patterns";
 
-function formatBotCategory(value: string) {
-  if (!value) return "Uncategorized";
+function formatBotCategory(value: string, uncategorizedLabel: string) {
+  if (!value) return uncategorizedLabel;
   return value
     .split(/[_-]/)
     .filter(Boolean)
@@ -15,40 +16,42 @@ function formatBotCategory(value: string) {
 }
 
 export function BotMetadata() {
+  const t = useExtracted();
+
   const tabs: BotSectionTab<Tab>[] = [
     {
       value: "asn_orgs",
-      label: "ASN Orgs",
+      label: t("ASN Orgs"),
       section: {
         dimension: "asn_org",
-        title: "ASN Orgs",
+        title: t("ASN Orgs"),
         getValue: item => item.value,
         getKey: item => item.value || "unknown",
-        getLabel: item => item.value || "Unknown",
+        getLabel: item => item.value || t("Unknown"),
         filterable: false,
       },
     },
     {
       value: "bot_categories",
-      label: "Categories",
+      label: t("Categories"),
       section: {
         dimension: "bot_category",
-        title: "Bot Categories",
+        title: t("Bot Categories"),
         getValue: item => item.value,
         getKey: item => item.value || "uncategorized",
-        getLabel: item => formatBotCategory(item.value),
+        getLabel: item => formatBotCategory(item.value, t("Uncategorized")),
         filterable: false,
       },
     },
     {
       value: "ua_patterns",
-      label: "UA Patterns",
+      label: t("UA Patterns"),
       section: {
         dimension: "matched_ua_pattern",
-        title: "Matched UA Patterns",
+        title: t("Matched UA Patterns"),
         getValue: item => item.value,
         getKey: item => item.value || "none",
-        getLabel: item => truncateString(item.value, 70) || "No matched pattern",
+        getLabel: item => truncateString(item.value, 70) || t("No matched pattern"),
         filterable: false,
       },
     },
