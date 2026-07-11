@@ -32,7 +32,7 @@ import { DateTime, Duration } from "luxon";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { createElement, useCallback, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useGetSessionReplayEvents } from "@/api/analytics/hooks/sessionReplay/useGetSessionReplayEvents";
 import { Avatar } from "@/components/Avatar";
@@ -432,7 +432,7 @@ function MeaningfulRow({
       <span className="w-9 shrink-0 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
         {Duration.fromMillis(event.offset).toFormat("mm:ss")}
       </span>
-      <Icon className={cn("h-4 w-4 shrink-0", color)} />
+      {createElement(Icon, { className: cn("h-4 w-4 shrink-0", color) })}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate text-xs font-medium text-neutral-900 dark:text-neutral-200">{label}</span>
@@ -476,7 +476,7 @@ function TechnicalRow({
       <span className="w-9 shrink-0 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
         {Duration.fromMillis(group.offset).toFormat("mm:ss")}
       </span>
-      <Icon className={cn("h-4 w-4 shrink-0", color)} />
+      {createElement(Icon, { className: cn("h-4 w-4 shrink-0", color) })}
       <div className="min-w-0 flex-1">
         <div className="truncate text-xs font-medium text-neutral-900 dark:text-neutral-200">{group.label}</div>
         {group.count > 1 && durationMs > 0 && (

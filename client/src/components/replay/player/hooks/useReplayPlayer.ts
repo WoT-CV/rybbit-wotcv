@@ -26,8 +26,11 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
 
   const widthRef = useRef(width);
   const heightRef = useRef(height);
-  widthRef.current = width;
-  heightRef.current = height;
+
+  useEffect(() => {
+    widthRef.current = width;
+    heightRef.current = height;
+  }, [height, width]);
 
   useEffect(() => {
     const target = playerContainerRef.current;

@@ -9,7 +9,8 @@
     "extract": "node scripts/extract-messages.mjs",
     "audit:polish": "node scripts/audit-polish-coverage.mjs",
     "lint": "eslint .",
-    "knip": "knip",
+    "lint:wotcv": "eslint scripts/audit-polish-coverage.mjs src/lib/capabilities.ts src/lib/userIdentity.ts src/components/replay \"src/app/*/retention/GrowthAccountingChart.tsx\"",
+    "knip": "knip --config knip.wotcv.json",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
   },

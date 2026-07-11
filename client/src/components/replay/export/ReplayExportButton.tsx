@@ -54,7 +54,7 @@ export function ReplayExportButton({ disabled, range, sessionId }: ReplayExportB
     if (exportStatus.state === "failed" || exportStatus.state === "cancelled") {
       handledExportIdRef.current = exportId;
       toast.error(exportStatus.error || t("Replay export failed"));
-      setExportId(null);
+      queueMicrotask(() => setExportId(null));
     }
   }, [downloadExport, exportId, exportStatus, sessionId, siteId, t]);
 

@@ -3,8 +3,8 @@ import { create } from "zustand";
 import type { ActivityPeriod, ReplayCaptureProfile, ReplaySegment } from "./player/utils/replayUtils";
 import type { ReplayPlayerAdapter } from "./player/ReplayPlayerAdapter";
 
-export type ReplayPlaybackState = "paused" | "playing" | "skipping-inactivity" | "seeking" | "buffering" | "ended";
-export interface ReplayAutoplayRequest {
+type ReplayPlaybackState = "paused" | "playing" | "skipping-inactivity" | "seeking" | "buffering" | "ended";
+interface ReplayAutoplayRequest {
   sessionId: string;
   selectionVersion: number;
 }

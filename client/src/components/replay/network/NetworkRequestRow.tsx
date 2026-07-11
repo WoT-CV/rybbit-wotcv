@@ -1,5 +1,6 @@
 import type { VirtualItem } from "@tanstack/react-virtual";
 import { AlertTriangle, ArrowLeftRight, FileCode2, Globe2, ImageIcon, Navigation, Network } from "lucide-react";
+import { createElement } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -48,10 +49,10 @@ export function NetworkRequestRow({ request, isActive, virtualRow, measure, onSe
       <span className="w-[52px] shrink-0 pt-0.5 text-[10px] tabular-nums text-neutral-500 dark:text-neutral-400">
         {formatNetworkOffset(request.startOffset)}
       </span>
-      <InitiatorIcon
-        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500 dark:text-neutral-400"
-        aria-hidden="true"
-      />
+      {createElement(InitiatorIcon, {
+        className: "mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500 dark:text-neutral-400",
+        "aria-hidden": true,
+      })}
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="shrink-0 rounded bg-neutral-100 px-1 py-0.5 text-[10px] font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">

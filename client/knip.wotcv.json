@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/lib/capabilities.ts",
+    "src/lib/userIdentity.ts",
+    "src/components/ui/activity-slider.tsx",
+    "src/components/replay/network/networkEventUtils.ts",
+    "src/components/replay/network/parseNetworkEvents.ts",
+    "src/components/replay/player/utils/replayUtils.ts",
+    "src/components/replay/player/utils/timelineMath.ts",
+    "src/app/*/retention/GrowthAccountingChart.tsx"
+  ],
+  "project": [
+    "src/components/replay/**/*.{ts,tsx}",
+    "src/app/*/retention/GrowthAccountingChart.tsx"
+  ],
+  "include": ["exports", "types", "duplicates"]
+}
