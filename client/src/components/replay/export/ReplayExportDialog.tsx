@@ -31,6 +31,7 @@ import { formatTime } from "../player/utils/replayUtils";
 import { useReplayStore } from "../replayStore";
 
 const MAX_EXPORT_DURATION_MS = 30_000;
+const MIN_EXPORT_DURATION_MS = 1_000;
 
 interface ReplayExportDialogProps {
   currentTime: number;
@@ -50,25 +51,31 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const [exportId, setExportId] = useState<string | null>(null);
   const setExportRange = useReplayStore(state => state.setExportRange);
   const downloadedExportIdRef = useRef<string | null>(null);
+  const initializedSessionRef = useRef<string | null>(null);
   const createExport = useCreateReplayExport();
   const downloadExport = useDownloadReplayExport();
   const cancelExport = useCancelReplayExport();
   const { data: exportStatus } = useReplayExportStatus(siteId, sessionId, exportId);
   const rangeDuration = range[1] - range[0];
-  const isRangeValid = rangeDuration > 0 && rangeDuration <= MAX_EXPORT_DURATION_MS;
+  const isRangeValid = rangeDuration >= MIN_EXPORT_DURATION_MS && rangeDuration <= MAX_EXPORT_DURATION_MS;
   const isExporting = Boolean(
     exportId && exportStatus && !["ready", "failed", "cancelled"].includes(exportStatus.state)
   );
 
   useEffect(() => {
-    if (!open || duration <= 0) return;
-    const start = Math.max(0, currentTime - 15_000);
-    const end = Math.min(duration, Math.max(start + 1_000, currentTime + 15_000));
-    setRange([start, end]);
-    setExportRange([start, end]);
+    if (!open) {
+      initializedSessionRef.current = null;
+      return;
+    }
+    if (duration <= 0 || initializedSessionRef.current === sessionId) return;
+
+    initializedSessionRef.current = sessionId;
+    const initialRange = createInitialRange(currentTime, duration);
+    setRange(initialRange);
+    setExportRange(initialRange);
     setExportId(null);
     downloadedExportIdRef.current = null;
-  }, [currentTime, duration, open, setExportRange]);
+  }, [currentTime, duration, open, sessionId, setExportRange]);
 
   useEffect(() => {
     if (open) {
@@ -135,8 +142,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   };
 
   const setQuickRange = (start: number, end: number) => {
-    const nextRange: [number, number] = [Math.max(0, start), Math.min(duration, end)];
-    setRange(nextRange);
+    setRange(constrainRangeFromStart(start, end, duration));
   };
 
   const handleOpenChange = (value: boolean) => {
@@ -195,7 +201,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
               step={100}
               value={range}
               minStepsBetweenThumbs={10}
-              onValueChange={value => setRange([value[0], value[1]])}
+              onValueChange={value => setRange(constrainSliderRange([value[0], value[1]], range, duration))}
               className="relative flex h-5 w-full touch-none select-none items-center"
             >
               <SliderPrimitive.Track className="relative h-2 w-full grow rounded-full bg-neutral-200 dark:bg-neutral-800">
@@ -204,19 +210,22 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
               <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-accent-500 bg-white shadow" />
               <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-accent-500 bg-white shadow" />
             </SliderPrimitive.Root>
-            {!isRangeValid && (
-              <p className="text-xs text-red-500">{t("The export range must be between 1 second and 30 seconds.")}</p>
-            )}
             <div className="grid grid-cols-2 gap-3 pt-1">
               <ReplayTimeInput
                 label={t("Start time")}
                 value={range[0]}
-                onChange={value => setRange([Math.max(0, Math.min(value, range[1] - 1_000)), range[1]])}
+                onChange={value => {
+                  const nextStart = clamp(value, 0, range[1] - MIN_EXPORT_DURATION_MS);
+                  setRange([nextStart, Math.min(range[1], nextStart + MAX_EXPORT_DURATION_MS)]);
+                }}
               />
               <ReplayTimeInput
                 label={t("End time")}
                 value={range[1]}
-                onChange={value => setRange([range[0], Math.min(duration, Math.max(value, range[0] + 1_000))])}
+                onChange={value => {
+                  const nextEnd = clamp(value, range[0] + MIN_EXPORT_DURATION_MS, duration);
+                  setRange([Math.max(range[0], nextEnd - MAX_EXPORT_DURATION_MS), nextEnd]);
+                }}
               />
             </div>
           </div>
@@ -275,6 +284,41 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
       </DialogContent>
     </Dialog>
   );
+}
+
+function createInitialRange(currentTime: number, duration: number): [number, number] {
+  const rangeDuration = Math.min(MAX_EXPORT_DURATION_MS, duration);
+  const start = clamp(currentTime - rangeDuration / 2, 0, Math.max(0, duration - rangeDuration));
+  return [start, start + rangeDuration];
+}
+
+function constrainRangeFromStart(start: number, end: number, duration: number): [number, number] {
+  const nextStart = clamp(start, 0, Math.max(0, duration - MIN_EXPORT_DURATION_MS));
+  const nextEnd = clamp(
+    end,
+    Math.min(duration, nextStart + MIN_EXPORT_DURATION_MS),
+    Math.min(duration, nextStart + MAX_EXPORT_DURATION_MS)
+  );
+  return [nextStart, nextEnd];
+}
+
+function constrainSliderRange(
+  nextRange: [number, number],
+  currentRange: [number, number],
+  duration: number
+): [number, number] {
+  const start = clamp(nextRange[0], 0, duration);
+  const end = clamp(nextRange[1], start, duration);
+  if (end - start <= MAX_EXPORT_DURATION_MS) return [start, end];
+
+  const startMovedMore = Math.abs(start - currentRange[0]) > Math.abs(end - currentRange[1]);
+  return startMovedMore
+    ? [Math.max(0, end - MAX_EXPORT_DURATION_MS), end]
+    : [start, Math.min(duration, start + MAX_EXPORT_DURATION_MS)];
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function ReplayTimeInput({
