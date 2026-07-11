@@ -14,6 +14,10 @@ RUN npm install && npm run build
 WORKDIR /app/client
 COPY client/package.json client/package-lock.json* ./
 RUN npm ci --legacy-peer-deps
+RUN rm -rf node_modules/@rybbit/shared \
+    && mkdir -p node_modules/@rybbit/shared \
+    && cp /app/shared/package.json node_modules/@rybbit/shared/package.json \
+    && cp -R /app/shared/dist node_modules/@rybbit/shared/dist
 
 # Rebuild the source code only when needed
 FROM base AS builder

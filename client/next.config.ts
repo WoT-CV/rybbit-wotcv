@@ -1,5 +1,9 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const withNextIntl = createNextIntlPlugin({
   experimental: {
@@ -16,6 +20,13 @@ const withNextIntl = createNextIntlPlugin({
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  transpilePackages: ["@rybbit/shared"],
+  turbopack: {
+    root: repositoryRoot,
+    resolveAlias: {
+      "@rybbit/shared": "./shared/src/index.ts",
+    },
+  },
   env: {
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
     NEXT_PUBLIC_DISABLE_SIGNUP: process.env.NEXT_PUBLIC_DISABLE_SIGNUP,
