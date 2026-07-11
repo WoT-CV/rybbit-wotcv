@@ -1482,6 +1482,35 @@
     );
   }
 
+  // networkReplay/recorderLifecycle.ts
+  var RecorderLifecycle = class {
+    constructor() {
+      this.cleanups = [];
+      this.stopped = false;
+    }
+    add(cleanup) {
+      if (this.stopped) {
+        runCleanup(cleanup);
+        return;
+      }
+      this.cleanups.push(cleanup);
+    }
+    stop() {
+      if (this.stopped) return;
+      this.stopped = true;
+      for (const cleanup of this.cleanups.reverse()) {
+        runCleanup(cleanup);
+      }
+      this.cleanups = [];
+    }
+  };
+  function runCleanup(cleanup) {
+    try {
+      cleanup();
+    } catch {
+    }
+  }
+
   // networkReplay/xhrObserver.ts
   function observeXhr({
     analyticsHost,
@@ -1735,54 +1764,52 @@
   }
 
   // networkReplay/index.ts
+  var stopActiveRecorder;
   function startNetworkReplayRecorder({
     analyticsHost,
     config,
     emit
   }) {
+    stopActiveRecorder?.();
+    stopActiveRecorder = void 0;
     if (!config.enabled) {
       return () => void 0;
     }
     const pendingRequests = new PendingRequests(emit);
-    const cleanupObservers = [];
+    const lifecycle = new RecorderLifecycle();
     let performanceObserver;
     if (config.capturePerformanceResources) {
       try {
         performanceObserver = observePerformance({ analyticsHost, config, emit, pendingRequests });
+        lifecycle.add(() => performanceObserver?.stop());
       } catch {
         performanceObserver = void 0;
       }
     }
     if (config.captureFetch) {
       try {
-        cleanupObservers.push(observeFetch({ analyticsHost, config, pendingRequests, performanceObserver }));
+        lifecycle.add(observeFetch({ analyticsHost, config, pendingRequests, performanceObserver }));
       } catch {
-        cleanupObservers.push(() => void 0);
       }
     }
     if (config.captureXhr) {
       try {
-        cleanupObservers.push(observeXhr({ analyticsHost, config, pendingRequests, performanceObserver }));
+        lifecycle.add(observeXhr({ analyticsHost, config, pendingRequests, performanceObserver }));
       } catch {
-        cleanupObservers.push(() => void 0);
       }
     }
     let stopped = false;
-    return () => {
+    const stop = () => {
       if (stopped) {
         return;
       }
       stopped = true;
-      performanceObserver?.stop();
+      lifecycle.stop();
       pendingRequests.finalizePendingOnUnload();
-      cleanupObservers.forEach((cleanup) => {
-        try {
-          cleanup();
-        } catch {
-          return;
-        }
-      });
+      if (stopActiveRecorder === stop) stopActiveRecorder = void 0;
     };
+    stopActiveRecorder = stop;
+    return stop;
   }
 
   // networkReplay/networkPlugin.ts

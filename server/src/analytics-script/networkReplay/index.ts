@@ -3,6 +3,7 @@ import type { NetworkReplayConfig } from "@rybbit/shared";
 import { observeFetch } from "./fetchObserver.js";
 import { PendingRequests } from "./pendingRequests.js";
 import { observePerformance, type NetworkPerformanceObserver } from "./performanceObserver.js";
+import { RecorderLifecycle } from "./recorderLifecycle.js";
 import type { NetworkRequestEmitter } from "./types.js";
 import { observeXhr } from "./xhrObserver.js";
 
@@ -11,6 +12,7 @@ export * from "./headerCapture.js";
 export * from "./ignoredTrackerRequests.js";
 export * from "./pendingRequests.js";
 export * from "./performanceObserver.js";
+export * from "./recorderLifecycle.js";
 export * from "./timing.js";
 export * from "./types.js";
 export * from "./utils.js";
@@ -21,22 +23,28 @@ export interface StartNetworkReplayRecorderOptions {
   emit: NetworkRequestEmitter;
 }
 
+let stopActiveRecorder: (() => void) | undefined;
+
 export function startNetworkReplayRecorder({
   analyticsHost,
   config,
   emit,
 }: StartNetworkReplayRecorderOptions): () => void {
+  stopActiveRecorder?.();
+  stopActiveRecorder = undefined;
+
   if (!config.enabled) {
     return () => undefined;
   }
 
   const pendingRequests = new PendingRequests(emit);
-  const cleanupObservers: Array<() => void> = [];
+  const lifecycle = new RecorderLifecycle();
   let performanceObserver: NetworkPerformanceObserver | undefined;
 
   if (config.capturePerformanceResources) {
     try {
       performanceObserver = observePerformance({ analyticsHost, config, emit, pendingRequests });
+      lifecycle.add(() => performanceObserver?.stop());
     } catch {
       performanceObserver = undefined;
     }
@@ -44,35 +52,28 @@ export function startNetworkReplayRecorder({
 
   if (config.captureFetch) {
     try {
-      cleanupObservers.push(observeFetch({ analyticsHost, config, pendingRequests, performanceObserver }));
-    } catch {
-      cleanupObservers.push(() => undefined);
-    }
+      lifecycle.add(observeFetch({ analyticsHost, config, pendingRequests, performanceObserver }));
+    } catch {}
   }
 
   if (config.captureXhr) {
     try {
-      cleanupObservers.push(observeXhr({ analyticsHost, config, pendingRequests, performanceObserver }));
-    } catch {
-      cleanupObservers.push(() => undefined);
-    }
+      lifecycle.add(observeXhr({ analyticsHost, config, pendingRequests, performanceObserver }));
+    } catch {}
   }
 
   let stopped = false;
-  return () => {
+  const stop = () => {
     if (stopped) {
       return;
     }
 
     stopped = true;
-    performanceObserver?.stop();
+    lifecycle.stop();
     pendingRequests.finalizePendingOnUnload();
-    cleanupObservers.forEach(cleanup => {
-      try {
-        cleanup();
-      } catch {
-        return;
-      }
-    });
+    if (stopActiveRecorder === stop) stopActiveRecorder = undefined;
   };
+
+  stopActiveRecorder = stop;
+  return stop;
 }
