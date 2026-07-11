@@ -88,13 +88,13 @@ export function EmbedTab({ siteMetadata, embedEnabled }: EmbedTabProps) {
   src="${widgetUrl.toString()}"
   style="border: 0; width: ${iframeWidth}px; height: ${height}px; max-width: 100%;"
   loading="lazy"
-  title="Live visitors"
+  title="Aktywni odwiedzający"
 ></iframe>`
       : `<iframe
   src="${widgetUrl.toString()}"
   style="border: 0; width: ${iframeWidth}px; height: ${height}px;"
   loading="lazy"
-  title="Live visitors"
+  title="Aktywni odwiedzający"
   scrolling="no"
 ></iframe>`;
 
@@ -151,7 +151,7 @@ export function EmbedTab({ siteMetadata, embedEnabled }: EmbedTabProps) {
                   maxWidth: "100%",
                   background: "transparent",
                 }}
-                title="Widget preview"
+                title={t("Podgląd widgetu")}
               />
             ) : (
               <div

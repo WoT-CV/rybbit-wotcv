@@ -29,9 +29,9 @@ function getLocalizedWeekdayNames(locale: string, format: "narrow" | "short" | "
 
   // Fallback in case Intl fails
   const fallback: Record<"narrow" | "short" | "long", string[]> = {
-    narrow: ["M", "T", "W", "T", "F", "S", "S"],
-    short: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    long: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    narrow: ["P", "W", "Ś", "C", "P", "S", "N"],
+    short: ["pon.", "wt.", "śr.", "czw.", "pt.", "sob.", "niedz."],
+    long: ["poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota", "niedziela"],
   };
 
   const today = new Date();
@@ -193,7 +193,7 @@ export const parseUtcTimestamp = (timestamp: string | Date): DateTime => {
 
 // Timezones with GMT offset and city name
 export const timezones = [
-  { value: "system", label: "System" },
+  { value: "system", label: "Systemowa" },
   { value: "Pacific/Honolulu", label: "GMT-10 Pacific/Honolulu" },
   { value: "America/Anchorage", label: "GMT-9 America/Anchorage" },
   { value: "America/Los_Angeles", label: "GMT-8 America/Los_Angeles" },
@@ -225,7 +225,7 @@ export const timezones = [
 // Get timezone label for display
 export const getTimezoneLabel = (value: string): string => {
   if (value === "system") {
-    return `System`;
+    return "Systemowa";
   }
   return value;
 };

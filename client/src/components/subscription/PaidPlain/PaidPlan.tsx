@@ -48,7 +48,7 @@ export function PaidPlan() {
 
   const createPortalSession = async (flowType?: string) => {
     if (!organizationId) {
-      toast.error("No organization selected");
+      toast.error("Nie wybrano organizacji");
       return;
     }
 
@@ -71,18 +71,18 @@ export function PaidPlan() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create portal session.");
+        throw new Error(data.error || "Nie udało się utworzyć sesji portalu płatności.");
       }
 
       if (data.portalUrl) {
         window.location.href = data.portalUrl;
       } else {
-        throw new Error("Portal URL not received.");
+        throw new Error("Nie otrzymano adresu URL portalu.");
       }
     } catch (err: any) {
       console.error("Portal Session Error:", err);
-      setActionError(err.message || "Could not open billing portal.");
-      toast.error(`Error: ${err.message || "Could not open billing portal."}`);
+      setActionError(err.message || "Nie można otworzyć portalu płatności.");
+      toast.error(`Błąd: ${err.message || "Nie można otworzyć portalu płatności."}`);
     } finally {
       setIsProcessing(false);
     }
@@ -92,8 +92,8 @@ export function PaidPlan() {
   const handleCancelSubscription = () => setShowCancellationDialog(true);
 
   const getFormattedPrice = () => {
-    if (!currentPlanDetails) return "$0/month";
-    return `${currentPlanDetails.price}/${currentPlanDetails.interval === "year" ? "year" : "month"}`;
+    if (!currentPlanDetails) return "$0/miesiąc";
+    return `${currentPlanDetails.price}/${currentPlanDetails.interval === "year" ? "rok" : "miesiąc"}`;
   };
 
   const formatRenewalDate = () => {
@@ -101,15 +101,15 @@ export function PaidPlan() {
     const formattedDate = formatDate(activeSubscription.currentPeriodEnd);
 
     if (activeSubscription.cancelAtPeriodEnd) {
-      return `Cancels on ${formattedDate}`;
+      return `Anuluje się ${formattedDate}`;
     }
     if (activeSubscription.status === "trialing") {
-      return `Trial ends on ${formattedDate}`;
+      return `Okres próbny kończy się ${formattedDate}`;
     }
     if (activeSubscription.status === "active") {
-      return isAnnualPlan ? `Renews annually on ${formattedDate}` : `Renews monthly on ${formattedDate}`;
+      return isAnnualPlan ? `Odnawia się rocznie ${formattedDate}` : `Odnawia się miesięcznie ${formattedDate}`;
     }
-    return `Status: ${activeSubscription.status}, ends/renews ${formattedDate}`;
+    return `Status: ${activeSubscription.status}, kończy się/odnawia ${formattedDate}`;
   };
 
   if (!activeSubscription) {
@@ -142,11 +142,11 @@ export function PaidPlan() {
               <div className="space-y-1">
                 <p className="text-3xl font-bold">{currentPlanDetails?.name || activeSubscription.planName} </p>
                 <p className="text text-neutral-600 dark:text-neutral-300">
-                  {getFormattedPrice()} • {activeSubscription.eventLimit.toLocaleString()} events
+                  {getFormattedPrice()} • {activeSubscription.eventLimit.toLocaleString()} zdarzeń
                 </p>
                 {isAnnualPlan && (
                   <div className="mt-2 text-sm text-emerald-400">
-                    <p>You save by paying annually (4 months free)</p>
+                    <p>Oszczędzasz dzięki płatności rocznej (4 miesiące gratis)</p>
                   </div>
                 )}
                 <p className="text-neutral-400 text-sm">{formatRenewalDate()}</p>
@@ -157,10 +157,10 @@ export function PaidPlan() {
                   onClick={() => createPortalSession("payment_method_update")}
                   disabled={isProcessing}
                 >
-                  Manage Payment Details
+                  Zarządzaj płatnością
                 </Button>
                 <Button variant="success" onClick={handleChangePlan}>
-                  Change Plan
+                  Zmień plan
                 </Button>
               </div>
             </div>
@@ -168,10 +168,10 @@ export function PaidPlan() {
               <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-200 dark:border-amber-800">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-amber-700 dark:text-amber-300">
-                    <strong>Usage limit reached!</strong> You've exceeded your plan's event limit.
+                    <strong>Limit użycia osiągnięty!</strong> Przekroczono limit zdarzeń w Twoim planie.
                   </p>
                   <Button variant="success" size="sm" onClick={handleChangePlan}>
-                    Upgrade Plan
+                    Zwiększ plan
                   </Button>
                 </div>
               </div>
@@ -183,12 +183,12 @@ export function PaidPlan() {
             {isTrial && (
               <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
                 <Clock className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                <AlertTitle>Trial Status</AlertTitle>
+                <AlertTitle>Status okresu próbnego</AlertTitle>
                 <AlertDescription>
                   {trialDaysRemaining > 0 ? (
-                    <>Your trial ends in <strong>{trialDaysRemaining} days</strong> on {formatDate(activeSubscription.currentPeriodEnd)}.</>
+                    <>Okres próbny kończy się za <strong>{trialDaysRemaining} dni</strong>, {formatDate(activeSubscription.currentPeriodEnd)}.</>
                   ) : (
-                    <>Your trial ends today. Upgrade to continue tracking.</>
+                    <>Okres próbny kończy się dzisiaj. Zwiększ plan, aby kontynuować śledzenie.</>
                   )}
                 </AlertDescription>
               </Alert>
@@ -197,8 +197,8 @@ export function PaidPlan() {
             {isAnnualPlan && !isTrial && (
               <div className="pt-2 pb-0 px-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-md border border-emerald-100 dark:border-emerald-800">
                 <p className="text-sm text-emerald-700 dark:text-emerald-300 py-2">
-                  <strong>Annual Billing:</strong> You're on annual billing which saves you money compared to monthly
-                  billing. Your subscription will renew once per year on{" "}
+                  <strong>Rozliczenie roczne:</strong> korzystasz z rozliczenia rocznego, które jest tańsze niż miesięczne.
+                  Subskrypcja odnowi się raz w roku:{" "}
                   {formatDate(activeSubscription.currentPeriodEnd)}.
                 </p>
               </div>
@@ -212,7 +212,7 @@ export function PaidPlan() {
                 size="sm"
                 className="dark:hover:bg-red-700/60"
               >
-                {isTrial ? "Cancel Trial" : "Cancel Subscription"}
+                {isTrial ? "Anuluj okres próbny" : "Anuluj subskrypcję"}
               </Button>
             </div>
           </div>

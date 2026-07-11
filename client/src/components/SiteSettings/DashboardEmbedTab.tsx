@@ -70,7 +70,7 @@ export function DashboardEmbedTab({ siteMetadata, disabled = false }: DashboardE
   src="${dashboardUrlString}"
   style="border: 0; width: 100%; height: 720px;"
   loading="lazy"
-  title="Analytics dashboard"
+  title="Panel analityczny"
 ></iframe>`;
 
   const dashboardTryMessage = dashboardEmbedAvailable

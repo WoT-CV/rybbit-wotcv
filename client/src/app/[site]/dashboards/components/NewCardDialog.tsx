@@ -41,7 +41,7 @@ const VIZ_ICON: Record<DashboardVizType, typeof LineChart> = {
 };
 
 // Terms that should keep the "Blank card" option visible while searching.
-const BLANK_TERMS = ["blank", "empty", "scratch", "custom", "new"];
+const BLANK_TERMS = ["pusta", "pusty", "nowa", "nowy", "własna", "własny", "custom", "scratch", "blank", "empty", "new"];
 
 // Flat rows, no per-item borders: a command-palette list, not a card grid. The
 // chart-type icon stays neutral (periwinkle is for data, never chrome).

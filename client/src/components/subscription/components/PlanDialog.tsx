@@ -65,7 +65,7 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
 
   const handleSelectPlan = async () => {
     if (!activeOrg) {
-      toast.error("Please select an organization");
+      toast.error("Wybierz organizację");
       return;
     }
 
@@ -73,13 +73,13 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
 
     const price = findPriceForTier(eventLimit, isAnnual ? "year" : "month", selectedPlan);
     if (!price) {
-      toast.error("Could not find a matching plan.");
+      toast.error("Nie znaleziono pasującego planu.");
       return;
     }
 
     // Don't allow selecting the current plan
     if (currentPlanName === price.name) {
-      toast.error("You are already on this plan.");
+      toast.error("To jest już Twój obecny plan.");
       return;
     }
 
@@ -116,18 +116,20 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || "Failed to create checkout session.");
+          throw new Error(data.error || "Nie udało się utworzyć sesji checkout.");
         }
 
         if (data.clientSecret) {
           setCheckoutClientSecret(data.clientSecret);
           onOpenChange(false);
         } else {
-          throw new Error("Checkout session not received.");
+          throw new Error("Nie otrzymano sesji checkout.");
         }
       }
     } catch (error: any) {
-      toast.error(`${hasActiveSubscription ? "Failed to preview subscription" : "Checkout"} failed: ${error.message}`);
+      toast.error(
+        `${hasActiveSubscription ? "Nie udało się przygotować podglądu subskrypcji" : "Checkout nie powiódł się"}: ${error.message}`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -174,7 +176,7 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle>Choose Your Plan</DialogTitle>
+              <DialogTitle>Wybierz plan</DialogTitle>
               {/* Monthly/Annual toggle */}
               <div className="relative flex bg-neutral-150 dark:bg-neutral-850 border border-neutral-250 dark:border-neutral-750 rounded-full p-0.5 text-sm">
                 <button
@@ -186,7 +188,7 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
                       : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
                   )}
                 >
-                  Monthly
+                  Miesięcznie
                 </button>
                 <button
                   onClick={() => setIsAnnual(true)}
@@ -197,11 +199,11 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
                       : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
                   )}
                 >
-                  Annual
+                  Rocznie
                 </button>
                 {isAnnual && (
                   <span className="absolute -top-3 -right-12 text-[10px] text-white bg-emerald-500 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                    4 months free
+                    4 miesiące gratis
                   </span>
                 )}
               </div>
@@ -213,12 +215,12 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Monthly events
+                  Zdarzenia miesięcznie
                 </span>
                 <span className="text-sm font-medium">
                   {eventLimit === "Custom"
-                    ? "Custom"
-                    : `${formatEventTier(eventLimit)} events`}
+                    ? "Własny"
+                    : `${formatEventTier(eventLimit)} zdarzeń`}
                 </span>
               </div>
               <Slider
@@ -244,7 +246,7 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
                 <PlanRow
                   plan="standard"
                   label="Standard"
-                  description="Up to 5 sites, 3 team members, advanced features"
+                  description="Do 5 stron, 3 członków zespołu, zaawansowane funkcje"
                   eventLimit={eventLimit}
                   isAnnual={isAnnual}
                   selectedPlan={selectedPlan}
@@ -257,7 +259,7 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
                 <PlanRow
                   plan="pro"
                   label="Pro"
-                  description="Unlimited sites, session replays"
+                  description="Nielimitowane strony, odtwarzanie sesji"
                   eventLimit={eventLimit}
                   isAnnual={isAnnual}
                   selectedPlan={selectedPlan}
@@ -271,7 +273,7 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
             ) : (
               <div className="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 text-center">
                 <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Need more than {formatEventTier(STRIPE_TIERS[STRIPE_TIERS.length - 1].events)} events? Contact us for a custom plan.
+                  Potrzebujesz więcej niż {formatEventTier(STRIPE_TIERS[STRIPE_TIERS.length - 1].events)} zdarzeń? Skontaktuj się z nami po plan indywidualny.
                 </p>
                 <a
                   href="mailto:hello@rybbit.com"
@@ -291,12 +293,12 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
                 disabled={isLoading || previewMutation.isPending || isCurrentSelection}
               >
                 {isLoading || previewMutation.isPending
-                  ? "Loading..."
+                  ? "Ładowanie..."
                   : isCurrentSelection
-                    ? "Current Plan"
+                    ? "Obecny plan"
                     : hasActiveSubscription
-                      ? "Change Plan"
-                      : "Subscribe"}
+                      ? "Zmień plan"
+                      : "Subskrybuj"}
                 {!isLoading && !previewMutation.isPending && !isCurrentSelection && (
                   <ArrowRight className="ml-2 h-4 w-4" />
                 )}
@@ -311,7 +313,7 @@ export function PlanDialog({ open, onOpenChange, currentPlanName, hasActiveSubsc
                 rel="noopener noreferrer"
                 className="text-neutral-600 dark:text-neutral-200 hover:text-neutral-900 dark:hover:text-neutral-100 text-sm underline"
               >
-                View detailed feature comparison →
+                Zobacz szczegółowe porównanie funkcji →
               </a>
             </div>
           </div>

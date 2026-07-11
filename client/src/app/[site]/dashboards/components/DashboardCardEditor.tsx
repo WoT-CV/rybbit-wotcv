@@ -180,27 +180,27 @@ function parseCardJson(text: string, id: string): { card: DashboardCard | null; 
   try {
     raw = JSON.parse(text);
   } catch (error) {
-    return { card: null, error: error instanceof Error ? error.message : "Invalid JSON" };
+    return { card: null, error: error instanceof Error ? error.message : "Nieprawidłowy JSON" };
   }
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-    return { card: null, error: "Card must be a JSON object." };
+    return { card: null, error: "Karta musi być obiektem JSON." };
   }
   const obj = raw as Record<string, unknown>;
-  if (typeof obj.title !== "string") return { card: null, error: "'title' must be a string." };
-  if (typeof obj.sql !== "string") return { card: null, error: "'sql' must be a string." };
+  if (typeof obj.title !== "string") return { card: null, error: "'title' musi być tekstem." };
+  if (typeof obj.sql !== "string") return { card: null, error: "'sql' musi być tekstem." };
   if (!VIZ_TYPES.includes(obj.vizType as DashboardVizType)) {
-    return { card: null, error: `'vizType' must be one of: ${VIZ_TYPES.join(", ")}.` };
+    return { card: null, error: `'vizType' musi być jedną z wartości: ${VIZ_TYPES.join(", ")}.` };
   }
   if (typeof obj.mapping !== "object" || obj.mapping === null || Array.isArray(obj.mapping)) {
-    return { card: null, error: "'mapping' must be an object." };
+    return { card: null, error: "'mapping' musi być obiektem." };
   }
   if (typeof obj.gridPos !== "object" || obj.gridPos === null || Array.isArray(obj.gridPos)) {
-    return { card: null, error: "'gridPos' must be an object." };
+    return { card: null, error: "'gridPos' musi być obiektem." };
   }
   const grid = obj.gridPos as Record<string, unknown>;
   for (const key of ["x", "y", "w", "h"] as const) {
     if (typeof grid[key] !== "number" || !Number.isFinite(grid[key])) {
-      return { card: null, error: `'gridPos.${key}' must be a number.` };
+      return { card: null, error: `'gridPos.${key}' musi być liczbą.` };
     }
   }
   return {

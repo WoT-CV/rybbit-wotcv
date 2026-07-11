@@ -11,22 +11,22 @@ export interface ChannelConfigItem {
 export const CHANNEL_CONFIG: Record<string, ChannelConfigItem> = {
   email: {
     icon: Mail,
-    title: "Email",
-    description: "Send notifications to an email address",
+    title: "E-mail",
+    description: "Wysyłaj powiadomienia na adres e-mail",
   },
   discord: {
     icon: SiDiscord,
     title: "Discord",
-    description: "Send notifications to a Discord channel via webhook",
+    description: "Wysyłaj powiadomienia na kanał Discord przez webhook",
   },
   slack: {
     icon: SiSlack,
     title: "Slack",
-    description: "Send notifications to a Slack channel",
+    description: "Wysyłaj powiadomienia na kanał Slack",
   },
   sms: {
     icon: Smartphone,
     title: "SMS",
-    description: "Send notifications via SMS",
+    description: "Wysyłaj powiadomienia SMS",
   },
 };

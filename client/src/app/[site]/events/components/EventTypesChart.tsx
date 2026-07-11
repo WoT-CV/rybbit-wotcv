@@ -16,15 +16,15 @@ import { formatter } from "@/lib/utils";
 import { CardLoader } from "../../../../components/ui/card";
 
 const EVENT_TYPE_CONFIG = [
-  { key: "pageview_count", label: "Pageviews", color: "#60a5fa" },
-  { key: "custom_event_count", label: "Custom Events", color: "#fbbf24" },
-  { key: "performance_count", label: "Performance", color: "#a78bfa" },
-  { key: "outbound_count", label: "Outbound", color: "#a3e635" },
-  { key: "error_count", label: "Errors", color: "#f87171" },
-  { key: "button_click_count", label: "Button Clicks", color: "#4ade80" },
-  { key: "copy_count", label: "Copy", color: "#38bdf8" },
-  { key: "form_submit_count", label: "Form Submits", color: "#c084fc" },
-  { key: "input_change_count", label: "Input Changes", color: "#f472b6" },
+  { key: "pageview_count", label: "Odsłony", color: "#60a5fa" },
+  { key: "custom_event_count", label: "Zdarzenia własne", color: "#fbbf24" },
+  { key: "performance_count", label: "Wydajność", color: "#a78bfa" },
+  { key: "outbound_count", label: "Linki wychodzące", color: "#a3e635" },
+  { key: "error_count", label: "Błędy", color: "#f87171" },
+  { key: "button_click_count", label: "Kliknięcia przycisków", color: "#4ade80" },
+  { key: "copy_count", label: "Kopiowanie", color: "#38bdf8" },
+  { key: "form_submit_count", label: "Wysłania formularzy", color: "#c084fc" },
+  { key: "input_change_count", label: "Zmiany pól", color: "#f472b6" },
 ] as const;
 
 type EventTypeKey = (typeof EVENT_TYPE_CONFIG)[number]["key"];
@@ -50,18 +50,6 @@ export function EventTypesChart() {
   const timezone = getTimezone();
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
 
-  const translatedLabels: Record<string, string> = {
-    Pageviews: t("Pageviews"),
-    "Custom Events": t("Custom Events"),
-    Performance: t("Performance"),
-    Outbound: t("Outbound"),
-    Errors: t("Errors"),
-    "Button Clicks": t("Button Clicks"),
-    Copy: t("Copy"),
-    "Form Submits": t("Form Submits"),
-    "Input Changes": t("Input Changes"),
-  };
-
   const toggleTypeVisibility = (typeLabel: string) => {
     setHiddenTypes((prev) => {
       const next = new Set(prev);
@@ -86,7 +74,7 @@ export function EventTypesChart() {
     });
 
     const allSeries: Series[] = EVENT_TYPE_CONFIG.map((config) => ({
-      id: translatedLabels[config.label] || config.label,
+      id: config.label,
       color: config.color,
       data: sortedData
         .map((row) => {
@@ -116,7 +104,7 @@ export function EventTypesChart() {
       maxValue,
       totalPoints,
     };
-  }, [data, timezone, translatedLabels]);
+  }, [data, timezone]);
 
   const maxTicks = Math.round((width ?? 900) / 85);
   const visibleSeries = series.filter((s) => !hiddenTypes.has(s.id));

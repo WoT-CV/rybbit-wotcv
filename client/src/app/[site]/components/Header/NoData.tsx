@@ -138,7 +138,7 @@ export function NoData() {
 
   const jsSnippet = `(function () {\n  var el = document.createElement("script");\n  el.src = "${scriptUrl}";\n  el.setAttribute("data-site-id", "${siteId}");\n  document.head.appendChild(el);\n})();`;
 
-  const aiPrompt = `Install Rybbit analytics on this website.\n\nAdd this script tag to the <head> of every page, using the root layout or base template if there is one:\n\n<script src="${scriptUrl}" data-site-id="${siteId}" defer></script>\n`;
+  const aiPrompt = `Zainstaluj analitykę Rybbit na tej stronie.\n\nDodaj ten tag skryptu do sekcji <head> każdej strony, najlepiej w głównym layoucie lub bazowym szablonie, jeśli taki istnieje:\n\n<script src="${scriptUrl}" data-site-id="${siteId}" defer></script>\n`;
 
   const rnInstallSnippet = "npm install @rybbit/react-native @react-native-async-storage/async-storage";
 
@@ -153,7 +153,7 @@ await rybbit.init({
   initialScreenName: "Home",
 });`;
 
-  const rnAiPrompt = `Install Rybbit analytics in this React Native app.\n\n1. Install the SDK:\n\nnpm install @rybbit/react-native @react-native-async-storage/async-storage\n\n2. Initialize it once in the app entry point:\n\n${rnInitSnippet}\n\n3. If the app uses React Navigation, track screens automatically:\n\nconst navigationTracker = rybbit.createNavigationTracker();\n\n<NavigationContainer\n  ref={navigationRef}\n  onReady={() => navigationTracker.onReady(navigationRef)}\n  onStateChange={() => navigationTracker.onStateChange(navigationRef)}\n>\n\nDocs: https://rybbit.com/docs/sdks/react-native\n`;
+  const rnAiPrompt = `Zainstaluj analitykę Rybbit w tej aplikacji React Native.\n\n1. Zainstaluj SDK:\n\nnpm install @rybbit/react-native @react-native-async-storage/async-storage\n\n2. Zainicjalizuj je raz w punkcie wejścia aplikacji:\n\n${rnInitSnippet}\n\n3. Jeśli aplikacja używa React Navigation, śledź ekrany automatycznie:\n\nconst navigationTracker = rybbit.createNavigationTracker();\n\n<NavigationContainer\n  ref={navigationRef}\n  onReady={() => navigationTracker.onReady(navigationRef)}\n  onStateChange={() => navigationTracker.onStateChange(navigationRef)}\n>\n\nDokumentacja: https://rybbit.com/docs/sdks/react-native\n`;
 
   return (
     <section className="mt-4 rounded-lg border border-neutral-100 bg-white p-4 dark:border-neutral-850 dark:bg-neutral-900">

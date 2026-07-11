@@ -57,7 +57,7 @@ export function ExclusionsTab({ siteId, disabled = false }: ExclusionsTabProps) 
         )}
       >
         <PatternExclusionManager
-          placeholder="e.g., /admin/* or /preview"
+          placeholder="np. /admin/* lub /preview"
           addLabel={t("Add Path")}
           loadingLabel={t("Loading path exclusions...")}
           maxLabel={t("Maximum 100 path exclusions allowed")}
@@ -76,7 +76,7 @@ export function ExclusionsTab({ siteId, disabled = false }: ExclusionsTabProps) 
         )}
       >
         <PatternExclusionManager
-          placeholder="e.g., localhost or *.vercel.app"
+          placeholder="np. localhost lub *.vercel.app"
           addLabel={t("Add Hostname")}
           loadingLabel={t("Loading hostname exclusions...")}
           maxLabel={t("Maximum 100 hostname exclusions allowed")}
@@ -95,7 +95,7 @@ export function ExclusionsTab({ siteId, disabled = false }: ExclusionsTabProps) 
         )}
       >
         <PatternExclusionManager
-          placeholder="e.g., HeadlessChrome"
+          placeholder="np. HeadlessChrome"
           addLabel={t("Add User Agent")}
           loadingLabel={t("Loading user agent exclusions...")}
           maxLabel={t("Maximum 100 user agent exclusions allowed")}

@@ -26,9 +26,9 @@ const MONITOR_COLORS = {
 // HTTP timing metrics with labels for stacked view - gradient from green-turquoise to blue
 const HTTP_METRICS = [
   { key: "dns_time_ms", label: "DNS", color: MONITOR_COLORS.dns }, // Green
-  { key: "tcp_time_ms", label: "Connection", color: MONITOR_COLORS.connection }, // Turquoise
-  { key: "tls_time_ms", label: "TLS Handshake", color: MONITOR_COLORS.tls }, // Light Blue
-  { key: "transfer_time_ms", label: "Data Transfer", color: MONITOR_COLORS.transfer }, // Blue
+  { key: "tcp_time_ms", label: "Połączenie", color: MONITOR_COLORS.connection }, // Turquoise
+  { key: "tls_time_ms", label: "Handshake TLS", color: MONITOR_COLORS.tls }, // Light Blue
+  { key: "transfer_time_ms", label: "Transfer danych", color: MONITOR_COLORS.transfer }, // Blue
 ] as const;
 
 const formatTooltipValue = (value: number) => {
@@ -37,12 +37,12 @@ const formatTooltipValue = (value: number) => {
 
 function getMetricLabel(label: string, t: ReturnType<typeof useExtracted>) {
   switch (label) {
-    case "Connection":
-      return t("Connection");
-    case "TLS Handshake":
-      return t("TLS Handshake");
-    case "Data Transfer":
-      return t("Data Transfer");
+    case "Połączenie":
+      return t("Połączenie");
+    case "Handshake TLS":
+      return t("Handshake TLS");
+    case "Transfer danych":
+      return t("Transfer danych");
     case "Response Time":
       return t("Response Time");
     default:

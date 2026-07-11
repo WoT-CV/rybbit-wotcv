@@ -34,17 +34,17 @@ export const FilterOptions: {
   icon: React.ReactNode;
 }[] = [
   {
-    label: "Path",
+    label: "Ścieżka",
     value: "pathname",
     icon: <FolderInput className="h-4 w-4" />,
   },
   {
-    label: "Page Title",
+    label: "Tytuł strony",
     value: "page_title",
     icon: <FileText className="h-4 w-4" />,
   },
   {
-    label: "Query",
+    label: "Query string",
     value: "querystring",
     icon: <Search className="h-4 w-4" />,
   },
@@ -54,37 +54,37 @@ export const FilterOptions: {
     icon: <Hotel className="h-4 w-4" />,
   },
   {
-    label: "User ID",
+    label: "ID użytkownika",
     value: "user_id",
     icon: <User className="h-4 w-4" />,
   },
   {
-    label: "Event Name",
+    label: "Nazwa zdarzenia",
     value: "event_name",
     icon: <MousePointerClick className="h-4 w-4" />,
   },
   {
-    label: "Referrer",
+    label: "Odsyłacz",
     value: "referrer",
     icon: <Link className="h-4 w-4" />,
   },
   {
-    label: "Channel",
+    label: "Kanał",
     value: "channel",
     icon: <Radio className="h-4 w-4" />,
   },
   {
-    label: "Entry Page",
+    label: "Strona wejścia",
     value: "entry_page",
     icon: <LogIn className="h-4 w-4" />,
   },
   {
-    label: "Exit Page",
+    label: "Strona wyjścia",
     value: "exit_page",
     icon: <LogOut className="h-4 w-4" />,
   },
   {
-    label: "Country",
+    label: "Kraj",
     value: "country",
     icon: <Globe className="h-4 w-4" />,
   },
@@ -94,42 +94,42 @@ export const FilterOptions: {
     icon: <MapPinned className="h-4 w-4" />,
   },
   {
-    label: "City",
+    label: "Miasto",
     value: "city",
     icon: <MapPinHouse className="h-4 w-4" />,
   },
   {
-    label: "Device Type",
+    label: "Typ urządzenia",
     value: "device_type",
     icon: <TabletSmartphone className="h-4 w-4" />,
   },
   {
-    label: "Operating System",
+    label: "System operacyjny",
     value: "operating_system",
     icon: <Brain className="h-4 w-4" />,
   },
   {
-    label: "Operating System Version",
+    label: "Wersja systemu operacyjnego",
     value: "operating_system_version",
     icon: <Brain className="h-4 w-4" />,
   },
   {
-    label: "Browser",
+    label: "Przeglądarka",
     value: "browser",
     icon: <AppWindow className="h-4 w-4" />,
   },
   {
-    label: "Browser Version",
+    label: "Wersja przeglądarki",
     value: "browser_version",
     icon: <AppWindow className="h-4 w-4" />,
   },
   {
-    label: "Language",
+    label: "Język",
     value: "language",
     icon: <Languages className="h-4 w-4" />,
   },
   {
-    label: "Screen Dimensions",
+    label: "Wymiary ekranu",
     value: "dimensions",
     icon: <Maximize className="h-4 w-4" />,
   },
@@ -164,54 +164,54 @@ export const FilterOptions: {
     icon: <Tag className="h-4 w-4" />,
   },
   {
-    label: "Lat",
+    label: "Szerokość geogr.",
     value: "lat",
     icon: <MapPin className="h-4 w-4" />,
   },
   {
-    label: "Lon",
+    label: "Długość geogr.",
     value: "lon",
     icon: <MapPin className="h-4 w-4" />,
   },
   {
-    label: "Timezone",
+    label: "Strefa czasowa",
     value: "timezone",
     icon: <Clock className="h-4 w-4" />,
   },
 ];
 
 export const OperatorOptions = [
-  { label: "Is", value: "equals" },
-  { label: "Is not", value: "not_equals" },
-  { label: "Contains", value: "contains" },
-  { label: "Not contains", value: "not_contains" },
+  { label: "Jest", value: "equals" },
+  { label: "Nie jest", value: "not_equals" },
+  { label: "Zawiera", value: "contains" },
+  { label: "Nie zawiera", value: "not_contains" },
 ];
 
 export const StringOperatorOptions = [
-  { label: "Is", value: "equals" },
-  { label: "Is not", value: "not_equals" },
-  { label: "Contains", value: "contains" },
-  { label: "Not contains", value: "not_contains" },
-  { label: "Starts with", value: "starts_with" },
-  { label: "Ends with", value: "ends_with" },
+  { label: "Jest", value: "equals" },
+  { label: "Nie jest", value: "not_equals" },
+  { label: "Zawiera", value: "contains" },
+  { label: "Nie zawiera", value: "not_contains" },
+  { label: "Zaczyna się od", value: "starts_with" },
+  { label: "Kończy się na", value: "ends_with" },
   { label: "Regex", value: "regex" },
-  { label: "Is null", value: "is_null" },
-  { label: "Is not null", value: "is_not_null" },
-  { label: "Greater than", value: "greater_than" },
-  { label: "Less than", value: "less_than" },
-  { label: "Greater than or equal to", value: "greater_than_or_equal" },
-  { label: "Less than or equal to", value: "less_than_or_equal" },
+  { label: "Jest puste", value: "is_null" },
+  { label: "Nie jest puste", value: "is_not_null" },
+  { label: "Większe niż", value: "greater_than" },
+  { label: "Mniejsze niż", value: "less_than" },
+  { label: "Większe lub równe", value: "greater_than_or_equal" },
+  { label: "Mniejsze lub równe", value: "less_than_or_equal" },
 ];
 
 export const NumericOperatorOptions = [
-  { label: "Equals", value: "equals" },
-  { label: "Not equals", value: "not_equals" },
-  { label: "Is null", value: "is_null" },
-  { label: "Is not null", value: "is_not_null" },
-  { label: "Greater than", value: "greater_than" },
-  { label: "Less than", value: "less_than" },
-  { label: "Greater than or equal to", value: "greater_than_or_equal" },
-  { label: "Less than or equal to", value: "less_than_or_equal" },
+  { label: "Równa się", value: "equals" },
+  { label: "Nie równa się", value: "not_equals" },
+  { label: "Jest puste", value: "is_null" },
+  { label: "Nie jest puste", value: "is_not_null" },
+  { label: "Większe niż", value: "greater_than" },
+  { label: "Mniejsze niż", value: "less_than" },
+  { label: "Większe lub równe", value: "greater_than_or_equal" },
+  { label: "Mniejsze lub równe", value: "less_than_or_equal" },
 ];
 
 export const NUMERIC_PARAMETERS: FilterParameter[] = ["lat", "lon"];

@@ -167,7 +167,7 @@ export default function GoalsPage() {
     : undefined;
 
   return (
-    <DisabledOverlay message="Goals" featurePath="goals" requiredPlan="basic">
+    <DisabledOverlay message="Cele" featurePath="goals" requiredPlan="basic">
       <div className="p-2 md:p-4 max-w-[1400px] mx-auto space-y-3">
         <SubHeader availableFilters={GOALS_PAGE_FILTERS} />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

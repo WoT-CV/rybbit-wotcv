@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Bell, Edit, MoreHorizontal, Power, Trash2 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -32,6 +33,7 @@ import { useNotificationsStore } from "./notificationsStore";
 type ChannelType = NotificationChannel["type"];
 
 export default function NotificationsPage() {
+  const t = useExtracted();
   const { data, isLoading } = useNotificationChannels();
   const updateChannel = useUpdateChannel();
   const deleteChannel = useDeleteChannel();
@@ -46,9 +48,9 @@ export default function NotificationsPage() {
         id: channel.id,
         data: { enabled: !channel.enabled },
       });
-      toast.success(channel.enabled ? "Channel disabled" : "Channel enabled");
+      toast.success(channel.enabled ? t("Channel disabled") : t("Channel enabled"));
     } catch (error) {
-      toast.error("Failed to update channel");
+      toast.error(t("Failed to update channel"));
     }
   };
 
@@ -57,10 +59,10 @@ export default function NotificationsPage() {
 
     try {
       await deleteChannel.mutateAsync(channelToDelete.id);
-      toast.success("Channel deleted");
+      toast.success(t("Channel deleted"));
       setChannelToDelete(null);
     } catch (error) {
-      toast.error("Failed to delete channel");
+      toast.error(t("Failed to delete channel"));
       throw error; // Re-throw to show error in modal
     }
   };
@@ -73,15 +75,15 @@ export default function NotificationsPage() {
   const handleTestChannel = async (channel: NotificationChannel) => {
     try {
       await testChannel.mutateAsync(channel.id);
-      toast.success("Test notification sent");
+      toast.success(t("Test notification sent"));
     } catch (error) {
-      toast.error("Failed to send test notification");
+      toast.error(t("Failed to send test notification"));
     }
   };
 
   const openCreateDialog = (type: ChannelType) => {
     if (CHANNEL_CONFIG[type].disabled) {
-      toast.info("This channel type is coming soon");
+      toast.info(t("This channel type is coming soon"));
       return;
     }
     openDialog(type);
@@ -94,8 +96,8 @@ export default function NotificationsPage() {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Notifications</h1>
-        <p className="text-sm text-neutral-500 mt-1">Configure how you want to be notified about monitor incidents</p>
+        <h1 className="text-2xl font-semibold">{t("Notifications")}</h1>
+        <p className="text-sm text-neutral-500 mt-1">{t("Configure how you want to be notified about monitor incidents")}</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {Object.entries(CHANNEL_CONFIG).map(([type, config]) => {
@@ -115,22 +117,22 @@ export default function NotificationsPage() {
                 </CardTitle>
                 <CardDescription>
                   {config.description}
-                  {config.disabled && " - Coming soon"}
+                  {config.disabled && ` - ${t("Coming soon")}`}
                 </CardDescription>
               </div>
               <Button variant="success" disabled={config.disabled}>
-                Create
+                {t("Create")}
               </Button>
             </div>
           );
         })}
       </div>
       <div className="space-y-4">
-        <h2 className="text-lg font-medium">Active Channels</h2>
+        <h2 className="text-lg font-medium">{t("Active Channels")}</h2>
         {data?.channels?.length === 0 && !isLoading ? (
           <Card>
             <CardContent className="p-8 text-center text-neutral-500">
-              No notification channels configured yet
+              {t("No notification channels configured yet")}
             </CardContent>
           </Card>
         ) : (
@@ -138,10 +140,10 @@ export default function NotificationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Channel</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("Channel")}</TableHead>
+                  <TableHead>{t("Type")}</TableHead>
+                  <TableHead>{t("Details")}</TableHead>
+                  <TableHead className="text-right">{t("Actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -175,7 +177,7 @@ export default function NotificationsPage() {
                               {channel.name}
                               {!channel.enabled && (
                                 <span className="text-xs bg-neutral-800 text-neutral-400 px-2 py-0.5 rounded">
-                                  Disabled
+                                  {t("Disabled")}
                                 </span>
                               )}
                             </div>
@@ -188,7 +190,7 @@ export default function NotificationsPage() {
                           </TableCell>
                           <TableCell className="text-sm text-neutral-500">
                             {channel.type === "email" && channel.config?.email}
-                            {channel.type === "discord" && "Discord webhook"}
+                            {channel.type === "discord" && t("Discord webhook")}
                             {channel.type === "slack" && `Slack ${channel.config?.slackChannel || "webhook"}`}
                             {channel.type === "sms" && channel.config?.phoneNumber}
                           </TableCell>
@@ -197,29 +199,29 @@ export default function NotificationsPage() {
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                   <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Open menu</span>
+                                  <span className="sr-only">{t("Open menu")}</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleToggleChannel(channel)}>
                                   <Power className="h-4 w-4" />
-                                  {channel.enabled ? "Disable" : "Enable"}
+                                  {channel.enabled ? t("Disable") : t("Enable")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => handleTestChannel(channel)}
                                   disabled={!channel.enabled}
                                 >
                                   <Bell className="h-4 w-4" />
-                                  Test
+                                  {t("Test")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => openEditDialog(channel)}>
                                   <Edit className="h-4 w-4" />
-                                  Edit
+                                  {t("Edit")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => openDeleteModal(channel)} className="text-red-600">
                                   <Trash2 className="h-4 w-4" />
-                                  Delete
+                                  {t("Delete")}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -237,19 +239,19 @@ export default function NotificationsPage() {
         isOpen={deleteModalOpen}
         setIsOpen={setDeleteModalOpen}
         onConfirm={handleDeleteChannel}
-        title="Delete Notification Channel"
+        title={t("Delete Notification Channel")}
         description={
           channelToDelete ? (
             <>
-              Are you sure you want to delete the notification channel <strong>{channelToDelete.name}</strong>? This
-              action cannot be undone.
+              {t("Are you sure you want to delete the notification channel")} <strong>{channelToDelete.name}</strong>?{" "}
+              {t("This action cannot be undone.")}
             </>
           ) : (
-            "Are you sure you want to delete this notification channel?"
+            t("Are you sure you want to delete this notification channel?")
           )
         }
         primaryAction={{
-          children: "Delete Channel",
+          children: t("Delete Channel"),
           variant: "destructive",
         }}
       />

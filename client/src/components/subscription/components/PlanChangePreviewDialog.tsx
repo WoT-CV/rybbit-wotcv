@@ -43,32 +43,32 @@ export function PlanChangePreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Confirm Plan Change</DialogTitle>
+          <DialogTitle>Potwierdź zmianę planu</DialogTitle>
         </DialogHeader>
 
         {previewData && (
           <div className="space-y-4">
             {/* Current Plan */}
             <div className="text-sm">
-              <div className="text-neutral-500 dark:text-neutral-400">Current Plan</div>
+              <div className="text-neutral-500 dark:text-neutral-400">Obecny plan</div>
               <div className="text-neutral-900 dark:text-neutral-100 font-medium">
-                ${previewData.currentPlan.amount / 100}/{previewData.currentPlan.interval === "year" ? "yr" : "mo"}
+                ${previewData.currentPlan.amount / 100}/{previewData.currentPlan.interval === "year" ? "rok" : "mies."}
               </div>
             </div>
 
             {/* New Plan */}
             <div className="text-sm">
-              <div className="text-neutral-500 dark:text-neutral-400">New Plan</div>
+              <div className="text-neutral-500 dark:text-neutral-400">Nowy plan</div>
               <div className="text-neutral-900 dark:text-neutral-100 font-medium">
-                ${previewData.newPlan.amount / 100}/{previewData.newPlan.interval === "year" ? "yr" : "mo"}
+                ${previewData.newPlan.amount / 100}/{previewData.newPlan.interval === "year" ? "rok" : "mies."}
               </div>
             </div>
 
             {previewData.isTrialing ? (
               <div className="text-sm text-neutral-500 dark:text-neutral-400 pt-1">
-                Your trial will continue with the new plan. You won't be charged until your trial ends
+                Okres próbny będzie kontynuowany z nowym planem. Opłata nie zostanie pobrana do końca okresu próbnego
                 {previewData.proration.nextBillingDate && (
-                  <> on {new Date(previewData.proration.nextBillingDate).toLocaleDateString()}</>
+                  <> w dniu {new Date(previewData.proration.nextBillingDate).toLocaleDateString()}</>
                 )}
                 .
               </div>
@@ -78,19 +78,19 @@ export function PlanChangePreviewDialog({
                 <div className="pt-1">
                   {previewData.proration.charge > 0 && (
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-neutral-500 dark:text-neutral-400">New plan charge (prorated)</span>
+                      <span className="text-neutral-500 dark:text-neutral-400">Opłata za nowy plan (proporcjonalnie)</span>
                       <span className="text-neutral-900 dark:text-neutral-100">${previewData.proration.charge.toFixed(2)}</span>
                     </div>
                   )}
                   {previewData.proration.credit > 0 && (
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-neutral-500 dark:text-neutral-400">Unused time credit</span>
+                      <span className="text-neutral-500 dark:text-neutral-400">Kredyt za niewykorzystany czas</span>
                       <span className="text-emerald-400">-${previewData.proration.credit.toFixed(2)}</span>
                     </div>
                   )}
 
                   <div className="flex justify-between text-sm font-medium pt-2">
-                    <span className="text-neutral-900 dark:text-neutral-100">Due now</span>
+                    <span className="text-neutral-900 dark:text-neutral-100">Do zapłaty teraz</span>
                     <span className={previewData.proration.immediatePayment > 0 ? "text-neutral-900 dark:text-neutral-100" : "text-emerald-400"}>
                       ${previewData.proration.immediatePayment.toFixed(2)}
                     </span>
@@ -99,7 +99,7 @@ export function PlanChangePreviewDialog({
 
                 {previewData.proration.nextBillingDate && (
                   <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Your next billing date: {new Date(previewData.proration.nextBillingDate).toLocaleDateString()}
+                    Następna data rozliczenia: {new Date(previewData.proration.nextBillingDate).toLocaleDateString()}
                   </div>
                 )}
               </>
@@ -108,16 +108,16 @@ export function PlanChangePreviewDialog({
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 pt-2">
               <Button onClick={onCancel} disabled={isUpdating} variant="outline">
-                Cancel
+                Anuluj
               </Button>
               <Button onClick={onConfirm} disabled={isUpdating} variant="success">
                 {isUpdating ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Updating&hellip;
+                    Aktualizowanie&hellip;
                   </span>
                 ) : (
-                  "Confirm Change"
+                  "Potwierdź zmianę"
                 )}
               </Button>
             </div>

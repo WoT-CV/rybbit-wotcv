@@ -20,7 +20,7 @@ export function getTimingSegments(event: MonitorEvent): TimingSegment[] {
     { label: "TCP", time: event.tcp_time_ms, color: TIMING_COLORS.tcp },
     { label: "TLS", time: event.tls_time_ms, color: TIMING_COLORS.tls },
     { label: "TTFB", time: event.ttfb_ms, color: TIMING_COLORS.ttfb },
-    { label: "Transfer", time: event.transfer_time_ms, color: TIMING_COLORS.transfer },
+    { label: "Transfer danych", time: event.transfer_time_ms, color: TIMING_COLORS.transfer },
   ].filter(t => t.time && t.time > 0);
 }
 

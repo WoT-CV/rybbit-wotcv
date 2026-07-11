@@ -24,14 +24,14 @@ export interface EventTypeConfig {
 }
 
 export const EVENT_TYPE_CONFIG: EventTypeConfig[] = [
-  { value: "pageview", label: "Pageview", colorClass: "text-blue-400" },
-  { value: "custom_event", label: "Event", colorClass: "text-amber-400" },
-  { value: "outbound", label: "Outbound", colorClass: "text-lime-400" },
-  { value: "button_click", label: "Button Click", colorClass: "text-green-400" },
-  { value: "copy", label: "Copy", colorClass: "text-sky-400" },
-  { value: "form_submit", label: "Form Submit", colorClass: "text-purple-400" },
-  { value: "input_change", label: "Input Change", colorClass: "text-pink-400" },
-  { value: "error", label: "Error", colorClass: "text-red-400" },
+  { value: "pageview", label: "Odsłona", colorClass: "text-blue-400" },
+  { value: "custom_event", label: "Zdarzenie", colorClass: "text-amber-400" },
+  { value: "outbound", label: "Link wychodzący", colorClass: "text-lime-400" },
+  { value: "button_click", label: "Kliknięcie przycisku", colorClass: "text-green-400" },
+  { value: "copy", label: "Kopiowanie", colorClass: "text-sky-400" },
+  { value: "form_submit", label: "Wysłanie formularza", colorClass: "text-purple-400" },
+  { value: "input_change", label: "Zmiana pola", colorClass: "text-pink-400" },
+  { value: "error", label: "Błąd", colorClass: "text-red-400" },
 ];
 
 // Autocaptured event types that goals and funnel steps can target directly

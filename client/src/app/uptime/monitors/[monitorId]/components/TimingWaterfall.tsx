@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { MonitorEvent } from "@/api/uptime/monitors";
+import { useExtracted } from "next-intl";
 import { getTimingSegments, renderTimingSegments, TimingSegment } from "./timingUtils";
 
 interface TimingWaterfallProps {
@@ -37,6 +38,7 @@ function TimingLegendItem({ timing }: { timing: TimingSegment }) {
 }
 
 export function TimingWaterfall({ event }: TimingWaterfallProps) {
+  const t = useExtracted();
   const timings = getTimingSegments(event);
   const totalTime = event.response_time_ms || 0;
 
@@ -46,7 +48,7 @@ export function TimingWaterfall({ event }: TimingWaterfallProps) {
 
   return (
     <div className="w-full">
-      <div className="text-sm font-medium mb-2">Timings</div>
+      <div className="text-sm font-medium mb-2">{t("Czasy")}</div>
       <div className="relative h-6 bg-neutral-800 rounded overflow-hidden">
         {renderTimingSegments(timings, totalTime, renderWaterfallSegment)}
       </div>

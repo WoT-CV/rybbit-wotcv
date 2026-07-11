@@ -28,7 +28,7 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
           <FormItem>
             <FormLabel>{t("Monitor Name")}</FormLabel>
             <FormControl>
-              <Input placeholder="My API Endpoint" {...field} value={field.value || ""} />
+              <Input placeholder="Mój endpoint API" {...field} value={field.value || ""} />
             </FormControl>
             <FormDescription>
               {t("A friendly name for this monitor. If not specified, the URL or host will be used.")}
@@ -49,7 +49,7 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
               <FormItem>
                 <FormLabel>{t("User Agent")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Custom User Agent" {...field} value={field.value || ""} />
+                  <Input placeholder="Własny User Agent" {...field} value={field.value || ""} />
                 </FormControl>
                 <FormDescription>{t("Override the default user agent string")}</FormDescription>
                 <FormMessage />

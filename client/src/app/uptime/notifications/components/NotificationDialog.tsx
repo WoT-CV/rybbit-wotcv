@@ -11,6 +11,7 @@ import { CHANNEL_CONFIG } from "../constants";
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import * as React from "react";
+import { useExtracted } from "next-intl";
 import { useMonitors } from "@/api/uptime/monitors";
 import { MultiSelect } from "@/components/ui/multi-select";
 
@@ -24,6 +25,7 @@ type FormData = {
 };
 
 export function NotificationDialog() {
+  const t = useExtracted();
   const createChannel = useCreateChannel();
   const updateChannel = useUpdateChannel();
   const {
@@ -80,8 +82,8 @@ export function NotificationDialog() {
       label:
         monitor.name ||
         (monitor.monitorType === "http"
-          ? monitor.httpConfig?.url || "HTTP Monitor"
-          : `${monitor.tcpConfig?.host}:${monitor.tcpConfig?.port}` || "TCP Monitor"),
+          ? monitor.httpConfig?.url || t("HTTP Monitor")
+          : `${monitor.tcpConfig?.host}:${monitor.tcpConfig?.port}` || t("TCP Monitor")),
     }));
   }, [monitorsData]);
 
@@ -108,7 +110,7 @@ export function NotificationDialog() {
             monitorIds,
           },
         });
-        toast.success("Notification channel updated");
+        toast.success(t("Notification channel updated"));
       } else {
         await createChannel.mutateAsync({
           type: selectedType,
@@ -116,14 +118,14 @@ export function NotificationDialog() {
           config,
           monitorIds,
         });
-        toast.success("Notification channel created");
+        toast.success(t("Notification channel created"));
       }
       closeDialog();
       resetStoreForm();
       reset();
       setSelectedMonitorIds([]);
     } catch (error) {
-      toast.error(editingChannel ? "Failed to update channel" : "Failed to create channel");
+      toast.error(editingChannel ? t("Failed to update channel") : t("Failed to create channel"));
     }
   };
 
@@ -155,18 +157,18 @@ export function NotificationDialog() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             {Icon && <Icon />}
-            {editingChannel ? "Edit" : "Add"} {selectedConfig && selectedConfig.title} Channel
+            {editingChannel ? t("Edit") : t("Add")} {selectedConfig && selectedConfig.title} {t("Channel")}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="name">Channel Name</Label>
+            <Label htmlFor="name">{t("Channel Name")}</Label>
             <Input
               id="name"
-              placeholder="e.g., Team Alerts"
+              placeholder={t("e.g., Team Alerts")}
               {...register("name", {
-                required: "Channel name is required",
-                minLength: { value: 1, message: "Channel name is required" },
+                required: t("Channel name is required"),
+                minLength: { value: 1, message: t("Channel name is required") },
               })}
             />
             {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
@@ -174,16 +176,16 @@ export function NotificationDialog() {
 
           {selectedType === "email" && (
             <div>
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">{t("Email Address")}</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="alerts@example.com"
                 {...register("email", {
-                  required: "Email address is required",
+                  required: t("Email address is required"),
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Invalid email address",
+                    message: t("Invalid email address"),
                   },
                 })}
               />
@@ -193,19 +195,19 @@ export function NotificationDialog() {
 
           {selectedType === "discord" && (
             <div>
-              <Label htmlFor="webhookUrl">Discord Webhook URL</Label>
+              <Label htmlFor="webhookUrl">{t("Discord Webhook URL")}</Label>
               <Input
                 id="webhookUrl"
                 placeholder="https://discord.com/api/webhooks/..."
                 {...register("webhookUrl", {
-                  required: "Discord webhook URL is required",
+                  required: t("Discord webhook URL is required"),
                   pattern: {
                     value: /^https:\/\/discord\.com\/api\/webhooks\/.+/,
-                    message: "Invalid Discord webhook URL",
+                    message: t("Invalid Discord webhook URL"),
                   },
                 })}
               />
-              <p className="text-xs text-neutral-500 mt-1">Create a webhook in your Discord server settings</p>
+              <p className="text-xs text-neutral-500 mt-1">{t("Create a webhook in your Discord server settings")}</p>
               {errors.webhookUrl && <p className="text-sm text-red-500 mt-1">{errors.webhookUrl.message}</p>}
             </div>
           )}
@@ -213,15 +215,15 @@ export function NotificationDialog() {
           {selectedType === "slack" && (
             <>
               <div>
-                <Label htmlFor="slackWebhookUrl">Slack Webhook URL</Label>
+                <Label htmlFor="slackWebhookUrl">{t("Slack Webhook URL")}</Label>
                 <Input
                   id="slackWebhookUrl"
                   placeholder="https://hooks.slack.com/services/..."
                   {...register("slackWebhookUrl", {
-                    required: "Slack webhook URL is required",
+                    required: t("Slack webhook URL is required"),
                     pattern: {
                       value: /^https:\/\/hooks\.slack\.com\/(services|workflows)\/.+/,
-                      message: "Invalid Slack webhook URL",
+                      message: t("Invalid Slack webhook URL"),
                     },
                   })}
                 />
@@ -230,7 +232,7 @@ export function NotificationDialog() {
                 )}
               </div>
               <div>
-                <Label htmlFor="slackChannel">Channel (optional)</Label>
+                <Label htmlFor="slackChannel">{t("Channel (optional)")}</Label>
                 <Input id="slackChannel" placeholder="#alerts" {...register("slackChannel")} />
               </div>
             </>
@@ -238,43 +240,43 @@ export function NotificationDialog() {
 
           {selectedType === "sms" && (
             <div>
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber">{t("Phone Number")}</Label>
               <Input
                 id="phoneNumber"
                 placeholder="+1234567890"
                 {...register("phoneNumber", {
-                  required: "Phone number is required",
+                  required: t("Phone number is required"),
                   pattern: {
                     value: /^\+[1-9]\d{1,14}$/,
-                    message: "Phone number must be in E.164 format (e.g., +14155552671)",
+                    message: t("Phone number must be in E.164 format (e.g., +14155552671)"),
                   },
                 })}
               />
-              <p className="text-xs text-neutral-500 mt-1">Use international E.164 format: +[country code][number]</p>
+              <p className="text-xs text-neutral-500 mt-1">{t("Use international E.164 format: +[country code][number]")}</p>
               {errors.phoneNumber && <p className="text-sm text-red-500 mt-1">{errors.phoneNumber.message}</p>}
             </div>
           )}
 
           {/* Monitor Selection */}
           <div className="space-y-2">
-            <Label>Monitors</Label>
+            <Label>{t("Monitors")}</Label>
             <MultiSelect
               options={monitorOptions}
               value={selectedMonitorIds}
               onValueChange={setSelectedMonitorIds}
-              placeholder="Select monitors..."
-              searchPlaceholder="Search monitors..."
-              emptyText="No monitors found."
+              placeholder={t("Select monitors...")}
+              searchPlaceholder={t("Search monitors...")}
+              emptyText={t("No monitors found.")}
               disabled={monitorsLoading}
             />
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Leave empty to receive alerts from all monitors
+              {t("Leave empty to receive alerts from all monitors")}
             </p>
           </div>
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={closeDialog}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="submit"
@@ -283,11 +285,11 @@ export function NotificationDialog() {
             >
               {editingChannel
                 ? updateChannel.isPending
-                  ? "Updating..."
-                  : "Update Channel"
+                  ? t("Updating...")
+                  : t("Update Channel")
                 : createChannel.isPending
-                  ? "Creating..."
-                  : "Create Channel"}
+                  ? t("Creating...")
+                  : t("Create Channel")}
             </Button>
           </div>
         </form>

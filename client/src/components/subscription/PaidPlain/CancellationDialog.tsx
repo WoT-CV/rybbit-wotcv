@@ -29,12 +29,12 @@ type CancellationReason =
   | "other";
 
 const REASONS: { value: CancellationReason; label: string }[] = [
-  { value: "too_expensive", label: "It's too expensive" },
-  { value: "missing_features", label: "Missing features I need" },
-  { value: "not_using", label: "I'm not using it enough" },
-  { value: "too_complex", label: "It's too hard to set up or use" },
-  { value: "switching_competitor", label: "Switching to another tool" },
-  { value: "other", label: "Other reason" },
+  { value: "too_expensive", label: "Cena jest zbyt wysoka" },
+  { value: "missing_features", label: "Brakuje mi potrzebnych funkcji" },
+  { value: "not_using", label: "Nie używam usługi wystarczająco często" },
+  { value: "too_complex", label: "Konfiguracja lub użycie jest zbyt trudne" },
+  { value: "switching_competitor", label: "Przechodzę do innego narzędzia" },
+  { value: "other", label: "Inny powód" },
 ];
 
 const DETAIL_REASONS: CancellationReason[] = [
@@ -93,7 +93,7 @@ export function CancellationDialog({
   const handleKeepPlan = (offerShown: string) => {
     submitFeedback.mutate(feedbackPayload(offerShown, true, "retained"), {
       onSettled: () => {
-        toast.success("Great, we're glad you're staying!");
+        toast.success("Dobrze, cieszymy się, że zostajesz.");
         resetAndClose();
       },
     });
@@ -135,7 +135,7 @@ export function CancellationDialog({
   const renderStep1 = () => (
     <div className="space-y-4">
       <p className="text-sm text-neutral-500 dark:text-neutral-400">
-        We'd love to understand why you're leaving so we can improve.
+        Chcemy zrozumieć, dlaczego rezygnujesz, aby móc ulepszyć produkt.
       </p>
       <RadioGroup
         value={reason}
@@ -158,10 +158,10 @@ export function CancellationDialog({
         <Textarea
           placeholder={
             reason === "missing_features"
-              ? "What features are you looking for?"
+              ? "Jakich funkcji szukasz?"
               : reason === "switching_competitor"
-                ? "Which tool are you switching to?"
-                : "Tell us more..."
+                ? "Na jakie narzędzie przechodzisz?"
+                : "Napisz coś więcej..."
           }
           value={reasonDetails}
           onChange={(e) => setReasonDetails(e.target.value)}
@@ -172,14 +172,14 @@ export function CancellationDialog({
 
       <div className="flex justify-end gap-3 pt-2">
         <Button variant="outline" onClick={resetAndClose}>
-          Never mind
+          Zostaję
         </Button>
         <Button
           variant="default"
           disabled={!reason}
           onClick={() => setStep(2)}
         >
-          Continue
+          Kontynuuj
         </Button>
       </div>
     </div>
@@ -192,18 +192,17 @@ export function CancellationDialog({
           <div className="space-y-4">
             <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
               <h4 className="font-medium text-neutral-800 dark:text-neutral-200 mb-1">
-                Switch to annual and save 33%
+                Przejdź na rozliczenie roczne i oszczędź 33%
               </h4>
               <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                Pay for 8 months and get 12. That's 4 months free with annual
-                billing.
+                Zapłać za 8 miesięcy i korzystaj przez 12. To 4 miesiące gratis przy rozliczeniu rocznym.
               </p>
               <Button
                 variant="success"
                 className="mt-3"
                 onClick={handleSwitchToAnnual}
               >
-                Switch to Annual Billing
+                Przejdź na rozliczenie roczne
               </Button>
             </div>
           </div>
@@ -213,14 +212,13 @@ export function CancellationDialog({
         <div className="space-y-4">
           <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
             <h4 className="font-medium text-neutral-800 dark:text-neutral-200 mb-1">
-              Downgrade to a smaller plan
+              Przejdź na mniejszy plan
             </h4>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              You can switch to a more affordable plan that better fits your
-              needs.
+              Możesz przejść na tańszy plan, który lepiej pasuje do Twoich potrzeb.
             </p>
             <Button variant="default" className="mt-3" onClick={handleDowngrade}>
-              View Plans
+              Zobacz plany
             </Button>
           </div>
         </div>
@@ -231,18 +229,17 @@ export function CancellationDialog({
       <div className="space-y-4">
         <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
           <h4 className="font-medium text-neutral-800 dark:text-neutral-200 mb-1">
-            We hear you
+            Rozumiemy
           </h4>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Your feedback has been recorded and will help us prioritize our
-            roadmap. We'd love for you to stay and see the improvements.
+            Twoja opinia została zapisana i pomoże nam ustalić priorytety rozwoju. Chcemy, abyś został i zobaczył kolejne usprawnienia.
           </p>
           <Button
             variant="default"
             className="mt-3"
             onClick={() => handleKeepPlan("feature_request")}
           >
-            Keep My Plan
+            Zachowaj mój plan
           </Button>
         </div>
       </div>
@@ -252,11 +249,10 @@ export function CancellationDialog({
       <div className="space-y-4">
         <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
           <h4 className="font-medium text-neutral-800 dark:text-neutral-200 mb-1">
-            Book a free setup session
+            Umów bezpłatną sesję konfiguracji
           </h4>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
-            We'd love to help you get the most out of Rybbit. Book a free
-            30-minute call and our team will help you get set up.
+            Chcemy pomóc Ci wykorzystać Rybbit w pełni. Umów bezpłatną 30-minutową rozmowę, a nasz zespół pomoże Ci w konfiguracji.
           </p>
           <Cal
             namespace="cancellation-setup"
@@ -272,7 +268,7 @@ export function CancellationDialog({
             className="mt-3"
             onClick={() => handleKeepPlan("setup_help")}
           >
-            Keep My Plan
+            Zachowaj mój plan
           </Button>
         </div>
       </div>
@@ -282,18 +278,17 @@ export function CancellationDialog({
       <div className="space-y-4">
         <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
           <h4 className="font-medium text-neutral-800 dark:text-neutral-200 mb-1">
-            Is there anything we can do?
+            Czy możemy coś jeszcze zrobić?
           </h4>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            We're sorry to see you go. If there's anything we can do to improve
-            your experience, we'd love to hear about it.
+            Przykro nam, że odchodzisz. Jeśli możemy zrobić coś, aby poprawić Twoje doświadczenie, chcemy o tym wiedzieć.
           </p>
           <Button
             variant="default"
             className="mt-3"
             onClick={() => handleKeepPlan("general")}
           >
-            Keep My Plan
+            Zachowaj mój plan
           </Button>
         </div>
       </div>
@@ -318,7 +313,7 @@ export function CancellationDialog({
     return (
       <div className="space-y-4">
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Before you go, we'd like to offer an alternative:
+          Zanim odejdziesz, chcemy zaproponować alternatywę:
         </p>
         {renderOffer()}
         <div className="flex justify-end pt-2">
@@ -326,7 +321,7 @@ export function CancellationDialog({
             className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 underline underline-offset-2"
             onClick={() => setStep(3)}
           >
-            No thanks, continue cancelling
+            Nie, kontynuuj anulowanie
           </button>
         </div>
       </div>
@@ -335,7 +330,7 @@ export function CancellationDialog({
 
   const renderStep3 = () => {
     const price = stripePlan
-      ? `$${stripePlan.price}/${stripePlan.interval === "year" ? "yr" : "mo"}`
+      ? `$${stripePlan.price}/${stripePlan.interval === "year" ? "rok" : "mies."}`
       : null;
 
     return (
@@ -345,25 +340,22 @@ export function CancellationDialog({
             <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 shrink-0" />
             <div className="space-y-2">
               <h4 className="font-medium text-red-800 dark:text-red-300">
-                Here's what you'll lose
+                Oto, co stracisz
               </h4>
               <ul className="text-sm text-red-700 dark:text-red-400 space-y-1.5">
                 <li className="flex items-center gap-2">
                   <BarChart3 className="h-3.5 w-3.5 shrink-0" />
-                  {subscription.eventLimit.toLocaleString()} events/
-                  {subscription.interval === "year" ? "year" : "month"} on the{" "}
-                  {planType} plan
+                  {subscription.eventLimit.toLocaleString()} zdarzeń/
+                  {subscription.interval === "year" ? "rok" : "miesiąc"} w planie {planType}
                   {price && <span className="text-neutral-500">({price})</span>}
                 </li>
                 <li className="flex items-center gap-2">
                   <ArrowRight className="h-3.5 w-3.5 shrink-0" />
-                  {subscription.monthlyEventCount.toLocaleString()} events
-                  tracked this month
+                  {subscription.monthlyEventCount.toLocaleString()} zdarzeń śledzonych w tym miesiącu
                 </li>
               </ul>
               <p className="text-sm text-red-700 dark:text-red-400 pt-1">
-                Your analytics data will no longer be collected after
-                cancellation.
+                Po anulowaniu dane analityczne nie będą już zbierane.
               </p>
             </div>
           </div>
@@ -371,7 +363,7 @@ export function CancellationDialog({
 
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="success" onClick={resetAndClose}>
-            Keep My Plan
+            Zachowaj mój plan
           </Button>
           <Button
             variant="destructive"
@@ -381,12 +373,12 @@ export function CancellationDialog({
             {submitFeedback.isPending ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Processing&hellip;
+                Przetwarzanie&hellip;
               </span>
             ) : isTrial ? (
-              "Cancel Trial"
+              "Anuluj okres próbny"
             ) : (
-              "Cancel My Subscription"
+              "Anuluj subskrypcję"
             )}
           </Button>
         </div>
@@ -397,10 +389,10 @@ export function CancellationDialog({
   const getTitle = () => {
     if (step === 1)
       return isTrial
-        ? "Why are you cancelling your trial?"
-        : "Why are you leaving?";
-    if (step === 2) return "Before you go...";
-    return "Are you sure?";
+        ? "Dlaczego anulujesz okres próbny?"
+        : "Dlaczego rezygnujesz?";
+    if (step === 2) return "Zanim odejdziesz...";
+    return "Czy na pewno?";
   };
 
   return (

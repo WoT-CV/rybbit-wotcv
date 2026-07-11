@@ -210,7 +210,7 @@ export function ImportManager({ siteId, disabled }: ImportManagerProps) {
     !selectedFile || !selectedPlatform || !!fileError || createImportMutation.isPending || disabled || hasActiveImport;
 
   return (
-    <DisabledOverlay message="Data Import" requiredPlan="standard">
+    <DisabledOverlay message="Import danych" requiredPlan="standard">
       <SettingsSections>
         <SettingsSection title={t("Import Data")} description={t("Import data from other analytics platforms.")}>
           {/* Active Import Warning */}

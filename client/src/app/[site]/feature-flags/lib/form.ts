@@ -36,7 +36,7 @@ export function createEmptyVariant(index: number): VariantFormState {
 export function createEmptyConditionSet(flagType: FeatureFlagType, index: number): ConditionSetFormState {
   return {
     id: createRuleId(),
-    name: index === 0 ? "Default" : `Condition ${index + 1}`,
+    name: index === 0 ? "Domyślny" : `Warunek ${index + 1}`,
     rules: [],
     rolloutPercentage: 100,
     variants: flagType === "multivariate" ? [createEmptyVariant(0), createEmptyVariant(1)] : [],
@@ -83,7 +83,7 @@ function parseOptionalPayload(value: string): FeatureFlagPayloadValue | undefine
 function parseRequiredPayload(value: string): FeatureFlagPayloadValue {
   const parsed = parseOptionalPayload(value);
   if (parsed === undefined) {
-    throw new Error("Payload is required");
+    throw new Error("Payload jest wymagany");
   }
   return parsed;
 }
@@ -103,7 +103,7 @@ function parseRuleValue(value: string): FeatureFlagRule["value"] {
     ) {
       return parsed;
     }
-    throw new Error("Rule arrays can only contain strings, numbers, or booleans");
+    throw new Error("Tablice reguł mogą zawierać tylko teksty, liczby lub wartości boolean");
   }
   return trimmed;
 }
@@ -135,7 +135,7 @@ function toConditionSetFormState(
 ): ConditionSetFormState {
   return {
     id: createRuleId(),
-    name: conditionSet.name || (index === 0 ? "Default" : `Condition ${index + 1}`),
+    name: conditionSet.name || (index === 0 ? "Domyślny" : `Warunek ${index + 1}`),
     rules: (conditionSet.rules || []).map(toRuleFormState),
     rolloutPercentage: conditionSet.rolloutPercentage ?? 100,
     variants:
@@ -151,7 +151,7 @@ function toConditionSetFormState(
 function fallbackConditionSetFromFlag(flag: FeatureFlag): ConditionSetFormState {
   return {
     id: createRuleId(),
-    name: "Default",
+    name: "Domyślny",
     rules: (flag.rules || []).map(toRuleFormState),
     rolloutPercentage: flag.rolloutPercentage,
     variants: flag.flagType === "multivariate" ? (flag.variants || []).map(toVariantFormState) : [],
@@ -180,10 +180,10 @@ export function buildPayload(form: FlagFormState): FeatureFlagPayload {
     rules.map(rule => {
       const requiresKey = rule.field === "query" || rule.field === "trait";
       if (requiresKey && !rule.key.trim()) {
-        throw new Error("Rule key is required");
+        throw new Error("Klucz reguły jest wymagany");
       }
       if (!rule.value.trim()) {
-        throw new Error("Rule value is required");
+        throw new Error("Wartość reguły jest wymagana");
       }
 
       return {
@@ -207,16 +207,16 @@ export function buildPayload(form: FlagFormState): FeatureFlagPayload {
     const variantRolloutTotal = variants.reduce((sum, variant) => sum + variant.rolloutPercentage, 0);
 
     if (variants.length < 2) {
-      throw new Error("Multiple variant flags need at least two variants");
+      throw new Error("Flagi wielowariantowe wymagają co najmniej dwóch wariantów");
     }
     if (variants.some(variant => !variant.key)) {
-      throw new Error("Variant key is required");
+      throw new Error("Klucz wariantu jest wymagany");
     }
     if (variantKeys.size !== variants.length) {
-      throw new Error("Variant keys must be unique");
+      throw new Error("Klucze wariantów muszą być unikalne");
     }
     if (variantRolloutTotal > 100) {
-      throw new Error("Variant rollout percentages cannot exceed 100");
+      throw new Error("Procenty rolloutów wariantów nie mogą przekraczać 100");
     }
   };
 
@@ -226,7 +226,7 @@ export function buildPayload(form: FlagFormState): FeatureFlagPayload {
       conditionSet.rolloutPercentage < 0 ||
       conditionSet.rolloutPercentage > 100
     ) {
-      throw new Error("Rollout must be between 0 and 100");
+      throw new Error("Rollout musi być w zakresie od 0 do 100");
     }
 
     const variants = form.flagType === "multivariate" ? buildVariants(conditionSet.variants) : [];

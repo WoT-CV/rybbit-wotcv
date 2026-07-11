@@ -67,7 +67,7 @@ const formSchema = z
       return true;
     },
     {
-      message: "Configuration is required based on goal type",
+      message: "Konfiguracja jest wymagana dla wybranego typu celu",
       path: ["config"],
     }
   )
@@ -79,7 +79,7 @@ const formSchema = z
       return true;
     },
     {
-      message: "Enter a path (e.g., /checkout), not a full URL. The domain is already determined by your site.",
+      message: "Wpisz ścieżkę (np. /checkout), a nie pełny URL. Domena jest już określona przez stronę.",
       path: ["config", "pathPattern"],
     }
   );

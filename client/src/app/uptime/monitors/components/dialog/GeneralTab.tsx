@@ -16,13 +16,13 @@ interface GeneralTabProps {
 }
 
 export const INTERVAL_OPTIONS = [
-  { value: 30, label: "30 seconds" },
-  { value: 60, label: "1 minute" },
-  { value: 120, label: "2 minutes" },
-  { value: 180, label: "3 minutes" },
-  { value: 300, label: "5 minutes" },
-  { value: 600, label: "10 minutes" },
-  { value: 1800, label: "30 minutes" },
+  { value: 30, label: "30 sekund" },
+  { value: 60, label: "1 minuta" },
+  { value: 120, label: "2 minuty" },
+  { value: 180, label: "3 minuty" },
+  { value: 300, label: "5 minut" },
+  { value: 600, label: "10 minut" },
+  { value: 1800, label: "30 minut" },
 ];
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH"] as const;
@@ -30,19 +30,19 @@ const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH"
 export function getIntervalOptionLabel(seconds: number | undefined, t: ReturnType<typeof useExtracted>) {
   switch (seconds) {
     case 30:
-      return t("30 seconds");
+      return t("30 sekund");
     case 60:
-      return t("1 minute");
+      return t("1 minuta");
     case 120:
-      return t("2 minutes");
+      return t("2 minuty");
     case 180:
-      return t("3 minutes");
+      return t("3 minuty");
     case 300:
-      return t("5 minutes");
+      return t("5 minut");
     case 600:
-      return t("10 minutes");
+      return t("10 minut");
     case 1800:
-      return t("30 minutes");
+      return t("30 minut");
     default:
       return `${seconds}s`;
   }
