@@ -17,6 +17,8 @@ export interface InactivitySkipTarget extends ActivityPeriod {
 }
 
 export const INACTIVITY_SKIP_THRESHOLD_MS = 5000;
+const PRE_ACTIVITY_PADDING_MS = 500;
+const POST_ACTIVITY_PADDING_MS = 1000;
 const MOUSE_MOVE_SOURCE = 1;
 const MOUSE_INTERACTION_SOURCE = 2;
 const INPUT_SOURCE = 5;
@@ -34,7 +36,7 @@ export const calculateActivityPeriods = (events: any[], totalDuration: number): 
   const periods: ActivityPeriod[] = [
     {
       start: 0,
-      end: Math.min(totalDuration, INACTIVITY_SKIP_THRESHOLD_MS),
+      end: Math.min(totalDuration, POST_ACTIVITY_PADDING_MS),
     },
   ];
 
@@ -43,8 +45,8 @@ export const calculateActivityPeriods = (events: any[], totalDuration: number): 
     .sort((first, second) => first - second)
     .forEach(offset => {
       periods.push({
-        start: offset,
-        end: Math.min(totalDuration, offset + INACTIVITY_SKIP_THRESHOLD_MS),
+        start: Math.max(0, offset - PRE_ACTIVITY_PADDING_MS),
+        end: Math.min(totalDuration, offset + POST_ACTIVITY_PADDING_MS),
       });
     });
 
