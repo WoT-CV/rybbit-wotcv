@@ -160,6 +160,10 @@ class SiteConfig {
     }
   }
 
+  invalidateCache(): void {
+    this.cache.clear();
+  }
+
   /**
    * Add a new site
    */

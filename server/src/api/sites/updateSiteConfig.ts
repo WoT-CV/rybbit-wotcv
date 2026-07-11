@@ -6,26 +6,12 @@ import { eq } from "drizzle-orm";
 import { IS_CLOUD } from "../../lib/const.js";
 import { siteConfig } from "../../lib/siteConfig.js";
 import { validateIPPattern } from "../../lib/ipUtils.js";
-import { normalizeNetworkReplayConfig } from "../../lib/networkReplayConfig.js";
+import {
+  getNetworkReplayConfigError,
+  networkReplayConfigSchema,
+  resolveNetworkReplayConfig,
+} from "../../lib/networkReplayConfig.js";
 import { getBestSubscription, subscriptionIncludesReplay } from "../../lib/subscriptionUtils.js";
-
-const networkReplayConfigSchema = z
-  .object({
-    enabled: z.boolean().optional(),
-    captureFetch: z.boolean().optional(),
-    captureXhr: z.boolean().optional(),
-    capturePerformanceResources: z.boolean().optional(),
-    captureInitialPerformanceResources: z.boolean().optional(),
-    captureRequestHeaders: z.boolean().optional(),
-    captureResponseHeaders: z.boolean().optional(),
-    captureRequestBody: z.boolean().optional(),
-    captureResponseBody: z.boolean().optional(),
-    maxBodySizeBytes: z.number().int().min(1).max(5_000_000).optional(),
-    bodyReadTimeoutMs: z.number().int().min(100).max(10_000).optional(),
-    maxNetworkEventSizeBytes: z.number().int().min(1).max(9_000_000).optional(),
-    maxReplayBatchSizeBytes: z.number().int().min(1).max(9_000_000).optional(),
-  })
-  .strict();
 
 // Schema for the update request - all fields are optional but validated when present
 const updateSiteConfigSchema = z.object({
@@ -109,10 +95,12 @@ export async function updateSiteConfig(
 
     const nextSiteType = updateData.type === undefined ? site.type || "web" : updateData.type || "web";
     const nextSessionReplay = updateData.sessionReplay ?? site.sessionReplay ?? false;
-    const nextNetworkReplayConfig = normalizeNetworkReplayConfig({
-      ...normalizeNetworkReplayConfig(site.networkReplayConfig),
-      ...updateData.networkReplayConfig,
-    });
+    const nextNetworkReplayConfig = resolveNetworkReplayConfig(
+      site.networkReplayConfig,
+      updateData.networkReplayConfig,
+      nextSessionReplay,
+      nextSiteType
+    );
 
     const nextDomain = updateData.domain ?? site.domain;
     const cleanedDomain = nextDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
@@ -151,23 +139,11 @@ export async function updateSiteConfig(
       });
     }
 
-    if (
-      updateData.networkReplayConfig !== undefined &&
-      nextNetworkReplayConfig.maxBodySizeBytes > nextNetworkReplayConfig.maxNetworkEventSizeBytes
-    ) {
+    const networkReplayConfigError = getNetworkReplayConfigError(nextNetworkReplayConfig);
+    if (updateData.networkReplayConfig !== undefined && networkReplayConfigError) {
       return reply.status(400).send({
         success: false,
-        error: "Network Replay body limit cannot exceed the event limit",
-      });
-    }
-
-    if (
-      updateData.networkReplayConfig !== undefined &&
-      nextNetworkReplayConfig.maxNetworkEventSizeBytes > nextNetworkReplayConfig.maxReplayBatchSizeBytes
-    ) {
-      return reply.status(400).send({
-        success: false,
-        error: "Network Replay event limit cannot exceed the replay batch limit",
+        error: networkReplayConfigError,
       });
     }
 
@@ -212,7 +188,7 @@ export async function updateSiteConfig(
     }
 
     // Build the update object - only include fields that were provided
-    const dbUpdateData: any = {};
+    const dbUpdateData: Partial<typeof sites.$inferInsert> = {};
 
     // Map the fields that exist in both request and database
     const directMappings = [
@@ -238,11 +214,11 @@ export async function updateSiteConfig(
       "trackButtonClicks",
       "trackCopy",
       "trackFormInteractions",
-    ];
+    ] as const;
 
     for (const field of directMappings) {
       if (updateData[field as keyof typeof updateData] !== undefined) {
-        dbUpdateData[field] = updateData[field as keyof typeof updateData];
+        Object.assign(dbUpdateData, { [field]: updateData[field] });
       }
     }
 
@@ -286,8 +262,8 @@ export async function updateSiteConfig(
     // Update the database
     await db.update(sites).set(dbUpdateData).where(eq(sites.siteId, siteId));
 
-    // Update the site config cache
-    await siteConfig.updateConfig(siteId, dbUpdateData);
+    // The database update above is authoritative; only invalidate the read cache.
+    siteConfig.invalidateCache();
 
     // Get the updated configuration to return
     const updatedConfig = await siteConfig.getConfig(siteId);
