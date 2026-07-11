@@ -13,7 +13,6 @@ import {
   useReplayExportStatus,
 } from "@/api/analytics/hooks/sessionReplay/useReplayExport";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +30,7 @@ import { formatTime } from "../player/utils/replayUtils";
 import { useReplayStore } from "../replayStore";
 
 const MAX_EXPORT_DURATION_MS = 30_000;
+const MIN_EXPORT_DURATION_MS = 1_000;
 
 interface ReplayExportDialogProps {
   currentTime: number;
@@ -45,8 +45,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const params = useParams();
   const siteId = Number(params.site);
   const [range, setRange] = useState<[number, number]>([0, Math.min(duration, 30_000)]);
-  const [skipInactivity, setSkipInactivity] = useState(true);
-  const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4>(1);
   const [exportId, setExportId] = useState<string | null>(null);
   const setExportRange = useReplayStore(state => state.setExportRange);
   const downloadedExportIdRef = useRef<string | null>(null);
@@ -56,7 +54,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const cancelExport = useCancelReplayExport();
   const { data: exportStatus } = useReplayExportStatus(siteId, sessionId, exportId);
   const rangeDuration = range[1] - range[0];
-  const isRangeValid = rangeDuration > 0 && rangeDuration <= MAX_EXPORT_DURATION_MS;
+  const isRangeValid = rangeDuration >= MIN_EXPORT_DURATION_MS && rangeDuration <= MAX_EXPORT_DURATION_MS;
   const isExporting = Boolean(
     exportId && exportStatus && !["ready", "failed", "cancelled"].includes(exportStatus.state)
   );
@@ -124,8 +122,8 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
         options: {
           startMs: range[0],
           endMs: range[1],
-          skipInactivity,
-          playbackSpeed,
+          skipInactivity: true,
+          playbackSpeed: 1,
         },
       });
       setExportId(result.exportId);
@@ -138,10 +136,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
     if (!exportId) return;
     await cancelExport.mutateAsync({ siteId, sessionId, exportId }).catch(() => undefined);
     setExportId(null);
-  };
-
-  const setQuickRange = (start: number) => {
-    setRange(constrainRangeFromStart(start, duration));
   };
 
   const handleOpenChange = (value: boolean) => {
@@ -161,18 +155,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
         </DialogHeader>
 
         <div className="space-y-5">
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" size="xs" variant="outline" onClick={() => setQuickRange(currentTime - 15_000)}>
-              {t("Current ±15 s")}
-            </Button>
-            <Button type="button" size="xs" variant="outline" onClick={() => setQuickRange(currentTime)}>
-              {t("From current time")}
-            </Button>
-            <Button type="button" size="xs" variant="outline" onClick={() => setQuickRange(0)}>
-              {duration <= MAX_EXPORT_DURATION_MS ? t("Full replay") : t("First 30 seconds")}
-            </Button>
-          </div>
-
           <div className="space-y-2">
             <div className="flex justify-between text-xs tabular-nums text-neutral-600 dark:text-neutral-300">
               <span>{formatTime(range[0])}</span>
@@ -199,41 +181,21 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
                 label={t("Start time")}
                 value={range[0]}
                 onChange={value => {
-                  const windowDuration = getExportWindowDuration(duration);
-                  const nextStart = clamp(value, 0, Math.max(0, duration - windowDuration));
-                  setRange([nextStart, nextStart + windowDuration]);
+                  const nextStart = clamp(value, 0, range[1] - MIN_EXPORT_DURATION_MS);
+                  const nextEnd = Math.min(range[1], nextStart + MAX_EXPORT_DURATION_MS);
+                  setRange([nextStart, nextEnd]);
                 }}
               />
               <ReplayTimeInput
                 label={t("End time")}
                 value={range[1]}
                 onChange={value => {
-                  const windowDuration = getExportWindowDuration(duration);
-                  const nextEnd = clamp(value, windowDuration, duration);
-                  setRange([nextEnd - windowDuration, nextEnd]);
+                  const nextEnd = clamp(value, range[0] + MIN_EXPORT_DURATION_MS, duration);
+                  const nextStart = Math.max(range[0], nextEnd - MAX_EXPORT_DURATION_MS);
+                  setRange([nextStart, nextEnd]);
                 }}
               />
             </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <ExportCheckbox
-              checked={skipInactivity}
-              onCheckedChange={setSkipInactivity}
-              label={t("Skip inactivity in video")}
-            />
-            <label className="flex items-center justify-between gap-3 text-sm">
-              <span>{t("Video speed")}</span>
-              <select
-                value={playbackSpeed}
-                onChange={event => setPlaybackSpeed(Number(event.target.value) as 1 | 2 | 4)}
-                className="rounded border border-neutral-200 bg-white px-2 py-1 text-xs dark:border-neutral-800 dark:bg-neutral-900"
-              >
-                <option value={1}>1x</option>
-                <option value={2}>2x</option>
-                <option value={4}>4x</option>
-              </select>
-            </label>
           </div>
 
           {exportId && (
@@ -278,26 +240,21 @@ function createInitialRange(currentTime: number, duration: number): [number, num
   return [start, start + rangeDuration];
 }
 
-function constrainRangeFromStart(start: number, duration: number): [number, number] {
-  const windowDuration = getExportWindowDuration(duration);
-  const nextStart = clamp(start, 0, Math.max(0, duration - windowDuration));
-  return [nextStart, nextStart + windowDuration];
-}
-
 function constrainSliderRange(
   nextRange: [number, number],
   currentRange: [number, number],
   duration: number
 ): [number, number] {
-  const windowDuration = getExportWindowDuration(duration);
+  const start = clamp(nextRange[0], 0, duration);
+  const end = clamp(nextRange[1], start, duration);
+  if (end - start <= MAX_EXPORT_DURATION_MS) return [start, end];
+
   const startMovedMore = Math.abs(nextRange[0] - currentRange[0]) > Math.abs(nextRange[1] - currentRange[1]);
   if (startMovedMore) {
-    const start = clamp(nextRange[0], 0, Math.max(0, duration - windowDuration));
-    return [start, start + windowDuration];
+    return [start, Math.min(duration, start + MAX_EXPORT_DURATION_MS)];
   }
 
-  const end = clamp(nextRange[1], windowDuration, duration);
-  return [end - windowDuration, end];
+  return [Math.max(0, end - MAX_EXPORT_DURATION_MS), end];
 }
 
 function getExportWindowDuration(duration: number) {
@@ -357,21 +314,4 @@ function parseEditableTime(value: string) {
   const match = value.trim().match(/^(\d+):([0-5]?\d(?:\.\d{1,3})?)$/);
   if (!match) return null;
   return (Number(match[1]) * 60 + Number(match[2])) * 1000;
-}
-
-function ExportCheckbox({
-  checked,
-  label,
-  onCheckedChange,
-}: {
-  checked: boolean;
-  label: string;
-  onCheckedChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2 text-sm">
-      <Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} />
-      <span>{label}</span>
-    </label>
-  );
 }
