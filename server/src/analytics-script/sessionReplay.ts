@@ -3,6 +3,7 @@ import { getJsonByteSize } from "./networkReplay/utils.js";
 import { ScriptConfig, SessionReplayBatch, SessionReplayEvent, SessionReplayTransportError } from "./types.js";
 
 const SAMPLE_STORAGE_KEY = "rybbit-replay-sampled";
+const ACTIVITY_CAPTURE_VERSION = 2;
 
 /**
  * Determines if this session should have replay enabled based on sample rate.
@@ -116,26 +117,6 @@ export class SessionReplayRecorder {
     }
 
     try {
-      // Default sampling configuration (can be overridden via config)
-      const defaultSampling = {
-        // Aggressive sampling to reduce data volume
-        mousemove: false, // Don't record mouse moves at all
-        mouseInteraction: {
-          MouseUp: false,
-          MouseDown: false,
-          Click: true, // Only record clicks
-          ContextMenu: false,
-          DblClick: true,
-          Focus: true,
-          Blur: true,
-          TouchStart: false,
-          TouchEnd: false,
-        },
-        scroll: 500, // Sample scroll events every 500ms
-        input: "last", // Only record the final input value
-        media: 800, // Sample media interactions less frequently
-      };
-
       // Default slimDOMOptions (can be overridden via config)
       const defaultSlimDOMOptions = {
         script: false,
@@ -170,7 +151,6 @@ export class SessionReplayRecorder {
         maskAllInputs: this.config.sessionReplayMaskAllInputs ?? true,
         maskInputOptions: this.config.sessionReplayMaskInputOptions ?? { password: true, email: true },
         collectFonts: this.config.sessionReplayCollectFonts ?? true,
-        sampling: this.config.sessionReplaySampling ?? defaultSampling,
         slimDOMOptions: this.config.sessionReplaySlimDOMOptions ?? defaultSlimDOMOptions,
         plugins: this.config.networkReplay?.enabled
           ? [getRecordNetworkPlugin(this.config.networkReplay, this.config.analyticsHost)]
@@ -182,7 +162,23 @@ export class SessionReplayRecorder {
         recordingOptions.maskTextSelector = this.config.sessionReplayMaskTextSelectors.join(", ");
       }
 
+      if (this.config.sessionReplaySampling !== undefined) {
+        recordingOptions.sampling = this.config.sessionReplaySampling;
+      }
+
       this.stopRecordingFn = window.rrweb.record(recordingOptions);
+
+      this.addEvent({
+        type: 5,
+        data: {
+          tag: "wotcv/replay-config",
+          payload: {
+            activityCaptureVersion: ACTIVITY_CAPTURE_VERSION,
+            sampling: this.config.sessionReplaySampling ?? null,
+          },
+        },
+        timestamp: Date.now(),
+      });
 
       this.isRecording = true;
       this.setupBatchTimer();
