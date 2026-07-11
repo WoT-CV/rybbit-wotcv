@@ -7,7 +7,7 @@ export function filterNetworkRequests(
   const query = filters.query.trim().toLowerCase();
 
   return requests.filter(request => {
-    if (query && !`${request.method} ${request.url} ${request.currentUrl}`.toLowerCase().includes(query)) {
+    if (query && !request.searchText.includes(query)) {
       return false;
     }
     if (filters.method !== "all" && request.method !== filters.method) {
@@ -31,19 +31,7 @@ export function filterNetworkRequests(
 }
 
 export function getRequestHost(request: ParsedNetworkRequest): string {
-  if (!request.url) {
-    return "unknown";
-  }
-
-  try {
-    return new URL(request.url).hostname || "unknown";
-  } catch {
-    try {
-      return request.currentUrl ? new URL(request.url, request.currentUrl).hostname || "unknown" : "unknown";
-    } catch {
-      return "unknown";
-    }
-  }
+  return request.host;
 }
 
 export function getRequestDisplayUrl(request: ParsedNetworkRequest): string {
@@ -122,22 +110,31 @@ export function formatTransferSize(sizeBytes: number | undefined): string | unde
 }
 
 export function getNetworkTransferSize(request: ParsedNetworkRequest): number | undefined {
+  return getNetworkTransferSizeInfo(request)?.bytes;
+}
+
+export type NetworkTransferSizeSource = "performance" | "content-length" | "encoded-body" | "captured-body";
+
+export function getNetworkTransferSizeInfo(
+  request: ParsedNetworkRequest
+): { bytes: number; source: NetworkTransferSizeSource } | undefined {
   const transferSize = request.sizes?.transferSize;
   if (transferSize !== undefined && transferSize > 0) {
-    return transferSize;
+    return { bytes: transferSize, source: "performance" };
   }
 
   const contentLength = getHeaderNumber(request.responseHeaders, "content-length");
   if (contentLength !== undefined) {
-    return contentLength;
+    return { bytes: contentLength, source: "content-length" };
   }
 
   const encodedBodySize = request.sizes?.encodedBodySize;
   if (encodedBodySize !== undefined && encodedBodySize > 0) {
-    return encodedBodySize;
+    return { bytes: encodedBodySize, source: "encoded-body" };
   }
 
-  return request.responseBody?.sizeBytes;
+  const capturedBodySize = request.responseBody?.sizeBytes;
+  return capturedBodySize === undefined ? undefined : { bytes: capturedBodySize, source: "captured-body" };
 }
 
 export function getResponseCorrelationId(request: ParsedNetworkRequest): string | undefined {

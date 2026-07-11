@@ -1,3 +1,5 @@
+import { NETWORK_REPLAY_SCHEMA_VERSION } from "@rybbit/shared";
+
 import type {
   CapturedBody,
   CapturedBodyKind,
@@ -71,11 +73,14 @@ export function parseNetworkEvents(events: readonly ReplayEventLike[] | undefine
       const startOffset = Math.max(0, request.startedAt - replayStartTimestamp);
       const completedAt = request.completedAt ?? request.startedAt;
       const endOffset = Math.max(startOffset, completedAt - replayStartTimestamp);
+      const host = getRequestHost(request.url, request.currentUrl);
 
       requests.push({
         ...request,
         startOffset,
         endOffset,
+        host,
+        searchText: `${request.method} ${request.url} ${request.currentUrl} ${host}`.toLowerCase(),
       });
     });
   });
@@ -94,6 +99,9 @@ function parseRequest(
   if (!isRecord(value)) {
     return undefined;
   }
+  if (value.schemaVersion !== undefined && value.schemaVersion !== NETWORK_REPLAY_SCHEMA_VERSION) {
+    return undefined;
+  }
 
   const startedAt = getFiniteNumber(value.startedAt) ?? getFiniteNumber(eventTimestamp);
   if (startedAt === undefined) {
@@ -107,7 +115,7 @@ function parseRequest(
   const requestId = getString(value.requestId) || `network-${eventIndex}-${requestIndex}`;
 
   return {
-    schemaVersion: 1,
+    schemaVersion: NETWORK_REPLAY_SCHEMA_VERSION,
     requestId,
     currentUrl: getString(value.currentUrl),
     url: getString(value.url),
@@ -208,4 +216,13 @@ function getFiniteNumber(value: unknown): number | undefined {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getRequestHost(url: string, currentUrl: string): string {
+  if (!url) return "unknown";
+  try {
+    return new URL(url, currentUrl || undefined).hostname || "unknown";
+  } catch {
+    return "unknown";
+  }
 }

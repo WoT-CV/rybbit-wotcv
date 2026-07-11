@@ -14,6 +14,8 @@ export interface ParsedNetworkRequest extends Omit<CapturedNetworkRequest, "dura
   durationMs: number;
   startOffset: number;
   endOffset: number;
+  host: string;
+  searchText: string;
 }
 
 export interface ReplayEventLike {
