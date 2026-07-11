@@ -7,6 +7,7 @@ import {
   formatNetworkDuration,
   formatNetworkOffset,
   formatTransferSize,
+  getNetworkTransferSize,
   getNetworkStatusLabel,
   getRequestDisplayUrl,
   isNetworkRequestError,
@@ -25,7 +26,7 @@ export function NetworkRequestRow({ request, isActive, virtualRow, measure, onSe
   const InitiatorIcon = getInitiatorIcon(request.initiatorType);
   const displayUrl = getRequestDisplayUrl(request);
   const statusLabel = getNetworkStatusLabel(request);
-  const transferSize = formatTransferSize(request.sizes?.transferSize);
+  const transferSize = formatTransferSize(getNetworkTransferSize(request));
   const isError = isNetworkRequestError(request);
 
   return (

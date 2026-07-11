@@ -121,8 +121,52 @@ export function formatTransferSize(sizeBytes: number | undefined): string | unde
   return `${(sizeBytes / 1_000_000).toFixed(1)} MB`;
 }
 
+export function getNetworkTransferSize(request: ParsedNetworkRequest): number | undefined {
+  const transferSize = request.sizes?.transferSize;
+  if (transferSize !== undefined && transferSize > 0) {
+    return transferSize;
+  }
+
+  const contentLength = getHeaderNumber(request.responseHeaders, "content-length");
+  if (contentLength !== undefined) {
+    return contentLength;
+  }
+
+  const encodedBodySize = request.sizes?.encodedBodySize;
+  if (encodedBodySize !== undefined && encodedBodySize > 0) {
+    return encodedBodySize;
+  }
+
+  return request.responseBody?.sizeBytes;
+}
+
+export function getResponseCorrelationId(request: ParsedNetworkRequest): string | undefined {
+  return getHeaderValue(request.responseHeaders, ["x-correlation-id", "correlation-id"]);
+}
+
 export function isNetworkRequestError(request: ParsedNetworkRequest): boolean {
   return request.outcome !== "success" || (request.status !== undefined && request.status >= 400);
+}
+
+function getHeaderValue(headers: Record<string, string>, names: string[]): string | undefined {
+  const normalizedNames = new Set(names.map(name => name.toLowerCase()));
+  for (const [name, value] of Object.entries(headers)) {
+    if (normalizedNames.has(name.toLowerCase()) && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+function getHeaderNumber(headers: Record<string, string>, name: string): number | undefined {
+  const value = getHeaderValue(headers, [name]);
+  if (!value) {
+    return undefined;
+  }
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && numericValue >= 0 ? numericValue : undefined;
 }
 
 function matchesStatusGroup(request: ParsedNetworkRequest, statusGroup: NetworkStatusGroup): boolean {

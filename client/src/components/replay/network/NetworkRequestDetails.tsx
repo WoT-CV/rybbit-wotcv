@@ -11,7 +11,9 @@ import {
   formatNetworkDuration,
   formatTransferSize,
   getInitiatorLabel,
+  getNetworkTransferSize,
   getNetworkStatusLabel,
+  getResponseCorrelationId,
   getRequestDisplayUrl,
 } from "./networkEventUtils";
 import type { CapturedNetworkTiming, ParsedNetworkRequest } from "./types";
@@ -103,7 +105,8 @@ function DetailsContent({ value, children }: { value: string; children: React.Re
 
 function Overview({ request }: { request: ParsedNetworkRequest }) {
   const t = useExtracted();
-  const transferSize = formatTransferSize(request.sizes?.transferSize);
+  const correlationId = getResponseCorrelationId(request);
+  const transferSize = formatTransferSize(getNetworkTransferSize(request));
   const rows = [
     [t("URL"), request.url || "—"],
     [t("Method"), request.method],
@@ -115,6 +118,7 @@ function Overview({ request }: { request: ParsedNetworkRequest }) {
     [t("Initiator"), getInitiatorLabel(request.initiatorType)],
     [t("Current page URL"), request.currentUrl || "—"],
     [t("Request ID"), request.requestId],
+    [t("Correlation ID"), correlationId ?? "—"],
     [t("Performance entry"), request.performanceEntryFound ? t("Available") : t("Not available")],
     [t("Transfer size"), transferSize ?? "—"],
   ];
