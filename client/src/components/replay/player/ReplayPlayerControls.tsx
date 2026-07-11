@@ -1,6 +1,6 @@
 import { Maximize2, Pause, Play, SkipForward } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { ActivitySlider } from "@/components/ui/activity-slider";
@@ -33,14 +33,12 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
     activityPeriods,
     currentTime,
     duration,
-    inactivitySkipNotice,
     isPlaying,
     playbackSpeed,
     player,
     registerManualSeek,
     sessionId,
     setCurrentTime,
-    setInactivitySkipNotice,
     setSkipInactivityEnabled,
     skipInactivityEnabled,
   } = useReplayStore(
@@ -48,31 +46,18 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
       activityPeriods: s.activityPeriods,
       currentTime: s.currentTime,
       duration: s.duration,
-      inactivitySkipNotice: s.inactivitySkipNotice,
       isPlaying: s.isPlaying,
       playbackSpeed: s.playbackSpeed,
       player: s.player,
       registerManualSeek: s.registerManualSeek,
       sessionId: s.sessionId,
       setCurrentTime: s.setCurrentTime,
-      setInactivitySkipNotice: s.setInactivitySkipNotice,
       setSkipInactivityEnabled: s.setSkipInactivityEnabled,
       skipInactivityEnabled: s.skipInactivityEnabled,
     }))
   );
   const [replayDrawerOpen, setReplayDrawerOpen] = useState(false);
   const networkRequests = useMemo(() => parseNetworkEvents(events), [events]);
-  const inactivitySkipLabel = useMemo(() => {
-    if (!inactivitySkipNotice) return null;
-    return t("Skipped inactivity {duration}", { duration: formatTime(inactivitySkipNotice.skippedMs) });
-  }, [inactivitySkipNotice, t]);
-
-  useEffect(() => {
-    if (!inactivitySkipNotice) return;
-
-    const timeoutId = window.setTimeout(() => setInactivitySkipNotice(null), 2500);
-    return () => window.clearTimeout(timeoutId);
-  }, [inactivitySkipNotice, setInactivitySkipNotice]);
 
   const handleSkipInactivityToggle = useCallback(() => {
     setSkipInactivityEnabled(!skipInactivityEnabled);
@@ -117,14 +102,6 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
         <div className="flex min-w-0 items-center gap-1.5">
-          {inactivitySkipLabel && (
-            <span
-              className="hidden max-w-32 truncate text-[10px] tabular-nums text-amber-600 dark:text-amber-400 lg:inline"
-              title={inactivitySkipLabel}
-            >
-              {inactivitySkipLabel}
-            </span>
-          )}
           <Button
             type="button"
             variant={skipInactivityEnabled ? "secondary" : "outline"}

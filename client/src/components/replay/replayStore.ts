@@ -1,18 +1,6 @@
 import { create } from "zustand";
 
-import {
-  MIN_INACTIVITY_SKIP_MS,
-  type ActivityPeriod,
-  type ReplayCaptureProfile,
-  type ReplaySegment,
-} from "./player/utils/replayUtils";
-
-interface InactivitySkipNotice {
-  from: number;
-  to: number;
-  skippedMs: number;
-  createdAt: number;
-}
+import type { ActivityPeriod, ReplayCaptureProfile, ReplaySegment } from "./player/utils/replayUtils";
 
 export type ReplayPlaybackState =
   | "paused"
@@ -68,12 +56,6 @@ export const useReplayStore = create<{
   skipInactivityEnabled: boolean;
   setSkipInactivityEnabled: (enabled: boolean) => void;
 
-  inactivitySkipThresholdMs: number;
-  setInactivitySkipThresholdMs: (thresholdMs: number) => void;
-
-  inactivitySkipNotice: InactivitySkipNotice | null;
-  setInactivitySkipNotice: (notice: InactivitySkipNotice | null) => void;
-
   manualSeekVersion: number;
   registerManualSeek: () => void;
 
@@ -125,12 +107,6 @@ export const useReplayStore = create<{
   skipInactivityEnabled: true,
   setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
 
-  inactivitySkipThresholdMs: MIN_INACTIVITY_SKIP_MS,
-  setInactivitySkipThresholdMs: inactivitySkipThresholdMs => set({ inactivitySkipThresholdMs }),
-
-  inactivitySkipNotice: null,
-  setInactivitySkipNotice: inactivitySkipNotice => set({ inactivitySkipNotice }),
-
   manualSeekVersion: 0,
   registerManualSeek: () => set(state => ({ manualSeekVersion: state.manualSeekVersion + 1 })),
 
@@ -148,7 +124,6 @@ export const useReplayStore = create<{
       activityPeriods: [],
       replaySegments: [],
       replayCaptureProfile: "legacy",
-      inactivitySkipNotice: null,
       manualSeekVersion: 0,
     }),
 }));
