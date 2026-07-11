@@ -222,6 +222,8 @@ docker inspect client --format '{{.Config.Image}} {{index .Config.Labels "org.op
 
 Health endpoint zwraca wersję forka, SHA, tag obrazu, identyfikator obrazu, czas budowania i czas wdrożenia.
 
+Obrazy publikowane przez workflow zawierają etykiety OCI `revision`, `version`, `created`, `source`, `licenses` i `title`. Job walidacyjny przed budowaniem sprawdza również, czy `server/public/script.js` oraz `server/public/script-full.js` odpowiadają źródłom trackera.
+
 ## Weryfikacja funkcji analityki web
 
 Po wdrożeniu można sprawdzić, czy odblokowane widoki `Strony`, `Wydajność` i `Boty` mają działające endpointy API:

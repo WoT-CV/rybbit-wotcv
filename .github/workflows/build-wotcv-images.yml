@@ -19,7 +19,43 @@ env:
   IMAGE_TAG: sha-${{ github.sha }}
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            shared/package-lock.json
+            server/package-lock.json
+      - name: Build shared contracts
+        working-directory: shared
+        run: npm ci && npm run build
+      - name: Verify generated tracker artifacts
+        working-directory: server
+        run: npm ci --legacy-peer-deps && npm run check:analytics
+      - name: Verify merged Compose configuration
+        env:
+          BASE_URL: https://tracking.example.com
+          BETTER_AUTH_SECRET: compose-validation-only
+          DEPLOYMENT: self-hosted
+          DISABLE_SIGNUP: "true"
+          DISABLE_TELEMETRY: "true"
+          IMAGE_TAG: sha-${{ github.sha }}
+          LITE_DASHBOARD: "false"
+          WOTCV_BUILD_TIME: "1970-01-01T00:00:00Z"
+          WOTCV_GIT_SHA: ${{ github.sha }}
+        run: >-
+          docker compose
+          -f docker-compose.yml
+          -f docker-compose.wotcv.yml
+          -f docker-compose.wotcv.branch-build.yml
+          config --quiet
+
   backend:
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +89,7 @@ jobs:
           echo 'Digest: `${{ steps.build.outputs.digest }}`' >> "$GITHUB_STEP_SUMMARY"
 
   client:
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -9,6 +9,7 @@
     "dev:cluster": "tsc && node dist/cluster.js",
     "build": "tsc && npm run build:analytics",
     "build:analytics": "cd src/analytics-script && node build.js",
+    "check:analytics": "node scripts/check-analytics-build.mjs",
     "start": "node dist/index.js",
     "start:cluster": "node dist/cluster.js",
     "test": "vitest",

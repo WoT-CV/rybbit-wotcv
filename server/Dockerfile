@@ -32,6 +32,9 @@ ARG WOTCV_BUILD_TIME=unknown
 LABEL org.opencontainers.image.revision=${WOTCV_GIT_SHA}
 LABEL org.opencontainers.image.version=${WOTCV_IMAGE_TAG}
 LABEL org.opencontainers.image.created=${WOTCV_BUILD_TIME}
+LABEL org.opencontainers.image.source="https://github.com/WoT-CV/rybbit-wotcv"
+LABEL org.opencontainers.image.licenses="AGPL-3.0-only"
+LABEL org.opencontainers.image.title="WoT-CV Rybbit backend"
 
 ENV WOTCV_VERSION=wotcv
 ENV WOTCV_GIT_SHA=${WOTCV_GIT_SHA}

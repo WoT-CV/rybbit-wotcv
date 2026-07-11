@@ -105,6 +105,97 @@
     }
   });
 
+  // ../../../shared/dist/replayActivity.js
+  var require_replayActivity = __commonJS({
+    "../../../shared/dist/replayActivity.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.REPLAY_ACTIVITY_POST_ROLL_MS = exports.REPLAY_ACTIVITY_PRE_ROLL_MS = void 0;
+      exports.calculateReplayActivityWindows = calculateReplayActivityWindows;
+      exports.getReplayActivityOffsets = getReplayActivityOffsets;
+      exports.getReplayCaptureVersion = getReplayCaptureVersion;
+      exports.isReplayActivityEvent = isReplayActivityEvent;
+      exports.REPLAY_ACTIVITY_PRE_ROLL_MS = 500;
+      exports.REPLAY_ACTIVITY_POST_ROLL_MS = 1e3;
+      var FULL_SNAPSHOT_EVENT_TYPE = 2;
+      var INCREMENTAL_EVENT_TYPE = 3;
+      var META_EVENT_TYPE = 4;
+      var CUSTOM_EVENT_TYPE = 5;
+      var ACTIVE_INCREMENTAL_SOURCES = /* @__PURE__ */ new Set([1, 2, 3, 4, 5, 6, 7, 12]);
+      function calculateReplayActivityWindows(events, totalDuration, rangeStart = 0, rangeEnd = totalDuration) {
+        const sortedEvents = getSortedReplayEvents(events);
+        const firstTimestamp = sortedEvents[0]?.timestamp;
+        if (firstTimestamp === void 0)
+          return [];
+        const safeStart = clamp(rangeStart, 0, totalDuration);
+        const safeEnd = clamp(rangeEnd, safeStart, totalDuration);
+        const windows = sortedEvents.filter(isReplayActivityEvent).map((event) => event.timestamp - firstTimestamp).filter((offset) => offset >= safeStart - exports.REPLAY_ACTIVITY_POST_ROLL_MS && offset <= safeEnd + exports.REPLAY_ACTIVITY_PRE_ROLL_MS).map((offset) => ({
+          start: Math.max(safeStart, offset - exports.REPLAY_ACTIVITY_PRE_ROLL_MS),
+          end: Math.min(safeEnd, offset + exports.REPLAY_ACTIVITY_POST_ROLL_MS),
+          eventCount: 1
+        }));
+        return windows.reduce((merged, window2) => {
+          const current = merged.at(-1);
+          if (!current || window2.start > current.end) {
+            merged.push({ ...window2 });
+          } else {
+            current.end = Math.max(current.end, window2.end);
+            current.eventCount += 1;
+          }
+          return merged;
+        }, []);
+      }
+      function getReplayActivityOffsets(events, totalDuration) {
+        const sortedEvents = getSortedReplayEvents(events);
+        const firstTimestamp = sortedEvents[0]?.timestamp;
+        if (firstTimestamp === void 0)
+          return [];
+        return sortedEvents.filter(isReplayActivityEvent).map((event) => clamp(event.timestamp - firstTimestamp, 0, totalDuration));
+      }
+      function getReplayCaptureVersion(events) {
+        for (const event of events) {
+          if (Number(event.type) !== CUSTOM_EVENT_TYPE || !isRecord(event.data) || event.data.tag !== "wotcv/replay-config") {
+            continue;
+          }
+          const payload = event.data.payload;
+          if (!isRecord(payload))
+            continue;
+          const version = Number(payload.activityCaptureVersion);
+          if (Number.isFinite(version))
+            return version;
+        }
+        return null;
+      }
+      function isReplayActivityEvent(event) {
+        const eventType = Number(event.type);
+        if (eventType === FULL_SNAPSHOT_EVENT_TYPE || eventType === META_EVENT_TYPE)
+          return true;
+        if (eventType !== INCREMENTAL_EVENT_TYPE || !isRecord(event.data))
+          return false;
+        return ACTIVE_INCREMENTAL_SOURCES.has(Number(event.data.source));
+      }
+      function getSortedReplayEvents(events) {
+        return events.filter((event) => Number.isFinite(event.timestamp)).slice().sort((first, second) => first.timestamp - second.timestamp);
+      }
+      function clamp(value, minimum, maximum) {
+        if (!Number.isFinite(value))
+          return minimum;
+        return Math.max(minimum, Math.min(maximum, value));
+      }
+      function isRecord(value) {
+        return typeof value === "object" && value !== null && !Array.isArray(value);
+      }
+    }
+  });
+
+  // ../../../shared/dist/growthAccounting.js
+  var require_growthAccounting = __commonJS({
+    "../../../shared/dist/growthAccounting.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+    }
+  });
+
   // ../../../shared/dist/index.js
   var require_dist = __commonJS({
     "../../../shared/dist/index.js"(exports) {
@@ -133,6 +224,8 @@
       __exportStar(require_time(), exports);
       __exportStar(require_performance(), exports);
       __exportStar(require_replayExport(), exports);
+      __exportStar(require_replayActivity(), exports);
+      __exportStar(require_growthAccounting(), exports);
     }
   });
 
