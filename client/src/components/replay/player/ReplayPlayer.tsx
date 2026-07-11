@@ -102,7 +102,6 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
     (speed: string) => {
       if (!player) return;
       setPlaybackSpeed(speed);
-      player.setSpeed(parseFloat(speed));
     },
     [player, setPlaybackSpeed]
   );

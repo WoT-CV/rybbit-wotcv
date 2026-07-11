@@ -14,6 +14,14 @@ interface InactivitySkipNotice {
   createdAt: number;
 }
 
+export type ReplayPlaybackState =
+  | "paused"
+  | "playing"
+  | "skipping-inactivity"
+  | "seeking"
+  | "buffering"
+  | "ended";
+
 export const useReplayStore = create<{
   minDuration: number;
   setMinDuration: (minDuration: number) => void;
@@ -38,6 +46,15 @@ export const useReplayStore = create<{
 
   playbackSpeed: string;
   setPlaybackSpeed: (speed: string) => void;
+
+  effectivePlaybackSpeed: number;
+  setEffectivePlaybackSpeed: (speed: number) => void;
+
+  playbackState: ReplayPlaybackState;
+  setPlaybackState: (state: ReplayPlaybackState) => void;
+
+  isSkippingInactivity: boolean;
+  setIsSkippingInactivity: (isSkipping: boolean) => void;
 
   activityPeriods: ActivityPeriod[];
   setActivityPeriods: (periods: ActivityPeriod[]) => void;
@@ -87,6 +104,15 @@ export const useReplayStore = create<{
   playbackSpeed: "1",
   setPlaybackSpeed: playbackSpeed => set({ playbackSpeed }),
 
+  effectivePlaybackSpeed: 1,
+  setEffectivePlaybackSpeed: effectivePlaybackSpeed => set({ effectivePlaybackSpeed }),
+
+  playbackState: "paused",
+  setPlaybackState: playbackState => set({ playbackState }),
+
+  isSkippingInactivity: false,
+  setIsSkippingInactivity: isSkippingInactivity => set({ isSkippingInactivity }),
+
   activityPeriods: [],
   setActivityPeriods: activityPeriods => set({ activityPeriods }),
 
@@ -116,6 +142,9 @@ export const useReplayStore = create<{
       currentTime: 0,
       duration: 0,
       playbackSpeed: "1",
+      effectivePlaybackSpeed: 1,
+      playbackState: "paused",
+      isSkippingInactivity: false,
       activityPeriods: [],
       replaySegments: [],
       replayCaptureProfile: "legacy",

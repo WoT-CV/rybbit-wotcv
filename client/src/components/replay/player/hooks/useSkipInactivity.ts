@@ -2,97 +2,95 @@ import { useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { useReplayStore } from "../../replayStore";
-import { findNextActivityPeriod } from "../utils/replayUtils";
+import { findSegmentAtTime } from "../utils/replayUtils";
 
 interface UseSkipInactivityProps {
   player: any;
 }
 
-const MANUAL_SEEK_SUPPRESSION_MS = 1500;
+const MIN_SKIP_SPEED = 50;
 
 export function useSkipInactivity({ player }: UseSkipInactivityProps) {
-  const lastSkippedTargetRef = useRef<number | null>(null);
-  const skipSuppressedUntilRef = useRef(0);
+  const appliedSpeedRef = useRef<number | null>(null);
+  const skippingSegmentRef = useRef<string | null>(null);
   const {
-    activityPeriods,
     currentTime,
     duration,
-    inactivitySkipThresholdMs,
     isPlaying,
-    manualSeekVersion,
-    setCurrentTime,
-    setInactivitySkipNotice,
-    setIsPlaying,
+    playbackSpeed,
+    replaySegments,
+    setEffectivePlaybackSpeed,
+    setIsSkippingInactivity,
+    setPlaybackState,
     skipInactivityEnabled,
   } = useReplayStore(
     useShallow(state => ({
-      activityPeriods: state.activityPeriods,
       currentTime: state.currentTime,
       duration: state.duration,
-      inactivitySkipThresholdMs: state.inactivitySkipThresholdMs,
       isPlaying: state.isPlaying,
-      manualSeekVersion: state.manualSeekVersion,
-      setCurrentTime: state.setCurrentTime,
-      setInactivitySkipNotice: state.setInactivitySkipNotice,
-      setIsPlaying: state.setIsPlaying,
+      playbackSpeed: state.playbackSpeed,
+      replaySegments: state.replaySegments,
+      setEffectivePlaybackSpeed: state.setEffectivePlaybackSpeed,
+      setIsSkippingInactivity: state.setIsSkippingInactivity,
+      setPlaybackState: state.setPlaybackState,
       skipInactivityEnabled: state.skipInactivityEnabled,
     }))
   );
 
   useEffect(() => {
-    if (manualSeekVersion === 0) return;
+    if (!player) return;
 
-    skipSuppressedUntilRef.current = Date.now() + MANUAL_SEEK_SUPPRESSION_MS;
-    lastSkippedTargetRef.current = null;
-  }, [manualSeekVersion]);
+    const selectedSpeed = Number.parseFloat(playbackSpeed) || 1;
+    const currentSegment = findSegmentAtTime(replaySegments, currentTime);
+    const shouldSkip = Boolean(skipInactivityEnabled && isPlaying && currentSegment && !currentSegment.isActive);
 
-  useEffect(() => {
-    if (!skipInactivityEnabled || !isPlaying || !player || activityPeriods.length === 0) {
-      lastSkippedTargetRef.current = null;
+    if (!isPlaying) {
+      skippingSegmentRef.current = null;
+      applySpeed(player, selectedSpeed, appliedSpeedRef, setEffectivePlaybackSpeed);
+      setIsSkippingInactivity(false);
+      setPlaybackState(duration > 0 && currentTime >= duration ? "ended" : "paused");
       return;
     }
 
-    if (Date.now() < skipSuppressedUntilRef.current) {
+    if (shouldSkip && currentSegment) {
+      const segmentKey = `${currentSegment.start}:${currentSegment.end}`;
+      if (skippingSegmentRef.current !== segmentKey) {
+        const secondsRemaining = Math.max(0, (currentSegment.end - currentTime) / 1000);
+        const skipSpeed = Math.max(MIN_SKIP_SPEED, secondsRemaining);
+        skippingSegmentRef.current = segmentKey;
+        applySpeed(player, skipSpeed, appliedSpeedRef, setEffectivePlaybackSpeed);
+      }
+      setIsSkippingInactivity(true);
+      setPlaybackState("skipping-inactivity");
       return;
     }
 
-    const nextActivity = findNextActivityPeriod(currentTime, activityPeriods, inactivitySkipThresholdMs, duration);
-
-    if (!nextActivity) {
-      lastSkippedTargetRef.current = null;
-      return;
-    }
-
-    if (lastSkippedTargetRef.current === nextActivity.start) {
-      return;
-    }
-
-    lastSkippedTargetRef.current = nextActivity.start;
-    player.goto(nextActivity.start);
-    if (nextActivity.start < duration) {
-      window.requestAnimationFrame(() => {
-        player.play?.();
-      });
-    } else {
-      setIsPlaying(false);
-    }
-    setCurrentTime(nextActivity.start);
-    setInactivitySkipNotice({
-      from: nextActivity.from,
-      to: nextActivity.to,
-      skippedMs: nextActivity.skippedMs,
-      createdAt: Date.now(),
-    });
+    skippingSegmentRef.current = null;
+    applySpeed(player, selectedSpeed, appliedSpeedRef, setEffectivePlaybackSpeed);
+    setIsSkippingInactivity(false);
+    setPlaybackState("playing");
   }, [
-    activityPeriods,
     currentTime,
     duration,
-    inactivitySkipThresholdMs,
     isPlaying,
+    playbackSpeed,
     player,
-    setCurrentTime,
-    setInactivitySkipNotice,
-    setIsPlaying,
+    replaySegments,
+    setEffectivePlaybackSpeed,
+    setIsSkippingInactivity,
+    setPlaybackState,
     skipInactivityEnabled,
   ]);
+}
+
+function applySpeed(
+  player: any,
+  speed: number,
+  appliedSpeedRef: { current: number | null },
+  setEffectivePlaybackSpeed: (speed: number) => void
+) {
+  if (appliedSpeedRef.current === speed) return;
+  player.setSpeed(speed);
+  appliedSpeedRef.current = speed;
+  setEffectivePlaybackSpeed(speed);
 }
