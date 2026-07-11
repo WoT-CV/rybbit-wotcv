@@ -36,6 +36,8 @@ const NETWORK_OUTCOMES = new Set<NetworkOutcome>([
   "pending_on_unload",
 ]);
 
+type NormalizedNetworkRequest = Omit<CapturedNetworkRequest, "durationMs"> & { durationMs: number };
+
 export function parseNetworkEvents(events: readonly ReplayEventLike[] | undefined): ParsedNetworkRequest[] {
   if (!events?.length) {
     return [];
@@ -88,7 +90,7 @@ function parseRequest(
   eventTimestamp: number,
   eventIndex: number,
   requestIndex: number
-): CapturedNetworkRequest | undefined {
+): NormalizedNetworkRequest | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
