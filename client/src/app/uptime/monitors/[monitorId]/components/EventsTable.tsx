@@ -12,6 +12,7 @@ import {
 import { getTimezone } from "@/lib/store";
 import { Loader2 } from "lucide-react";
 import { DateTime } from "luxon";
+import { useExtracted } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { MonitorEvent, UptimeMonitor, useMonitorEventsInfinite } from "../../../../../api/uptime/monitors";
 import { Badge } from "../../../../../components/ui/badge";
@@ -28,6 +29,7 @@ import { InlineTimingWaterfall } from "./InlineTimingWaterfall";
 const columnHelper = createColumnHelper<MonitorEvent>();
 
 export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; monitorId: number }) {
+  const t = useExtracted();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { selectedRegion } = useUptimeStore();
@@ -74,7 +76,7 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
         size: 40,
       }),
       columnHelper.accessor("timestamp", {
-        header: "Time",
+        header: t("Time"),
         cell: ({ row }) => {
           const timestamp = DateTime.fromSQL(row.original.timestamp, { zone: "utc" });
           return (
@@ -85,7 +87,7 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
         },
       }),
       columnHelper.accessor("status_code", {
-        header: "Status",
+        header: t("Status"),
         cell: ({ row }) => {
           const code = row.original.status_code;
           if (!code) return <span className="text-neutral-500">-</span>;
@@ -106,7 +108,7 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
         },
       }),
       columnHelper.accessor("response_time_ms", {
-        header: "Latency",
+        header: t("Latency"),
         cell: ({ row }) => (
           <span className="font-mono text-sm">
             {row.original.response_time_ms ? `${Math.round(row.original.response_time_ms)}ms` : "-"}
@@ -115,14 +117,14 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
       }),
       columnHelper.display({
         id: "timings",
-        header: "Timings",
+        header: t("Timings"),
         cell: ({ row }) => <InlineTimingWaterfall event={row.original} />,
       }),
       // Conditionally add region column for global monitoring
       ...(monitor?.monitoringType === "global"
         ? [
             columnHelper.accessor("region", {
-              header: "Region",
+              header: t("Region"),
               cell: ({ row }) => {
                 const region = REGIONS.find(r => r.code === row.original.region);
                 return (
@@ -136,7 +138,7 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
           ]
         : []),
     ],
-    [monitor?.monitoringType]
+    [monitor?.monitoringType, t]
   );
 
   // Create table instance
@@ -156,7 +158,7 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Recent Events</CardTitle>
+        <CardTitle className="text-base">{t("Recent Events")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg border border-neutral-800">
@@ -214,7 +216,7 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
               ) : table.getRowModel().rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="text-center text-neutral-500 py-8">
-                    No events found
+                    {t("No events found")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -245,7 +247,7 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
           <div className="flex justify-center">
             <Button variant="ghost" size="sm" disabled>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading more events&hellip;
+              {t("Loading more events")}...
             </Button>
           </div>
         )}
@@ -254,7 +256,7 @@ export function EventsTable({ monitor, monitorId }: { monitor?: UptimeMonitor; m
         {hasNextPage && !isFetchingNextPage && (
           <div className="flex justify-center">
             <Button variant="outline" size="sm" onClick={() => fetchNextPage()}>
-              Load More
+              {t("Load More")}
             </Button>
           </div>
         )}

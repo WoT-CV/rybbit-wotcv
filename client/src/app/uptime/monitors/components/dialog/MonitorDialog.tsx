@@ -24,6 +24,7 @@ import { NotificationsTab } from "./NotificationsTab";
 import { IS_CLOUD } from "@/lib/const";
 import { useQuery } from "@tanstack/react-query";
 import { authedFetch } from "../../../../../api/utils";
+import { useExtracted } from "next-intl";
 
 interface MonitorDialogProps {
   monitor?: UptimeMonitor;
@@ -32,6 +33,7 @@ interface MonitorDialogProps {
 }
 
 export function MonitorDialog({ monitor, open, onOpenChange }: MonitorDialogProps) {
+  const t = useExtracted();
   const { data: activeOrganization, isPending } = authClient.useActiveOrganization();
   const createMonitor = useCreateMonitor();
   const updateMonitor = useUpdateMonitor();
@@ -108,16 +110,16 @@ export function MonitorDialog({ monitor, open, onOpenChange }: MonitorDialogProp
           monitorId: monitor.id,
           data,
         });
-        toast.success("Monitor updated successfully");
+        toast.success(t("Monitor updated successfully"));
       } else {
         await createMonitor.mutateAsync(data);
-        toast.success("Monitor created successfully");
+        toast.success(t("Monitor created successfully"));
       }
       onOpenChange(false);
       form.reset();
     } catch (error: any) {
       console.error("Submit error:", error);
-      toast.error(error.response?.data?.error || `Failed to ${isEdit ? "update" : "create"} monitor`);
+      toast.error(error.response?.data?.error || (isEdit ? t("Failed to update monitor") : t("Failed to create monitor")));
     }
   };
 
@@ -219,20 +221,20 @@ export function MonitorDialog({ monitor, open, onOpenChange }: MonitorDialogProp
         <Form {...form}>
           <form>
             <DialogHeader>
-              <DialogTitle>{isEdit ? "Edit" : "Create New"} Monitor</DialogTitle>
+              <DialogTitle>{isEdit ? t("Edit Monitor") : t("Create New Monitor")}</DialogTitle>
               <DialogDescription>
                 {isEdit
-                  ? "Update the configuration for this monitor."
-                  : "Set up a new uptime monitor to track the availability of your endpoints."}
+                  ? t("Update the configuration for this monitor.")
+                  : t("Set up a new uptime monitor to track the availability of your endpoints.")}
               </DialogDescription>
             </DialogHeader>
 
             <Tabs defaultValue="general" className="mt-4">
               <TabsList className="">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="advanced">Advanced</TabsTrigger>
-                <TabsTrigger value="regions">Regions</TabsTrigger>
-                <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                <TabsTrigger value="general">{t("General")}</TabsTrigger>
+                <TabsTrigger value="advanced">{t("Advanced")}</TabsTrigger>
+                <TabsTrigger value="regions">{t("Regions")}</TabsTrigger>
+                <TabsTrigger value="notifications">{t("Notifications")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="general" className="space-y-4 mt-4">
@@ -259,7 +261,7 @@ export function MonitorDialog({ monitor, open, onOpenChange }: MonitorDialogProp
                 onClick={() => onOpenChange(false)}
                 disabled={createMonitor.isPending || updateMonitor.isPending}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
@@ -270,7 +272,7 @@ export function MonitorDialog({ monitor, open, onOpenChange }: MonitorDialogProp
                 }
               >
                 {(createMonitor.isPending || updateMonitor.isPending) && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isEdit ? "Update" : "Create"} Monitor
+                {isEdit ? t("Update Monitor") : t("Create Monitor")}
               </Button>
             </DialogFooter>
           </form>

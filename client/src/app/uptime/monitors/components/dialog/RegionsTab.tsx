@@ -10,6 +10,7 @@ import { CountryFlag } from "@/app/[site]/components/shared/icons/CountryFlag";
 import { IS_CLOUD } from "@/lib/const";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useExtracted } from "next-intl";
 
 interface Region {
   code: string;
@@ -20,6 +21,7 @@ interface Region {
 }
 
 export function RegionsTab() {
+  const t = useExtracted();
   const form = useFormContext();
   const monitoringType = IS_CLOUD ? "global" : "local";
   const selectedRegions = form.watch("selectedRegions") || [];
@@ -71,16 +73,16 @@ export function RegionsTab() {
             <h3 className="text-sm font-medium flex items-center gap-2">
               {IS_CLOUD ? (
                 <>
-                  <Globe className="h-4 w-4" /> Global Monitoring
+                  <Globe className="h-4 w-4" /> {t("Global Monitoring")}
                 </>
               ) : (
                 <>
-                  <Server className="h-4 w-4" /> Local Monitoring
+                  <Server className="h-4 w-4" /> {t("Local Monitoring")}
                 </>
               )}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {IS_CLOUD ? "Monitor from multiple regions worldwide" : "Monitor from your main server location only"}
+              {IS_CLOUD ? t("Monitor from multiple regions worldwide") : t("Monitor from your main server location only")}
             </p>
           </div>
         </div>
@@ -145,7 +147,7 @@ export function RegionsTab() {
                                 >
                                   {region.name}
                                 </label>
-                                {!region.isHealthy && <span className="ml-auto text-xs text-red-500">Offline</span>}
+                                {!region.isHealthy && <span className="ml-auto text-xs text-red-500">{t("Offline")}</span>}
                               </div>
                             </div>
                           </FormItem>
@@ -162,14 +164,14 @@ export function RegionsTab() {
           {selectedRegions.length === 0 && (
             <Alert variant="destructive">
               <Info className="h-4 w-4" />
-              <AlertDescription>Please select at least one region for global monitoring.</AlertDescription>
+              <AlertDescription>{t("Please select at least one region for global monitoring.")}</AlertDescription>
             </Alert>
           )}
 
           {selectedRegions.length === 1 && (
             <Alert>
               <Info className="h-4 w-4" />
-              <AlertDescription>At least one region must remain selected.</AlertDescription>
+              <AlertDescription>{t("At least one region must remain selected.")}</AlertDescription>
             </Alert>
           )}
         </>
@@ -177,8 +179,7 @@ export function RegionsTab() {
         <Alert>
           <Crown className="h-4 w-4" />
           <AlertDescription>
-            Upgrade to Cloud or Enterprise tier to enable multi-region monitoring and get better uptime insights from
-            multiple geographic locations.
+            {t("Upgrade to Cloud or Enterprise tier to enable multi-region monitoring and get better uptime insights from multiple geographic locations.")}
           </AlertDescription>
         </Alert>
       )}

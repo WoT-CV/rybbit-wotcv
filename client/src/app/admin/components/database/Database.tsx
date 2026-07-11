@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useClickhouseStats } from "@/api/admin/hooks/useClickhouseStats";
@@ -41,6 +42,8 @@ function formatBytes(bytes: number): string {
 }
 
 function TableStatsTable({ tableStats, isLoading }: { tableStats: any[] | undefined; isLoading: boolean }) {
+  const t = useExtracted();
+
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
@@ -54,7 +57,7 @@ function TableStatsTable({ tableStats, isLoading }: { tableStats: any[] | undefi
   if (!tableStats || tableStats.length === 0) {
     return (
       <div className="py-8 text-center text-neutral-500 dark:text-neutral-400">
-        No table statistics available
+        {t("No table statistics available")}
       </div>
     );
   }
@@ -63,11 +66,11 @@ function TableStatsTable({ tableStats, isLoading }: { tableStats: any[] | undefi
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Table</TableHead>
-          <TableHead className="text-right">Rows</TableHead>
-          <TableHead className="text-right">Compressed</TableHead>
-          <TableHead className="text-right">Uncompressed</TableHead>
-          <TableHead className="text-right">Ratio</TableHead>
+          <TableHead>{t("Table")}</TableHead>
+          <TableHead className="text-right">{t("Rows")}</TableHead>
+          <TableHead className="text-right">{t("Compressed")}</TableHead>
+          <TableHead className="text-right">{t("Uncompressed")}</TableHead>
+          <TableHead className="text-right">{t("Ratio")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -94,6 +97,7 @@ function TableStatsTable({ tableStats, isLoading }: { tableStats: any[] | undefi
 }
 
 export function Database() {
+  const t = useExtracted();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -134,41 +138,41 @@ export function Database() {
         isLoading={statsLoading}
         stats={[
           {
-            label: "Total rows",
+            label: t("Total rows"),
             value: tableStats ? formatNumber(totalRows) : "-",
-            hint: tableStats ? `across ${tableStats.length} tables` : undefined,
+            hint: tableStats ? t("across {count} tables", { count: String(tableStats.length) }) : undefined,
           },
           {
-            label: "Compressed",
+            label: t("Compressed"),
             value: tableStats ? formatBytes(totalCompressedBytes) : "-",
-            hint: tableStats ? `${compressionRatio}% compression` : undefined,
+            hint: tableStats ? t("{ratio}% compression", { ratio: compressionRatio }) : undefined,
           },
           {
-            label: "Uncompressed",
+            label: t("Uncompressed"),
             value: tableStats ? formatBytes(totalUncompressedBytes) : "-",
-            hint: tableStats ? "original size" : undefined,
+            hint: tableStats ? t("original size") : undefined,
           },
           {
-            label: "Parts",
+            label: t("Parts"),
             value: tableStats ? formatNumber(totalParts) : "-",
-            hint: tableStats ? "active data parts" : undefined,
+            hint: tableStats ? t("active data parts") : undefined,
           },
         ]}
       />
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="query-log">Query Log</TabsTrigger>
+          <TabsTrigger value="overview">{t("Overview")}</TabsTrigger>
+          <TabsTrigger value="query-log">{t("Query Log")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Panel title="Table statistics" flush>
+            <Panel title={t("Table statistics")} flush>
               <TableStatsTable tableStats={tableStats} isLoading={statsLoading} />
             </Panel>
 
-            <Panel title="Insert rate (last 24h)">
+            <Panel title={t("Insert rate (last 24h)")}>
               <InsertRateChart
                 insertRate={stats?.insertRate}
                 isLoading={statsLoading}
@@ -178,21 +182,21 @@ export function Database() {
           </div>
 
           <Panel
-            title="Rows inserted by table"
+            title={t("Rows inserted by table")}
             actions={
               <Select value={String(rowsDays)} onValueChange={v => setRowsDays(Number(v))}>
                 <SelectTrigger className="h-8 w-[140px] text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="14">Last 14 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="60">Last 60 days</SelectItem>
-                  <SelectItem value="90">Last 90 days</SelectItem>
-                  <SelectItem value="180">Last 180 days</SelectItem>
-                  <SelectItem value="365">Last 365 days</SelectItem>
-                  <SelectItem value="0">All time</SelectItem>
+                  <SelectItem value="7">{t("Last 7 days")}</SelectItem>
+                  <SelectItem value="14">{t("Last 14 days")}</SelectItem>
+                  <SelectItem value="30">{t("Last 30 days")}</SelectItem>
+                  <SelectItem value="60">{t("Last 60 days")}</SelectItem>
+                  <SelectItem value="90">{t("Last 90 days")}</SelectItem>
+                  <SelectItem value="180">{t("Last 180 days")}</SelectItem>
+                  <SelectItem value="365">{t("Last 365 days")}</SelectItem>
+                  <SelectItem value="0">{t("All time")}</SelectItem>
                 </SelectContent>
               </Select>
             }
@@ -202,7 +206,7 @@ export function Database() {
         </TabsContent>
 
         <TabsContent value="query-log" className="mt-4">
-          <Panel title="Query log" actions={<span className="text-xs text-neutral-500 dark:text-neutral-400">last 24 hours</span>}>
+          <Panel title={t("Query log")} actions={<span className="text-xs text-neutral-500 dark:text-neutral-400">{t("last 24 hours")}</span>}>
             <QueryLogTable />
           </Panel>
         </TabsContent>

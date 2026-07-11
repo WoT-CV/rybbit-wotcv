@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@uidotdev/usehooks";
+import { useExtracted } from "next-intl";
 import { FUNNEL_PAGE_FILTERS } from "../../../../lib/filterGroups";
 import { getFilteredFilters, useStore } from "../../../../lib/store";
 import { buildApiParams } from "../../../utils";
@@ -9,6 +10,7 @@ import { analyzeFunnel, FunnelRequest, FunnelResponse, saveFunnel, SaveFunnelReq
  * Hook for analyzing conversion funnels through a series of steps
  */
 export function useGetFunnel(config?: FunnelRequest, debounce?: boolean) {
+  const t = useExtracted();
   const { site, time, timezone } = useStore();
 
   const debouncedConfig = useDebounce(config, 500);
@@ -21,7 +23,7 @@ export function useGetFunnel(config?: FunnelRequest, debounce?: boolean) {
     queryKey: ["funnel", site, time, filteredFilters, configToUse?.steps, timezone],
     queryFn: async () => {
       if (!configToUse) {
-        throw new Error("Funnel configuration is required");
+        throw new Error(t("Funnel configuration is required"));
       }
 
       return analyzeFunnel(site, {
@@ -41,6 +43,7 @@ export function useGetFunnel(config?: FunnelRequest, debounce?: boolean) {
  * Hook for saving funnel configurations without analyzing them
  */
 export function useSaveFunnel() {
+  const t = useExtracted();
   const { site } = useStore();
   const queryClient = useQueryClient();
 
@@ -58,7 +61,7 @@ export function useSaveFunnel() {
 
         return saveResponse;
       } catch (error) {
-        throw new Error("Failed to save funnel");
+        throw new Error(t("Failed to save funnel"));
       }
     },
   });

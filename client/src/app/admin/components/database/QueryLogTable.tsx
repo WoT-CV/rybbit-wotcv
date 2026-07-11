@@ -13,6 +13,7 @@ import { format as formatSql } from "sql-formatter";
 import { useClickhouseQueryLog } from "@/api/admin/hooks/useClickhouseStats";
 import { QueryLogEntry, QueryLogParams } from "@/api/admin/endpoints/clickhouseStats";
 import { getTimezone } from "../../../../lib/store";
+import { useExtracted } from "next-intl";
 
 function formatDuration(ms: number): string {
   if (ms < 1) return "<1ms";
@@ -76,6 +77,7 @@ function SortableHeader({
 }
 
 export function QueryLogTable() {
+  const t = useExtracted();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [sortBy, setSortBy] = useState<SortColumn>("event_time");
@@ -110,8 +112,8 @@ export function QueryLogTable() {
   if (data?.unavailable) {
     return (
       <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
-        <p>Feature unavailable</p>
-        <p className="text-xs mt-1">system.query_log is disabled to save disk space</p>
+        <p>{t("Feature unavailable")}</p>
+        <p className="text-xs mt-1">{t("system.query_log is disabled to save disk space")}</p>
       </div>
     );
   }
@@ -121,34 +123,34 @@ export function QueryLogTable() {
       {/* Filters */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-neutral-500">Kind:</span>
+          <span className="text-sm text-neutral-500">{t("Kind:")}</span>
           <Select value={queryKind || "all"} onValueChange={(v) => { setQueryKind(v === "all" ? "" : v); setPage(1); }}>
             <SelectTrigger className="h-8 w-28">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="Select">Select</SelectItem>
-              <SelectItem value="Insert">Insert</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
+              <SelectItem value="all">{t("All")}</SelectItem>
+              <SelectItem value="Select">{t("Select")}</SelectItem>
+              <SelectItem value="Insert">{t("Insert")}</SelectItem>
+              <SelectItem value="Other">{t("Other")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-neutral-500">Status:</span>
+          <span className="text-sm text-neutral-500">{t("Status:")}</span>
           <Select value={type || "all"} onValueChange={(v) => { setType(v === "all" ? "" : v); setPage(1); }}>
             <SelectTrigger className="h-8 w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="QueryFinish">Success</SelectItem>
-              <SelectItem value="ExceptionWhileProcessing">Error</SelectItem>
+              <SelectItem value="all">{t("All")}</SelectItem>
+              <SelectItem value="QueryFinish">{t("Success")}</SelectItem>
+              <SelectItem value="ExceptionWhileProcessing">{t("Error")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         {isFetching && !isLoading && (
-          <span className="text-xs text-neutral-400">Updating&hellip;</span>
+          <span className="text-xs text-neutral-400">{t("Updating")}...</span>
         )}
       </div>
 
@@ -158,16 +160,16 @@ export function QueryLogTable() {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortableHeader column="event_time" label="Time" currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
-                <TableHead>User</TableHead>
-                <TableHead>Kind</TableHead>
-                <TableHead>Status</TableHead>
-                <SortableHeader column="query_duration_ms" label="Duration" currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
-                <SortableHeader column="read_rows" label="Rows Read" currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
-                <SortableHeader column="read_bytes" label="Bytes Read" currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
-                <SortableHeader column="written_rows" label="Rows Written" currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
-                <SortableHeader column="memory_usage" label="Memory" currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
-                <TableHead>Query</TableHead>
+                <SortableHeader column="event_time" label={t("Time")} currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
+                <TableHead>{t("User")}</TableHead>
+                <TableHead>{t("Kind")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
+                <SortableHeader column="query_duration_ms" label={t("Duration")} currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
+                <SortableHeader column="read_rows" label={t("Rows Read")} currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
+                <SortableHeader column="read_bytes" label={t("Bytes Read")} currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
+                <SortableHeader column="written_rows" label={t("Rows Written")} currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
+                <SortableHeader column="memory_usage" label={t("Memory")} currentSort={sortBy} currentOrder={sortOrder} onSort={handleSort} />
+                <TableHead>{t("Query")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -189,7 +191,7 @@ export function QueryLogTable() {
               ) : !data?.items?.length ? (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center py-8 text-neutral-500 dark:text-neutral-400">
-                    No queries found in the last 24 hours
+                    {t("No queries found in the last 24 hours")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -204,12 +206,12 @@ export function QueryLogTable() {
                       <TableCell className="text-xs">{entry.user}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="text-xs">
-                          {entry.queryKind || "Other"}
+                          {entry.queryKind || t("Other")}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {isError ? (
-                          <Badge variant="destructive" className="text-xs">Error</Badge>
+                          <Badge variant="destructive" className="text-xs">{t("Error")}</Badge>
                         ) : (
                           <Badge variant="outline" className="text-xs text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700">OK</Badge>
                         )}
@@ -242,12 +244,12 @@ export function QueryLogTable() {
       <Sheet open={!!selectedEntry} onOpenChange={(open) => { if (!open) setSelectedEntry(null); }}>
         <SheetContent side="right" className="sm:max-w-2xl w-full overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Query Details</SheetTitle>
+            <SheetTitle>{t("Query Details")}</SheetTitle>
             {selectedEntry && (
               <SheetDescription>
                 {DateTime.fromSQL(selectedEntry.eventTime, { zone: "utc" }).toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS)}
-                {" \u00b7 "}{selectedEntry.queryKind || "Other"}
-                {" \u00b7 "}{selectedEntry.type === "ExceptionWhileProcessing" ? "Error" : "OK"}
+                {" \u00b7 "}{selectedEntry.queryKind || t("Other")}
+                {" \u00b7 "}{selectedEntry.type === "ExceptionWhileProcessing" ? t("Error") : "OK"}
               </SheetDescription>
             )}
           </SheetHeader>
@@ -255,32 +257,32 @@ export function QueryLogTable() {
             <div className="mt-6 space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-neutral-500">User</span>
+                  <span className="text-neutral-500">{t("User")}</span>
                   <p className="font-medium">{selectedEntry.user}</p>
                 </div>
                 <div>
-                  <span className="text-neutral-500">Duration</span>
+                  <span className="text-neutral-500">{t("Duration")}</span>
                   <p className="font-medium">{formatDuration(selectedEntry.queryDurationMs)}</p>
                 </div>
                 <div>
-                  <span className="text-neutral-500">Rows Read</span>
+                  <span className="text-neutral-500">{t("Rows Read")}</span>
                   <p className="font-medium">{formatNumber(selectedEntry.readRows)}</p>
                 </div>
                 <div>
-                  <span className="text-neutral-500">Bytes Read</span>
+                  <span className="text-neutral-500">{t("Bytes Read")}</span>
                   <p className="font-medium">{formatBytes(selectedEntry.readBytes)}</p>
                 </div>
                 <div>
-                  <span className="text-neutral-500">Rows Written</span>
+                  <span className="text-neutral-500">{t("Rows Written")}</span>
                   <p className="font-medium">{formatNumber(selectedEntry.writtenRows)}</p>
                 </div>
                 <div>
-                  <span className="text-neutral-500">Memory</span>
+                  <span className="text-neutral-500">{t("Memory")}</span>
                   <p className="font-medium">{formatBytes(selectedEntry.memoryUsage)}</p>
                 </div>
               </div>
               <div>
-                <span className="text-sm text-neutral-500">Query</span>
+                <span className="text-sm text-neutral-500">{t("Query")}</span>
                 <pre className="mt-1 p-3 rounded-lg bg-neutral-100 dark:bg-neutral-900 text-xs font-mono whitespace-pre-wrap break-all overflow-x-auto max-h-[60vh]">
                   {(() => { try { return formatSql(selectedEntry.query, { language: "sql" }); } catch { return selectedEntry.query; } })()}
                 </pre>
@@ -302,7 +304,7 @@ export function QueryLogTable() {
             setPageSize(size);
             setPage(1);
           }}
-          itemName="queries"
+          itemName={t("queries")}
         />
       )}
     </div>

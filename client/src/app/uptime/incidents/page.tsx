@@ -15,6 +15,7 @@ import { getTimezone } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { AlertCircle, CheckCircle, MoreHorizontal } from "lucide-react";
 import { DateTime } from "luxon";
+import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -47,7 +48,7 @@ const getStatusIcon = (status: UptimeIncident["status"]) => {
   }
 };
 
-const formatDuration = (startTime: string, endTime: string | null): string => {
+const formatDuration = (startTime: string, endTime: string | null, ongoingLabel: string): string => {
   const start = DateTime.fromSQL(startTime, { zone: "UTC" });
   const end = endTime ? DateTime.fromSQL(endTime, { zone: "UTC" }) : DateTime.now().toUTC();
   const diff = end.diff(start, ["days", "hours", "minutes", "seconds"]);
@@ -68,10 +69,11 @@ const formatDuration = (startTime: string, endTime: string | null): string => {
     result = `${seconds}s`;
   }
 
-  return endTime ? result : `${result} (ongoing)`;
+  return endTime ? result : `${result} (${ongoingLabel})`;
 };
 
 export default function IncidentsPage() {
+  const t = useExtracted();
   const { formatRelative } = useDateTimeFormat();
 
   const formatStartTime = (timestamp: string) => {
@@ -89,32 +91,32 @@ export default function IncidentsPage() {
   const handleAcknowledge = async (incident: UptimeIncident) => {
     try {
       await acknowledgeIncident.mutateAsync(incident.id);
-      toast.success("Incident acknowledged");
+      toast.success(t("Incident acknowledged"));
     } catch (error) {
-      toast.error("Failed to acknowledge incident");
+      toast.error(t("Failed to acknowledge incident"));
     }
   };
 
   const handleResolve = async (incident: UptimeIncident) => {
     try {
       await resolveIncident.mutateAsync(incident.id);
-      toast.success("Incident resolved");
+      toast.success(t("Incident resolved"));
     } catch (error) {
-      toast.error("Failed to resolve incident");
+      toast.error(t("Failed to resolve incident"));
     }
   };
 
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Incidents</h1>
+        <h1 className="text-2xl font-semibold">{t("Incidents")}</h1>
 
         <Tabs value={statusFilter} onValueChange={value => setStatusFilter(value as any)}>
           <TabsList>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="acknowledged">Acknowledged</TabsTrigger>
-            <TabsTrigger value="resolved">Resolved</TabsTrigger>
-            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="active">{t("Active")}</TabsTrigger>
+            <TabsTrigger value="acknowledged">{t("Acknowledged")}</TabsTrigger>
+            <TabsTrigger value="resolved">{t("Resolved")}</TabsTrigger>
+            <TabsTrigger value="all">{t("All")}</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -124,10 +126,10 @@ export default function IncidentsPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-10"></TableHead>
-              <TableHead>Monitor Name</TableHead>
-              <TableHead>Affected Regions</TableHead>
-              <TableHead>Start Time</TableHead>
-              <TableHead>Duration</TableHead>
+              <TableHead>{t("Monitor Name")}</TableHead>
+              <TableHead>{t("Affected Regions")}</TableHead>
+              <TableHead>{t("Start Time")}</TableHead>
+              <TableHead>{t("Duration")}</TableHead>
               <TableHead className="w-10"></TableHead>
             </TableRow>
           </TableHeader>
@@ -158,7 +160,7 @@ export default function IncidentsPage() {
             ) : data?.incidents?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-neutral-500">
-                  No incidents found
+                  {t("No incidents found")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -185,7 +187,7 @@ export default function IncidentsPage() {
                               </span>
                             ))}
                             <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-neutral-700 text-neutral-300">
-                              +{incident.affectedRegions.length - 3} more
+                              {t("+{count} more", { count: String(incident.affectedRegions.length - 3) })}
                             </span>
                           </>
                         ) : (
@@ -220,7 +222,7 @@ export default function IncidentsPage() {
                   <TableCell className="text-sm text-neutral-300">{formatStartTime(incident.startTime)}</TableCell>
                   <TableCell>
                     <div className="text-sm text-neutral-300">
-                      {formatDuration(incident.startTime, incident.endTime || null)}
+                      {formatDuration(incident.startTime, incident.endTime || null, t("ongoing"))}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -232,10 +234,10 @@ export default function IncidentsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {incident.status === "active" && (
-                          <DropdownMenuItem onClick={() => handleAcknowledge(incident)}>Acknowledge</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAcknowledge(incident)}>{t("Acknowledge")}</DropdownMenuItem>
                         )}
                         {incident.status !== "resolved" && (
-                          <DropdownMenuItem onClick={() => handleResolve(incident)}>Resolve</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleResolve(incident)}>{t("Resolve")}</DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>

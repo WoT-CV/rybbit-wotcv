@@ -4,6 +4,7 @@ import { CountryFlag } from "@/app/[site]/components/shared/icons/CountryFlag";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Earth } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { UptimeMonitor } from "../../../../../api/uptime/monitors";
 import { TIME_RANGES, useUptimeStore } from "../../components/uptimeStore";
 import { REGIONS } from "../../const";
@@ -13,7 +14,25 @@ interface FilterBarProps {
   isLoading: boolean;
 }
 
+function getRegionLabel(code: string, fallbackName: string, t: ReturnType<typeof useExtracted>) {
+  switch (code) {
+    case "all":
+      return t("All Regions");
+    case "us-east":
+      return t("US East");
+    case "us-west":
+      return t("US West");
+    case "eu":
+      return t("Europe");
+    case "asia":
+      return t("Asia");
+    default:
+      return fallbackName;
+  }
+}
+
 export function FilterBar({ monitor, isLoading }: FilterBarProps) {
+  const t = useExtracted();
   const { timeRange, setTimeRange, selectedRegion, setSelectedRegion } = useUptimeStore();
 
   // Only show region filter for global monitors (multi-region)
@@ -43,7 +62,7 @@ export function FilterBar({ monitor, isLoading }: FilterBarProps) {
           onValueChange={value => setSelectedRegion(value === "all" ? undefined : value)}
         >
           <SelectTrigger size="sm" className="w-[140px] ml-2">
-            <SelectValue placeholder="Select region" />
+            <SelectValue placeholder={t("Select region")} />
           </SelectTrigger>
           <SelectContent size="sm">
             {REGIONS.filter((region, i) => i === 0 || monitor?.selectedRegions.includes(region.code)).map(region => (
@@ -54,7 +73,7 @@ export function FilterBar({ monitor, isLoading }: FilterBarProps) {
                   ) : (
                     <Earth className="w-4 h-4" />
                   )}
-                  <span>{region.name}</span>
+                  <span>{getRegionLabel(region.code, region.name, t)}</span>
                 </div>
               </SelectItem>
             ))}

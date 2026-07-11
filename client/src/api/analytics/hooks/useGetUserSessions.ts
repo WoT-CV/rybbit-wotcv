@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
 import { SESSION_PAGE_FILTERS } from "../../../lib/filterGroups";
 import { getFilteredFilters, getTimezone, useStore } from "../../../lib/store";
 import { buildApiParams } from "../../utils";
@@ -104,6 +105,7 @@ export function useGetSessionsInfinite({
 }
 
 export function useGetSessionDetailsInfinite(sessionId: string | null) {
+  const t = useExtracted();
   const { site, time } = useStore();
   const pastMinutesMode = time.mode === "past-minutes";
 
@@ -116,7 +118,7 @@ export function useGetSessionDetailsInfinite(sessionId: string | null) {
   return useInfiniteQuery<{ data: SessionPageviewsAndEvents }>({
     queryKey: ["session-details-infinite", sessionId, site, minutes],
     queryFn: ({ pageParam = 0 }) => {
-      if (!sessionId) throw new Error("Session ID is required");
+      if (!sessionId) throw new Error(t("Session ID is required"));
 
       return fetchSession(site, {
         sessionId,

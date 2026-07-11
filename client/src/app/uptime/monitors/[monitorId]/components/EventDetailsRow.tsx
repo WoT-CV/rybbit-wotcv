@@ -3,12 +3,15 @@
 import { cn } from "@/lib/utils";
 import { MonitorEvent } from "@/api/uptime/monitors";
 import { TimingWaterfall } from "./TimingWaterfall";
+import { useExtracted } from "next-intl";
 
 interface EventDetailsRowProps {
   event: MonitorEvent;
 }
 
 export function EventDetailsRow({ event }: EventDetailsRowProps) {
+  const t = useExtracted();
+
   return (
     <div className="bg-neutral-900 border-t border-neutral-800 p-6">
       <div className="space-y-6">
@@ -22,7 +25,7 @@ export function EventDetailsRow({ event }: EventDetailsRowProps) {
         {/* Error Message */}
         {event.error_message && (
           <div>
-            <h4 className="text-sm font-medium text-red-500 mb-2">Error Message</h4>
+            <h4 className="text-sm font-medium text-red-500 mb-2">{t("Error Message")}</h4>
             <div className="text-sm text-neutral-400 bg-neutral-900 p-3 rounded whitespace-pre-wrap font-mono">
               {event.error_message}
             </div>
@@ -32,7 +35,7 @@ export function EventDetailsRow({ event }: EventDetailsRowProps) {
         {/* Headers Table */}
         {event.response_headers && Object.keys(event.response_headers).length > 0 && (
           <div>
-            <h4 className="text-sm font-medium mb-2">Response Headers</h4>
+            <h4 className="text-sm font-medium mb-2">{t("Response Headers")}</h4>
             <div className="border border-neutral-800 rounded overflow-hidden">
               <table className="w-full text-xs">
                 <tbody>

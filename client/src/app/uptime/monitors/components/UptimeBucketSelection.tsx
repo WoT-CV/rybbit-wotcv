@@ -2,6 +2,7 @@
 
 import React from "react";
 import { SelectItem, Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useExtracted } from "next-intl";
 
 export type TimeBucket =
   | "minute"
@@ -49,19 +50,31 @@ const getBucketOptions = (timeRange: string): TimeBucket[] => {
   }
 };
 
-const bucketLabels: Record<TimeBucket, string> = {
-  minute: "Minute",
-  five_minutes: "5 Minutes",
-  ten_minutes: "10 Minutes",
-  fifteen_minutes: "15 Minutes",
-  hour: "Hour",
-  day: "Day",
-  week: "Week",
-  month: "Month",
-  year: "Year",
-};
+function getBucketLabel(bucket: TimeBucket, t: ReturnType<typeof useExtracted>) {
+  switch (bucket) {
+    case "minute":
+      return t("Minute");
+    case "five_minutes":
+      return t("5 Minutes");
+    case "ten_minutes":
+      return t("10 Minutes");
+    case "fifteen_minutes":
+      return t("15 Minutes");
+    case "hour":
+      return t("Hour");
+    case "day":
+      return t("Day");
+    case "week":
+      return t("Week");
+    case "month":
+      return t("Month");
+    case "year":
+      return t("Year");
+  }
+}
 
 export function UptimeBucketSelection({ timeRange, bucket, onBucketChange }: UptimeBucketSelectionProps) {
+  const t = useExtracted();
   const availableBuckets = getBucketOptions(timeRange);
 
   // If current bucket is not available for the time range, select the first available one
@@ -79,7 +92,7 @@ export function UptimeBucketSelection({ timeRange, bucket, onBucketChange }: Upt
       <SelectContent>
         {availableBuckets.map(bucketOption => (
           <SelectItem key={bucketOption} value={bucketOption} size="sm">
-            {bucketLabels[bucketOption]}
+            {getBucketLabel(bucketOption, t)}
           </SelectItem>
         ))}
       </SelectContent>

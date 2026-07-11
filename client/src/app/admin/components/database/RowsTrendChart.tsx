@@ -10,6 +10,7 @@ import { userLocale } from "@/lib/dateTimeUtils";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { formatter } from "@/lib/utils";
 import { useState } from "react";
+import { useExtracted } from "next-intl";
 
 const CHART_COLORS = [
   "#60a5fa", // blue-400
@@ -25,6 +26,7 @@ interface RowsTrendChartProps {
 }
 
 export function RowsTrendChart({ rowsByDate, isLoading, days }: RowsTrendChartProps) {
+  const t = useExtracted();
   const nivoTheme = useNivoTheme();
   const { width } = useWindowSize();
   const maxTicks = Math.round((width ?? Infinity) / 100);
@@ -41,7 +43,7 @@ export function RowsTrendChart({ rowsByDate, isLoading, days }: RowsTrendChartPr
   if (!rowsByDate || rowsByDate.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-neutral-500 dark:text-neutral-400">
-        No rows trend data available
+        {t("No rows trend data available")}
       </div>
     );
   }
@@ -110,7 +112,7 @@ export function RowsTrendChart({ rowsByDate, isLoading, days }: RowsTrendChartPr
       <div className="h-64 flex-1 min-w-0">
         {visibleSeries.length === 0 ? (
           <div className="h-full flex items-center justify-center text-neutral-500 dark:text-neutral-400">
-            No series selected
+            {t("No series selected")}
           </div>
         ) : (
           <ResponsiveLine
@@ -224,7 +226,7 @@ export function RowsTrendChart({ rowsByDate, isLoading, days }: RowsTrendChartPr
           );
         })}
         <div className="flex items-center justify-between gap-3 border-t border-neutral-200 dark:border-neutral-700 pt-1.5 mt-0.5">
-          <span className="text-neutral-600 dark:text-neutral-400">Total</span>
+          <span className="text-neutral-600 dark:text-neutral-400">{t("Total")}</span>
           <span className="font-semibold tabular-nums">
             {formatter(totalRows)}
           </span>

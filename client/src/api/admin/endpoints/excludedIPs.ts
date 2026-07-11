@@ -31,12 +31,12 @@ export const updateExcludedIPs = async (siteId: number, excludedIPs: string[]): 
     await updateSiteConfig(siteId, { excludedIPs });
     return {
       success: true,
-      message: "Excluded IPs updated successfully",
+      message: "Wykluczone adresy IP zostały zaktualizowane",
       excludedIPs: excludedIPs,
     };
   } catch (error) {
     throw new Error(
-      `Failed to update excluded IPs: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Nie udało się zaktualizować wykluczonych adresów IP: ${error instanceof Error ? error.message : "Nieznany błąd"}`
     );
   }
 };

@@ -1,4 +1,5 @@
 import { Edit2, MoreVertical, Power, Trash2 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
@@ -24,6 +25,7 @@ import { cn } from "../../../../lib/utils";
 import { MonitorDialog } from "./dialog";
 
 export function MonitorActions({ monitor }: { monitor?: UptimeMonitor }) {
+  const t = useExtracted();
   const router = useRouter();
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -41,9 +43,9 @@ export function MonitorActions({ monitor }: { monitor?: UptimeMonitor }) {
         monitorId: monitor.id,
         data: { enabled: !monitor.enabled },
       });
-      toast.success(`Monitor ${monitor.enabled ? "disabled" : "enabled"} successfully`);
+      toast.success(monitor.enabled ? t("Monitor disabled successfully") : t("Monitor enabled successfully"));
     } catch (error: any) {
-      toast.error(error.response?.data?.error || "Failed to update monitor");
+      toast.error(error.response?.data?.error || t("Failed to update monitor"));
     } finally {
       setIsToggling(false);
     }
@@ -52,10 +54,10 @@ export function MonitorActions({ monitor }: { monitor?: UptimeMonitor }) {
   const handleDelete = async () => {
     try {
       await deleteMonitor.mutateAsync(monitor?.id ?? 0);
-      toast.success("Monitor deleted successfully");
+      toast.success(t("Monitor deleted successfully"));
       router.push("/uptime/monitors");
     } catch (error: any) {
-      toast.error(error.response?.data?.error || "Failed to delete monitor");
+      toast.error(error.response?.data?.error || t("Failed to delete monitor"));
     }
   };
 
@@ -75,25 +77,25 @@ export function MonitorActions({ monitor }: { monitor?: UptimeMonitor }) {
             )}
           >
             <Power className="h-4 w-4" />
-            {monitor?.enabled ? "On" : "Off"}
+            {monitor?.enabled ? t("On") : t("Off")}
           </Button>
         )}
         <Button size="sm" onClick={() => setShowEditDialog(true)} className="flex items-center gap-2">
           <Edit2 className="h-4 w-4" />
-          Edit
+          {t("Edit")}
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <MoreVertical className="h-4 w-4" />
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">{t("Open menu")}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-500 focus:text-red-600">
               <Trash2 className="h-4 w-4" />
-              Delete Monitor
+              {t("Delete Monitor")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -104,20 +106,20 @@ export function MonitorActions({ monitor }: { monitor?: UptimeMonitor }) {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Are you sure?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the monitor "
-              {monitor?.name ||
-                (monitor?.monitorType === "http"
-                  ? monitor?.httpConfig?.url
-                  : `${monitor?.tcpConfig?.host}:${monitor?.tcpConfig?.port}`)}
-              " and all its historical data. This action cannot be undone.
+              {t("This will permanently delete the monitor {name} and all its historical data. This action cannot be undone.", {
+                name: monitor?.name ||
+                  (monitor?.monitorType === "http"
+                    ? monitor?.httpConfig?.url || ""
+                    : `${monitor?.tcpConfig?.host}:${monitor?.tcpConfig?.port}`),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} variant={"destructive"}>
-              Delete Monitor
+              {t("Delete Monitor")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

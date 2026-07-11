@@ -9,6 +9,7 @@ import { getTimezone } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { ResponsiveLine } from "@nivo/line";
 import { DateTime } from "luxon";
+import { useExtracted } from "next-intl";
 import { useEffect, useState } from "react";
 import { useNivoTheme } from "../../../../lib/nivo";
 import { UptimeBucketSelection } from "./UptimeBucketSelection";
@@ -34,6 +35,21 @@ const formatTooltipValue = (value: number) => {
   return `${Math.round(value)}ms`;
 };
 
+function getMetricLabel(label: string, t: ReturnType<typeof useExtracted>) {
+  switch (label) {
+    case "Connection":
+      return t("Connection");
+    case "TLS Handshake":
+      return t("TLS Handshake");
+    case "Data Transfer":
+      return t("Data Transfer");
+    case "Response Time":
+      return t("Response Time");
+    default:
+      return label;
+  }
+}
+
 export function MonitorResponseTimeChart({
   monitor,
   monitorId,
@@ -43,6 +59,7 @@ export function MonitorResponseTimeChart({
   monitorId: number;
   isLoading: boolean;
 }) {
+  const t = useExtracted();
   const monitorType = monitor?.monitorType;
 
   const { timeRange, bucket, setBucket, selectedRegion } = useUptimeStore();
@@ -122,7 +139,7 @@ export function MonitorResponseTimeChart({
     if (monitorType === "tcp") {
       return [
         {
-          id: "Response Time",
+          id: t("Response Time"),
           color: "hsl(180, 70%, 45%)",
           data: processedData
             .map((item: any) => ({
@@ -219,7 +236,7 @@ export function MonitorResponseTimeChart({
     <Card className="overflow-visible">
       <CardContent className="p-4 overflow-visible">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-medium">Response Time</h3>
+          <h3 className="text-base font-medium">{t("Response Time")}</h3>
 
           <div className="flex items-center gap-4">
             {/* Metric toggles for HTTP monitors */}
@@ -245,7 +262,7 @@ export function MonitorResponseTimeChart({
                         )}
                         style={{ backgroundColor: metric.color }}
                       />
-                      <span>{metric.label}</span>
+                      <span>{getMetricLabel(metric.label, t)}</span>
                     </button>
                   );
                 })}
@@ -264,8 +281,8 @@ export function MonitorResponseTimeChart({
         ) : data.length === 0 || data.every(series => series.data.length === 0) ? (
           <div className="h-[400px] w-full flex items-center justify-center">
             <div className="text-center text-neutral-500">
-              <p className="text-lg font-medium">No data available</p>
-              <p className="text-sm">Try adjusting your time range</p>
+              <p className="text-lg font-medium">{t("No data available")}</p>
+              <p className="text-sm">{t("Try adjusting your time range")}</p>
             </div>
           </div>
         ) : (
@@ -395,8 +412,11 @@ export function MonitorResponseTimeChart({
                               : "bg-yellow-500/20 text-yellow-400"
                           )}
                         >
-                          {dataPoint.failure_count + dataPoint.timeout_count} of {dataPoint.check_count} checks failed (
-                          {dataPoint.failure_percentage.toFixed(1)}%)
+                          {t("{failed} of {total} checks failed ({percentage}%)", {
+                            failed: String(dataPoint.failure_count + dataPoint.timeout_count),
+                            total: String(dataPoint.check_count),
+                            percentage: dataPoint.failure_percentage.toFixed(1),
+                          })}
                         </div>
                       )}
 
@@ -405,14 +425,14 @@ export function MonitorResponseTimeChart({
                           <div key={point.seriesId} className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: point.seriesColor }} />
-                              <span>{point.seriesId}</span>
+                              <span>{getMetricLabel(String(point.seriesId), t)}</span>
                             </div>
                             <span className="font-medium">{formatTooltipValue(Number(point.data.yFormatted))}</span>
                           </div>
                         ))}
                         {monitorType === "http" && (
                           <div className="flex justify-between items-center pt-1.5 border-t border-neutral-100 dark:border-neutral-750">
-                            <span>Total</span>
+                            <span>{t("Total")}</span>
                             <span className="font-semibold">{formatTooltipValue(total)}</span>
                           </div>
                         )}

@@ -26,7 +26,7 @@ const authSchema = z.object({
 
 // HTTP config schema
 const httpConfigSchema = z.object({
-  url: z.string().url("Please enter a valid URL"),
+  url: z.string().url("Podaj prawidłowy adres URL"),
   method: httpMethodSchema,
   headers: z.record(z.string()).optional(),
   body: z.string().optional(),
@@ -39,14 +39,14 @@ const httpConfigSchema = z.object({
 
 // TCP config schema
 const tcpConfigSchema = z.object({
-  host: z.string().min(1, "Host is required"),
-  port: z.number().int().min(1, "Invalid port").max(65535, "Port must be between 1 and 65535"),
+  host: z.string().min(1, "Host jest wymagany"),
+  port: z.number().int().min(1, "Nieprawidłowy port").max(65535, "Port musi być z zakresu od 1 do 65535"),
   timeoutMs: z.number().int().min(1000).max(300000),
 });
 
 // Partial schemas for updates
 const partialHttpConfigSchema = z.object({
-  url: z.string().url("Please enter a valid URL").optional(),
+  url: z.string().url("Podaj prawidłowy adres URL").optional(),
   method: httpMethodSchema.optional(),
   headers: z.record(z.string()).optional(),
   body: z.string().optional(),
@@ -58,15 +58,15 @@ const partialHttpConfigSchema = z.object({
 });
 
 const partialTcpConfigSchema = z.object({
-  host: z.string().min(1, "Host is required").optional(),
-  port: z.number().int().min(1, "Invalid port").max(65535, "Port must be between 1 and 65535").optional(),
+  host: z.string().min(1, "Host jest wymagany").optional(),
+  port: z.number().int().min(1, "Nieprawidłowy port").max(65535, "Port musi być z zakresu od 1 do 65535").optional(),
   timeoutMs: z.number().int().min(1000).max(300000).optional(),
 });
 
 // Create monitor schema
 export const createMonitorSchema = z
   .object({
-    organizationId: z.string().min(1, "Organization is required"),
+    organizationId: z.string().min(1, "Organizacja jest wymagana"),
     name: z.string().max(256).optional(), // Made optional
     monitorType: z.enum(["http", "tcp"]),
     intervalSeconds: z.number().int().min(30).max(86400),
@@ -88,7 +88,7 @@ export const createMonitorSchema = z
       return false;
     },
     {
-      message: "Monitor type specific configuration is required",
+      message: "Konfiguracja właściwa dla typu monitora jest wymagana",
     }
   )
   .refine(
@@ -99,7 +99,7 @@ export const createMonitorSchema = z
       return true;
     },
     {
-      message: "At least one region must be selected for global monitoring",
+      message: "W monitoringu globalnym trzeba wybrać co najmniej jeden region",
     }
   );
 

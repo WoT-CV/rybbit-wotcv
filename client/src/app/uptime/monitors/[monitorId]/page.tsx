@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { UptimeMonitor, useMonitor, useMonitorStats, useMonitorUptime } from "../../../../api/uptime/monitors";
 import { StandardPage } from "../../../../components/StandardPage";
-import { INTERVAL_OPTIONS } from "../components/dialog/GeneralTab";
+import { getIntervalOptionLabel } from "../components/dialog/GeneralTab";
 import { MonitorActions } from "../components/MonitorActions";
 import { MonitorResponseTimeChart } from "../components/MonitorResponseTimeChart";
 import { StatusOrb } from "../components/StatusOrb";
@@ -47,9 +48,8 @@ const formatUptime = (seconds?: number) => {
   return `${minutes}m`;
 };
 
-const formatInterval = (seconds?: number) => {
-  const interval = INTERVAL_OPTIONS.find(interval => interval.value === seconds);
-  return interval?.label || `${seconds}s`;
+const formatInterval = (seconds: number | undefined, t: ReturnType<typeof useExtracted>) => {
+  return getIntervalOptionLabel(seconds, t);
 };
 
 function StatCard({ label, value, isLoading }: StatCardProps) {
@@ -70,7 +70,15 @@ const getMonitorName = (monitor: UptimeMonitor) => {
   );
 };
 
-const MonitorHeader = ({ monitor, isLoadingMonitor }: { monitor?: UptimeMonitor; isLoadingMonitor: boolean }) => {
+const MonitorHeader = ({
+  monitor,
+  isLoadingMonitor,
+  t,
+}: {
+  monitor?: UptimeMonitor;
+  isLoadingMonitor: boolean;
+  t: ReturnType<typeof useExtracted>;
+}) => {
   if (isLoadingMonitor) {
     return (
       <div className="flex flex-col gap-1">
@@ -99,7 +107,7 @@ const MonitorHeader = ({ monitor, isLoadingMonitor }: { monitor?: UptimeMonitor;
         <span
           className={cn("font-medium", monitor.status?.currentStatus === "up" ? "text-green-400" : "text-red-500/80")}
         >
-          {monitor.status?.currentStatus === "up" ? "Up" : "Down"}
+          {monitor.status?.currentStatus === "up" ? t("Up") : t("Down")}
         </span>
         •
         <span>
@@ -107,13 +115,14 @@ const MonitorHeader = ({ monitor, isLoadingMonitor }: { monitor?: UptimeMonitor;
             ? monitor.httpConfig?.url
             : `${monitor.tcpConfig?.host}:${monitor.tcpConfig?.port}`}
         </span>
-        •<span>every {formatInterval(monitor.intervalSeconds)}</span>
+        •<span>{t("every {interval}", { interval: formatInterval(monitor.intervalSeconds, t) })}</span>
       </p>
     </div>
   );
 };
 
 export default function MonitorDetailPage() {
+  const t = useExtracted();
   const params = useParams();
   const router = useRouter();
   const monitorId = parseInt(params.monitorId as string);
@@ -131,9 +140,9 @@ export default function MonitorDetailPage() {
     return (
       <StandardPage showSidebar={false}>
         <div className="text-center py-12">
-          <h2 className="text-xl font-semibold mb-2">Monitor not found</h2>
+          <h2 className="text-xl font-semibold mb-2">{t("Monitor not found")}</h2>
           <Button onClick={() => router.push("/uptime")} variant="outline">
-            Back to Monitors
+            {t("Back to Monitors")}
           </Button>
         </div>
       </StandardPage>
@@ -151,19 +160,19 @@ export default function MonitorDetailPage() {
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t("Back")}
         </Button>
         <div className="flex items-start justify-between">
-          <MonitorHeader monitor={monitor} isLoadingMonitor={isLoadingMonitor} />
+          <MonitorHeader monitor={monitor} isLoadingMonitor={isLoadingMonitor} t={t} />
           <MonitorActions monitor={monitor} />
         </div>
         <FilterBar monitor={monitor} isLoading={isLoadingMonitor} />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <StatCard label="Uptime" value={formatPercentage(stats?.stats.uptimePercentage)} isLoading={isLoadingStats} />
+          <StatCard label={t("Uptime")} value={formatPercentage(stats?.stats.uptimePercentage)} isLoading={isLoadingStats} />
           <StatCard
-            label="Current Uptime"
+            label={t("Current Uptime")}
             value={formatUptime(uptimeData?.currentUptimeSeconds)}
             isLoading={isLoadingUptime}
           />

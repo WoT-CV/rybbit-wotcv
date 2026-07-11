@@ -4,6 +4,7 @@ import { getTimezone } from "@/lib/store";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DateTime } from "luxon";
 import { useMonitorUptimeBuckets } from "@/api/uptime/monitors";
+import { useExtracted } from "next-intl";
 
 interface UptimeBarProps {
   monitorId: number;
@@ -11,6 +12,7 @@ interface UptimeBarProps {
 }
 
 export function UptimeBar({ monitorId, className }: UptimeBarProps) {
+  const t = useExtracted();
   const { data, isLoading } = useMonitorUptimeBuckets(monitorId, {
     bucket: "day",
     days: 7,
@@ -92,7 +94,7 @@ export function UptimeBar({ monitorId, className }: UptimeBarProps) {
                       </div>
                     </>
                   ) : (
-                    <div className="text-xs text-neutral-300 mt-1">No data</div>
+                    <div className="text-xs text-neutral-300 mt-1">{t("No data")}</div>
                   )}
                 </div>
               </TooltipContent>

@@ -23,6 +23,7 @@ import { Button } from "../../../../components/ui/button";
 import { Pagination } from "../../../../components/pagination";
 import { cn } from "@/lib/utils";
 import { DateTime } from "luxon";
+import { useExtracted } from "next-intl";
 
 interface MonitorsTableProps {
   onMonitorClick?: (monitor: UptimeMonitor) => void;
@@ -46,7 +47,7 @@ const fuzzyFilter: FilterFn<UptimeMonitor> = (row, columnId, value, addMeta) => 
   return false;
 };
 
-const formatLastPing = (lastCheckedAt?: string) => {
+const formatLastPing = (lastCheckedAt: string | undefined, t: ReturnType<typeof useExtracted>) => {
   if (!lastCheckedAt) return "-";
 
   const lastPing = DateTime.fromSQL(lastCheckedAt, {
@@ -61,11 +62,11 @@ const formatLastPing = (lastCheckedAt?: string) => {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (days > 0) return `${days}d ago`;
-  if (hours > 0) return `${hours}h ago`;
-  if (minutes > 0) return `${minutes}m ago`;
-  if (seconds > 0) return `${seconds}s ago`;
-  return "just now";
+  if (days > 0) return t("{count}d ago", { count: String(days) });
+  if (hours > 0) return t("{count}h ago", { count: String(hours) });
+  if (minutes > 0) return t("{count}m ago", { count: String(minutes) });
+  if (seconds > 0) return t("{count}s ago", { count: String(seconds) });
+  return t("just now");
 };
 
 const formatPercentage = (value?: number) => {
@@ -101,6 +102,7 @@ const SortHeader = ({ column, children }: any) => {
 };
 
 export function MonitorsTable({ onMonitorClick }: MonitorsTableProps) {
+  const t = useExtracted();
   const { data: monitors = [], isLoading } = useMonitors();
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -123,7 +125,7 @@ export function MonitorsTable({ onMonitorClick }: MonitorsTableProps) {
         size: 48,
       }),
       columnHelper.accessor("name", {
-        header: ({ column }) => <SortHeader column={column}>Monitor</SortHeader>,
+        header: ({ column }) => <SortHeader column={column}>{t("Monitor")}</SortHeader>,
         cell: ({ row }) => {
           const displayName =
             row.original.name ||
@@ -145,7 +147,7 @@ export function MonitorsTable({ onMonitorClick }: MonitorsTableProps) {
         },
       }),
       columnHelper.accessor("monitorType", {
-        header: ({ column }) => <SortHeader column={column}>Type</SortHeader>,
+        header: ({ column }) => <SortHeader column={column}>{t("Type")}</SortHeader>,
         cell: ({ getValue }) => {
           const type = getValue();
           return (
@@ -163,28 +165,28 @@ export function MonitorsTable({ onMonitorClick }: MonitorsTableProps) {
       }),
       columnHelper.display({
         id: "uptime-bar",
-        header: "Last 7 Days",
+        header: t("Last 7 Days"),
         cell: ({ row }) => <UptimeBar monitorId={row.original.id} />,
         size: 192,
       }),
       columnHelper.accessor(row => row.status?.lastCheckedAt, {
         id: "lastPing",
-        header: ({ column }) => <SortHeader column={column}>Last Ping</SortHeader>,
-        cell: ({ getValue }) => <span className="text-neutral-300">{formatLastPing(getValue())}</span>,
+        header: ({ column }) => <SortHeader column={column}>{t("Last Ping")}</SortHeader>,
+        cell: ({ getValue }) => <span className="text-neutral-300">{formatLastPing(getValue(), t)}</span>,
         size: 112,
       }),
       columnHelper.accessor(row => row.status?.uptimePercentage7d, {
         id: "uptimePercentage",
         header: ({ column }) => (
           <SortHeader column={column}>
-            <span className="whitespace-nowrap">Uptime %</span>
+            <span className="whitespace-nowrap">{t("Uptime %")}</span>
           </SortHeader>
         ),
         cell: ({ getValue }) => <div className="text-right text-neutral-300">{formatPercentage(getValue())}</div>,
         size: 80,
       }),
     ],
-    []
+    [t]
   );
 
   // Create table instance
@@ -209,7 +211,7 @@ export function MonitorsTable({ onMonitorClick }: MonitorsTableProps) {
   return (
     <div className="space-y-4">
       <Input
-        placeholder="Search monitors by name, URL, or type..."
+        placeholder={t("Search monitors by name, URL, or type...")}
         value={globalFilter}
         onChange={e => setGlobalFilter(e.target.value)}
         className="max-w-sm bg-neutral-900"
@@ -262,7 +264,7 @@ export function MonitorsTable({ onMonitorClick }: MonitorsTableProps) {
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center text-neutral-500 py-8">
-                  {globalFilter ? "No monitors match your search" : "No monitors configured"}
+                  {globalFilter ? t("No monitors match your search") : t("No monitors configured")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -293,7 +295,7 @@ export function MonitorsTable({ onMonitorClick }: MonitorsTableProps) {
           pagination={pagination}
           setPagination={setPagination}
           isLoading={isLoading}
-          itemName="monitors"
+          itemName={t("monitors")}
         />
       )}
     </div>

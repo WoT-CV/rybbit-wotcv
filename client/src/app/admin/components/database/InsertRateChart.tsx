@@ -8,6 +8,7 @@ import { ChartTooltip } from "@/components/charts/ChartTooltip";
 import { DateTime } from "luxon";
 import { userLocale } from "@/lib/dateTimeUtils";
 import { useWindowSize } from "@uidotdev/usehooks";
+import { useExtracted } from "next-intl";
 
 interface InsertRateChartProps {
   insertRate: InsertRate[] | undefined;
@@ -29,6 +30,7 @@ function formatNumber(num: number): string {
 }
 
 export function InsertRateChart({ insertRate, isLoading, isUnavailable }: InsertRateChartProps) {
+  const t = useExtracted();
   const nivoTheme = useNivoTheme();
   const { width } = useWindowSize();
   const maxTicks = Math.round((width ?? Infinity) / 100);
@@ -44,8 +46,8 @@ export function InsertRateChart({ insertRate, isLoading, isUnavailable }: Insert
   if (isUnavailable) {
     return (
       <div className="h-64 flex flex-col items-center justify-center text-neutral-500 dark:text-neutral-400">
-        <p>Feature unavailable</p>
-        <p className="text-xs mt-1">system.query_log is disabled to save disk space</p>
+        <p>{t("Feature unavailable")}</p>
+        <p className="text-xs mt-1">{t("system.query_log is disabled to save disk space")}</p>
       </div>
     );
   }
@@ -53,7 +55,7 @@ export function InsertRateChart({ insertRate, isLoading, isUnavailable }: Insert
   if (!insertRate || insertRate.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-neutral-500 dark:text-neutral-400">
-        No insert rate data available
+        {t("No insert rate data available")}
       </div>
     );
   }
@@ -129,14 +131,14 @@ export function InsertRateChart({ insertRate, isLoading, isUnavailable }: Insert
             <ChartTooltip>
               <div className="p-3 min-w-[140px]">
                 <div className="font-medium mb-1">
-                  {currentTime?.toLocaleString(DateTime.DATETIME_SHORT) ?? "Unknown"}
+                  {currentTime?.toLocaleString(DateTime.DATETIME_SHORT) ?? t("Unknown")}
                 </div>
                 <div className="flex justify-between gap-4">
-                  <span>Rows inserted:</span>
+                  <span>{t("Rows inserted:")}</span>
                   <span>{formatNumber(Number(point?.data.yFormatted ?? 0))}</span>
                 </div>
                 <div className="flex justify-between gap-4 text-neutral-500">
-                  <span>Insert queries:</span>
+                  <span>{t("Insert queries:")}</span>
                   <span>{data?.insertCount ?? 0}</span>
                 </div>
               </div>

@@ -32,12 +32,12 @@ export const updateExcludedCountries = async (
     await updateSiteConfig(siteId, { excludedCountries });
     return {
       success: true,
-      message: "Excluded countries updated successfully",
+      message: "Wykluczone kraje zostały zaktualizowane",
       excludedCountries: excludedCountries,
     };
   } catch (error) {
     throw new Error(
-      `Failed to update excluded countries: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Nie udało się zaktualizować wykluczonych krajów: ${error instanceof Error ? error.message : "Nieznany błąd"}`
     );
   }
 };

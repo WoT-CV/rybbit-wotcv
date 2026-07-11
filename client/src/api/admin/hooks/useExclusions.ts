@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/sonner";
+import { useExtracted } from "next-intl";
 import {
   fetchExcludedPaths,
   updateExcludedPaths,
@@ -19,16 +20,17 @@ export const useGetExcludedPaths = (siteId: number) => {
 };
 
 export const useUpdateExcludedPaths = () => {
+  const t = useExtracted();
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, { siteId: number; excludedPaths: string[] }>({
     mutationFn: ({ siteId, excludedPaths }) => updateExcludedPaths(siteId, excludedPaths),
     onSuccess: (_, variables) => {
-      toast.success("Excluded paths updated successfully");
+      toast.success(t("Excluded paths updated successfully"));
       queryClient.invalidateQueries({ queryKey: ["excludedPaths", variables.siteId] });
     },
     onError: error => {
-      toast.error(error.message || "Failed to update excluded paths");
+      toast.error(error.message || t("Failed to update excluded paths"));
     },
   });
 };
@@ -43,16 +45,17 @@ export const useGetExcludedHostnames = (siteId: number) => {
 };
 
 export const useUpdateExcludedHostnames = () => {
+  const t = useExtracted();
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, { siteId: number; excludedHostnames: string[] }>({
     mutationFn: ({ siteId, excludedHostnames }) => updateExcludedHostnames(siteId, excludedHostnames),
     onSuccess: (_, variables) => {
-      toast.success("Excluded hostnames updated successfully");
+      toast.success(t("Excluded hostnames updated successfully"));
       queryClient.invalidateQueries({ queryKey: ["excludedHostnames", variables.siteId] });
     },
     onError: error => {
-      toast.error(error.message || "Failed to update excluded hostnames");
+      toast.error(error.message || t("Failed to update excluded hostnames"));
     },
   });
 };
@@ -67,16 +70,17 @@ export const useGetExcludedUserAgents = (siteId: number) => {
 };
 
 export const useUpdateExcludedUserAgents = () => {
+  const t = useExtracted();
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, { siteId: number; excludedUserAgents: string[] }>({
     mutationFn: ({ siteId, excludedUserAgents }) => updateExcludedUserAgents(siteId, excludedUserAgents),
     onSuccess: (_, variables) => {
-      toast.success("Excluded user agents updated successfully");
+      toast.success(t("Excluded user agents updated successfully"));
       queryClient.invalidateQueries({ queryKey: ["excludedUserAgents", variables.siteId] });
     },
     onError: error => {
-      toast.error(error.message || "Failed to update excluded user agents");
+      toast.error(error.message || t("Failed to update excluded user agents"));
     },
   });
 };

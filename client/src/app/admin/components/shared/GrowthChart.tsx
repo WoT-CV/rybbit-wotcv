@@ -8,6 +8,7 @@ import { formatter } from "@/lib/utils";
 import { DateTime } from "luxon";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { ChartTooltip } from "@/components/charts/ChartTooltip";
+import { useExtracted } from "next-intl";
 
 interface GrowthChartProps {
   data?: Array<{ createdAt: string }>;
@@ -15,6 +16,7 @@ interface GrowthChartProps {
 }
 
 export function GrowthChart({ data, title }: GrowthChartProps) {
+  const t = useExtracted();
   const { width } = useWindowSize();
   const maxTicks = Math.round((width ?? Infinity) / 200);
   const nivoTheme = useNivoTheme();
@@ -49,7 +51,7 @@ export function GrowthChart({ data, title }: GrowthChartProps) {
   if (data === undefined) {
     return (
       <div className="h-64 flex items-center justify-center text-neutral-500 dark:text-neutral-400 text-sm">
-        Loading&hellip;
+        {t("Loading")}...
       </div>
     );
   }
@@ -57,7 +59,7 @@ export function GrowthChart({ data, title }: GrowthChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-neutral-500 dark:text-neutral-400 text-sm">
-        No data available
+        {t("No data available")}
       </div>
     );
   }
@@ -123,7 +125,7 @@ export function GrowthChart({ data, title }: GrowthChartProps) {
                 <div className="flex justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: point.seriesColor }} />
-                    <span>New {title}</span>
+                    <span>{t("New {title}", { title })}</span>
                   </div>
                   <div>{formatter(Number(point.data.yFormatted))}</div>
                 </div>

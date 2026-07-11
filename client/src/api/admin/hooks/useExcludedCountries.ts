@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/sonner";
+import { useExtracted } from "next-intl";
 import {
   fetchExcludedCountries,
   updateExcludedCountries,
@@ -16,20 +17,21 @@ export const useGetExcludedCountries = (siteId: number) => {
 };
 
 export const useUpdateExcludedCountries = () => {
+  const t = useExtracted();
   const queryClient = useQueryClient();
 
   return useMutation<UpdateExcludedCountriesResponse, Error, UpdateExcludedCountriesRequest>({
     mutationFn: ({ siteId, excludedCountries }: UpdateExcludedCountriesRequest) =>
       updateExcludedCountries(siteId, excludedCountries),
     onSuccess: (_: UpdateExcludedCountriesResponse, variables: UpdateExcludedCountriesRequest) => {
-      toast.success("Excluded countries updated successfully");
+      toast.success(t("Excluded countries updated successfully"));
       // Invalidate and refetch excluded countries data
       queryClient.invalidateQueries({
         queryKey: ["excludedCountries", variables.siteId],
       });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update excluded countries");
+      toast.error(error.message || t("Failed to update excluded countries"));
     },
   });
 };

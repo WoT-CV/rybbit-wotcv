@@ -1,5 +1,8 @@
 import React from "react";
+import { useExtracted } from "next-intl";
 
 export function NotificationsTab() {
-  return <div className="text-neutral-500 text-sm">Notification settings will be available in a future update.</div>;
+  const t = useExtracted();
+
+  return <div className="text-neutral-500 text-sm">{t("Notification settings will be available in a future update.")}</div>;
 }

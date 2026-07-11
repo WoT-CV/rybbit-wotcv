@@ -8,6 +8,7 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Plus, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { CreateMonitorFormData, UpdateMonitorFormData } from "../monitorSchemas";
+import { useExtracted } from "next-intl";
 
 interface AdvancedTabProps {
   form: UseFormReturn<CreateMonitorFormData | UpdateMonitorFormData>;
@@ -15,6 +16,8 @@ interface AdvancedTabProps {
 }
 
 export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
+  const t = useExtracted();
+
   return (
     <div className="space-y-4">
       {/* Monitor Name */}
@@ -23,12 +26,12 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Monitor Name</FormLabel>
+            <FormLabel>{t("Monitor Name")}</FormLabel>
             <FormControl>
               <Input placeholder="My API Endpoint" {...field} value={field.value || ""} />
             </FormControl>
             <FormDescription>
-              A friendly name for this monitor. If not specified, the URL or host will be used.
+              {t("A friendly name for this monitor. If not specified, the URL or host will be used.")}
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -36,7 +39,7 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
       />
 
       {monitorType === "tcp" ? (
-        <div className="text-sm text-neutral-500 mt-4">No additional advanced options available for TCP monitors.</div>
+        <div className="text-sm text-neutral-500 mt-4">{t("No additional advanced options available for TCP monitors.")}</div>
       ) : (
         <>
           <FormField
@@ -44,11 +47,11 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
             name="httpConfig.userAgent"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>User Agent</FormLabel>
+                <FormLabel>{t("User Agent")}</FormLabel>
                 <FormControl>
                   <Input placeholder="Custom User Agent" {...field} value={field.value || ""} />
                 </FormControl>
-                <FormDescription>Override the default user agent string</FormDescription>
+                <FormDescription>{t("Override the default user agent string")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -103,23 +106,23 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
               return (
                 <FormItem>
                   <div className="flex items-center justify-between mb-2">
-                    <FormLabel>Custom Headers</FormLabel>
+                    <FormLabel>{t("Custom Headers")}</FormLabel>
                     <Button type="button" variant="outline" size="sm" onClick={addHeader} className="h-8">
                       <Plus className="h-4 w-4 mr-1" />
-                      Add header
+                      {t("Add header")}
                     </Button>
                   </div>
                   <div className="space-y-2">
                     {localHeaders.map(header => (
                       <div key={header.id} className="flex gap-2 items-center">
                         <Input
-                          placeholder="Header name"
+                          placeholder={t("Header name")}
                           value={header.key}
                           onChange={e => updateHeader(header.id, "key", e.target.value)}
                           className="flex-1"
                         />
                         <Input
-                          placeholder="Header value"
+                          placeholder={t("Header value")}
                           value={header.value}
                           onChange={e => updateHeader(header.id, "value", e.target.value)}
                           className="flex-1"
@@ -136,10 +139,10 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
                       </div>
                     ))}
                     {localHeaders.length === 0 && (
-                      <div className="text-sm text-neutral-500">No custom headers added</div>
+                      <div className="text-sm text-neutral-500">{t("No custom headers added")}</div>
                     )}
                   </div>
-                  <FormDescription>Additional headers to send with requests</FormDescription>
+                  <FormDescription>{t("Additional headers to send with requests")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               );
@@ -151,7 +154,7 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
             name="httpConfig.body"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Request Body</FormLabel>
+                <FormLabel>{t("Request Body")}</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder='{"key": "value"}'
@@ -161,7 +164,7 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
                     style={{ fontSize: "12px" }}
                   />
                 </FormControl>
-                <FormDescription>Request body for POST, PUT, PATCH methods. Usually JSON or form data.</FormDescription>
+                <FormDescription>{t("Request body for POST, PUT, PATCH methods. Usually JSON or form data.")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -173,8 +176,8 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between">
                 <div className="space-y-0.5">
-                  <FormLabel>Follow Redirects</FormLabel>
-                  <FormDescription>Automatically follow HTTP redirects</FormDescription>
+                  <FormLabel>{t("Follow Redirects")}</FormLabel>
+                  <FormDescription>{t("Automatically follow HTTP redirects")}</FormDescription>
                 </div>
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -188,7 +191,7 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
             name="httpConfig.ipVersion"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>IP Version</FormLabel>
+                <FormLabel>{t("IP Version")}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -196,9 +199,9 @@ export function AdvancedTab({ form, monitorType }: AdvancedTabProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="ipv4">IPv4 Only</SelectItem>
-                    <SelectItem value="ipv6">IPv6 Only</SelectItem>
+                    <SelectItem value="any">{t("Any")}</SelectItem>
+                    <SelectItem value="ipv4">{t("IPv4 Only")}</SelectItem>
+                    <SelectItem value="ipv6">{t("IPv6 Only")}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
