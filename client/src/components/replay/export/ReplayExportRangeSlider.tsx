@@ -5,6 +5,7 @@ import { MAX_REPLAY_EXPORT_DURATION_MS } from "@rybbit/shared";
 import { useExtracted } from "next-intl";
 
 import { formatTime } from "../player/utils/replayUtils";
+import { constrainSlidingRange } from "../player/utils/timelineMath";
 
 interface ReplayExportRangeSliderProps {
   duration: number;
@@ -30,7 +31,11 @@ export function ReplayExportRangeSlider({ duration, range, onRangeChange }: Repl
         step={100}
         minStepsBetweenThumbs={10}
         value={range}
-        onValueChange={value => onRangeChange(constrainExportRange([value[0], value[1]], range, duration))}
+        onValueChange={value =>
+          onRangeChange(
+            constrainSlidingRange([value[0], value[1]], range, duration, MAX_REPLAY_EXPORT_DURATION_MS)
+          )
+        }
         className="relative flex h-4 w-full touch-none select-none items-center"
       >
         <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-visible rounded-full bg-neutral-300 dark:bg-neutral-700">
@@ -63,21 +68,6 @@ export function createInitialExportRange(currentTime: number, duration: number):
   const rangeDuration = Math.min(MAX_REPLAY_EXPORT_DURATION_MS, duration);
   const start = clamp(currentTime - rangeDuration / 2, 0, Math.max(0, duration - rangeDuration));
   return [start, start + rangeDuration];
-}
-
-function constrainExportRange(
-  nextRange: [number, number],
-  currentRange: [number, number],
-  duration: number
-): [number, number] {
-  const start = clamp(nextRange[0], 0, duration);
-  const end = clamp(nextRange[1], start, duration);
-  if (end - start <= MAX_REPLAY_EXPORT_DURATION_MS) return [start, end];
-
-  const startMovedMore = Math.abs(start - currentRange[0]) > Math.abs(end - currentRange[1]);
-  return startMovedMore
-    ? [start, Math.min(duration, start + MAX_REPLAY_EXPORT_DURATION_MS)]
-    : [Math.max(0, end - MAX_REPLAY_EXPORT_DURATION_MS), end];
 }
 
 function clamp(value: number, min: number, max: number) {

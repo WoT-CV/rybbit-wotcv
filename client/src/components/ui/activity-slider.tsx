@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
+import type { ReplayActivityEvent } from "@rybbit/shared";
 
 import { NetworkWaterfall } from "@/components/replay/network/NetworkWaterfall";
 import type { ParsedNetworkRequest } from "@/components/replay/network/types";
 import { getReplayActivityOffsets, type ReplaySegment } from "@/components/replay/player/utils/replayUtils";
+import { getTimelineRangeStyle, toTimelinePercent } from "@/components/replay/player/utils/timelineMath";
 import { getMeaningfulEvents, type MeaningfulEvent, type MeaningfulKind } from "@/components/replay/replayEvents";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +20,7 @@ interface ActivitySliderProps extends React.ComponentPropsWithoutRef<typeof Slid
   activityPeriods?: ActivityPeriod[];
   replaySegments?: ReplaySegment[];
   duration?: number;
-  events?: Array<{ timestamp: number; type: string | number; data?: any }>;
+  events?: ReplayActivityEvent[];
   networkRequests?: ParsedNetworkRequest[];
   currentTime?: number;
   onNetworkSeek?: (offset: number) => void;
@@ -131,7 +133,7 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
             onSeek={onNetworkSeek}
           />
           {markers.map(event => {
-            const position = duration > 0 ? (event.offset / duration) * 100 : 0;
+            const position = toTimelinePercent(event.offset, duration);
             const constrained = Math.max(0.5, Math.min(99.5, position));
             return (
               <div
@@ -159,8 +161,7 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
 
             {/* Activity periods */}
             {(replaySegments.length > 0 ? replaySegments : activityPeriods).map((period, index) => {
-              const startPercent = duration > 0 ? (period.start / duration) * 100 : 0;
-              const widthPercent = duration > 0 ? ((period.end - period.start) / duration) * 100 : 0;
+              const rangeStyle = getTimelineRangeStyle(period.start, period.end, duration);
               const isActive = "isActive" in period ? period.isActive : true;
               return (
                 <div
@@ -169,7 +170,7 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
                     "absolute h-full",
                     isActive ? "bg-neutral-400 dark:bg-neutral-500" : "bg-neutral-300/40 dark:bg-neutral-800"
                   )}
-                  style={{ left: `${startPercent}%`, width: `${widthPercent}%` }}
+                  style={rangeStyle}
                 />
               );
             })}
@@ -180,14 +181,14 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
             {exportRange && duration > 0 && (
               <div
                 className="pointer-events-none absolute inset-y-0 rounded-sm border border-accent-400 bg-accent-400/20"
-                style={{
-                  left: `${(exportRange[0] / duration) * 100}%`,
-                  width: `${((exportRange[1] - exportRange[0]) / duration) * 100}%`,
-                }}
+                style={getTimelineRangeStyle(exportRange[0], exportRange[1], duration)}
               />
             )}
           </SliderPrimitive.Track>
-          <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-accent-500 bg-white shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-500 disabled:pointer-events-none disabled:opacity-50" />
+          <SliderPrimitive.Thumb
+            aria-label="Replay position"
+            className="block h-4 w-4 rounded-full border-2 border-accent-500 bg-white shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-500 disabled:pointer-events-none disabled:opacity-50"
+          />
         </SliderPrimitive.Root>
       </div>
     );
