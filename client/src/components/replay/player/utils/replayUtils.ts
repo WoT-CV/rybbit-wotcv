@@ -97,12 +97,7 @@ function createReplaySegments(
   return segments;
 }
 
-function createSegment(
-  kind: ReplaySegment["kind"],
-  start: number,
-  end: number,
-  eventCount: number
-): ReplaySegment {
+function createSegment(kind: ReplaySegment["kind"], start: number, end: number, eventCount: number): ReplaySegment {
   return {
     start,
     end,

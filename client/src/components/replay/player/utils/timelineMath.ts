@@ -22,9 +22,7 @@ export function constrainSlidingRange(
   if (end - start <= maximumRange) return [start, end];
 
   const startMovedMore = Math.abs(start - currentRange[0]) > Math.abs(end - currentRange[1]);
-  return startMovedMore
-    ? [start, Math.min(duration, start + maximumRange)]
-    : [Math.max(0, end - maximumRange), end];
+  return startMovedMore ? [start, Math.min(duration, start + maximumRange)] : [Math.max(0, end - maximumRange), end];
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {

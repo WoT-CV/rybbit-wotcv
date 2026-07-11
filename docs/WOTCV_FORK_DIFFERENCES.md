@@ -133,6 +133,23 @@ Build przekazuje:
 
 Backend zwraca te dane w `/api/health`. Projekt Compose zachowuje nazwę `rybbit`, aby korzystać z istniejących wolumenów Postgresa, ClickHouse i Redis.
 
+## Bramki jakości forka
+
+Kod utrzymywany przez WoT-CV ma osobne, stabilne bramki, które nie są blokowane przez historyczny dług całego upstreamu:
+
+- `cd client && npm run test:run` — regresje parsera Network Replay, filtrów, timeline, identity i capabilities,
+- `cd client && npm run lint:wotcv` — ESLint dla modułów zmienianych przez fork,
+- `cd client && npm run knip` — martwe eksporty i typy w granicy forka,
+- `cd client && npm run audit:polish` — kompletność i placeholdery katalogu PL,
+- `cd client && npm run format:check:wotcv` — formatowanie kodu forka,
+- `cd client && npx tsc --noEmit` oraz `npm run build` — kontrakty i produkcyjny build klienta,
+- `cd server && npm run test:run` — pełna regresja backendu i trackera,
+- `cd server && npm run db:check` — kontrola schematu bez wykonywania migracji,
+- `cd server && npm run check:analytics` — zgodność wygenerowanych bundle trackera ze źródłami,
+- `cd server && npm run build` — produkcyjny build backendu.
+
+Workflow obrazów wykonuje tę macierz przed publikacją. Pełne upstreamowe `lint` i `format:check` pozostają użyteczne jako audyt długu całego projektu, ale nie powinny powodować masowych, niezwiązanych zmian w commitach WoT-CV.
+
 ## Zgodność AGPL-3.0
 
 Fork zachowuje `LICENSE.md` i `NOTICE.md`. Uruchomiona aplikacja wskazuje odpowiadający kod źródłowy:

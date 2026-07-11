@@ -9,12 +9,7 @@ interface UseActivityPeriodsProps {
 }
 
 export const useActivityPeriods = ({ data }: UseActivityPeriodsProps) => {
-  const {
-    duration,
-    setActivityPeriods,
-    setReplayCaptureProfile,
-    setReplaySegments,
-  } = useReplayStore(
+  const { duration, setActivityPeriods, setReplayCaptureProfile, setReplaySegments } = useReplayStore(
     useShallow(state => ({
       duration: state.duration,
       setActivityPeriods: state.setActivityPeriods,

@@ -49,7 +49,7 @@ describe("parseNetworkEvents", () => {
             },
           },
         },
-      ]),
+      ])
     ).toEqual([]);
   });
 });

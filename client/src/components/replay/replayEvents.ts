@@ -424,7 +424,11 @@ function collapseRageClicks(events: MeaningfulEvent[]): MeaningfulEvent[] {
     // Grow a cluster of clicks within the time + distance window.
     let j = i + 1;
     const anchor = coords(e);
-    while (j < events.length && events[j].kind === "click" && events[j].timestamp - events[i].timestamp <= RAGE_CLICK_WINDOW_MS) {
+    while (
+      j < events.length &&
+      events[j].kind === "click" &&
+      events[j].timestamp - events[i].timestamp <= RAGE_CLICK_WINDOW_MS
+    ) {
       const c = coords(events[j]);
       if (anchor && c && Math.hypot(c[0] - anchor[0], c[1] - anchor[1]) > RAGE_CLICK_RADIUS) break;
       j++;
@@ -514,8 +518,8 @@ export function getTechnicalGroups(events: RawEvent[] | undefined): TechnicalGro
       if (current) groups.push(current);
       const label: string =
         type === 3 && source !== undefined
-          ? INCREMENTAL_TYPES[source] ?? `Source ${source}`
-          : EVENT_TYPE_NAMES[type] ?? `Type ${type}`;
+          ? (INCREMENTAL_TYPES[source] ?? `Source ${source}`)
+          : (EVENT_TYPE_NAMES[type] ?? `Type ${type}`);
       current = {
         key: `${ev.timestamp}-${i}`,
         label,

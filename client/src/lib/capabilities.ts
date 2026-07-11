@@ -13,10 +13,7 @@ type CapabilityEnvironment = {
   isCloud: boolean;
 };
 
-export const resolveAnalyticsCapabilities = ({
-  deployment,
-  isCloud,
-}: CapabilityEnvironment): AnalyticsCapabilities => {
+export const resolveAnalyticsCapabilities = ({ deployment, isCloud }: CapabilityEnvironment): AnalyticsCapabilities => {
   const hasExtendedWebAnalytics = isCloud || deployment === "self-hosted";
 
   return {

@@ -10,10 +10,7 @@ describe("timeline math", () => {
   });
 
   it("keeps the export window sliding when its end handle moves", () => {
-    expect(constrainSlidingRange([15_000, 60_000], [15_000, 45_000], 120_000, 30_000)).toEqual([
-      30_000,
-      60_000,
-    ]);
+    expect(constrainSlidingRange([15_000, 60_000], [15_000, 45_000], 120_000, 30_000)).toEqual([30_000, 60_000]);
   });
 
   it("creates a bounded range style", () => {

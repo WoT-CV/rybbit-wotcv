@@ -32,9 +32,7 @@ export function ReplayExportRangeSlider({ duration, range, onRangeChange }: Repl
         minStepsBetweenThumbs={10}
         value={range}
         onValueChange={value =>
-          onRangeChange(
-            constrainSlidingRange([value[0], value[1]], range, duration, MAX_REPLAY_EXPORT_DURATION_MS)
-          )
+          onRangeChange(constrainSlidingRange([value[0], value[1]], range, duration, MAX_REPLAY_EXPORT_DURATION_MS))
         }
         className="relative flex h-4 w-full touch-none select-none items-center"
       >

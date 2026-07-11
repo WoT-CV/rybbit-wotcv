@@ -39,7 +39,7 @@ jobs:
         run: npm ci --legacy-peer-deps && npm run test:run && npm run db:check && npm run check:analytics
       - name: Verify WoT-CV client code
         working-directory: client
-        run: npm ci --legacy-peer-deps && npm run test:run && npm run lint:wotcv && npm run knip && npm run audit:polish && npx tsc --noEmit
+        run: npm ci --legacy-peer-deps && npm run test:run && npm run lint:wotcv && npm run knip && npm run audit:polish && npm run format:check:wotcv && npx tsc --noEmit
       - name: Verify merged Compose configuration
         env:
           BASE_URL: https://tracking.example.com

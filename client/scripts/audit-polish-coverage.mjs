@@ -72,7 +72,7 @@ const placeholderMismatches = sourceKeys.filter(key => {
   return !sameValues(placeholders(sourceCatalog[key]), placeholders(polishCatalog[key]));
 });
 const identicalValues = sourceKeys.filter(
-  key => sourceCatalog[key] === polishCatalog[key] && !allowedIdenticalValues.has(sourceCatalog[key]),
+  key => sourceCatalog[key] === polishCatalog[key] && !allowedIdenticalValues.has(sourceCatalog[key])
 );
 
 const errors = [
