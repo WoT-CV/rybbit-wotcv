@@ -519,8 +519,8 @@ function formatBytes(value?: number) {
   return `${(value / 1024).toFixed(1)} KB`;
 }
 
-function escapeHtml(value: string) {
-  return value.replace(
+function escapeHtml(value: unknown) {
+  return String(value ?? "").replace(
     /[&<>'"]/g,
     character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]!
   );

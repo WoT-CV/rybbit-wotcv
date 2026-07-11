@@ -45,10 +45,8 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const params = useParams();
   const siteId = Number(params.site);
   const [range, setRange] = useState<[number, number]>([0, Math.min(duration, 30_000)]);
-  const [captureMs, setCaptureMs] = useState(0);
   const [skipInactivity, setSkipInactivity] = useState(true);
   const [includeNetwork, setIncludeNetwork] = useState(true);
-  const [includeBodies, setIncludeBodies] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4>(1);
   const [exportId, setExportId] = useState<string | null>(null);
   const setExportRange = useReplayStore(state => state.setExportRange);
@@ -58,6 +56,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const cancelExport = useCancelReplayExport();
   const { data: exportStatus } = useReplayExportStatus(siteId, sessionId, exportId);
   const rangeDuration = range[1] - range[0];
+  const captureMs = Math.max(range[0], Math.min(range[1], currentTime));
   const isRangeValid = rangeDuration > 0 && rangeDuration <= MAX_EXPORT_DURATION_MS;
   const isExporting = Boolean(
     exportId && exportStatus && !["ready", "failed", "cancelled"].includes(exportStatus.state)
@@ -69,7 +68,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
     const end = Math.min(duration, Math.max(start + 1_000, currentTime + 15_000));
     setRange([start, end]);
     setExportRange([start, end]);
-    setCaptureMs(Math.max(start, Math.min(end, currentTime)));
     setExportId(null);
     downloadedExportIdRef.current = null;
   }, [currentTime, duration, open, setExportRange]);
@@ -125,7 +123,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
           captureMs,
           skipInactivity,
           includeNetwork,
-          includeBodies: includeNetwork && includeBodies,
+          includeBodies: includeNetwork,
           playbackSpeed,
         },
       });
@@ -144,7 +142,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
   const setQuickRange = (start: number, end: number) => {
     const nextRange: [number, number] = [Math.max(0, start), Math.min(duration, end)];
     setRange(nextRange);
-    setCaptureMs(Math.max(nextRange[0], Math.min(nextRange[1], currentTime)));
   };
 
   const handleOpenChange = (value: boolean) => {
@@ -203,11 +200,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
               step={100}
               value={range}
               minStepsBetweenThumbs={10}
-              onValueChange={value => {
-                const nextRange: [number, number] = [value[0], value[1]];
-                setRange(nextRange);
-                setCaptureMs(current => Math.max(nextRange[0], Math.min(nextRange[1], current)));
-              }}
+              onValueChange={value => setRange([value[0], value[1]])}
               className="relative flex h-5 w-full touch-none select-none items-center"
             >
               <SliderPrimitive.Track className="relative h-2 w-full grow rounded-full bg-neutral-200 dark:bg-neutral-800">
@@ -233,26 +226,6 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-neutral-600 dark:text-neutral-300">
-              <span>{t("Evidence screenshot time")}</span>
-              <span className="tabular-nums">{formatTime(captureMs)}</span>
-            </div>
-            <SliderPrimitive.Root
-              min={range[0]}
-              max={Math.max(range[0] + 1, range[1])}
-              step={100}
-              value={[captureMs]}
-              onValueChange={value => setCaptureMs(value[0])}
-              className="relative flex h-5 w-full touch-none select-none items-center"
-            >
-              <SliderPrimitive.Track className="relative h-1.5 w-full grow rounded-full bg-neutral-200 dark:bg-neutral-800">
-                <SliderPrimitive.Range className="absolute h-full rounded-full bg-amber-500" />
-              </SliderPrimitive.Track>
-              <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-amber-500 bg-white shadow" />
-            </SliderPrimitive.Root>
-          </div>
-
           <div className="grid gap-3 sm:grid-cols-2">
             <ExportCheckbox
               checked={skipInactivity}
@@ -262,13 +235,7 @@ export function ReplayExportDialog({ currentTime, duration, open, sessionId, onO
             <ExportCheckbox
               checked={includeNetwork}
               onCheckedChange={setIncludeNetwork}
-              label={t("Include network logs")}
-            />
-            <ExportCheckbox
-              checked={includeBodies}
-              disabled={!includeNetwork}
-              onCheckedChange={setIncludeBodies}
-              label={t("Include request and response bodies")}
+              label={t("Include network logs with request and response bodies")}
             />
             <label className="flex items-center justify-between gap-3 text-sm">
               <span>{t("Video speed")}</span>
@@ -373,18 +340,16 @@ function parseEditableTime(value: string) {
 
 function ExportCheckbox({
   checked,
-  disabled,
   label,
   onCheckedChange,
 }: {
   checked: boolean;
-  disabled?: boolean;
   label: string;
   onCheckedChange: (checked: boolean) => void;
 }) {
   return (
     <label className="flex items-center gap-2 text-sm">
-      <Checkbox checked={checked} disabled={disabled} onCheckedChange={value => onCheckedChange(value === true)} />
+      <Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} />
       <span>{label}</span>
     </label>
   );
