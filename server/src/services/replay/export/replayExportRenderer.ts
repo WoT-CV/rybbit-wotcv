@@ -180,7 +180,10 @@ async function createReplayPage(browser: Browser, events: any[]): Promise<Page> 
   await page.addScriptTag({ path: join(process.cwd(), "public", "rrweb.min.js") });
   await page.evaluate(replayEvents => {
     const replayWindow = window as any;
-    replayWindow.__replayer = new replayWindow.rrweb.Replay(replayEvents, {
+    if (typeof replayWindow.rrweb?.Replayer !== "function") {
+      throw new Error("rrweb Replayer is unavailable in the export renderer");
+    }
+    replayWindow.__replayer = new replayWindow.rrweb.Replayer(replayEvents, {
       root: document.getElementById("replay"),
       mouseTail: false,
       showWarning: false,
