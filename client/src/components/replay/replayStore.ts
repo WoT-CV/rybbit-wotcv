@@ -79,7 +79,7 @@ export const useReplayStore = create<{
   activityPeriods: [],
   setActivityPeriods: activityPeriods => set({ activityPeriods }),
 
-  skipInactivityEnabled: false,
+  skipInactivityEnabled: true,
   setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
 
   inactivitySkipThresholdMs: INACTIVITY_SKIP_THRESHOLD_MS,
