@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start -p 3002",
     "extract": "node scripts/extract-messages.mjs",
+    "audit:polish": "node scripts/audit-polish-coverage.mjs",
     "lint": "eslint .",
     "knip": "knip",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
