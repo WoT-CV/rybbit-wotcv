@@ -17,8 +17,8 @@ import { useEffect } from "react";
 import { AppSumoPlan } from "../../../components/subscription/AppSumoPlan";
 
 export default function OrganizationBillingPage() {
-  useSetPageTitle("Organization Billing");
   const t = useExtracted();
+  useSetPageTitle(t("Organization Billing"));
   const { data: activeSubscription, isLoading: isLoadingSubscription } = useStripeSubscription();
 
   const { data: activeOrg, isPending } = authClient.useActiveOrganization();

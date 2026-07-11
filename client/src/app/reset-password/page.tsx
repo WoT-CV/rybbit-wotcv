@@ -15,8 +15,8 @@ import { authClient } from "../../lib/auth";
 import { IS_CLOUD } from "../../lib/const";
 
 export default function ResetPasswordPage() {
-  useSetPageTitle("Reset Password");
   const t = useExtracted();
+  useSetPageTitle(t("Reset Password"));
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>();

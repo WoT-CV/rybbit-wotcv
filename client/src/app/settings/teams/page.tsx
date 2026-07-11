@@ -15,8 +15,8 @@ import { CreateEditTeamDialog } from "./components/CreateEditTeamDialog";
 import { DeleteTeamDialog } from "./components/DeleteTeamDialog";
 
 export default function TeamsPage() {
-  useSetPageTitle("Organization Teams");
   const t = useExtracted();
+  useSetPageTitle(t("Organization Teams"));
   const { data: activeOrganization, isPending } =
     authClient.useActiveOrganization();
   const { data: teamsData, isLoading: teamsLoading } = useTeams(

@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useState } from "react";
@@ -47,7 +48,8 @@ function AppSumoCodeHandler({
 }
 
 export default function AppSumoSignupPage() {
-  useSetPageTitle("AppSumo Signup");
+  const t = useExtracted();
+  useSetPageTitle(t("AppSumo Signup"));
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -163,7 +165,7 @@ export default function AppSumoSignupPage() {
       return true;
     } catch (licenseError) {
       console.error("Error activating AppSumo license:", licenseError);
-      setError("License activation failed. Please contact support with your license key.");
+      setError(t("License activation failed. Please contact support with your license key."));
       return false;
     }
   };
@@ -176,7 +178,7 @@ export default function AppSumoSignupPage() {
     try {
       // Validate Turnstile token if in cloud mode
       if (IS_CLOUD && !turnstileToken) {
-        setError("Please complete the captcha verification");
+        setError(t("Please complete the captcha verification"));
         setIsLoading(false);
         return;
       }
@@ -226,11 +228,11 @@ export default function AppSumoSignupPage() {
       });
 
       if (error) {
-        throw new Error(error.message || "Failed to create organization");
+        throw new Error(error.message || t("Failed to create organization"));
       }
 
       if (!data?.id) {
-        throw new Error("No organization ID returned");
+        throw new Error(t("No organization ID returned"));
       }
 
       // Set as active organization
@@ -262,7 +264,7 @@ export default function AppSumoSignupPage() {
     try {
       // Validate domain
       if (!isValidDomain(domain)) {
-        setError("Invalid domain format. Must be a valid domain like example.com or sub.example.com");
+        setError(t("Invalid domain format. Must be a valid domain like example.com or sub.example.com"));
         setIsLoading(false);
         return;
       }
@@ -293,12 +295,14 @@ export default function AppSumoSignupPage() {
       case 1:
         return (
           <div>
-            <h2 className="text-2xl font-semibold mb-2">Welcome to Rybbit!</h2>
-            <p className="text-sm text-muted-foreground mb-6">Activate your AppSumo license by creating an account</p>
+            <h2 className="text-2xl font-semibold mb-2">{t("Welcome to Rybbit!")}</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              {t("Activate your AppSumo license by creating an account")}
+            </p>
             <div className="space-y-4">
               <AuthInput
                 id="email"
-                label="Email"
+                label={t("Email")}
                 type="email"
                 placeholder="email@example.com"
                 required
@@ -308,7 +312,7 @@ export default function AppSumoSignupPage() {
 
               <AuthInput
                 id="password"
-                label="Password"
+                label={t("Password")}
                 type="password"
                 placeholder="••••••••"
                 required
@@ -327,23 +331,23 @@ export default function AppSumoSignupPage() {
 
               <AuthButton
                 isLoading={isLoading}
-                loadingText="Creating account..."
+                loadingText={t("Creating account...")}
                 onClick={handleAccountSubmit}
                 type="button"
                 className="mt-6 transition-all duration-300 h-11"
                 disabled={IS_CLOUD ? !turnstileToken || isLoading : isLoading}
               >
-                Continue
+                {t("Continue")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </AuthButton>
 
               <div className="text-center text-sm">
-                Already have an account?{" "}
+                {t("Already have an account?")}{" "}
                 <Link
                   href="/login"
                   className="underline underline-offset-4 hover:text-emerald-400 transition-colors duration-300"
                 >
-                  Log in
+                  {t("Log in")}
                 </Link>
               </div>
             </div>
@@ -353,16 +357,16 @@ export default function AppSumoSignupPage() {
         return (
           <div>
             <h2 className="text-2xl font-semibold mb-2">
-              {isExistingUser ? "Create an organization" : "Create your organization"}
+              {isExistingUser ? t("Create an organization") : t("Create your organization")}
             </h2>
             <p className="text-sm text-muted-foreground mb-6">
               {isExistingUser
-                ? "Create an organization to activate your AppSumo license"
-                : "Your AppSumo license will be activated for this organization"}
+                ? t("Create an organization to activate your AppSumo license")
+                : t("Your AppSumo license will be activated for this organization")}
             </p>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="orgName">Organization Name</Label>
+                <Label htmlFor="orgName">{t("Organization Name")}</Label>
                 <Input
                   id="orgName"
                   type="text"
@@ -380,7 +384,7 @@ export default function AppSumoSignupPage() {
                 disabled={isLoading || !orgName || !orgSlug}
                 variant="success"
               >
-                Continue & Activate License
+                {t("Continue & Activate License")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -389,11 +393,13 @@ export default function AppSumoSignupPage() {
       case 3:
         return (
           <div>
-            <h2 className="text-2xl font-semibold mb-2">Add your site (optional)</h2>
-            <p className="text-sm text-muted-foreground mb-6">You can always add sites later from your dashboard</p>
+            <h2 className="text-2xl font-semibold mb-2">{t("Add your site (optional)")}</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              {t("You can always add sites later from your dashboard")}
+            </p>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="domain">Website Domain</Label>
+                <Label htmlFor="domain">{t("Website Domain")}</Label>
                 <Input
                   id="domain"
                   type="text"
@@ -402,7 +408,9 @@ export default function AppSumoSignupPage() {
                   onChange={e => setDomain(e.target.value.toLowerCase())}
                   className="h-10 transition-all bg-neutral-100 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700"
                 />
-                <p className="text-xs text-muted-foreground">Enter the domain of the website you want to track</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("Enter the domain of the website you want to track")}
+                </p>
               </div>
 
               <div className="flex flex-col gap-3">
@@ -412,7 +420,7 @@ export default function AppSumoSignupPage() {
                   disabled={isLoading || !domain || !isValidDomain(domain)}
                   variant="success"
                 >
-                  Add Site & Continue
+                  {t("Add Site & Continue")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
@@ -421,7 +429,7 @@ export default function AppSumoSignupPage() {
                   disabled={isLoading}
                   variant="outline"
                 >
-                  Skip for now
+                  {t("Skip for now")}
                 </Button>
               </div>
             </div>
@@ -438,7 +446,7 @@ export default function AppSumoSignupPage() {
       <div className="flex justify-center items-center h-dvh w-full p-4 bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-600 dark:text-emerald-500" />
-          <p className="text-muted-foreground">Loading&hellip;</p>
+          <p className="text-muted-foreground">{t("Loading")}...</p>
         </div>
       </div>
     );
@@ -466,7 +474,7 @@ export default function AppSumoSignupPage() {
           <a href="https://rybbit.com" target="_blank" className="inline-block mb-2">
             <RybbitTextLogo />
           </a>
-          <h1 className="text-lg text-neutral-600 dark:text-neutral-300">AppSumo License Activation</h1>
+          <h1 className="text-lg text-neutral-600 dark:text-neutral-300">{t("AppSumo License Activation")}</h1>
         </div>
 
         <Card className="w-full md:w-[500px] p-0 overflow-hidden shadow-2xl border-neutral-200 dark:border-neutral-700/50 backdrop-blur-sm bg-white/80 dark:bg-neutral-800/20 z-10 p-8">
@@ -510,9 +518,9 @@ export default function AppSumoSignupPage() {
             href="https://rybbit.com"
             target="_blank"
             rel="noopener"
-            title="Rybbit - Open Source Privacy-Focused Web Analytics"
+            title={t("Rybbit - Open Source Privacy-Focused Web Analytics")}
           >
-            Open source web analytics powered by Rybbit
+            {t("Open source web analytics powered by Rybbit")}
           </a>
         </div>
       </div>

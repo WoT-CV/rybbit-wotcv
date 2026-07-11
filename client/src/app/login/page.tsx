@@ -19,8 +19,8 @@ import { userStore } from "../../lib/userStore";
 
 export default function Page() {
   const { configs, isLoading: isLoadingConfigs } = useConfigs();
-  useSetPageTitle("Login");
   const t = useExtracted();
+  useSetPageTitle(t("Login"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -157,7 +157,7 @@ export default function Page() {
               href="https://rybbit.com"
               target="_blank"
               rel="noopener"
-              title="Rybbit - Open Source Privacy-Focused Web Analytics"
+              title={t("Rybbit - Open Source Privacy-Focused Web Analytics")}
             >
               {t("Open source web analytics powered by Rybbit")}
             </a>

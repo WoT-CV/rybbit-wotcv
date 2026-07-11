@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth";
 import { useGetSitesFromOrg } from "@/api/admin/hooks/useSites";
+import { useExtracted } from "next-intl";
 
 interface SiteAccessMultiSelectProps {
   selectedSiteIds: number[];
@@ -12,6 +13,7 @@ interface SiteAccessMultiSelectProps {
 }
 
 export function SiteAccessMultiSelect({ selectedSiteIds, onChange, disabled = false }: SiteAccessMultiSelectProps) {
+  const t = useExtracted();
   const { data: activeOrganization } = authClient.useActiveOrganization();
   const { data: sitesData, isLoading } = useGetSitesFromOrg(activeOrganization?.id);
 
@@ -34,11 +36,11 @@ export function SiteAccessMultiSelect({ selectedSiteIds, onChange, disabled = fa
   };
 
   if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading sites&hellip;</div>;
+    return <div className="text-sm text-muted-foreground">{t("Loading sites")}...</div>;
   }
 
   if (sites.length === 0) {
-    return <div className="text-sm text-muted-foreground">No sites in this organization</div>;
+    return <div className="text-sm text-muted-foreground">{t("No sites in this organization")}</div>;
   }
 
   return (
@@ -51,7 +53,7 @@ export function SiteAccessMultiSelect({ selectedSiteIds, onChange, disabled = fa
           disabled={disabled}
         />
         <Label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
-          Select all sites ({sites.length})
+          {t("Select all sites ({count})", { count: String(sites.length) })}
         </Label>
       </div>
       <div className="border rounded-lg divide-y max-h-48 overflow-y-auto">

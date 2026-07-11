@@ -6,8 +6,8 @@ import { AccountInner } from "./components/AccountInner";
 import { ExternalLink } from "../../../components/ExternalLink";
 
 export default function AccountPage() {
-  useSetPageTitle("Account");
   const t = useExtracted();
+  useSetPageTitle(t("Account"));
 
   return (
     <>

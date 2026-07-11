@@ -144,8 +144,8 @@ function Organization({
 
 // Main Organizations component
 export default function MembersPage() {
-  useSetPageTitle("Organization Members");
   const t = useExtracted();
+  useSetPageTitle(t("Organization Members"));
   const { data: activeOrganization, isPending } = authClient.useActiveOrganization();
 
   if (isPending) {

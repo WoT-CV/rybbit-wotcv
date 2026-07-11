@@ -26,8 +26,8 @@ import { SetupStep } from "./components/SetupStep";
 
 function SignupPageContent() {
   const { configs, isLoading: isLoadingConfigs } = useConfigs();
-  useSetPageTitle("Signup");
   const t = useExtracted();
+  useSetPageTitle(t("Signup"));
 
   const maxStep = IS_CLOUD ? 3 : 2;
   const [stepParam, setStepParam] = useQueryState("step", parseAsInteger);
@@ -183,7 +183,7 @@ function SignupPageContent() {
       );
 
       if (!selectedTierPrice) {
-        setError("Could not find a matching plan. Please try a different selection.");
+        setError(t("Could not find a matching plan. Please try a different selection."));
         return;
       }
 
@@ -205,7 +205,7 @@ function SignupPageContent() {
       const checkoutData = await checkoutResponse.json();
 
       if (!checkoutResponse.ok) {
-        throw new Error(checkoutData.error || "Failed to create checkout session");
+        throw new Error(checkoutData.error || t("Failed to create checkout session"));
       }
 
       trackAdEvent("checkout", { tier: selectedTierPrice.name });
@@ -379,7 +379,7 @@ function SignupPageContent() {
               href="https://rybbit.com"
               target="_blank"
               rel="noopener"
-              title="Rybbit - Open Source Privacy-Focused Web Analytics"
+              title={t("Rybbit - Open Source Privacy-Focused Web Analytics")}
             >
               {t("Open source web analytics powered by Rybbit")}
             </a>
