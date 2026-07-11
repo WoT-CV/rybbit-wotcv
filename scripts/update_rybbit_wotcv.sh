@@ -99,10 +99,10 @@ if [[ -n "${PUBLIC_HEALTH_URL}" ]]; then
   echo
 fi
 
-if [[ -n "${WOTCV_SITE_ID:-}" && -x "${REPO_DIR}/scripts/wotcv-self-hosted-analytics-smoke.sh" ]]; then
+if [[ -n "${WOTCV_SITE_ID:-}" && -f "${REPO_DIR}/scripts/wotcv-smoke.sh" ]]; then
   echo
   echo "Analytics smoke check for site ${WOTCV_SITE_ID}:"
-  bash "${REPO_DIR}/scripts/wotcv-self-hosted-analytics-smoke.sh"
+  bash "${REPO_DIR}/scripts/wotcv-smoke.sh" all
 fi
 
 echo

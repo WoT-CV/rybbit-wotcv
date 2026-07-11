@@ -3,6 +3,7 @@
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${ROOT_DIR}/scripts/lib/wotcv-common.sh"
 STATE_FILE="${ROOT_DIR}/.wotcv-deployment.env"
 HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
 TARGET_TAG="${1:-${IMAGE_TAG:-}}"
@@ -24,46 +25,12 @@ if [[ ! "${TARGET_TAG}" =~ ^sha-[0-9a-f]{7,40}$ ]]; then
   exit 1
 fi
 
-if [[ -n "$(git status --porcelain)" ]]; then
-  echo "Working tree must be clean before deployment." >&2
-  exit 1
-fi
-
-command -v docker >/dev/null 2>&1 || { echo "docker is required." >&2; exit 1; }
-command -v curl >/dev/null 2>&1 || { echo "curl is required." >&2; exit 1; }
-
-read_state() {
-  local key="$1"
-  [[ -f "${STATE_FILE}" ]] || return 0
-  sed -n "s/^${key}=//p" "${STATE_FILE}" | tail -n 1
-}
+wotcv_require_commands git docker curl
+wotcv_require_clean_worktree
 
 image_digest() {
   local image="$1"
   docker image inspect "${image}:${TARGET_TAG}" --format '{{index .RepoDigests 0}}' | awk -F@ '{print $2}'
-}
-
-wait_for_health() {
-  local expected_image_tag="${1:-}"
-  local attempts=60
-  local response
-  local last_response=""
-
-  for ((attempt = 1; attempt <= attempts; attempt++)); do
-    if response="$(curl --fail --silent --show-error --max-time 5 "${HEALTHCHECK_URL}" 2>/dev/null)"; then
-      last_response="${response}"
-      if [[ -z "${expected_image_tag}" || "${response}" == *"\"imageTag\":\"${expected_image_tag}\""* ]]; then
-        printf '%s\n' "${response}"
-        return 0
-      fi
-    fi
-    sleep 2
-  done
-
-  if [[ -n "${last_response}" ]]; then
-    printf '%s\n' "${last_response}"
-  fi
-  return 1
 }
 
 rollback() {
@@ -91,7 +58,7 @@ rollback() {
   WOTCV_DEPLOYED_AT="${rollback_deployed_at}" \
     "${COMPOSE[@]}" up -d --force-recreate backend client
 
-  if ! rollback_response="$(wait_for_health "${previous_tag}")"; then
+  if ! rollback_response="$(wotcv_wait_for_health "${HEALTHCHECK_URL}" "" "${previous_tag}")"; then
     echo "Rollback health check failed; manual intervention is required." >&2
     return 1
   fi
@@ -104,9 +71,9 @@ rollback() {
   echo "Rollback completed: ${previous_tag}" >&2
 }
 
-PREVIOUS_TAG="$(read_state LAST_IMAGE_TAG)"
-PREVIOUS_BACKEND_DIGEST="$(read_state BACKEND_IMAGE_DIGEST)"
-PREVIOUS_CLIENT_DIGEST="$(read_state CLIENT_IMAGE_DIGEST)"
+PREVIOUS_TAG="$(wotcv_read_state "${STATE_FILE}" LAST_IMAGE_TAG)"
+PREVIOUS_BACKEND_DIGEST="$(wotcv_read_state "${STATE_FILE}" BACKEND_IMAGE_DIGEST)"
+PREVIOUS_CLIENT_DIGEST="$(wotcv_read_state "${STATE_FILE}" CLIENT_IMAGE_DIGEST)"
 WOTCV_DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 export IMAGE_TAG="${TARGET_TAG}"
@@ -125,7 +92,7 @@ export BACKEND_IMAGE_DIGEST CLIENT_IMAGE_DIGEST
 echo "Starting backend and client..."
 "${COMPOSE[@]}" up -d --force-recreate backend client
 
-if ! HEALTH_RESPONSE="$(wait_for_health "${IMAGE_TAG}")"; then
+if ! HEALTH_RESPONSE="$(wotcv_wait_for_health "${HEALTHCHECK_URL}" "" "${IMAGE_TAG}")"; then
   echo "Health check failed. Recent logs:" >&2
   "${COMPOSE[@]}" logs --since=10m backend client >&2 || true
   rollback "${PREVIOUS_TAG}" "${PREVIOUS_BACKEND_DIGEST}" "${PREVIOUS_CLIENT_DIGEST}" || true

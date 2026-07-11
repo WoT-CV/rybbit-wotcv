@@ -230,7 +230,7 @@ Po wdrożeniu można sprawdzić, czy odblokowane widoki `Strony`, `Wydajność` 
 cd /home/rybbit-wotcv
 
 WOTCV_SITE_ID=ID_STRONY \
-bash scripts/wotcv-self-hosted-analytics-smoke.sh
+bash scripts/wotcv-smoke.sh analytics
 ```
 
 Dla strony prywatnej przekaż klucz prywatnego linku albo API key:
@@ -238,11 +238,11 @@ Dla strony prywatnej przekaż klucz prywatnego linku albo API key:
 ```bash
 WOTCV_SITE_ID=ID_STRONY \
 WOTCV_PRIVATE_KEY=PRIVATE_LINK_KEY \
-bash scripts/wotcv-self-hosted-analytics-smoke.sh
+bash scripts/wotcv-smoke.sh analytics
 
 WOTCV_SITE_ID=ID_STRONY \
 WOTCV_API_KEY=API_KEY \
-bash scripts/wotcv-self-hosted-analytics-smoke.sh
+bash scripts/wotcv-smoke.sh analytics
 ```
 
 Zakres czasu można zawęzić bez zmiany kodu:
@@ -252,8 +252,10 @@ WOTCV_SITE_ID=ID_STRONY \
 WOTCV_START_DATE=2026-07-01 \
 WOTCV_END_DATE=2026-07-10 \
 WOTCV_TIME_ZONE=Europe/Warsaw \
-bash scripts/wotcv-self-hosted-analytics-smoke.sh
+bash scripts/wotcv-smoke.sh analytics
 ```
+
+Tryb `growth` sprawdza wyłącznie analizę wzrostu, a `all` wykonuje oba zestawy kontroli.
 
 `Wydajność` zaczyna pokazywać dane po włączeniu Web Vitals w ustawieniach strony i zebraniu zdarzeń `performance`. `Boty` pokazują dane, gdy tracker zapisuje zdarzenia botów dla danej strony.
 
