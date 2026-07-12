@@ -116,6 +116,5 @@ export const PLAYBACK_SPEEDS = [
   { value: "4", label: "4x" },
 ];
 
-export const CONTROLS_HEIGHT = 144;
 export const SKIP_SECONDS = 10_000;
 export const OVERLAY_TIMEOUT = 800;

@@ -4,7 +4,6 @@ import { useShallow } from "zustand/react/shallow";
 import type { ReplayEventLike } from "../../network/types";
 import { useReplayStore } from "../../replayStore";
 import { ReplayPlayerAdapter } from "../ReplayPlayerAdapter";
-import { CONTROLS_HEIGHT } from "../utils/replayUtils";
 
 interface UseReplayPlayerProps {
   data: { events: ReplayEventLike[] } | undefined;
@@ -40,16 +39,18 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
     const initializedSessionId = initializedState.sessionId;
     const initializedSelectionVersion = initializedState.selectionVersion;
     let handleVisibilityChange: (() => void) | undefined;
+    let resizeObserver: ResizeObserver | undefined;
     let adapter: ReplayPlayerAdapter;
 
     target.replaceChildren();
 
     try {
+      const initialRect = target.getBoundingClientRect();
       adapter = new ReplayPlayerAdapter({
         target,
         events: data.events,
-        width: widthRef.current,
-        height: heightRef.current - CONTROLS_HEIGHT,
+        width: initialRect.width || widthRef.current,
+        height: initialRect.height || heightRef.current,
       });
 
       playerRef.current = adapter;
@@ -124,6 +125,13 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
       };
 
       document.addEventListener("visibilitychange", handleVisibilityChange);
+
+      resizeObserver = new ResizeObserver(entries => {
+        const entry = entries[0];
+        if (!entry || entry.contentRect.width <= 0 || entry.contentRect.height <= 0) return;
+        adapter.resize(entry.contentRect.width, entry.contentRect.height);
+      });
+      resizeObserver.observe(target);
     } catch (error) {
       console.error("Failed to initialize rrweb player:", error);
       return;
@@ -131,6 +139,7 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
 
     return () => {
       if (handleVisibilityChange) document.removeEventListener("visibilitychange", handleVisibilityChange);
+      resizeObserver?.disconnect();
       adapter.destroy();
       playerRef.current = null;
       setPlayer(null);
@@ -138,7 +147,9 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
   }, [data, setCurrentTime, setDuration, setIsPlaying, setPlayer]);
 
   useEffect(() => {
-    playerRef.current?.resize(width, height - CONTROLS_HEIGHT);
+    const target = playerContainerRef.current;
+    const rect = target?.getBoundingClientRect();
+    playerRef.current?.resize(rect?.width || width, rect?.height || height);
   }, [height, width]);
 
   return { playerContainerRef };

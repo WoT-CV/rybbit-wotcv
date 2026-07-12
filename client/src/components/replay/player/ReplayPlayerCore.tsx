@@ -14,10 +14,10 @@ export function ReplayPlayerCore({ data, width, height, onPlayPause, isPlaying }
   const { playerContainerRef } = useReplayPlayer({ data, width, height });
 
   return (
-    <div className="flex-1 flex items-center justify-center overflow-hidden relative">
+    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
       <div
         ref={playerContainerRef}
-        className="w-full bg-black shadow-2xl [&_.rr-player]:bg-black!"
+        className="h-full w-full bg-black shadow-2xl [&_.rr-player]:bg-black!"
         style={{
           position: "relative",
         }}
