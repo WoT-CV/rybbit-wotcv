@@ -74,16 +74,16 @@ ENV WOTCV_BUILD_TIME=${WOTCV_BUILD_TIME}
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/client/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/client/public ./client/public
 
 # Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+RUN mkdir -p client/.next
+RUN chown -R nextjs:nodejs client
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/client/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/client/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/client/.next/static ./client/.next/static
 
 USER nextjs
 
@@ -92,4 +92,4 @@ EXPOSE 3002
 ENV PORT=3002
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["node", "client/server.js"]

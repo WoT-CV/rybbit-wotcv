@@ -171,7 +171,9 @@ Uruchomienie:
 /home/wotcv/tools/update_rybbit_wotcv.sh
 ```
 
-Wrapper działa niezależnie od bieżącego katalogu. Domyślnie używa `/home/rybbit-wotcv`, gałęzi `origin/feat/wotcv`, projektu Compose `rybbit`, lokalnego healthchecka `http://127.0.0.1:3001/api/health` i publicznego healthchecka `https://tracking.wot-cv.com/api/health`.
+Skrypt uruchamiaj jako użytkownik `wotcv`, bez `sudo`. Wrapper działa niezależnie od bieżącego katalogu. Domyślnie używa `/home/rybbit-wotcv`, gałęzi `origin/feat/wotcv`, projektu Compose `rybbit`, lokalnego healthchecka `http://127.0.0.1:3001/api/health` i publicznego healthchecka `https://tracking.wot-cv.com/api/health`.
+
+Przed podmianą kontenerów skrypt sprawdza również, czy obraz backendu zawiera działający pakiet `@rybbit/shared`, a obraz klienta zawiera serwer Next.js standalone.
 
 Przykłady nadpisania ustawień:
 

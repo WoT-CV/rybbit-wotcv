@@ -13,6 +13,10 @@ RUN npm install && npm run build
 WORKDIR /app/server
 COPY server/package*.json ./
 RUN npm ci --legacy-peer-deps
+RUN rm -rf node_modules/@rybbit/shared \
+    && mkdir -p node_modules/@rybbit/shared \
+    && cp /app/shared/package.json node_modules/@rybbit/shared/package.json \
+    && cp -R /app/shared/dist node_modules/@rybbit/shared/dist
 
 # Copy server source code
 COPY server/ .

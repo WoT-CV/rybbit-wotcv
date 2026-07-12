@@ -12,10 +12,18 @@ BACKEND_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-backend"
 CLIENT_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-client"
 COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-rybbit}}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.wotcv.yml -f docker-compose.wotcv.branch-build.yml)
+COMPOSE_CONFIG_FILE=""
+
+cleanup() {
+  [[ -z "${COMPOSE_CONFIG_FILE}" ]] || rm -f "${COMPOSE_CONFIG_FILE}"
+}
+
+trap cleanup EXIT
 
 cd "${ROOT_DIR}"
 export COMPOSE_PROJECT_NAME
 
+wotcv_require_non_root
 wotcv_require_commands git docker curl
 wotcv_require_clean_worktree
 
@@ -23,6 +31,13 @@ image_id() {
   local image="$1"
   local tag="$2"
   docker image inspect "${image}:${tag}" --format '{{.Id}}'
+}
+
+validate_runtime_images() {
+  docker run --rm --entrypoint node "${BACKEND_IMAGE}:${IMAGE_TAG}" \
+    --input-type=module --eval 'await import("@rybbit/shared")'
+  docker run --rm --entrypoint node "${CLIENT_IMAGE}:${IMAGE_TAG}" \
+    --check /app/client/server.js
 }
 
 switch_to_branch() {
@@ -104,7 +119,8 @@ export BACKEND_IMAGE_DIGEST=unknown
 export CLIENT_IMAGE_DIGEST=unknown
 
 echo "Validating Compose configuration for ${DEPLOY_BRANCH} at ${WOTCV_GIT_SHA}..."
-"${COMPOSE[@]}" config >/tmp/rybbit-wotcv-branch-build-compose.yml
+COMPOSE_CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/rybbit-wotcv-branch-build-compose.${UID}.XXXXXX.yml")"
+"${COMPOSE[@]}" config >"${COMPOSE_CONFIG_FILE}"
 
 BUILD_COMMAND=(build)
 if [[ "${WOTCV_BUILD_PULL:-0}" == "1" ]]; then
@@ -113,6 +129,9 @@ fi
 
 echo "Building backend and client locally from ${DEPLOY_BRANCH}..."
 "${COMPOSE[@]}" "${BUILD_COMMAND[@]}" backend client
+
+echo "Validating runtime contents of backend and client images..."
+validate_runtime_images
 
 BACKEND_IMAGE_DIGEST="$(image_id "${BACKEND_IMAGE}" "${IMAGE_TAG}")"
 CLIENT_IMAGE_DIGEST="$(image_id "${CLIENT_IMAGE}" "${IMAGE_TAG}")"

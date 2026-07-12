@@ -2,6 +2,13 @@
 
 set -Eeuo pipefail
 
+wotcv_require_non_root() {
+  if [[ "${EUID}" -eq 0 ]]; then
+    echo "Run this script as the deployment user, without sudo." >&2
+    return 1
+  fi
+}
+
 wotcv_require_commands() {
   local command_name
 

@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="${RYBBIT_REPO_DIR:-/home/rybbit-wotcv}"
-LOCK_FILE="${RYBBIT_UPDATE_LOCK:-/tmp/rybbit-wotcv-update.lock}"
+LOCK_FILE="${RYBBIT_UPDATE_LOCK:-/tmp/rybbit-wotcv-update-${UID}.lock}"
 LOG_DIR="${RYBBIT_UPDATE_LOG_DIR:-${SCRIPT_DIR}/logs}"
 PUBLIC_HEALTH_URL="${RYBBIT_PUBLIC_HEALTH_URL:-https://tracking.wot-cv.com/api/health}"
 
@@ -13,6 +13,11 @@ export WOTCV_BRANCH="${WOTCV_BRANCH:-feat/wotcv}"
 export WOTCV_COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME:-rybbit}"
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-${WOTCV_COMPOSE_PROJECT_NAME}}"
 export WOTCV_HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
+
+if [[ "${EUID}" -eq 0 ]]; then
+  echo "Uruchom ten skrypt jako użytkownik wdrożeniowy, bez sudo." >&2
+  exit 1
+fi
 
 command -v flock >/dev/null 2>&1 || {
   echo "flock is required." >&2
