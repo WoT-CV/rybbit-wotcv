@@ -8,7 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { useReplayStore } from "../replayStore";
-import { filterNetworkRequests, formatNetworkOffset, getInitiatorLabel, getRequestHost } from "./networkEventUtils";
+import {
+  filterNetworkRequests,
+  formatNetworkOffset,
+  getDefaultNetworkHost,
+  getInitiatorLabel,
+  getRequestHost,
+} from "./networkEventUtils";
 import { NetworkRequestDetails } from "./NetworkRequestDetails";
 import { NetworkRequestRow } from "./NetworkRequestRow";
 import type { NetworkStatusGroup, ParsedNetworkRequest } from "./types";
@@ -36,12 +42,12 @@ type NetworkTimelineRow =
 export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
   const t = useExtracted();
   const [query, setQuery] = useState("");
-  const [host, setHost] = useState("all");
+  const [host, setHost] = useState(() => getDefaultNetworkHost(requests));
   const [method, setMethod] = useState("all");
   const [statusGroup, setStatusGroup] = useState<NetworkStatusGroup>("all");
   const [initiatorType, setInitiatorType] = useState("all");
-  const [fetchXhrOnly, setFetchXhrOnly] = useState(false);
-  const [followCurrentTime, setFollowCurrentTime] = useState(false);
+  const [fetchXhrOnly, setFetchXhrOnly] = useState(true);
+  const [followCurrentTime, setFollowCurrentTime] = useState(true);
   const [minDurationMs, setMinDurationMs] = useState(0);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

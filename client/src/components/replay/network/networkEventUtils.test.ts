@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { filterNetworkRequests, getNetworkTransferSizeInfo, getResponseCorrelationId } from "./networkEventUtils";
+import {
+  filterNetworkRequests,
+  getDefaultNetworkHost,
+  getNetworkTransferSizeInfo,
+  getResponseCorrelationId,
+} from "./networkEventUtils";
 import type { NetworkRequestFilters, ParsedNetworkRequest } from "./types";
 
 const request = (overrides: Partial<ParsedNetworkRequest> = {}): ParsedNetworkRequest => {
@@ -39,6 +44,13 @@ const filters: NetworkRequestFilters = {
 };
 
 describe("network event utilities", () => {
+  it("prefers api.wot-cv.com as the initial host when available", () => {
+    expect(getDefaultNetworkHost([request({ host: "wot-cv.com" }), request({ host: "api.wot-cv.com" })])).toBe(
+      "api.wot-cv.com"
+    );
+    expect(getDefaultNetworkHost([request({ host: "wot-cv.com" })])).toBe("all");
+  });
+
   it("combines host, method, status and duration filters", () => {
     const requests = [
       request(),

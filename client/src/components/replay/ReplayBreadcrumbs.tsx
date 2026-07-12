@@ -173,7 +173,7 @@ export function ReplayBreadcrumbs() {
   const t = useExtracted();
   const params = useParams();
   const siteId = Number(params.site);
-  const [timelineView, setTimelineView] = useState<"key" | "network" | "all">("key");
+  const [timelineView, setTimelineView] = useState<"key" | "network" | "all">("network");
   const { sessionId } = useReplayStore(
     useShallow(s => ({
       sessionId: s.sessionId,
@@ -280,19 +280,6 @@ export function ReplayBreadcrumbs() {
           >
             <button
               role="tab"
-              aria-selected={timelineView === "key"}
-              onClick={() => setTimelineView("key")}
-              className={cn(
-                "rounded px-2 py-0.5 transition-colors",
-                timelineView === "key"
-                  ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
-              )}
-            >
-              {t("Key")}
-            </button>
-            <button
-              role="tab"
               aria-selected={timelineView === "network"}
               onClick={() => setTimelineView("network")}
               className={cn(
@@ -303,6 +290,19 @@ export function ReplayBreadcrumbs() {
               )}
             >
               {t("Network")}
+            </button>
+            <button
+              role="tab"
+              aria-selected={timelineView === "key"}
+              onClick={() => setTimelineView("key")}
+              className={cn(
+                "rounded px-2 py-0.5 transition-colors",
+                timelineView === "key"
+                  ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+              )}
+            >
+              {t("Key")}
             </button>
             <button
               role="tab"

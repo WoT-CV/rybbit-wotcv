@@ -1,5 +1,13 @@
 import type { NetworkRequestFilters, NetworkStatusGroup, ParsedNetworkRequest } from "./types";
 
+export const DEFAULT_REPLAY_NETWORK_HOST = "api.wot-cv.com";
+
+export function getDefaultNetworkHost(requests: readonly ParsedNetworkRequest[]): string {
+  return requests.some(request => getRequestHost(request) === DEFAULT_REPLAY_NETWORK_HOST)
+    ? DEFAULT_REPLAY_NETWORK_HOST
+    : "all";
+}
+
 export function filterNetworkRequests(
   requests: readonly ParsedNetworkRequest[],
   filters: NetworkRequestFilters
