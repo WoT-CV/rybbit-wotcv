@@ -1,5 +1,4 @@
 import twilio from "twilio";
-import { IS_CLOUD } from "./const.js";
 import { createServiceLogger } from "./logger/logger.js";
 
 const logger = createServiceLogger("twilio");
@@ -7,7 +6,7 @@ const logger = createServiceLogger("twilio");
 let twilioClient: ReturnType<typeof twilio> | undefined;
 
 // Initialize Twilio client only if we have the necessary credentials
-if (IS_CLOUD && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
   twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 }
 

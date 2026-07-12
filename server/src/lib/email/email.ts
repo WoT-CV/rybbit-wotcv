@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { render } from "@react-email/components";
-import { IS_CLOUD } from "../const.js";
+import { runtimeCapabilities } from "../runtimeCapabilities.js";
 import { ApproachingLimitEmail } from "./templates/ApproachingLimitEmail.js";
 import { InvitationEmail } from "./templates/InvitationEmail.js";
 import { LimitExceededEmail } from "./templates/LimitExceededEmail.js";
@@ -15,7 +15,10 @@ import type { ReengagementContent } from "../../services/reengagement/reengageme
 let resend: Resend | undefined;
 let marketingAudienceId: string | null = null;
 
-if (IS_CLOUD) {
+const emailFrom = process.env.EMAIL_FROM || "Rybbit <automail@email.rybbit.com>";
+const emailReplyTo = process.env.EMAIL_REPLY_TO;
+
+if (runtimeCapabilities.transactionalEmail) {
   resend = new Resend(process.env.RESEND_API_KEY);
 }
 
@@ -81,7 +84,8 @@ export const sendEmail = async (email: string, subject: string, html: string) =>
   }
   try {
     const response = await resend.emails.send({
-      from: "Rybbit <automail@email.rybbit.com>",
+      from: emailFrom,
+      ...(emailReplyTo ? { replyTo: emailReplyTo } : {}),
       to: email,
       subject,
       html,
@@ -120,11 +124,7 @@ export const sendEmailVerificationLink = async (email: string, verificationUrl: 
   await sendEmail(email, "Verify your Rybbit email", html);
 };
 
-export const sendChangeEmailVerification = async (
-  currentEmail: string,
-  newEmail: string,
-  verificationUrl: string
-) => {
+export const sendChangeEmailVerification = async (currentEmail: string, newEmail: string, verificationUrl: string) => {
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color: #111;">
       <h2 style="margin: 0 0 16px;">Confirm your new email</h2>
@@ -234,8 +234,8 @@ Bill`;
 
   try {
     await resend.emails.send({
-      from: "Bill from Rybbit <bill@email.rybbit.com>",
-      replyTo: "hello@rybbit.com",
+      from: emailFrom,
+      ...(emailReplyTo ? { replyTo: emailReplyTo } : {}),
       to: email,
       subject: "Welcome to Rybbit!",
       text,
@@ -268,7 +268,8 @@ export const scheduleOnboardingTipEmail = async (
     );
 
     const response = await resend.emails.send({
-      from: "Rybbit <automail@email.rybbit.com>",
+      from: emailFrom,
+      ...(emailReplyTo ? { replyTo: emailReplyTo } : {}),
       to: email,
       subject: tipContent.subject,
       html,
@@ -323,7 +324,8 @@ export const sendReengagementEmail = async (
     );
 
     await resend.emails.send({
-      from: "Rybbit <automail@email.rybbit.com>",
+      from: emailFrom,
+      ...(emailReplyTo ? { replyTo: emailReplyTo } : {}),
       to: email,
       subject: content.subject,
       html,

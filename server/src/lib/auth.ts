@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import pg from "pg";
 import { dash } from "@better-auth/infra";
-import { apiKey } from "@better-auth/api-key"
+import { apiKey } from "@better-auth/api-key";
 
 import { db } from "../db/postgres/postgres.js";
 import * as schema from "../db/postgres/schema.js";
@@ -23,6 +23,7 @@ import {
 import { onboardingTipsService } from "../services/onboardingTips/onboardingTipsService.js";
 import { getTrustedCorsOrigins } from "./cors.js";
 import { createServiceLogger } from "./logger/logger.js";
+import { runtimeCapabilities } from "./runtimeCapabilities.js";
 
 dotenv.config();
 
@@ -170,14 +171,13 @@ const pluginList = [
       await sendOtpEmail(email, otp, type);
     },
   }),
-  // Add Cloudflare Turnstile captcha (cloud only)
-  ...(IS_CLOUD && process.env.TURNSTILE_SECRET_KEY && process.env.NODE_ENV === "production"
+  ...(runtimeCapabilities.turnstile && process.env.NODE_ENV === "production"
     ? [
-      captcha({
-        provider: "cloudflare-turnstile",
-        secretKey: process.env.TURNSTILE_SECRET_KEY,
-      }),
-    ]
+        captcha({
+          provider: "cloudflare-turnstile",
+          secretKey: process.env.TURNSTILE_SECRET_KEY!,
+        }),
+      ]
     : []),
 ];
 
@@ -205,26 +205,27 @@ export const auth = betterAuth({
     disableSignUp: DISABLE_SIGNUP,
   },
   emailVerification: {
-    sendVerificationEmail: async ({
-      user,
-      url,
-    }: {
-      user: { email: string };
-      url: string;
-      token: string;
-    }) => {
+    sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string; token: string }) => {
       await sendEmailVerificationLink(user.email, url);
     },
   },
   socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    },
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    },
+    ...(runtimeCapabilities.socialProviders.google
+      ? {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          },
+        }
+      : {}),
+    ...(runtimeCapabilities.socialProviders.github
+      ? {
+          github: {
+            clientId: process.env.GITHUB_CLIENT_ID!,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+          },
+        }
+      : {}),
   },
   user: {
     additionalFields: {
@@ -280,19 +281,19 @@ export const auth = betterAuth({
             await db.update(user).set({ role: "admin" }).where(eq(user.id, users[0].id));
           }
 
-          sendWelcomeEmail(u.email, u.name);
-          // Add contact to marketing audience and schedule onboarding emails
-          try {
-            await addContactToAudience(u.email, u.name);
+          if (IS_CLOUD) {
+            sendWelcomeEmail(u.email, u.name);
+            try {
+              await addContactToAudience(u.email, u.name);
 
-            const emailIds = await onboardingTipsService.scheduleOnboardingEmails(u.email, u.name);
+              const emailIds = await onboardingTipsService.scheduleOnboardingEmails(u.email, u.name);
 
-            // Store scheduled email IDs for potential cancellation
-            if (emailIds.length > 0) {
-              await db.update(user).set({ scheduledTipEmailIds: emailIds }).where(eq(user.id, u.id));
+              if (emailIds.length > 0) {
+                await db.update(user).set({ scheduledTipEmailIds: emailIds }).where(eq(user.id, u.id));
+              }
+            } catch (error) {
+              console.error("Error setting up onboarding emails:", error);
             }
-          } catch (error) {
-            console.error("Error setting up onboarding emails:", error);
           }
         },
       },
@@ -318,7 +319,7 @@ export const auth = betterAuth({
     },
   },
   hooks: {
-    before: createAuthMiddleware(async (ctx) => {
+    before: createAuthMiddleware(async ctx => {
       if (IS_CLOUD && ctx.path === "/organization/invite-member") {
         const body = ctx.body as { organizationId?: string } | undefined;
         const organizationId = body?.organizationId;

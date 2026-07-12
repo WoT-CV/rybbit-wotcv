@@ -8,7 +8,7 @@ import { processResults } from "../../api/analytics/utils/utils.js";
 import { createServiceLogger } from "../../lib/logger/logger.js";
 import { sendWeeklyReportEmail } from "../../lib/email/email.js";
 import { filterSitesByMemberAccess } from "../../lib/siteAccess.js";
-import { IS_CLOUD } from "../../lib/const.js";
+import { runtimeCapabilities } from "../../lib/runtimeCapabilities.js";
 import type { OverviewData, MetricData, SiteReport, OrganizationReport } from "./weeklyReportTypes.js";
 
 class WeeklyReportService {
@@ -360,7 +360,6 @@ class WeeklyReportService {
         }
 
         for (const site of allowedSites) {
-
           try {
             await sendWeeklyReportEmail(memberData.email, memberData.name, report.organizationName, site);
             this.logger.info(
@@ -386,8 +385,8 @@ class WeeklyReportService {
   }
 
   public async generateAndSendReports(): Promise<void> {
-    if (!IS_CLOUD) {
-      this.logger.info("Skipping weekly reports for non-cloud instance");
+    if (!runtimeCapabilities.weeklyReports) {
+      this.logger.info("Skipping weekly reports because they are not configured");
       return;
     }
 
@@ -436,8 +435,8 @@ class WeeklyReportService {
   }
 
   private initializeWeeklyReportCron(): void {
-    if (!IS_CLOUD) {
-      this.logger.info("Skipping weekly report cron initialization for non-cloud instance");
+    if (!runtimeCapabilities.weeklyReports) {
+      this.logger.info("Skipping weekly report cron because it is not configured");
       return;
     }
 

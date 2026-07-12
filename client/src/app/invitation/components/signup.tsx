@@ -3,8 +3,8 @@
 import { useExtracted } from "next-intl";
 import { useState } from "react";
 import { authClient } from "../../../lib/auth";
+import { useConfigs } from "../../../lib/configs";
 import { userStore } from "../../../lib/userStore";
-import { IS_CLOUD } from "../../../lib/const";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthError } from "@/components/auth/AuthError";
@@ -17,11 +17,13 @@ interface SignupProps {
 
 export function Signup({ callbackURL }: SignupProps) {
   const t = useExtracted();
+  const { configs } = useConfigs();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const turnstileEnabled = Boolean(configs?.capabilities.turnstile);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +31,7 @@ export function Signup({ callbackURL }: SignupProps) {
     setError("");
 
     try {
-      // Validate Turnstile token if in cloud mode
-      if (IS_CLOUD && !turnstileToken) {
+      if (turnstileEnabled && !turnstileToken) {
         setError(t("Please complete the captcha verification"));
         setIsLoading(false);
         return;
@@ -44,7 +45,7 @@ export function Signup({ callbackURL }: SignupProps) {
         },
         {
           onRequest: context => {
-            if (IS_CLOUD && turnstileToken) {
+            if (turnstileEnabled && turnstileToken) {
               context.headers.set("x-captcha-response", turnstileToken);
             }
           },
@@ -97,12 +98,12 @@ export function Signup({ callbackURL }: SignupProps) {
         <AuthButton
           isLoading={isLoading}
           loadingText={t("Creating account...")}
-          disabled={IS_CLOUD ? !turnstileToken || isLoading : isLoading}
+          disabled={turnstileEnabled ? !turnstileToken || isLoading : isLoading}
         >
           {t("Sign Up to Accept Invitation")}
         </AuthButton>
 
-        {IS_CLOUD && (
+        {turnstileEnabled && (
           <Turnstile
             onSuccess={token => setTurnstileToken(token)}
             onError={() => setTurnstileToken("")}

@@ -108,6 +108,60 @@ grep -q '^HOST_POSTGRES_PORT=' .env || echo 'HOST_POSTGRES_PORT=127.0.0.1:5433:5
 
 Bez `COMPOSE_PROJECT_NAME=rybbit` Docker Compose uruchomiony z `/home/rybbit-wotcv` utworzy nowe volume zamiast użyć obecnych `rybbit_postgres-data`, `rybbit_clickhouse-data` i `rybbit_redis-data`.
 
+## Opcjonalne funkcje self-hosted
+
+Fork nie wymaga ustawiania `CLOUD=true`. Funkcje zależne od usług zewnętrznych są wykrywane osobno i pojawiają się w interfejsie dopiero po podaniu kompletnej konfiguracji.
+
+Google OAuth i Google Search Console:
+
+```dotenv
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=https://tracking.wot-cv.com/api/gsc/callback
+```
+
+W konfiguracji klienta OAuth Google dodaj adres przekierowania z `GOOGLE_REDIRECT_URI`. Te same dane włączają logowanie Google oraz integrację Search Console. Logowanie GitHub można włączyć niezależnie:
+
+```dotenv
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+```
+
+Dla logowania społecznościowego dodaj również callbacki `https://tracking.wot-cv.com/api/auth/callback/google` w Google OAuth oraz `https://tracking.wot-cv.com/api/auth/callback/github` w GitHub OAuth.
+
+Formularze logowania, rejestracji i resetowania hasła można zabezpieczyć Cloudflare Turnstile:
+
+```dotenv
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=...
+TURNSTILE_SECRET_KEY=...
+```
+
+Turnstile aktywuje się dopiero po ustawieniu obu kluczy. Zmiana publicznego klucza wymaga ponownego zbudowania obrazu klienta.
+
+E-maile transakcyjne i zaproszenia przez Resend:
+
+```dotenv
+RESEND_API_KEY=...
+EMAIL_FROM=WoT-CV Analytics <analytics@wot-cv.com>
+EMAIL_REPLY_TO=support@wot-cv.com
+ENABLE_WEEKLY_REPORTS=false
+```
+
+`EMAIL_FROM` musi należeć do domeny zweryfikowanej w Resend. Raporty tygodniowe są domyślnie wyłączone; ustaw `ENABLE_WEEKLY_REPORTS=true`, aby uruchomić cron i pokazać przełącznik raportów na koncie użytkownika. Marketingowe wiadomości onboardingowe i reaktywacyjne pozostają wyłączone na self-hosted.
+
+Cloudflare R2 jako opcjonalny storage powtórek:
+
+```dotenv
+R2_ACCOUNT_ID=...
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_BUCKET_NAME=rybbit
+```
+
+Bez pełnej konfiguracji R2 aplikacja zachowuje dotychczasowy mechanizm przechowywania. Powiadomienia SMS Twilio można opcjonalnie skonfigurować przez `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` i `TWILIO_PHONE_NUMBER`.
+
+Eksport PDF, Web Vitals i informacje o źródle geolokalizacji są dostępne na self-hosted bez dodatkowych usług i nie wymagają żadnych zmiennych.
+
 ## Build i wdrożenie z `feat/wotcv`
 
 Używany zestaw Compose:

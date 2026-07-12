@@ -173,6 +173,7 @@ import { getBuildMetadata } from "./lib/buildMetadata.js";
 import { createCorsOptionsDelegate, createRejectUntrustedOriginHook } from "./lib/cors.js";
 import { getSourceCodeUrl } from "./lib/sourceCode.js";
 import { IS_CLOUD } from "./lib/const.js";
+import { runtimeCapabilities } from "./lib/runtimeCapabilities.js";
 import { reengagementService } from "./services/reengagement/reengagementService.js";
 import { telemetryService } from "./services/telemetryService.js";
 import { handleIdentify } from "./services/tracker/identifyService.js";
@@ -520,8 +521,10 @@ const start = async () => {
     if (!cluster.isWorker) {
       telemetryService.startTelemetryCron();
       usageService.startUsageCheckCron();
-      if (IS_CLOUD && process.env.NODE_ENV !== "development") {
+      if (runtimeCapabilities.weeklyReports && process.env.NODE_ENV !== "development") {
         weeklyReportService.startWeeklyReportCron();
+      }
+      if (IS_CLOUD && process.env.NODE_ENV !== "development") {
         reengagementService.startReengagementCron();
       }
     }

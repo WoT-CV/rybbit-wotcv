@@ -12,10 +12,11 @@ import { useState } from "react";
 import { RybbitLogo } from "../../components/RybbitLogo";
 import { useSetPageTitle } from "../../hooks/useSetPageTitle";
 import { authClient } from "../../lib/auth";
-import { IS_CLOUD } from "../../lib/const";
+import { useConfigs } from "../../lib/configs";
 
 export default function ResetPasswordPage() {
   const t = useExtracted();
+  const { configs } = useConfigs();
   useSetPageTitle(t("Reset Password"));
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -26,14 +27,14 @@ export default function ResetPasswordPage() {
   const [resetSuccess, setResetSuccess] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const router = useRouter();
+  const turnstileEnabled = Boolean(configs?.capabilities.turnstile) && process.env.NODE_ENV === "production";
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    // Validate Turnstile token if in cloud mode and production
-    if (IS_CLOUD && process.env.NODE_ENV === "production" && !turnstileToken) {
+    if (turnstileEnabled && !turnstileToken) {
       setError(t("Please complete the captcha verification"));
       setIsLoading(false);
       return;
@@ -47,7 +48,7 @@ export default function ResetPasswordPage() {
         },
         {
           onRequest: context => {
-            if (IS_CLOUD && process.env.NODE_ENV === "production" && turnstileToken) {
+            if (turnstileEnabled && turnstileToken) {
               context.headers.set("x-captcha-response", turnstileToken);
             }
           },
@@ -128,7 +129,10 @@ export default function ResetPasswordPage() {
           ) : otpSent ? (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                {t("We've sent a verification code to {email}. Please enter the code below along with your new password.", { email })}
+                {t(
+                  "We've sent a verification code to {email}. Please enter the code below along with your new password.",
+                  { email }
+                )}
               </p>
 
               <AuthInput
@@ -183,7 +187,7 @@ export default function ResetPasswordPage() {
                 onChange={e => setEmail(e.target.value)}
               />
 
-              {IS_CLOUD && process.env.NODE_ENV === "production" && (
+              {turnstileEnabled && (
                 <Turnstile
                   onSuccess={token => setTurnstileToken(token)}
                   onError={() => setTurnstileToken("")}
@@ -195,7 +199,7 @@ export default function ResetPasswordPage() {
               <AuthButton
                 isLoading={isLoading}
                 loadingText={t("Sending code...")}
-                disabled={IS_CLOUD && process.env.NODE_ENV === "production" ? !turnstileToken || isLoading : isLoading}
+                disabled={turnstileEnabled ? !turnstileToken || isLoading : isLoading}
               >
                 {t("Send Verification Code")}
               </AuthButton>

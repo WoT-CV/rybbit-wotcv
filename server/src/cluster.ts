@@ -3,6 +3,7 @@ import { initializeClickhouse } from "./db/clickhouse/clickhouse.js";
 import { initPostgres } from "./db/postgres/initPostgres.js";
 import { IS_CLOUD } from "./lib/const.js";
 import { createServiceLogger } from "./lib/logger/logger.js";
+import { runtimeCapabilities } from "./lib/runtimeCapabilities.js";
 import { reengagementService } from "./services/reengagement/reengagementService.js";
 import { sessionsService } from "./services/sessions/sessionsService.js";
 import { telemetryService } from "./services/telemetryService.js";
@@ -45,8 +46,10 @@ if (workerCount === 0) {
   // Start cron jobs on the primary process only
   telemetryService.startTelemetryCron();
   usageService.startUsageCheckCron();
-  if (IS_CLOUD && process.env.NODE_ENV !== "development") {
+  if (runtimeCapabilities.weeklyReports && process.env.NODE_ENV !== "development") {
     weeklyReportService.startWeeklyReportCron();
+  }
+  if (IS_CLOUD && process.env.NODE_ENV !== "development") {
     reengagementService.startReengagementCron();
   }
 
@@ -117,8 +120,10 @@ if (workerCount === 0) {
     usageService.stopUsageCheckCron();
     void sessionsService.close();
     telemetryService.stopTelemetryCron();
-    if (IS_CLOUD) {
+    if (runtimeCapabilities.weeklyReports) {
       weeklyReportService.stopWeeklyReportCron();
+    }
+    if (IS_CLOUD) {
       reengagementService.stopReengagementCron();
     }
 

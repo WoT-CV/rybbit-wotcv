@@ -140,7 +140,7 @@ export function TrackingTab({ siteMetadata, disabled = false }: TrackingTabProps
           } as ToggleConfig,
         ]
       : []),
-    ...(IS_CLOUD && !isMobileSite
+    ...(!isMobileSite
       ? [
           {
             id: "webVitals",

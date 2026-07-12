@@ -6,8 +6,6 @@ import { ArrowRight } from "lucide-react";
 import { useExtracted } from "next-intl";
 import Link from "next/link";
 
-import { IS_CLOUD } from "../../../lib/const";
-
 interface AccountStepProps {
   email: string;
   setEmail: (v: string) => void;
@@ -15,6 +13,7 @@ interface AccountStepProps {
   setPassword: (v: string) => void;
   turnstileToken: string;
   setTurnstileToken: (v: string) => void;
+  turnstileEnabled: boolean;
   isLoading: boolean;
   onSubmit: () => void;
   setError: (v: string) => void;
@@ -27,6 +26,7 @@ export function AccountStep({
   setPassword,
   turnstileToken,
   setTurnstileToken,
+  turnstileEnabled,
   isLoading,
   onSubmit,
   setError,
@@ -56,7 +56,7 @@ export function AccountStep({
           value={password}
           onChange={e => setPassword(e.target.value)}
         />
-        {IS_CLOUD && (
+        {turnstileEnabled && (
           <Turnstile
             onSuccess={token => setTurnstileToken(token)}
             onError={() => setTurnstileToken("")}
@@ -70,7 +70,7 @@ export function AccountStep({
           onClick={onSubmit}
           type="button"
           className="mt-6 transition-all duration-300 h-11"
-          disabled={IS_CLOUD ? !turnstileToken || isLoading : isLoading}
+          disabled={turnstileEnabled ? !turnstileToken || isLoading : isLoading}
         >
           {t("Continue")}
           <ArrowRight className="ml-2 h-4 w-4" />

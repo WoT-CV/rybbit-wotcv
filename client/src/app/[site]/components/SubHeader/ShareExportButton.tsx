@@ -21,6 +21,7 @@ import {
 import { Input } from "../../../../components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../components/ui/tooltip";
 import { authClient } from "../../../../lib/auth";
+import { IS_CLOUD } from "../../../../lib/const";
 import { getTimezone, useStore } from "../../../../lib/store";
 import { useStripeSubscription } from "../../../../lib/subscription/useStripeSubscription";
 import { exportCsv, exportPdf } from "./Export";
@@ -81,7 +82,8 @@ export function ShareExportButton() {
 
   const isExporting = isExportingCsv || isExportingPdf;
   const canExportPdf =
-    subscription?.planName !== "free" && !["appsumo-1", "appsumo-2"].includes(subscription?.planName ?? "");
+    !IS_CLOUD ||
+    (subscription?.planName !== "free" && !["appsumo-1", "appsumo-2"].includes(subscription?.planName ?? ""));
 
   return (
     <div className={canShare ? undefined : "hidden md:block"}>

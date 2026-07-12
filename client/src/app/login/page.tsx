@@ -28,6 +28,7 @@ export default function Page() {
   const [error, setError] = useState<string>();
   const [turnstileToken, setTurnstileToken] = useState<string>("");
   const router = useRouter();
+  const turnstileEnabled = Boolean(configs?.capabilities.turnstile) && process.env.NODE_ENV === "production";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +36,7 @@ export default function Page() {
 
     setError("");
 
-    // Validate Turnstile token if in cloud mode and production
-    if (IS_CLOUD && process.env.NODE_ENV === "production" && !turnstileToken) {
+    if (turnstileEnabled && !turnstileToken) {
       setError(t("Please complete the captcha verification"));
       setIsLoading(false);
       return;
@@ -50,7 +50,7 @@ export default function Page() {
         },
         {
           onRequest: context => {
-            if (IS_CLOUD && process.env.NODE_ENV === "production" && turnstileToken) {
+            if (turnstileEnabled && turnstileToken) {
               context.headers.set("x-captcha-response", turnstileToken);
             }
           },
@@ -71,8 +71,6 @@ export default function Page() {
     }
     setIsLoading(false);
   };
-
-  const turnstileEnabled = IS_CLOUD && process.env.NODE_ENV === "production";
 
   return (
     <div className="flex h-dvh w-full">
@@ -109,7 +107,7 @@ export default function Page() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   rightElement={
-                    IS_CLOUD && (
+                    configs?.capabilities.transactionalEmail && (
                       <Link href="/reset-password" className="text-xs text-muted-foreground hover:text-primary">
                         {t("Forgot password?")}
                       </Link>

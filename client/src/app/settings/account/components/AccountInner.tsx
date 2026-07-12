@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../../../components
 import { Input } from "../../../../components/ui/input";
 import { Switch } from "../../../../components/ui/switch";
 import { validateEmail } from "../../../../lib/auth-utils";
-import { IS_CLOUD } from "../../../../lib/const";
+import { useConfigs } from "../../../../lib/configs";
 import { ApiKeyManager } from "./ApiKeyManager";
 import { ChangePassword } from "./ChangePassword";
 import { DeleteAccount } from "./DeleteAccount";
@@ -26,6 +26,7 @@ export function AccountInner() {
   const signout = useSignout();
   const updateAccountSettings = useUpdateAccountSettings();
   const t = useExtracted();
+  const { configs } = useConfigs();
 
   const [email, setEmail] = useState(session.data?.user.email ?? "");
   const [name, setName] = useState(session.data?.user.name ?? "");
@@ -155,11 +156,13 @@ export function AccountInner() {
               </Button>
             </div>
           </div>
-          {(session.data?.user as any)?.sendAutoEmailReports !== undefined && IS_CLOUD && (
+          {(session.data?.user as any)?.sendAutoEmailReports !== undefined && configs?.capabilities.weeklyReports && (
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">{t("Send Weekly Email Reports")}</h4>
-                <p className="text-xs text-neutral-500">{t("Enable or disable automatic email reports for your account.")}</p>
+                <p className="text-xs text-neutral-500">
+                  {t("Enable or disable automatic email reports for your account.")}
+                </p>
               </div>
               <div className="flex space-x-2">
                 <Switch

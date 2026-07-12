@@ -9,15 +9,8 @@ import { GetOrganizationMembersResponse } from "../../../../api/admin/endpoints/
 import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../../../components/ui/table";
-import { IS_CLOUD } from "../../../../lib/const";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../../components/ui/table";
+import { useConfigs } from "../../../../lib/configs";
 import { getTimezone } from "../../../../lib/store";
 import { CreateUserDialog } from "./CreateUserDialog";
 import { EditMemberDialog } from "./EditMemberDialog";
@@ -34,15 +27,9 @@ interface MembersTableProps {
   onRefresh: () => void;
 }
 
-export function MembersTable({
-  org,
-  members,
-  membersLoading,
-  isOwner,
-  isAdmin,
-  onRefresh,
-}: MembersTableProps) {
+export function MembersTable({ org, members, membersLoading, isOwner, isAdmin, onRefresh }: MembersTableProps) {
   const t = useExtracted();
+  const { configs } = useConfigs();
   const [selectedMember, setSelectedMember] = useState<MemberData | null>(null);
 
   return (
@@ -55,7 +42,7 @@ export function MembersTable({
             <div className="flex items-center gap-2">
               {isOwner && (
                 <>
-                  {IS_CLOUD ? (
+                  {configs?.capabilities.transactionalEmail ? (
                     <InviteMemberDialog
                       organizationId={org.id}
                       onSuccess={onRefresh}
@@ -114,11 +101,7 @@ export function MembersTable({
                       <TableCell>{member.user?.name || "—"}</TableCell>
                       <TableCell>{member.user?.email}</TableCell>
                       <TableCell className="capitalize">
-                        {member.role === "admin"
-                          ? t("Admin")
-                          : member.role === "owner"
-                            ? t("Owner")
-                            : t("Member")}
+                        {member.role === "admin" ? t("Admin") : member.role === "owner" ? t("Owner") : t("Member")}
                       </TableCell>
                       <TableCell>
                         {member.role === "member" ? (
@@ -139,10 +122,9 @@ export function MembersTable({
                                 {team.name}
                               </Badge>
                             ))}
-                            {!member.siteAccess?.hasRestrictedSiteAccess &&
-                              !member.teams?.length && (
-                                <Badge variant="secondary">{t("All sites")}</Badge>
-                              )}
+                            {!member.siteAccess?.hasRestrictedSiteAccess && !member.teams?.length && (
+                              <Badge variant="secondary">{t("All sites")}</Badge>
+                            )}
                           </div>
                         ) : (
                           <Badge variant="outline">{t("All sites")}</Badge>
@@ -156,11 +138,7 @@ export function MembersTable({
                       {isAdmin && (
                         <TableCell className="text-right">
                           {(isOwner || member.role !== "owner") && (
-                            <Button
-                              size="smIcon"
-                              variant="ghost"
-                              onClick={() => setSelectedMember(member)}
-                            >
+                            <Button size="smIcon" variant="ghost" onClick={() => setSelectedMember(member)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
@@ -170,10 +148,7 @@ export function MembersTable({
                   ))}
                   {(!members?.data || members.data.length === 0) && (
                     <TableRow>
-                      <TableCell
-                        colSpan={isAdmin ? 6 : 5}
-                        className="text-center py-6 text-muted-foreground"
-                      >
+                      <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-6 text-muted-foreground">
                         {t("No members found")}
                       </TableCell>
                     </TableRow>
