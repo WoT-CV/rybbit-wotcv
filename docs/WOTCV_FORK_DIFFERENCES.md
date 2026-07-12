@@ -4,6 +4,8 @@
 
 Ten dokument jest źródłem prawdy o funkcjach i zmianach utrzymywanych przez WoT-CV ponad upstreamem [rybbit-io/rybbit](https://github.com/rybbit-io/rybbit). Nie opisuje kolejnych etapów implementacji; przedstawia wyłącznie aktualny stan forka.
 
+Pełny katalog funkcji, opcji konfiguracyjnych i etapów rozwoju znajduje się w [WOTCV_FORK_FEATURE_CATALOG.md](WOTCV_FORK_FEATURE_CATALOG.md).
+
 ## Strategia repozytorium
 
 - `upstream/master` — główna gałąź oficjalnego Rybbit.
