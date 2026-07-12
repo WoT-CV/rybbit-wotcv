@@ -1,28 +1,36 @@
 "use client";
 
 import * as SliderPrimitive from "@radix-ui/react-slider";
-import { MAX_REPLAY_EXPORT_DURATION_MS } from "@rybbit/shared";
+import { getReplayActivityDuration, MAX_REPLAY_EXPORT_DURATION_MS, type ReplayActivityPeriod } from "@rybbit/shared";
 import { useExtracted } from "next-intl";
 
 import { formatTime } from "../player/utils/replayUtils";
-import { constrainSlidingRange } from "../player/utils/timelineMath";
+import { constrainSlidingRange, createInitialActiveRange } from "../player/utils/timelineMath";
 
 interface ReplayExportRangeSliderProps {
   duration: number;
   range: [number, number];
+  activityPeriods: readonly ReplayActivityPeriod[];
   onRangeChange: (range: [number, number]) => void;
 }
 
-export function ReplayExportRangeSlider({ duration, range, onRangeChange }: ReplayExportRangeSliderProps) {
+export function ReplayExportRangeSlider({
+  duration,
+  range,
+  activityPeriods,
+  onRangeChange,
+}: ReplayExportRangeSliderProps) {
   const t = useExtracted();
-  const rangeDuration = range[1] - range[0];
+  const activeDuration = getReplayActivityDuration(activityPeriods, range[0], range[1]);
+  const formattedActiveDuration = formatTime(Math.ceil(activeDuration / 1000) * 1000);
 
   return (
     <div className="mt-1.5 space-y-1">
       <div className="flex items-center justify-between gap-3 text-[10px] leading-none text-neutral-500 dark:text-neutral-400">
         <span className="font-medium">{t("Export range")}</span>
         <span className="tabular-nums">
-          {formatTime(range[0])}–{formatTime(range[1])} · {formatTime(rangeDuration)}
+          {formatTime(range[0])}–{formatTime(range[1])} ·{" "}
+          {t("Exported video: {duration}", { duration: formattedActiveDuration })}
         </span>
       </div>
       <SliderPrimitive.Root
@@ -32,7 +40,9 @@ export function ReplayExportRangeSlider({ duration, range, onRangeChange }: Repl
         minStepsBetweenThumbs={10}
         value={range}
         onValueChange={value =>
-          onRangeChange(constrainSlidingRange([value[0], value[1]], range, duration, MAX_REPLAY_EXPORT_DURATION_MS))
+          onRangeChange(
+            constrainSlidingRange([value[0], value[1]], range, duration, MAX_REPLAY_EXPORT_DURATION_MS, activityPeriods)
+          )
         }
         className="relative flex h-4 w-full touch-none select-none items-center"
       >
@@ -62,12 +72,10 @@ export function ReplayExportRangeSlider({ duration, range, onRangeChange }: Repl
   );
 }
 
-export function createInitialExportRange(currentTime: number, duration: number): [number, number] {
-  const rangeDuration = Math.min(MAX_REPLAY_EXPORT_DURATION_MS, duration);
-  const start = clamp(currentTime - rangeDuration / 2, 0, Math.max(0, duration - rangeDuration));
-  return [start, start + rangeDuration];
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
+export function createInitialExportRange(
+  currentTime: number,
+  duration: number,
+  activityPeriods: readonly ReplayActivityPeriod[]
+): [number, number] {
+  return createInitialActiveRange(currentTime, duration, MAX_REPLAY_EXPORT_DURATION_MS, activityPeriods);
 }

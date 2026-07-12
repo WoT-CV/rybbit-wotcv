@@ -1,4 +1,4 @@
-import { calculateReplayActivityWindows, getReplayCaptureVersion } from "@rybbit/shared";
+import { calculateReplayActivityWindows, getReplayActivityDuration, getReplayCaptureVersion } from "@rybbit/shared";
 import { describe, expect, it } from "vitest";
 
 describe("replay activity segmentation", () => {
@@ -29,5 +29,15 @@ describe("replay activity segmentation", () => {
         },
       ])
     ).toBe(2);
+  });
+
+  it("measures only activity intersecting the export source range", () => {
+    const periods = [
+      { start: 1_000, end: 4_000 },
+      { start: 10_000, end: 12_000 },
+    ];
+
+    expect(getReplayActivityDuration(periods)).toBe(5_000);
+    expect(getReplayActivityDuration(periods, 2_000, 11_000)).toBe(3_000);
   });
 });

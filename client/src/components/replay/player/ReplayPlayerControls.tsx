@@ -2,6 +2,7 @@ import { Maximize2, Pause, Play, SkipForward } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { getReplayActivityDuration } from "@rybbit/shared";
 
 import { ActivitySlider } from "@/components/ui/activity-slider";
 import { Button } from "@/components/ui/button";
@@ -68,9 +69,11 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   const { seekTo } = useReplaySeek();
 
   useEffect(() => {
-    if (duration <= 0 || exportRange) return;
-    setExportRange(createInitialExportRange(currentTime, duration));
-  }, [currentTime, duration, exportRange, setExportRange]);
+    if (duration <= 0 || exportRange || replaySegments.length === 0) return;
+    setExportRange(createInitialExportRange(currentTime, duration, activityPeriods));
+  }, [activityPeriods, currentTime, duration, exportRange, replaySegments.length, setExportRange]);
+
+  const exportDuration = exportRange ? getReplayActivityDuration(activityPeriods, exportRange[0], exportRange[1]) : 0;
 
   const handleSkipInactivityToggle = useCallback(() => {
     setSkipInactivityEnabled(!skipInactivityEnabled);
@@ -103,7 +106,12 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
           className="w-full"
         />
         {exportRange && (
-          <ReplayExportRangeSlider duration={duration} range={exportRange} onRangeChange={setExportRange} />
+          <ReplayExportRangeSlider
+            duration={duration}
+            range={exportRange}
+            activityPeriods={activityPeriods}
+            onRangeChange={setExportRange}
+          />
         )}
       </div>
 
@@ -119,7 +127,11 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
         <div className="flex min-w-0 items-center gap-1.5">
-          <ReplayExportButton disabled={!player || duration <= 0} range={exportRange} sessionId={sessionId} />
+          <ReplayExportButton
+            disabled={!player || duration <= 0 || exportDuration <= 0}
+            range={exportRange}
+            sessionId={sessionId}
+          />
           <Button
             type="button"
             variant={skipInactivityEnabled ? "secondary" : "outline"}

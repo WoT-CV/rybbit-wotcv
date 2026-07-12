@@ -9,6 +9,7 @@ import puppeteer, { type Browser, type Page } from "puppeteer";
 import { createServiceLogger } from "../../../lib/logger/logger.js";
 import { SessionReplayQueryService } from "../sessionReplayQueryService.js";
 import type { ReplayExportJobData, ReplayExportResult } from "./replayExportTypes.js";
+import { validateReplayExportActivityDuration } from "./replayExportTiming.js";
 
 const REPLAY_WIDTH = 1280;
 const REPLAY_HEIGHT = 720;
@@ -67,6 +68,8 @@ export class ReplayExportRenderer {
       const firstTimestamp = events[0]?.timestamp ?? 0;
       const totalDuration = Math.max(0, (events.at(-1)?.timestamp ?? firstTimestamp) - firstTimestamp);
       const options = normalizeOptions(jobData.options, totalDuration);
+      const playbackWindows = getActivePlaybackWindows(events, options.startMs, options.endMs);
+      const outputDurationMs = validateReplayExportActivityDuration(playbackWindows);
       const requests = parseNetworkRequests(events, firstTimestamp)
         .filter(request => request.startOffset <= options.endMs && request.endOffset >= options.startMs)
         .filter(request => isTargetNetworkHost(request.url))
@@ -85,7 +88,7 @@ export class ReplayExportRenderer {
       await onProgress(15);
 
       const videoPath = join(workDirectory, EXPORT_FILE_NAMES.video);
-      await recordReplayRange(replayPage, events, options, videoPath, isCancelled);
+      await recordReplayRange(replayPage, playbackWindows, options, videoPath, isCancelled);
       await onProgress(80);
 
       if (await isCancelled()) throw new ReplayExportCancelledError();
@@ -101,7 +104,11 @@ export class ReplayExportRenderer {
             generatedAt,
             siteId: jobData.siteId,
             sessionId: jobData.sessionId,
-            range: options,
+            range: {
+              ...options,
+              sourceDurationMs: options.endMs - options.startMs,
+              exportedActiveDurationMs: outputDurationMs,
+            },
             session: getExportMetadata(metadata),
             network: {
               host: REPLAY_EXPORT_NETWORK_HOST,
@@ -175,7 +182,7 @@ async function pauseReplayAt(page: Page, offset: number) {
 
 async function recordReplayRange(
   page: Page,
-  events: any[],
+  playbackWindows: PlaybackWindow[],
   options: ReturnType<typeof normalizeOptions>,
   videoPath: string,
   isCancelled: () => Promise<boolean>
@@ -189,9 +196,6 @@ async function recordReplayRange(
   });
 
   try {
-    const windows = getActivePlaybackWindows(events, options.startMs, options.endMs);
-    const playbackWindows = windows.length > 0 ? windows : [{ start: options.startMs, end: options.endMs }];
-
     for (const playbackWindow of playbackWindows) {
       if (await isCancelled()) throw new ReplayExportCancelledError();
 

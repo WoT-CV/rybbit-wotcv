@@ -3,10 +3,11 @@
 import * as React from "react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import type { ReplayActivityEvent } from "@rybbit/shared";
+import { useExtracted } from "next-intl";
 
 import { NetworkWaterfall } from "@/components/replay/network/NetworkWaterfall";
 import type { ParsedNetworkRequest } from "@/components/replay/network/types";
-import { getReplayActivityOffsets, type ReplaySegment } from "@/components/replay/player/utils/replayUtils";
+import { formatTime, getReplayActivityOffsets, type ReplaySegment } from "@/components/replay/player/utils/replayUtils";
 import { getTimelineRangeStyle, toTimelinePercent } from "@/components/replay/player/utils/timelineMath";
 import { getMeaningfulEvents, type MeaningfulEvent, type MeaningfulKind } from "@/components/replay/replayEvents";
 import { cn } from "@/lib/utils";
@@ -93,6 +94,7 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
     },
     ref
   ) => {
+    const t = useExtracted();
     const markers = React.useMemo(() => {
       const meaningful = getMeaningfulEvents(events).filter(e => e.kind !== "session-start" && e.offset > 0);
       if (meaningful.length <= MAX_MARKERS) return meaningful;
@@ -115,6 +117,12 @@ const ActivitySlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.
 
     return (
       <div className="w-full">
+        <div className="mb-1 flex items-center justify-between text-[10px] leading-none text-neutral-500 dark:text-neutral-400">
+          <span className="font-medium">{t("Replay timeline")}</span>
+          <span className="tabular-nums">
+            {formatTime(0)}–{formatTime(duration)}
+          </span>
+        </div>
         {/* Event markers */}
         <div className="relative h-6 w-full mb-2">
           <div className="pointer-events-none absolute inset-0 flex items-end gap-px overflow-hidden">

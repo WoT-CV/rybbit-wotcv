@@ -19,6 +19,8 @@ export interface ReplayActivityWindow {
   eventCount: number;
 }
 
+export type ReplayActivityPeriod = Pick<ReplayActivityWindow, "start" | "end">;
+
 export function calculateReplayActivityWindows(
   events: readonly ReplayActivityEvent[],
   totalDuration: number,
@@ -34,7 +36,9 @@ export function calculateReplayActivityWindows(
   const windows = sortedEvents
     .filter(isReplayActivityEvent)
     .map(event => event.timestamp - firstTimestamp)
-    .filter(offset => offset >= safeStart - REPLAY_ACTIVITY_POST_ROLL_MS && offset <= safeEnd + REPLAY_ACTIVITY_PRE_ROLL_MS)
+    .filter(
+      offset => offset >= safeStart - REPLAY_ACTIVITY_POST_ROLL_MS && offset <= safeEnd + REPLAY_ACTIVITY_PRE_ROLL_MS
+    )
     .map(offset => ({
       start: Math.max(safeStart, offset - REPLAY_ACTIVITY_PRE_ROLL_MS),
       end: Math.min(safeEnd, offset + REPLAY_ACTIVITY_POST_ROLL_MS),
@@ -61,6 +65,21 @@ export function getReplayActivityOffsets(events: readonly ReplayActivityEvent[],
   return sortedEvents
     .filter(isReplayActivityEvent)
     .map(event => clamp(event.timestamp - firstTimestamp, 0, totalDuration));
+}
+
+export function getReplayActivityDuration(
+  periods: readonly ReplayActivityPeriod[],
+  rangeStart = 0,
+  rangeEnd = Number.POSITIVE_INFINITY
+): number {
+  const safeStart = Number.isFinite(rangeStart) ? Math.max(0, rangeStart) : 0;
+  const safeEnd = Number.isFinite(rangeEnd) ? Math.max(safeStart, rangeEnd) : Number.POSITIVE_INFINITY;
+
+  return periods.reduce((total, period) => {
+    const start = Math.max(safeStart, period.start);
+    const end = Math.min(safeEnd, period.end);
+    return total + Math.max(0, end - start);
+  }, 0);
 }
 
 export function getReplayCaptureVersion(events: readonly ReplayActivityEvent[]): number | null {
