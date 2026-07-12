@@ -1,6 +1,6 @@
 import { Maximize2, Pause, Play, SkipForward } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { getReplayActivityDuration } from "@rybbit/shared";
 
@@ -8,7 +8,6 @@ import { ActivitySlider } from "@/components/ui/activity-slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { ReplayDrawer } from "../../Sessions/ReplayDrawer";
 import { ReplayExportButton } from "../export/ReplayExportButton";
 import { createInitialExportRange, ReplayExportRangeSlider } from "../export/ReplayExportRangeSlider";
 import { parseNetworkEvents } from "../network/parseNetworkEvents";
@@ -23,6 +22,7 @@ interface ReplayPlayerControlsProps {
   onSliderChange: (value: number[]) => void;
   onSliderCommit: (value: number[]) => void;
   onSpeedChange: (speed: string) => void;
+  onFullscreenOpen?: () => void;
   isDrawer?: boolean;
 }
 
@@ -32,6 +32,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   onSliderChange,
   onSliderCommit,
   onSpeedChange,
+  onFullscreenOpen,
   isDrawer,
 }: ReplayPlayerControlsProps) {
   const t = useExtracted();
@@ -64,7 +65,6 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
       skipInactivityEnabled: s.skipInactivityEnabled,
     }))
   );
-  const [replayDrawerOpen, setReplayDrawerOpen] = useState(false);
   const networkRequests = useMemo(() => parseNetworkEvents(events), [events]);
   const { seekTo } = useReplaySeek();
 
@@ -157,12 +157,11 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
             ))}
           </SelectContent>
         </Select>
-        {!isDrawer && (
-          <Button variant="ghost" size="smIcon" onClick={() => setReplayDrawerOpen(true)}>
+        {!isDrawer && onFullscreenOpen && (
+          <Button variant="ghost" size="smIcon" onClick={onFullscreenOpen}>
             <Maximize2 className="w-4 h-4" />
           </Button>
         )}
-        <ReplayDrawer sessionId={sessionId} open={replayDrawerOpen} onOpenChange={setReplayDrawerOpen} />
       </div>
     </div>
   );

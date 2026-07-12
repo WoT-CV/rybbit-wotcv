@@ -1,10 +1,11 @@
 import { useParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import "rrweb-player/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
 
 import { useGetSessionReplayEvents } from "@/api/analytics/hooks/sessionReplay/useGetSessionReplayEvents";
 import { ThreeDotLoader } from "@/components/Loaders";
+import { ReplayDrawer } from "@/components/Sessions/ReplayDrawer";
 
 import { useReplayStore } from "../replayStore";
 import { useActivityPeriods } from "./hooks/useActivityPeriods";
@@ -19,6 +20,7 @@ import { findPreviousActiveSegment, findSegmentAtTime, SKIP_SECONDS } from "./ut
 export function ReplayPlayer({ width, height, isDrawer }: { width: number; height: number; isDrawer?: boolean }) {
   const params = useParams();
   const siteId = Number(params.site);
+  const [replayDrawerOpen, setReplayDrawerOpen] = useState(false);
   const {
     sessionId,
     player,
@@ -44,27 +46,30 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
   );
 
   const { data, isLoading, error } = useGetSessionReplayEvents(siteId, sessionId);
+  const isActiveSurface = Boolean(isDrawer || !replayDrawerOpen);
+  const activePlayer = isActiveSurface ? player : null;
+  const handleFullscreenOpen = useCallback(() => setReplayDrawerOpen(true), []);
 
   // Calculate activity periods when player and data are ready
   useActivityPeriods({ data });
-  useSkipInactivity({ player });
+  useSkipInactivity({ player: activePlayer });
   const { commitPreviewSeek, previewSeek, seekTo } = useReplaySeek();
 
   const handlePlayPause = useCallback(() => {
-    if (!player) return;
+    if (!activePlayer) return;
 
     const newPlayingState = !isPlaying;
 
     if (isPlaying) {
-      player.pause();
+      activePlayer.pause();
     } else {
-      player.play();
+      activePlayer.play();
     }
     setIsPlaying(newPlayingState);
-  }, [player, isPlaying, setIsPlaying]);
+  }, [activePlayer, isPlaying, setIsPlaying]);
 
   const handleSkipBack = useCallback(() => {
-    if (!player) return;
+    if (!activePlayer) return;
     const requestedTime = Math.max(0, currentTime - SKIP_SECONDS);
     const requestedSegment = findSegmentAtTime(replaySegments, requestedTime);
     const previousActiveSegment =
@@ -75,43 +80,43 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
       ? Math.max(previousActiveSegment.start, previousActiveSegment.end - 1)
       : requestedTime;
     seekTo(newTime);
-  }, [currentTime, player, replaySegments, seekTo, skipInactivityEnabled]);
+  }, [activePlayer, currentTime, replaySegments, seekTo, skipInactivityEnabled]);
 
   const handleSkipForward = useCallback(() => {
-    if (!player) return;
+    if (!activePlayer) return;
     const newTime = Math.min(duration, currentTime + SKIP_SECONDS);
     seekTo(newTime);
-  }, [player, duration, currentTime, seekTo]);
+  }, [activePlayer, duration, currentTime, seekTo]);
 
   const handleSliderChange = useCallback(
     (value: number[]) => {
-      if (!player || !duration) return;
+      if (!activePlayer || !duration) return;
 
       const newTime = (value[0] / 100) * duration;
       previewSeek(newTime);
     },
-    [player, duration, previewSeek]
+    [activePlayer, duration, previewSeek]
   );
 
   const handleSliderCommit = useCallback(
     (value: number[]) => {
-      if (!player || !duration) return;
+      if (!activePlayer || !duration) return;
       commitPreviewSeek((value[0] / 100) * duration);
     },
-    [commitPreviewSeek, duration, player]
+    [activePlayer, commitPreviewSeek, duration]
   );
 
   const handleSpeedChange = useCallback(
     (speed: string) => {
-      if (!player) return;
+      if (!activePlayer) return;
       setPlaybackSpeed(speed);
     },
-    [player, setPlaybackSpeed]
+    [activePlayer, setPlaybackSpeed]
   );
 
   // Add keyboard shortcuts
   useReplayKeyboardShortcuts({
-    player,
+    player: activePlayer,
     onSkipBack: handleSkipBack,
     onSkipForward: handleSkipForward,
     onPlayPause: handlePlayPause,
@@ -133,6 +138,8 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
       <ReplayPlayerTopbar />
       {isLoading || !data ? (
         <ThreeDotLoader className="w-full" />
+      ) : !isActiveSurface ? (
+        <div className="min-h-0 flex-1 bg-black" />
       ) : (
         <ReplayPlayerCore
           data={data}
@@ -148,8 +155,17 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
         onSliderChange={handleSliderChange}
         onSliderCommit={handleSliderCommit}
         onSpeedChange={handleSpeedChange}
+        onFullscreenOpen={!isDrawer ? handleFullscreenOpen : undefined}
         isDrawer={isDrawer}
       />
+      {!isDrawer && (
+        <ReplayDrawer
+          sessionId={sessionId}
+          open={replayDrawerOpen}
+          onOpenChange={setReplayDrawerOpen}
+          preservePlaybackState
+        />
+      )}
     </div>
   );
 }

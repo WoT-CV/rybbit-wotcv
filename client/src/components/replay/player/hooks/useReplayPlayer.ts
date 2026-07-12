@@ -38,6 +38,9 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
     const initializedState = useReplayStore.getState();
     const initializedSessionId = initializedState.sessionId;
     const initializedSelectionVersion = initializedState.selectionVersion;
+    const initializedCurrentTime = initializedState.currentTime;
+    const initializedWasPlaying = initializedState.isPlaying;
+    let initialPlaybackApplied = false;
     let handleVisibilityChange: (() => void) | undefined;
     let resizeObserver: ResizeObserver | undefined;
     let adapter: ReplayPlayerAdapter;
@@ -57,6 +60,7 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
       setPlayer(adapter);
 
       adapter.onCurrentTime(currentTime => {
+        if (useReplayStore.getState().player !== adapter) return;
         const playerDuration = adapter.getDuration();
         if (playerDuration && currentTime > playerDuration) {
           adapter.pause();
@@ -68,6 +72,7 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
       });
 
       adapter.onPlayingChange(isNowPlaying => {
+        if (useReplayStore.getState().player !== adapter) return;
         setIsPlaying(isNowPlaying);
         if (!isNowPlaying) return;
 
@@ -83,29 +88,51 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
         }
       });
 
-      const syncDurationAndAutoplay = () => {
-        const playerDuration = adapter.getDuration();
-        if (playerDuration) setDuration(playerDuration);
-
+      const syncDurationAndPlayback = () => {
         const state = useReplayStore.getState();
         if (
-          state.sessionId === initializedSessionId &&
-          state.autoplayRequest?.sessionId === initializedSessionId &&
-          state.autoplayRequest.selectionVersion === initializedSelectionVersion &&
-          state.player === adapter
+          state.player !== adapter ||
+          state.sessionId !== initializedSessionId ||
+          state.selectionVersion !== initializedSelectionVersion
         ) {
+          return;
+        }
+
+        const playerDuration = adapter.getDuration();
+        if (playerDuration) setDuration(playerDuration);
+        if (!playerDuration || initialPlaybackApplied) return;
+        initialPlaybackApplied = true;
+
+        const resumeAt = Math.max(0, Math.min(playerDuration, initializedCurrentTime));
+        if (resumeAt > 0) {
+          adapter.seek(resumeAt);
+          setCurrentTime(resumeAt);
+        }
+
+        const autoplayRequest = state.autoplayRequest;
+        const shouldAutoplay =
+          autoplayRequest?.sessionId === initializedSessionId &&
+          autoplayRequest.selectionVersion === initializedSelectionVersion;
+        if (shouldAutoplay || initializedWasPlaying) {
           adapter.play();
+          state.setIsPlaying(true);
+          state.setPlaybackState("playing");
+        }
+        if (shouldAutoplay && autoplayRequest) {
+          state.consumeAutoplay(autoplayRequest);
         }
       };
 
       adapter.onDuration(playerDuration => {
+        if (useReplayStore.getState().player !== adapter) return;
         setDuration(playerDuration);
-        syncDurationAndAutoplay();
+        syncDurationAndPlayback();
       });
-      queueMicrotask(syncDurationAndAutoplay);
+      queueMicrotask(syncDurationAndPlayback);
 
       let wasPlayingBeforeHidden = false;
       handleVisibilityChange = () => {
+        if (useReplayStore.getState().player !== adapter) return;
         if (document.hidden) {
           wasPlayingBeforeHidden = adapter.getIsPlaying();
           if (wasPlayingBeforeHidden) {
@@ -142,7 +169,9 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
       resizeObserver?.disconnect();
       adapter.destroy();
       playerRef.current = null;
-      setPlayer(null);
+      if (useReplayStore.getState().player === adapter) {
+        setPlayer(null);
+      }
     };
   }, [data, setCurrentTime, setDuration, setIsPlaying, setPlayer]);
 

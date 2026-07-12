@@ -1,39 +1,40 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { ReplayPlayer } from "@/components/replay/player/ReplayPlayer";
-import { useReplayStore } from "@/components/replay/replayStore";
 import { ReplayBreadcrumbs } from "@/components/replay/ReplayBreadcrumbs";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useReplayStore } from "@/components/replay/replayStore";
 
 interface ReplayDrawerProps {
   sessionId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preservePlaybackState?: boolean;
 }
 
-export function ReplayDrawer({ sessionId, open, onOpenChange }: ReplayDrawerProps) {
+export function ReplayDrawer({ sessionId, open, onOpenChange, preservePlaybackState = false }: ReplayDrawerProps) {
   const { selectSession, resetPlayerState } = useReplayStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const wasOpenRef = useRef(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-  // Set sessionId in store when drawer opens
   useEffect(() => {
-    if (open && sessionId) {
+    if (open && sessionId && !preservePlaybackState) {
       selectSession(sessionId, true);
     }
-  }, [open, sessionId, selectSession]);
+  }, [open, preservePlaybackState, selectSession, sessionId]);
 
   useEffect(() => {
     const wasOpen = wasOpenRef.current;
     wasOpenRef.current = open;
 
-    if (wasOpen && !open) {
+    if (wasOpen && !open && !preservePlaybackState) {
       resetPlayerState();
     }
-  }, [open, resetPlayerState]);
+  }, [open, preservePlaybackState, resetPlayerState]);
 
   // Measure container dimensions using getBoundingClientRect for more reliable sizing
   useEffect(() => {
@@ -71,20 +72,20 @@ export function ReplayDrawer({ sessionId, open, onOpenChange }: ReplayDrawerProp
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[90vh]">
+      <DrawerContent className="h-[90vh] overflow-hidden">
         <VisuallyHidden>
           <DrawerTitle>Session Replay</DrawerTitle>
         </VisuallyHidden>
-        <div className="flex gap-2 p-2 h-[97%]">
+        <div className="flex min-h-0 flex-1 gap-2 p-2">
           {/* Player */}
-          <div ref={containerRef} className="relative flex-1" style={{ height: "calc(90vh - 40px)" }}>
+          <div ref={containerRef} className="relative min-h-0 flex-1">
             {dimensions.width > 0 && dimensions.height > 0 && (
               <ReplayPlayer width={dimensions.width} height={dimensions.height} isDrawer={true} />
             )}
           </div>
 
           {/* Timeline sidebar */}
-          <div className="w-[300px] hidden lg:block h-[calc(90vh - 40px)]">
+          <div className="hidden h-full min-h-0 w-[300px] lg:block">
             <ReplayBreadcrumbs />
           </div>
         </div>
