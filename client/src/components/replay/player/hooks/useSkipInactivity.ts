@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { useReplayStore } from "../../replayStore";
+import { useReplaySeek } from "./useReplaySeek";
 import { findSegmentAtTime } from "../utils/replayUtils";
 import type { ReplayPlayerAdapter } from "../ReplayPlayerAdapter";
 
@@ -9,12 +10,10 @@ interface UseSkipInactivityProps {
   player: ReplayPlayerAdapter | null;
 }
 
-const MIN_SKIP_SPEED = 200;
-const SKIP_TARGET_DURATION_SECONDS = 0.2;
-
 export function useSkipInactivity({ player }: UseSkipInactivityProps) {
   const appliedSpeedRef = useRef<number | null>(null);
   const skippingSegmentRef = useRef<string | null>(null);
+  const { seekTo } = useReplaySeek();
   const {
     currentTime,
     duration,
@@ -57,13 +56,13 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
     if (shouldSkip && currentSegment) {
       const segmentKey = `${currentSegment.start}:${currentSegment.end}`;
       if (skippingSegmentRef.current !== segmentKey) {
-        const secondsRemaining = Math.max(0, (currentSegment.end - currentTime) / 1000);
-        const skipSpeed = Math.max(MIN_SKIP_SPEED, secondsRemaining / SKIP_TARGET_DURATION_SECONDS);
         skippingSegmentRef.current = segmentKey;
-        applySpeed(player, skipSpeed, appliedSpeedRef, setEffectivePlaybackSpeed);
+        applySpeed(player, selectedSpeed, appliedSpeedRef, setEffectivePlaybackSpeed);
+        setIsSkippingInactivity(true);
+        setPlaybackState("skipping-inactivity");
+        seekTo(currentSegment.end, true);
+        return;
       }
-      setIsSkippingInactivity(true);
-      setPlaybackState("skipping-inactivity");
       return;
     }
 
@@ -81,6 +80,7 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
     setEffectivePlaybackSpeed,
     setIsSkippingInactivity,
     setPlaybackState,
+    seekTo,
     skipInactivityEnabled,
   ]);
 }
