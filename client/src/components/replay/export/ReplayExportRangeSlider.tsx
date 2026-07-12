@@ -26,9 +26,9 @@ export function ReplayExportRangeSlider({
 
   return (
     <div className="mt-1.5 space-y-1">
-      <div className="flex items-center justify-between gap-3 text-[10px] leading-none text-neutral-500 dark:text-neutral-400">
-        <span className="font-medium">{t("Export range")}</span>
-        <span className="tabular-nums">
+      <div className="flex min-h-4 flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] leading-tight text-neutral-500 dark:text-neutral-400">
+        <span className="shrink-0 font-medium">{t("Export range")}</span>
+        <span className="min-w-0 text-right tabular-nums">
           {formatTime(range[0])}–{formatTime(range[1])} ·{" "}
           {t("Exported video: {duration}", { duration: formattedActiveDuration })}
         </span>

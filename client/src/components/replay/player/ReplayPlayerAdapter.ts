@@ -26,6 +26,7 @@ export class ReplayPlayerAdapter {
         width,
         height,
         autoPlay: false,
+        skipInactive: false,
         showController: false,
       },
     });
@@ -77,6 +78,8 @@ export class ReplayPlayerAdapter {
     if (!this.active) return;
     this.active = false;
     this.pause();
+    this.player.getReplayer().destroy();
+    (this.player as unknown as { $destroy: () => void }).$destroy();
     this.target.replaceChildren();
   }
 

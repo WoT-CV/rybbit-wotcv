@@ -87,8 +87,8 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   );
 
   return (
-    <div className="border border-neutral-100 dark:border-neutral-800 p-2 pb-3 bg-white dark:bg-neutral-900 rounded-b-lg pt-6">
-      <div className="-mt-8">
+    <div className="border border-neutral-100 dark:border-neutral-800 bg-white p-2 pb-3 dark:bg-neutral-900 rounded-b-lg">
+      <div>
         <ActivitySlider
           value={[duration > 0 ? (currentTime / duration) * 100 : 0]}
           onValueChange={onSliderChange}
