@@ -564,7 +564,7 @@ export function FunnelForm({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
               <Reorder.Group axis="y" values={stepIds} onReorder={handleReorder} className="list-none space-y-2">
                 {stepIds.map((id, index) => (
                   <StepCard

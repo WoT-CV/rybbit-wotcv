@@ -44,6 +44,9 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    ports:
+      # Localhost-only: reach from outside via SSH tunnel (ssh -N -L 8123:localhost:8123 <host>)
+      - "127.0.0.1:8123:8123"
 
   postgres:
     image: postgres:17.4
@@ -62,11 +65,15 @@ services:
       start_period: 10s
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      # Localhost-only: reach from outside via SSH tunnel
+      - "127.0.0.1:5432:5432"
 
   redis:
     image: redis:8.6.4-alpine
     container_name: redis
+    ports:
+      # Localhost-only: reach from outside via SSH tunnel
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
