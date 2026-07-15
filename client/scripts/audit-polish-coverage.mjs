@@ -54,7 +54,7 @@ const allowedIdenticalValues = new Set([
 ]);
 
 const sortedKeys = values => Object.keys(values).sort((left, right) => left.localeCompare(right));
-const placeholders = value => [...value.matchAll(/\{([^{}]+)\}/g)].map(match => match[1]).sort();
+const placeholders = value => [...value.matchAll(/\{\s*([A-Za-z_][\w.-]*)\s*(?:,|\})/g)].map(match => match[1]).sort();
 const sameValues = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 const sourceKeys = sortedKeys(sourceCatalog);

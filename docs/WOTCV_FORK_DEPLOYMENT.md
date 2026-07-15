@@ -171,8 +171,25 @@ docker compose \
   -f docker-compose.yml \
   -f docker-compose.wotcv.yml \
   -f docker-compose.wotcv.branch-build.yml \
-  config > /tmp/rybbit-wotcv-branch-build-compose.yml
+  config --format json > /tmp/rybbit-wotcv-branch-build-compose.json
 ```
+
+Overlay `docker-compose.wotcv.yml` usuwa publikację portu Redisa na hosta i zachowuje mapowanie Postgresa pod `127.0.0.1:5433`. Skrypt wdrożeniowy analizuje efektywny Compose i faktyczne mapowania uruchomionych kontenerów przed buildem. Przerwie pracę, jeżeli Redis publikuje port albo ClickHouse, Postgres, backend lub client wystawiają port poza loopback.
+
+Po zmianie konfiguracji Compose przygotuj Redis jednorazowo, bez odtwarzania pozostałej infrastruktury:
+
+```bash
+COMPOSE_PROJECT_NAME=rybbit IMAGE_TAG=sha-preflight \
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.wotcv.yml \
+  up -d --no-deps redis
+
+docker port redis
+docker exec backend sh -lc 'getent hosts redis && nc -zvw3 redis 6379'
+```
+
+`docker port redis` nie powinien zwrócić żadnego mapowania. Backend nadal łączy się z `redis:6379` po wewnętrznej sieci Compose. Przed właściwym wdrożeniem kontenery `postgres`, `clickhouse` i `redis` muszą być uruchomione i zdrowe; skrypt nie odtwarza ich automatycznie.
 
 Wdrożenie:
 
@@ -186,13 +203,14 @@ Skrypt:
 2. pobiera `origin/feat/wotcv`,
 3. przełącza lokalną gałąź `feat/wotcv`,
 4. wykonuje wyłącznie fast-forward,
-5. buduje backend i client lokalnie na serwerze,
-6. taguje obrazy jako `sha-<commit>`,
-7. uruchamia `backend` i `client`,
-8. czeka na `/api/health`,
-9. sprawdza `gitSha` i `imageTag`,
-10. zapisuje stan do `.wotcv-deployment.env`,
-11. próbuje wrócić do poprzedniego lokalnego obrazu, jeżeli health check nie przejdzie.
+5. waliduje efektywną konfigurację portów Compose oraz stan infrastruktury,
+6. buduje backend i client lokalnie na serwerze,
+7. taguje obrazy jako `sha-<commit>`,
+8. odtwarza wyłącznie `backend` i `client` z `--no-deps`,
+9. czeka na `/api/health`,
+10. sprawdza `gitSha` i `imageTag`,
+11. zapisuje stan do `.wotcv-deployment.env`,
+12. próbuje wrócić do poprzedniego lokalnego obrazu, jeżeli start lub health check nie przejdzie.
 
 Parametry:
 

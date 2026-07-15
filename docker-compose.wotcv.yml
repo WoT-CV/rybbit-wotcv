@@ -1,4 +1,15 @@
 services:
+  redis:
+    # Redis is consumed over the internal Compose network. Do not publish its
+    # port on production hosts, where a system Redis may already use 6379.
+    ports: !reset []
+
+  postgres:
+    # Keep the existing WoT-CV host mapping instead of inheriting upstream's
+    # localhost:5432 binding.
+    ports: !override
+      - "${HOST_POSTGRES_PORT:-127.0.0.1:5433:5432}"
+
   backend:
     image: ghcr.io/wot-cv/rybbit-wotcv-backend:${IMAGE_TAG:?IMAGE_TAG must use an immutable sha-* tag}
     environment:

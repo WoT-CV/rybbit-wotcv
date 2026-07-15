@@ -24,7 +24,7 @@ cd "${ROOT_DIR}"
 export COMPOSE_PROJECT_NAME
 
 wotcv_require_non_root
-wotcv_require_commands git docker curl
+wotcv_require_commands git docker curl python3
 wotcv_require_clean_worktree
 
 image_id() {
@@ -38,6 +38,71 @@ validate_runtime_images() {
     --input-type=module --eval 'await import("@rybbit/shared")'
   docker run --rm --entrypoint node "${CLIENT_IMAGE}:${IMAGE_TAG}" \
     --check /app/client/server.js
+}
+
+validate_compose_config() {
+  python3 - "${COMPOSE_CONFIG_FILE}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as config_file:
+    config = json.load(config_file)
+
+services = config["services"]
+redis_ports = services["redis"].get("ports") or []
+if redis_ports:
+    raise SystemExit(f"Redis must not publish host ports: {redis_ports}")
+
+for service_name in ("clickhouse", "postgres", "backend", "client"):
+    for port in services[service_name].get("ports") or []:
+        host_ip = port.get("host_ip")
+        if host_ip not in ("127.0.0.1", "::1"):
+            raise SystemExit(f"{service_name} publishes a non-loopback port: {port}")
+
+print("Compose port validation passed.")
+PY
+}
+
+validate_infrastructure() {
+  local service
+  local container_id
+  local state
+  local health
+  local port_bindings
+
+  for service in postgres clickhouse redis; do
+    container_id="$("${COMPOSE[@]}" ps -q "${service}")"
+    if [[ -z "${container_id}" ]]; then
+      echo "Required infrastructure service ${service} is not created." >&2
+      return 1
+    fi
+
+    state="$(docker inspect "${container_id}" --format '{{.State.Status}}')"
+    health="$(docker inspect "${container_id}" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}')"
+    if [[ "${state}" != "running" || ("${health}" != "healthy" && "${health}" != "none") ]]; then
+      echo "Required infrastructure service ${service} is not ready (state=${state}, health=${health})." >&2
+      return 1
+    fi
+
+    port_bindings="$(docker inspect "${container_id}" --format '{{json .HostConfig.PortBindings}}')"
+    python3 - "${service}" "${port_bindings}" <<'PY'
+import json
+import sys
+
+service_name = sys.argv[1]
+bindings = json.loads(sys.argv[2]) or {}
+
+if service_name == "redis" and bindings:
+    raise SystemExit(f"Running Redis container publishes host ports: {bindings}")
+
+for container_port, published_ports in bindings.items():
+    for published_port in published_ports or []:
+        if published_port.get("HostIp") not in ("127.0.0.1", "::1"):
+            raise SystemExit(
+                f"Running {service_name} container publishes {container_port} outside loopback: {published_port}"
+            )
+PY
+  done
 }
 
 switch_to_branch() {
@@ -85,7 +150,7 @@ rollback() {
   WOTCV_DEPLOYED_AT="${rollback_deployed_at}" \
   BACKEND_IMAGE_DIGEST="${previous_backend_digest:-unknown}" \
   CLIENT_IMAGE_DIGEST="${previous_client_digest:-unknown}" \
-    "${COMPOSE[@]}" up -d --force-recreate backend client
+    "${COMPOSE[@]}" up -d --no-deps --force-recreate backend client
 
   if ! rollback_response="$(wotcv_wait_for_health "${HEALTHCHECK_URL}" "${previous_git_sha}" "${previous_tag}")"; then
     echo "Rollback health check failed; manual intervention is required." >&2
@@ -119,8 +184,10 @@ export BACKEND_IMAGE_DIGEST=unknown
 export CLIENT_IMAGE_DIGEST=unknown
 
 echo "Validating Compose configuration for ${DEPLOY_BRANCH} at ${WOTCV_GIT_SHA}..."
-COMPOSE_CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/rybbit-wotcv-branch-build-compose.${UID}.XXXXXX.yml")"
-"${COMPOSE[@]}" config >"${COMPOSE_CONFIG_FILE}"
+COMPOSE_CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/rybbit-wotcv-branch-build-compose.${UID}.XXXXXX.json")"
+"${COMPOSE[@]}" config --format json >"${COMPOSE_CONFIG_FILE}"
+validate_compose_config
+validate_infrastructure
 
 BUILD_COMMAND=(build)
 if [[ "${WOTCV_BUILD_PULL:-0}" == "1" ]]; then
@@ -138,7 +205,11 @@ CLIENT_IMAGE_DIGEST="$(image_id "${CLIENT_IMAGE}" "${IMAGE_TAG}")"
 export BACKEND_IMAGE_DIGEST CLIENT_IMAGE_DIGEST
 
 echo "Starting backend and client..."
-"${COMPOSE[@]}" up -d --force-recreate backend client
+if ! "${COMPOSE[@]}" up -d --no-deps --force-recreate backend client; then
+  echo "Compose startup failed. Attempting rollback..." >&2
+  rollback "${PREVIOUS_TAG}" "${PREVIOUS_GIT_SHA}" "${PREVIOUS_BUILD_TIME}" "${PREVIOUS_BACKEND_DIGEST}" "${PREVIOUS_CLIENT_DIGEST}" || true
+  exit 1
+fi
 
 if ! HEALTH_RESPONSE="$(wotcv_wait_for_health "${HEALTHCHECK_URL}" "${WOTCV_GIT_SHA}" "${IMAGE_TAG}")"; then
   echo "Health check failed. Recent logs:" >&2

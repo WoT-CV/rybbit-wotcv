@@ -1,5 +1,4 @@
 import { CopyText } from "@/components/CopyText";
-import { Monitor, Smartphone, Tablet } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { GetSessionsResponse } from "../../../api/analytics/endpoints";
 import { Browser } from "../../../app/[site]/components/shared/icons/Browser";
@@ -34,10 +33,7 @@ interface SessionInfoTabProps {
   };
 }
 
-export function SessionInfoTab({
-  session,
-  sessionDetails,
-}: SessionInfoTabProps) {
+export function SessionInfoTab({ session, sessionDetails }: SessionInfoTabProps) {
   const { getRegionName } = useGetRegionName();
   const t = useExtracted();
   const isIdentified = !!session.identified_user_id;
@@ -55,11 +51,7 @@ export function SessionInfoTab({
               <div className="h-10 w-10 bg-neutral-200 dark:bg-neutral-800 rounded-full flex items-center justify-center shrink-0">
                 <Avatar
                   size={40}
-                  id={
-                    isIdentified
-                      ? session.identified_user_id
-                      : sessionDetails.user_id
-                  }
+                  id={isIdentified ? session.identified_user_id : sessionDetails.user_id}
                   imageUrl={getUserAvatarUrl(session)}
                   alt={getUserDisplayName(session)}
                 />
@@ -72,20 +64,12 @@ export function SessionInfoTab({
                       user_id: sessionDetails.user_id,
                     })}
                   </span>
-                  {isIdentified && (
-                    <IdentifiedBadge traits={session.traits} />
-                  )}
+                  {isIdentified && <IdentifiedBadge traits={session.traits} userId={session.identified_user_id} />}
                 </div>
                 <div className="text-sm text-neutral-500 dark:text-neutral-400 flex items-center">
-                  <span className="font-medium text-neutral-600 dark:text-neutral-300">
-                    {t("User ID:")}
-                  </span>
+                  <span className="font-medium text-neutral-600 dark:text-neutral-300">{t("User ID:")}</span>
                   <CopyText
-                    text={
-                      isIdentified
-                        ? session.identified_user_id
-                        : sessionDetails.user_id
-                    }
+                    text={isIdentified ? session.identified_user_id : sessionDetails.user_id}
                     maxLength={24}
                     className="inline-flex ml-2"
                   />
@@ -101,46 +85,31 @@ export function SessionInfoTab({
                   {t("Language:")}
                 </span>
                 <span className="text-neutral-500 dark:text-neutral-400">
-                  {sessionDetails.language
-                    ? getLanguageName(sessionDetails.language)
-                    : t("N/A")}
+                  {sessionDetails.language ? getLanguageName(sessionDetails.language) : t("N/A")}
                 </span>
               </div>
             )}
 
             {sessionDetails?.country && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-                  {t("Country:")}
-                </span>
+                <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("Country:")}</span>
                 <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
                   <CountryFlag country={sessionDetails.country} />
                   <span>{getCountryName(sessionDetails.country)}</span>
-                  {sessionDetails.region && (
-                    <span>({sessionDetails.region})</span>
-                  )}
+                  {sessionDetails.region && <span>({sessionDetails.region})</span>}
                 </div>
               </div>
             )}
-            {sessionDetails?.region &&
-              getRegionName(sessionDetails.region) && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-                    {t("Region:")}
-                  </span>
-                  <span className="text-neutral-500 dark:text-neutral-400">
-                    {getRegionName(sessionDetails.region)}
-                  </span>
-                </div>
-              )}
+            {sessionDetails?.region && getRegionName(sessionDetails.region) && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("Region:")}</span>
+                <span className="text-neutral-500 dark:text-neutral-400">{getRegionName(sessionDetails.region)}</span>
+              </div>
+            )}
             {sessionDetails?.city && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-                  {t("City:")}
-                </span>
-                <span className="text-neutral-500 dark:text-neutral-400">
-                  {sessionDetails.city}
-                </span>
+                <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("City:")}</span>
+                <span className="text-neutral-500 dark:text-neutral-400">{sessionDetails.city}</span>
               </div>
             )}
           </div>
@@ -154,9 +123,7 @@ export function SessionInfoTab({
         </h4>
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-              {t("Device:")}
-            </span>
+            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("Device:")}</span>
             <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
               <DeviceIcon deviceType={sessionDetails?.device_type || ""} />
               <span>{sessionDetails?.device_type || t("Unknown")}</span>
@@ -164,63 +131,41 @@ export function SessionInfoTab({
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-              {t("Browser:")}
-            </span>
+            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("Browser:")}</span>
             <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
-              <Browser
-                browser={sessionDetails?.browser || "Unknown"}
-              />
+              <Browser browser={sessionDetails?.browser || "Unknown"} />
               <span>
                 {sessionDetails?.browser || t("Unknown")}
-                {sessionDetails?.browser_version && (
-                  <span className="ml-1">
-                    v{sessionDetails.browser_version}
-                  </span>
-                )}
+                {sessionDetails?.browser_version && <span className="ml-1">v{sessionDetails.browser_version}</span>}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-              {t("OS:")}
-            </span>
+            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("OS:")}</span>
             <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
-              <OperatingSystem
-                os={sessionDetails?.operating_system || ""}
-              />
+              <OperatingSystem os={sessionDetails?.operating_system || ""} />
               <span>
                 {sessionDetails?.operating_system || t("Unknown")}
                 {sessionDetails?.operating_system_version && (
-                  <span className="ml-1">
-                    {sessionDetails.operating_system_version}
-                  </span>
+                  <span className="ml-1">{sessionDetails.operating_system_version}</span>
                 )}
               </span>
             </div>
           </div>
 
-          {sessionDetails?.screen_width &&
-            sessionDetails?.screen_height ? (
+          {sessionDetails?.screen_width && sessionDetails?.screen_height ? (
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-                {t("Screen:")}
-              </span>
+              <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("Screen:")}</span>
               <span className="text-neutral-500 dark:text-neutral-400">
-                {sessionDetails.screen_width} ×{" "}
-                {sessionDetails.screen_height}
+                {sessionDetails.screen_width} × {sessionDetails.screen_height}
               </span>
             </div>
           ) : null}
           {sessionDetails?.ip && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-                {t("IP:")}
-              </span>
-              <span className="text-neutral-500 dark:text-neutral-400">
-                {sessionDetails.ip}
-              </span>
+              <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("IP:")}</span>
+              <span className="text-neutral-500 dark:text-neutral-400">{sessionDetails.ip}</span>
             </div>
           )}
         </div>
@@ -233,27 +178,21 @@ export function SessionInfoTab({
         </h4>
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-              {t("Channel:")}
-            </span>
+            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("Channel:")}</span>
             <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
               <span>{sessionDetails?.channel || t("None")}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-              {t("Referrer:")}
-            </span>
+            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("Referrer:")}</span>
             <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
               <span>{sessionDetails?.referrer || t("None")}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">
-              {t("Entry Page:")}
-            </span>
+            <span className="font-medium text-neutral-600 dark:text-neutral-300 min-w-[80px]">{t("Entry Page:")}</span>
             <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
               <span>{sessionDetails?.entry_page || t("None")}</span>
             </div>

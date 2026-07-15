@@ -9,12 +9,7 @@ import { Reorder, useDragControls } from "framer-motion";
 import round from "lodash/round";
 import { ChevronDown, ChevronUp, Funnel as FunnelIcon, GripVertical, Plus, Save, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import {
-  FunnelResponse,
-  FunnelStep,
-  FunnelStepType,
-  hasIncompleteSteps,
-} from "../../../../api/analytics/endpoints";
+import { FunnelResponse, FunnelStep, FunnelStepType, hasIncompleteSteps } from "../../../../api/analytics/endpoints";
 import { useAutocaptureValuesByType } from "../../../../api/analytics/hooks/events/useAutocaptureValues";
 import { useMetric } from "../../../../api/analytics/hooks/useGetMetric";
 import { ThreeDotLoader } from "../../../../components/Loaders";
@@ -147,7 +142,9 @@ function StepCard({
           className={cn("w-full", urlError && "border-red-500 dark:border-red-500")}
           onChange={e => onFieldChange("value", e.target.value)}
         />
-        {urlError && <p className="mt-1 text-xs text-red-500">{t("Enter a path (e.g., /checkout), not a full URL.")}</p>}
+        {urlError && (
+          <p className="mt-1 text-xs text-red-500">{t("Enter a path (e.g., /checkout), not a full URL.")}</p>
+        )}
         <EventTrackingNotice type={step.type} className="mt-2" />
       </div>
 
@@ -308,10 +305,7 @@ export function FunnelForm({
   const [stepIds, setStepIds] = useState<string[]>(() => steps.map((_, i) => `step-${Date.now()}-${i}`));
 
   // Derive which page-type steps have URL values
-  const stepUrlErrors = useMemo(
-    () => steps.map(step => step.type === "page" && URL_PATTERN.test(step.value)),
-    [steps]
-  );
+  const stepUrlErrors = useMemo(() => steps.map(step => step.type === "page" && URL_PATTERN.test(step.value)), [steps]);
   const hasUrlErrors = stepUrlErrors.some(Boolean);
 
   const hasIncomplete = hasIncompleteSteps(steps);
@@ -564,7 +558,7 @@ export function FunnelForm({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
               <Reorder.Group axis="y" values={stepIds} onReorder={handleReorder} className="list-none space-y-2">
                 {stepIds.map((id, index) => (
                   <StepCard

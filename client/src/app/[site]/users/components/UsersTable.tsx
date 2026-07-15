@@ -113,7 +113,7 @@ export function UsersTable() {
   const debouncedSearch = useDebounce(searchTerm, 300);
 
   useEffect(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
   }, [debouncedSearch]);
 
   const effectiveIdentifiedOnly = identifiedOnly || debouncedSearch.length > 0;
@@ -155,7 +155,7 @@ export function UsersTable() {
             <span className="max-w-32 truncate hover:underline" title={displayName}>
               {displayName}
             </span>
-            {isIdentified && <IdentifiedBadge traits={info.row.original.traits} />}
+            {isIdentified && <IdentifiedBadge traits={info.row.original.traits} userId={identifiedUserId} />}
           </Link>
         );
       },
@@ -327,7 +327,7 @@ export function UsersTable() {
             className="rounded-l-none"
             type="search"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2">
@@ -387,32 +387,24 @@ export function UsersTable() {
               ))
             ) : table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-3 py-8 text-center text-neutral-500 dark:text-neutral-400"
-                >
+                <td colSpan={columns.length} className="px-3 py-8 text-center text-neutral-500 dark:text-neutral-400">
                   {t("No users found")}
                 </td>
               </tr>
             ) : (
               table.getRowModel().rows.map(row => {
-                const linkId = row.original.identified_user_id || row.original.user_id;
-                const href = `/${site}/user/${encodeURIComponent(linkId)}`;
-
                 return (
-                  <tr key={row.id} className="border-b border-neutral-100 dark:border-neutral-800 group hover:bg-neutral-50 dark:hover:bg-neutral-850">
+                  <tr
+                    key={row.id}
+                    className="border-b border-neutral-100 dark:border-neutral-800 group hover:bg-neutral-50 dark:hover:bg-neutral-850"
+                  >
                     {row.getVisibleCells().map(cell => (
                       <td
                         key={cell.id}
-                        className={isTimeColumn(cell.column.id) ? `p-3 relative ${TIME_COLUMN_WIDTH_CLASS}` : "p-3 relative"}
+                        className={
+                          isTimeColumn(cell.column.id) ? `p-3 relative ${TIME_COLUMN_WIDTH_CLASS}` : "p-3 relative"
+                        }
                       >
-                        {/* <Link
-                            href={href}
-                            className="absolute inset-0 z-10"
-                            aria-label={`View user ${userId}`}
-                          >
-                            <span className="sr-only">View user details</span>
-                          </Link> */}
                         <span className="relative z-0">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </span>

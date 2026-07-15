@@ -78,6 +78,40 @@
     }
   });
 
+  // ../../../shared/dist/scopes.js
+  var require_scopes = __commonJS({
+    "../../../shared/dist/scopes.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.ALL_SCOPE_STRINGS = exports.SCOPE_RESOURCES = exports.OIDC_STANDARD_SCOPES = exports.SCOPE_MATRIX = void 0;
+      exports.isValidScopePair = isValidScopePair;
+      exports.SCOPE_MATRIX = {
+        analytics: ["read"],
+        sessions: ["read"],
+        events: ["read"],
+        users: ["read", "write"],
+        goals: ["read", "write"],
+        funnels: ["read", "write"],
+        dashboards: ["read", "write"],
+        flags: ["read", "write"],
+        experiments: ["read", "write"],
+        sites: ["read", "write"],
+        gsc: ["read", "write"],
+        org: ["read", "write"],
+        replay: ["read", "write"],
+        sql: ["read"],
+        ingest: ["write"]
+      };
+      exports.OIDC_STANDARD_SCOPES = ["openid", "profile", "email", "offline_access"];
+      exports.SCOPE_RESOURCES = Object.keys(exports.SCOPE_MATRIX);
+      exports.ALL_SCOPE_STRINGS = exports.SCOPE_RESOURCES.flatMap((resource) => exports.SCOPE_MATRIX[resource].map((action) => `${resource}:${action}`));
+      function isValidScopePair(resource, action) {
+        const actions = exports.SCOPE_MATRIX[resource];
+        return !!actions && actions.includes(action);
+      }
+    }
+  });
+
   // ../../../shared/dist/time.js
   var require_time = __commonJS({
     "../../../shared/dist/time.js"(exports) {
@@ -113,6 +147,7 @@
       exports.REPLAY_ACTIVITY_POST_ROLL_MS = exports.REPLAY_ACTIVITY_PRE_ROLL_MS = void 0;
       exports.calculateReplayActivityWindows = calculateReplayActivityWindows;
       exports.getReplayActivityOffsets = getReplayActivityOffsets;
+      exports.getReplayActivityDuration = getReplayActivityDuration;
       exports.getReplayCaptureVersion = getReplayCaptureVersion;
       exports.isReplayActivityEvent = isReplayActivityEvent;
       exports.REPLAY_ACTIVITY_PRE_ROLL_MS = 500;
@@ -151,6 +186,15 @@
         if (firstTimestamp === void 0)
           return [];
         return sortedEvents.filter(isReplayActivityEvent).map((event) => clamp(event.timestamp - firstTimestamp, 0, totalDuration));
+      }
+      function getReplayActivityDuration(periods, rangeStart = 0, rangeEnd = Number.POSITIVE_INFINITY) {
+        const safeStart = Number.isFinite(rangeStart) ? Math.max(0, rangeStart) : 0;
+        const safeEnd = Number.isFinite(rangeEnd) ? Math.max(safeStart, rangeEnd) : Number.POSITIVE_INFINITY;
+        return periods.reduce((total, period) => {
+          const start = Math.max(safeStart, period.start);
+          const end = Math.min(safeEnd, period.end);
+          return total + Math.max(0, end - start);
+        }, 0);
       }
       function getReplayCaptureVersion(events) {
         for (const event of events) {
@@ -221,6 +265,7 @@
       __exportStar(require_filters(), exports);
       __exportStar(require_networkReplay(), exports);
       __exportStar(require_params(), exports);
+      __exportStar(require_scopes(), exports);
       __exportStar(require_time(), exports);
       __exportStar(require_performance(), exports);
       __exportStar(require_replayExport(), exports);
@@ -2251,6 +2296,12 @@
     }
     // Update user ID when it changes
     updateUserId(userId) {
+      if (userId === this.userId) {
+        return;
+      }
+      if (this.eventBuffer.length > 0) {
+        void this.flushEvents();
+      }
       this.userId = userId;
     }
     // Handle page navigation for SPAs
@@ -2781,6 +2832,9 @@
       try {
         localStorage.removeItem(`${this.config.namespace}-user-id`);
       } catch (e2) {
+      }
+      if (this.sessionReplayRecorder) {
+        this.sessionReplayRecorder.updateUserId("");
       }
       void this.refreshFeatureFlags();
     }

@@ -30,8 +30,10 @@ export function TraitValueUsersList({
   const t = useExtracted();
   const [searchTerm, setSearchTerm] = useState("");
   const { site } = useParams();
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useGetUserTraitValueUsers(traitKey, value);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetUserTraitValueUsers(
+    traitKey,
+    value
+  );
 
   const [ref, entry] = useIntersectionObserver({
     threshold: 0,
@@ -41,47 +43,31 @@ export function TraitValueUsersList({
 
   const flattenedUsers = useMemo(() => {
     if (!data) return [];
-    return data.pages.flatMap((page) => page.users);
+    return data.pages.flatMap(page => page.users);
   }, [data]);
 
   const filteredUsers = useMemo(() => {
     if (!searchTerm) return flattenedUsers;
     const lower = searchTerm.toLowerCase();
-    return flattenedUsers.filter((user) =>
-      getUserDisplayName(user).toLowerCase().includes(lower)
-    );
+    return flattenedUsers.filter(user => getUserDisplayName(user).toLowerCase().includes(lower));
   }, [flattenedUsers, searchTerm]);
 
   useEffect(() => {
-    if (
-      entry?.isIntersecting &&
-      hasNextPage &&
-      !isFetchingNextPage &&
-      !isLoading
-    ) {
+    if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage && !isLoading) {
       fetchNextPage();
     }
-  }, [
-    entry?.isIntersecting,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  ]);
+  }, [entry?.isIntersecting, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading]);
 
   if (isLoading) {
     return (
       <div className="border-l border-neutral-150 dark:border-neutral-750 ml-[19px]">
         {Array.from({ length: Math.min(userCount, 10) }).map((_, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-3 py-1.5 px-3 animate-pulse"
-          >
+          <div key={i} className="flex items-center gap-3 py-1.5 px-3 animate-pulse">
             <div className="h-5 w-5 bg-neutral-200 dark:bg-neutral-800 rounded-full shrink-0" />
             <div className="w-56 shrink">
               <div
                 className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded"
-                style={{ width: `${20 + Math.random() * 100}px` }}
+                style={{ width: `${48 + ((i * 37) % 72)}px` }}
               />
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -99,11 +85,7 @@ export function TraitValueUsersList({
   }
 
   if (flattenedUsers.length === 0) {
-    return (
-      <div className="pl-12 py-3 text-xs text-neutral-500 dark:text-neutral-400">
-        {t("No users found")}
-      </div>
-    );
+    return <div className="pl-12 py-3 text-xs text-neutral-500 dark:text-neutral-400">{t("No users found")}</div>;
   }
 
   return (
@@ -115,7 +97,7 @@ export function TraitValueUsersList({
             <Input
               placeholder={t("Search users...")}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="h-7 pl-7 text-xs"
             />
           </div>
@@ -138,27 +120,20 @@ export function TraitValueUsersList({
               target="_blank"
             >
               <Avatar size={20} id={linkId} imageUrl={getUserAvatarUrl(user)} alt={displayName} />
-              <span
-                className="truncate hover:underline"
-                title={displayName}
-              >
+              <span className="truncate hover:underline" title={displayName}>
                 {displayName}
               </span>
             </Link>
             <div className="flex items-center gap-1.5 shrink-0">
-              {isIdentified && <IdentifiedBadge traits={user.traits} />}
-              <CountryFlagTooltipIcon
-                country={user.country || ""}
-                city={user.city || ""}
-                region={user.region || ""}
-              />
+              {isIdentified && <IdentifiedBadge traits={user.traits} userId={user.identified_user_id} />}
+              <CountryFlagTooltipIcon country={user.country || ""} city={user.city || ""} region={user.region || ""} />
               <BrowserTooltipIcon browser={user.browser || ""} />
-              <OperatingSystemTooltipIcon
-                operating_system={user.operating_system || ""}
-              />
+              <OperatingSystemTooltipIcon operating_system={user.operating_system || ""} />
               <DeviceTypeTooltipIcon device_type={user.device_type || ""} />
               <span className="text-neutral-500 dark:text-neutral-400 text-xs whitespace-nowrap ml-1">
-                {user.sessions === 1 ? t("{count} session", { count: user.sessions.toLocaleString() }) : t("{count} sessions", { count: user.sessions.toLocaleString() })}
+                {user.sessions === 1
+                  ? t("{count} session", { count: user.sessions.toLocaleString() })
+                  : t("{count} sessions", { count: user.sessions.toLocaleString() })}
               </span>
             </div>
           </div>

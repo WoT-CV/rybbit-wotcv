@@ -35,7 +35,13 @@ interface SessionCardProps {
   highlightedEventTimestamp?: number;
 }
 
-export function SessionCard({ session, onClick, userId, expandedByDefault, highlightedEventTimestamp }: SessionCardProps) {
+export function SessionCard({
+  session,
+  onClick,
+  userId,
+  expandedByDefault,
+  highlightedEventTimestamp,
+}: SessionCardProps) {
   const { site } = useParams();
   const t = useExtracted();
   const { hour12, formatDateTime } = useDateTimeFormat();
@@ -46,9 +52,7 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
   const end = DateTime.fromSQL(session.session_end);
   const totalSeconds = Math.floor(end.diff(start).milliseconds / 1000);
   const duration = formatShortDuration(totalSeconds);
-  const relativeTime = DateTime.fromSQL(session.session_start, { zone: "utc" })
-    .setZone(getTimezone())
-    .toRelative();
+  const relativeTime = DateTime.fromSQL(session.session_start, { zone: "utc" }).setZone(getTimezone()).toRelative();
   const isIdentified = !!session.identified_user_id;
 
   const handleCardClick = () => {
@@ -77,22 +81,28 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
       <div className="p-3 cursor-pointer" onClick={handleCardClick}>
         {/* Mobile layout - two rows */}
         <div className="flex flex-col gap-2 md:hidden">
-          {/* Top row on mobile - User name (left) + Timestamp (right) */}
+          {/* Top row on mobile - User name (left) + Timestamp (right).
+              On a single user's page the name repeats on every card, so it is
+              hidden there, matching the desktop layout. */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Avatar
-                size={24}
-                id={session.user_id}
-                imageUrl={getUserAvatarUrl(session)}
-                alt={getUserDisplayName(session)}
-                lastActiveTime={DateTime.fromSQL(session.session_end, { zone: "utc" })}
-              />
-              <span className="text-xs text-neutral-600 dark:text-neutral-200 truncate max-w-[150px]">
-                {getUserDisplayName(session)}
-              </span>
-              {!!session.identified_user_id && <IdentifiedBadge traits={session.traits} />}
-            </div>
-            <span className="text-xs text-neutral-500 dark:text-neutral-400 ">
+            {!userId && (
+              <div className="flex items-center gap-2">
+                <Avatar
+                  size={24}
+                  id={session.user_id}
+                  imageUrl={getUserAvatarUrl(session)}
+                  alt={getUserDisplayName(session)}
+                  lastActiveTime={DateTime.fromSQL(session.session_end, { zone: "utc" })}
+                />
+                <span className="text-xs text-neutral-600 dark:text-neutral-200 truncate max-w-[150px]">
+                  {getUserDisplayName(session)}
+                </span>
+                {!!session.identified_user_id && (
+                  <IdentifiedBadge traits={session.traits} userId={session.identified_user_id} />
+                )}
+              </div>
+            )}
+            <span className="ml-auto text-xs text-neutral-500 dark:text-neutral-400">
               <span className="group-hover/card:hidden">
                 {formatDateTime(DateTime.fromSQL(session.session_start, { zone: "utc" }), {
                   month: "short",
@@ -162,7 +172,15 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
               <TooltipTrigger asChild>
                 <Badge className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
                   <EventIcon />
-                  <span>{formatter(session.events + (session.button_clicks || 0) + (session.copies || 0) + (session.form_submits || 0) + (session.input_changes || 0))}</span>
+                  <span>
+                    {formatter(
+                      session.events +
+                        (session.button_clicks || 0) +
+                        (session.copies || 0) +
+                        (session.form_submits || 0) +
+                        (session.input_changes || 0)
+                    )}
+                  </span>
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>{t("Events")}</TooltipContent>
@@ -179,9 +197,7 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
         <div className="hidden md:flex items-center gap-2">
           {!userId && (
             <Link
-              href={`/${site}/user/${encodeURIComponent(
-                isIdentified ? session.identified_user_id : session.user_id
-              )}`}
+              href={`/${site}/user/${encodeURIComponent(isIdentified ? session.identified_user_id : session.user_id)}`}
               onClick={e => e.stopPropagation()}
               className="flex items-center gap-2"
             >
@@ -195,7 +211,9 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
               <span className="text-xs text-neutral-600 dark:text-neutral-200 w-24 truncate hover:underline">
                 {getUserDisplayName(session)}
               </span>
-              {!!session.identified_user_id && <IdentifiedBadge traits={session.traits} />}
+              {!!session.identified_user_id && (
+                <IdentifiedBadge traits={session.traits} userId={session.identified_user_id} />
+              )}
             </Link>
           )}
 
@@ -254,7 +272,15 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
               <TooltipTrigger asChild>
                 <Badge className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
                   <EventIcon />
-                  <span>{formatter(session.events + (session.button_clicks || 0) + (session.copies || 0) + (session.form_submits || 0) + (session.input_changes || 0))}</span>
+                  <span>
+                    {formatter(
+                      session.events +
+                        (session.button_clicks || 0) +
+                        (session.copies || 0) +
+                        (session.form_submits || 0) +
+                        (session.input_changes || 0)
+                    )}
+                  </span>
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>{t("Events")}</TooltipContent>
@@ -330,7 +356,9 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
       </div>
 
       {/* Expanded content using SessionDetails component */}
-      {expanded && <SessionDetails session={session} userId={userId} highlightedEventTimestamp={highlightedEventTimestamp} />}
+      {expanded && (
+        <SessionDetails session={session} userId={userId} highlightedEventTimestamp={highlightedEventTimestamp} />
+      )}
 
       {/* Replay Drawer */}
       {session.has_replay === 1 && (
@@ -340,25 +368,17 @@ export function SessionCard({ session, onClick, userId, expandedByDefault, highl
   );
 }
 
-export const SessionCardSkeleton = memo(({ userId, count }: { userId?: string; count?: number }) => {
-  // Function to get a random width class for skeletons
-  const getRandomWidth = () => {
-    const widths = ["w-16", "w-20", "w-24", "w-28", "w-32", "w-36", "w-40", "w-44", "w-48"];
-    return widths[Math.floor(Math.random() * widths.length)];
-  };
+const SESSION_SKELETON_WIDTHS = ["w-16", "w-28", "w-40", "w-20", "w-36", "w-24", "w-44", "w-32", "w-48"];
+const SESSION_SKELETON_TIME_WIDTHS = ["w-20", "w-28", "w-24", "w-32"];
+const SESSION_SKELETON_DURATION_WIDTHS = ["w-10", "w-14", "w-12"];
 
-  // Get random width for time displays
-  const getRandomTimeWidth = () => {
-    const widths = ["w-20", "w-24", "w-28", "w-32"];
-    return widths[Math.floor(Math.random() * widths.length)];
-  };
-
-  // Get random width for duration displays
-  const getRandomDurationWidth = () => {
-    const widths = ["w-10", "w-12", "w-14"];
-    return widths[Math.floor(Math.random() * widths.length)];
-  };
-
+export const SessionCardSkeleton = memo(function SessionCardSkeleton({
+  userId,
+  count,
+}: {
+  userId?: string;
+  count?: number;
+}) {
   // Create multiple skeletons for a realistic loading state
   const skeletons = Array.from({ length: count || 25 }).map((_, index) => (
     <div
@@ -370,11 +390,15 @@ export const SessionCardSkeleton = memo(({ userId, count }: { userId?: string; c
         <div className="flex flex-col gap-2 md:hidden">
           {/* Top row - Avatar + name (left) + timestamp (right) */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-6 w-6 rounded-full" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-            <Skeleton className={cn("h-3", getRandomTimeWidth())} />
+            {!userId && (
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            )}
+            <Skeleton
+              className={cn("ml-auto h-3", SESSION_SKELETON_TIME_WIDTHS[index % SESSION_SKELETON_TIME_WIDTHS.length])}
+            />
           </div>
 
           {/* Bottom row - Icons, badges, channel */}
@@ -416,16 +440,24 @@ export const SessionCardSkeleton = memo(({ userId, count }: { userId?: string; c
 
           {/* Entry/Exit paths with randomized widths */}
           <div className="items-center ml-3 flex-1 min-w-0 flex">
-            <Skeleton className={cn("h-3 max-w-[200px]", getRandomWidth())} />
+            <Skeleton
+              className={cn("h-3 max-w-[200px]", SESSION_SKELETON_WIDTHS[index % SESSION_SKELETON_WIDTHS.length])}
+            />
             <ArrowRight className="mx-2 w-3 h-3 shrink-0 text-neutral-500 dark:text-neutral-400 opacity-20" />
-            <Skeleton className={cn("h-3 max-w-[200px]", getRandomWidth())} />
+            <Skeleton
+              className={cn("h-3 max-w-[200px]", SESSION_SKELETON_WIDTHS[(index + 3) % SESSION_SKELETON_WIDTHS.length])}
+            />
           </div>
 
           {/* Time information */}
           <div className="flex items-center gap-1.5">
-            <Skeleton className={cn("h-3", getRandomTimeWidth())} />
+            <Skeleton
+              className={cn("h-3", SESSION_SKELETON_TIME_WIDTHS[index % SESSION_SKELETON_TIME_WIDTHS.length])}
+            />
             <span className="text-neutral-500 dark:text-neutral-400 opacity-20">•</span>
-            <Skeleton className={cn("h-3", getRandomDurationWidth())} />
+            <Skeleton
+              className={cn("h-3", SESSION_SKELETON_DURATION_WIDTHS[index % SESSION_SKELETON_DURATION_WIDTHS.length])}
+            />
           </div>
 
           {/* Expand icon */}
