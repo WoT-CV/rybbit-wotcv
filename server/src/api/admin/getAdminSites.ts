@@ -1,15 +1,9 @@
 import { count, eq } from "drizzle-orm";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { DateTime } from "luxon";
-import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { db } from "../../db/postgres/postgres.js";
 import { goals, funnels, member, user } from "../../db/postgres/schema.js";
+import { getSiteEventCounts } from "../../services/admin/siteEventCountsService.js";
 import { getOrganizationSubscriptions } from "../../services/admin/subscriptionService.js";
-
-interface EventCountResult {
-  site_id: string;
-  total_events: number;
-}
 
 export async function getAdminSites(request: FastifyRequest, reply: FastifyReply) {
   // Get all sites (including organizationId for owner lookup)
@@ -38,63 +32,7 @@ export async function getAdminSites(request: FastifyRequest, reply: FastifyReply
   const organizationsData = await db.query.organization.findMany();
   const orgSubscriptionMap = await getOrganizationSubscriptions(organizationsData, false);
 
-  // Get event counts for the past 24 hours and 30 days from Clickhouse
-  const now = DateTime.now();
-  const yesterday = now.minus({ hours: 24 });
-  const thirtyDaysAgo = now.minus({ days: 30 });
-
-  // Get 24h event counts
-  const eventCounts24hResult = await clickhouse.query({
-    query: `
-      SELECT 
-        site_id,
-        sum(event_count) as total_events
-      FROM 
-        hourly_events_by_site_mv_target
-      WHERE 
-        event_hour >= toDateTime('${yesterday.toFormat("yyyy-MM-dd HH:mm:ss")}') AND
-        event_hour <= toDateTime('${now.toFormat("yyyy-MM-dd HH:mm:ss")}')
-      GROUP BY 
-        site_id
-    `,
-    format: "JSONEachRow",
-  });
-
-  // Get 30d event counts
-  const eventCounts30dResult = await clickhouse.query({
-    query: `
-      SELECT 
-        site_id,
-        sum(event_count) as total_events
-      FROM 
-        hourly_events_by_site_mv_target
-      WHERE 
-        event_hour >= toDateTime('${thirtyDaysAgo.toFormat("yyyy-MM-dd HH:mm:ss")}') AND
-        event_hour <= toDateTime('${now.toFormat("yyyy-MM-dd HH:mm:ss")}')
-      GROUP BY 
-        site_id
-    `,
-    format: "JSONEachRow",
-  });
-
-  const rawEventCounts24h = await eventCounts24hResult.json();
-  const rawEventCounts30d = await eventCounts30dResult.json();
-
-  // Create maps of site IDs to event counts
-  const siteEventMap24h = new Map<number, number>();
-  const siteEventMap30d = new Map<number, number>();
-
-  // Type assertion for the events data
-  const eventCounts24h = rawEventCounts24h as EventCountResult[];
-  const eventCounts30d = rawEventCounts30d as EventCountResult[];
-
-  for (const event of eventCounts24h) {
-    siteEventMap24h.set(Number(event.site_id), event.total_events);
-  }
-
-  for (const event of eventCounts30d) {
-    siteEventMap30d.set(Number(event.site_id), event.total_events);
-  }
+  const siteEventCounts = await getSiteEventCounts();
 
   // Get goal and funnel counts per site
   const goalCounts = await db.select({ siteId: goals.siteId, count: count() }).from(goals).groupBy(goals.siteId);
@@ -130,8 +68,8 @@ export async function getAdminSites(request: FastifyRequest, reply: FastifyReply
       organizationId: site.organizationId,
       createdAt: site.createdAt,
       public: site.public,
-      eventsLast24Hours: siteEventMap24h.get(site.siteId) || 0,
-      eventsLast30Days: siteEventMap30d.get(site.siteId) || 0,
+      eventsLast24Hours: siteEventCounts.last24Hours.get(site.siteId) || 0,
+      eventsLast30Days: siteEventCounts.last30Days.get(site.siteId) || 0,
       goalsCount: siteGoalCountMap.get(site.siteId) || 0,
       funnelsCount: siteFunnelCountMap.get(site.siteId) || 0,
       sessionReplay: site.sessionReplay ?? false,

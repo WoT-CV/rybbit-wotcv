@@ -1,16 +1,10 @@
 import { eq, inArray } from "drizzle-orm";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { DateTime } from "luxon";
-import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { db } from "../../db/postgres/postgres.js";
 import { member, sites, user } from "../../db/postgres/schema.js";
 import { logger } from "../../lib/logger/logger.js";
+import { getSiteEventCounts } from "../../services/admin/siteEventCountsService.js";
 import { getOrganizationSubscriptions } from "../../services/admin/subscriptionService.js";
-
-interface EventCountResult {
-  site_id: string;
-  total_events: number;
-}
 
 export interface AdminOrganizationData {
   id: string;
@@ -92,62 +86,13 @@ export async function getAdminOrganizations(request: FastifyRequest, reply: Fast
       .from(sites)
       .where(allOrgIds.length > 0 ? inArray(sites.organizationId, allOrgIds) : undefined);
 
-    // Get event counts for the past 24 hours and 30 days from ClickHouse
-    const now = DateTime.now();
-    const yesterday = now.minus({ hours: 24 });
-    const thirtyDaysAgo = now.minus({ days: 30 });
-
     let siteEventMap24h = new Map<number, number>();
     let siteEventMap30d = new Map<number, number>();
 
     try {
-      // Query for last 24 hours
-      const eventCounts24hResult = await clickhouse.query({
-        query: `
-          SELECT
-            site_id,
-            sum(event_count) as total_events
-          FROM
-            hourly_events_by_site_mv_target
-          WHERE
-            event_hour >= toDateTime('${yesterday.toFormat("yyyy-MM-dd HH:mm:ss")}') AND
-            event_hour <= toDateTime('${now.toFormat("yyyy-MM-dd HH:mm:ss")}')
-          GROUP BY
-            site_id
-        `,
-        format: "JSONEachRow",
-      });
-
-      const rawEventCounts24h = await eventCounts24hResult.json();
-      const eventCounts24h = rawEventCounts24h as EventCountResult[];
-
-      for (const event of eventCounts24h) {
-        siteEventMap24h.set(Number(event.site_id), event.total_events);
-      }
-
-      // Query for last 30 days
-      const eventCounts30dResult = await clickhouse.query({
-        query: `
-          SELECT
-            site_id,
-            sum(event_count) as total_events
-          FROM
-            hourly_events_by_site_mv_target
-          WHERE
-            event_hour >= toDateTime('${thirtyDaysAgo.toFormat("yyyy-MM-dd HH:mm:ss")}') AND
-            event_hour <= toDateTime('${now.toFormat("yyyy-MM-dd HH:mm:ss")}')
-          GROUP BY
-            site_id
-        `,
-        format: "JSONEachRow",
-      });
-
-      const rawEventCounts30d = await eventCounts30dResult.json();
-      const eventCounts30d = rawEventCounts30d as EventCountResult[];
-
-      for (const event of eventCounts30d) {
-        siteEventMap30d.set(Number(event.site_id), event.total_events);
-      }
+      const siteEventCounts = await getSiteEventCounts();
+      siteEventMap24h = siteEventCounts.last24Hours;
+      siteEventMap30d = siteEventCounts.last30Days;
     } catch (clickhouseError) {
       logger.warn(clickhouseError as Error, "ClickHouse query failed, continuing without event counts");
     }
