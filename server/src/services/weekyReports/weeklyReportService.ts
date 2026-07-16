@@ -11,6 +11,8 @@ import { filterSitesByMemberAccess } from "../../lib/siteAccess.js";
 import { IS_CLOUD } from "../../lib/const.js";
 import type { OverviewData, MetricData, SiteReport, OrganizationReport } from "./weeklyReportTypes.js";
 
+const MAX_SITE_REPORTS_PER_ORG = 10;
+
 class WeeklyReportService {
   private cronTask: cron.ScheduledTask | null = null;
   private logger = createServiceLogger("weekly-report");
@@ -297,6 +299,14 @@ class WeeklyReportService {
       const siteReports: SiteReport[] = [];
 
       for (const site of orgSites) {
+        if (siteReports.length >= MAX_SITE_REPORTS_PER_ORG) {
+          this.logger.info(
+            { organizationId, totalSites: orgSites.length, limit: MAX_SITE_REPORTS_PER_ORG },
+            "Reached site report limit for organization, skipping remaining sites"
+          );
+          break;
+        }
+
         const report = await this.generateSiteReport(site.siteId, site.name, site.domain);
         if (report) {
           siteReports.push(report);
