@@ -105,6 +105,8 @@ W poprawce zastosowano następujący model:
 
 Deployment został rozszerzony o kontrolowaną kolejność: walidacja portów, ewentualne odtworzenie wyłącznie kontenera Redis bez publikacji `6379`, build obrazów, migracja PostgreSQL, odtworzenie ClickHouse z konfiguracją słownika, start aplikacji, health check i preflight. Preflight potwierdza schemat aliasów, status słownika, przykładowe mapowanie PostgreSQL -> ClickHouse, izolację Redis oraz uruchomione SHA obrazów.
 
+Po pierwszym wdrożeniu doprecyzowano bramkę gotowości kontenerów: preflight czeka teraz do 120 sekund na przejście healthchecka ze stanu `starting` do `healthy`. Zapobiega to fałszywemu rollbackowi, gdy endpoint backendu już odpowiada, ale Docker nie zapisał jeszcze pierwszego udanego healthchecka.
+
 Walidacja poprawki:
 
 - `server`: 50 plików testowych i 457 testów, TypeScript, Drizzle check oraz build przeszły poprawnie.

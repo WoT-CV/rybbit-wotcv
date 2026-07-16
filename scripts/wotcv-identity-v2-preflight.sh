@@ -20,6 +20,36 @@ WOTCV_GIT_SHA="${WOTCV_GIT_SHA:-$(wotcv_read_state "${STATE_FILE}" LAST_GIT_SHA)
 : "${IMAGE_TAG:?IMAGE_TAG is unavailable; deploy once or export IMAGE_TAG}"
 export IMAGE_TAG
 
+wait_for_container_ready() {
+  local service="$1"
+  local attempts="${WOTCV_PREFLIGHT_READY_ATTEMPTS:-60}"
+  local container_id=""
+  local state="missing"
+  local health="unknown"
+
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    container_id="$("${COMPOSE[@]}" ps -q "${service}")"
+    if [[ -n "${container_id}" ]]; then
+      state="$(docker inspect "${container_id}" --format '{{.State.Status}}')"
+      health="$(docker inspect "${container_id}" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}')"
+
+      if [[ "${state}" == "running" && ("${health}" == "healthy" || "${health}" == "none") ]]; then
+        return 0
+      fi
+
+      if [[ "${state}" == "exited" || "${state}" == "dead" ]]; then
+        echo "${service} stopped while waiting for readiness (state=${state}, health=${health})." >&2
+        return 1
+      fi
+    fi
+
+    sleep 2
+  done
+
+  echo "${service} did not become ready (state=${state}, health=${health})." >&2
+  return 1
+}
+
 echo "[1/7] Validating effective Compose ports..."
 compose_config="$(mktemp "${TMPDIR:-/tmp}/rybbit-identity-preflight.${UID}.XXXXXX.json")"
 trap 'rm -f "${compose_config}"' EXIT
@@ -42,15 +72,7 @@ PY
 
 echo "[2/7] Verifying running containers and Redis isolation..."
 for service in postgres clickhouse redis backend client; do
-  container_id="$("${COMPOSE[@]}" ps -q "${service}")"
-  [[ -n "${container_id}" ]] || { echo "Missing container for ${service}." >&2; exit 1; }
-  state="$(docker inspect "${container_id}" --format '{{.State.Status}}')"
-  health="$(docker inspect "${container_id}" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}')"
-  [[ "${state}" == "running" ]] || { echo "${service} is ${state}." >&2; exit 1; }
-  [[ "${health}" == "healthy" || "${health}" == "none" ]] || {
-    echo "${service} health is ${health}." >&2
-    exit 1
-  }
+  wait_for_container_ready "${service}"
 done
 
 redis_id="$("${COMPOSE[@]}" ps -q redis)"
