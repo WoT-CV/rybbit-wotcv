@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${ROOT_DIR}/scripts/lib/wotcv-common.sh"
+STATE_FILE="${ROOT_DIR}/.wotcv-deployment.env"
+HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
+COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-rybbit}}"
+COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.wotcv.yml)
+
+cd "${ROOT_DIR}"
+export COMPOSE_PROJECT_NAME
+
+wotcv_require_non_root
+wotcv_require_commands docker curl python3
+
+IMAGE_TAG="${IMAGE_TAG:-$(wotcv_read_state "${STATE_FILE}" LAST_IMAGE_TAG)}"
+WOTCV_GIT_SHA="${WOTCV_GIT_SHA:-$(wotcv_read_state "${STATE_FILE}" LAST_GIT_SHA)}"
+: "${IMAGE_TAG:?IMAGE_TAG is unavailable; deploy once or export IMAGE_TAG}"
+export IMAGE_TAG
+
+echo "[1/7] Validating effective Compose ports..."
+compose_config="$(mktemp "${TMPDIR:-/tmp}/rybbit-identity-preflight.${UID}.XXXXXX.json")"
+trap 'rm -f "${compose_config}"' EXIT
+"${COMPOSE[@]}" config --format json >"${compose_config}"
+python3 - "${compose_config}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    services = json.load(stream)["services"]
+
+if services["redis"].get("ports"):
+    raise SystemExit(f"Redis must not publish a host port: {services['redis']['ports']}")
+
+for service_name in ("clickhouse", "postgres", "backend", "client"):
+    for port in services[service_name].get("ports") or []:
+        if port.get("host_ip") not in ("127.0.0.1", "::1"):
+            raise SystemExit(f"{service_name} publishes outside loopback: {port}")
+PY
+
+echo "[2/7] Verifying running containers and Redis isolation..."
+for service in postgres clickhouse redis backend client; do
+  container_id="$("${COMPOSE[@]}" ps -q "${service}")"
+  [[ -n "${container_id}" ]] || { echo "Missing container for ${service}." >&2; exit 1; }
+  state="$(docker inspect "${container_id}" --format '{{.State.Status}}')"
+  health="$(docker inspect "${container_id}" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}')"
+  [[ "${state}" == "running" ]] || { echo "${service} is ${state}." >&2; exit 1; }
+  [[ "${health}" == "healthy" || "${health}" == "none" ]] || {
+    echo "${service} health is ${health}." >&2
+    exit 1
+  }
+done
+
+redis_id="$("${COMPOSE[@]}" ps -q redis)"
+redis_bindings="$(docker inspect "${redis_id}" --format '{{json .HostConfig.PortBindings}}')"
+python3 - "${redis_bindings}" <<'PY'
+import json
+import sys
+
+bindings = json.loads(sys.argv[1]) or {}
+if bindings:
+    raise SystemExit(f"Running Redis publishes host ports: {bindings}")
+PY
+docker exec backend sh -lc 'getent hosts redis >/dev/null && nc -zvw3 redis 6379'
+
+echo "[3/7] Verifying PostgreSQL identity schema..."
+column_count="$(printf '%s\n' \
+  "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_aliases' AND column_name IN ('source', 'updated_at')" | \
+  docker exec -i postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At')"
+[[ "${column_count}" == "2" ]] || { echo "Identity migration columns are missing." >&2; exit 1; }
+
+constraint_count="$(printf '%s\n' \
+  "SELECT count(*) FROM pg_constraint WHERE conname IN ('user_aliases_site_anon_unique', 'user_aliases_source_check')" | \
+  docker exec -i postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At')"
+[[ "${constraint_count}" == "2" ]] || { echo "Identity constraints are missing." >&2; exit 1; }
+
+echo "[4/7] Loading and checking the ClickHouse dictionary..."
+printf '%s\n' "SELECT dictGetOrDefault('user_identity_dict', 'user_id', tuple(toUInt64(0), ''), '')" | \
+  docker exec -i clickhouse sh -lc \
+    'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"' \
+    >/dev/null
+
+dictionary_status="$(printf '%s\n' "SELECT status FROM system.dictionaries WHERE name = 'user_identity_dict'" | \
+  docker exec -i clickhouse sh -lc \
+    'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB" --format TSVRaw')"
+[[ "${dictionary_status}" == "LOADED" ]] || {
+  echo "Identity dictionary status is ${dictionary_status:-missing}." >&2
+  exit 1
+}
+
+echo "[5/7] Comparing a PostgreSQL alias with ClickHouse resolution..."
+sample_alias="$(printf '%s\n' \
+  "SELECT row_to_json(sample) FROM (SELECT site_id, anonymous_id, user_id FROM user_aliases ORDER BY updated_at DESC, id DESC LIMIT 1) AS sample" | \
+  docker exec -i postgres sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At')"
+if [[ -n "${sample_alias}" ]]; then
+  sample_site_id="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["site_id"])' "${sample_alias}")"
+  sample_anonymous_id="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["anonymous_id"])' "${sample_alias}")"
+  sample_user_id="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["user_id"])' "${sample_alias}")"
+  resolved_user_id="$(printf '%s\n' \
+    "SELECT dictGetOrDefault('user_identity_dict', 'user_id', tuple({site_id:UInt64}, {anonymous_id:String}), '')" | \
+    docker exec -i clickhouse sh -lc \
+      'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB" --format TSVRaw --param_site_id "$1" --param_anonymous_id "$2"' \
+      sh "${sample_site_id}" "${sample_anonymous_id}")"
+  [[ "${resolved_user_id}" == "${sample_user_id}" ]] || {
+    echo "Dictionary resolved '${resolved_user_id}' instead of '${sample_user_id}'." >&2
+    exit 1
+  }
+else
+  echo "No aliases exist yet; sample lookup skipped."
+fi
+
+echo "[6/7] Checking for legacy identity mutations..."
+pending_mutations="$(printf '%s\n' \
+  "SELECT count() FROM system.mutations WHERE is_done = 0 AND command LIKE '%identified_user_id%'" | \
+  docker exec -i clickhouse sh -lc \
+    'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB" --format TSVRaw')"
+if [[ "${pending_mutations}" != "0" ]]; then
+  echo "WARNING: ${pending_mutations} legacy identified_user_id mutation(s) are still running." >&2
+fi
+
+echo "[7/7] Verifying backend health and deployed revision..."
+health_response="$(curl --fail --silent --show-error --max-time 5 "${HEALTHCHECK_URL}")"
+if [[ -n "${WOTCV_GIT_SHA}" && "${health_response}" != *"\"gitSha\":\"${WOTCV_GIT_SHA}\""* ]]; then
+  echo "Health endpoint reports an unexpected git SHA: ${health_response}" >&2
+  exit 1
+fi
+if [[ "${health_response}" != *"\"imageTag\":\"${IMAGE_TAG}\""* ]]; then
+  echo "Health endpoint reports an unexpected image tag: ${health_response}" >&2
+  exit 1
+fi
+
+echo "Identity Resolution v2 preflight passed."
+echo "Health: ${health_response}"

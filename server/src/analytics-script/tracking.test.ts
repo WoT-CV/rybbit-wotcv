@@ -16,7 +16,11 @@ describe("Tracker", () => {
 
     // Reset fetch mock
     vi.mocked(global.fetch).mockReset();
-    vi.mocked(global.fetch).mockResolvedValue({} as Response);
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({}),
+    } as unknown as Response);
 
     // Mock localStorage
     const localStorageMock = {
@@ -120,6 +124,7 @@ describe("Tracker", () => {
 
       expect(payload).toEqual({
         site_id: "123",
+        anonymous_id: "visitor-123",
         hostname: "example.com",
         pathname: "/page",
         querystring: "?query=test",
@@ -448,6 +453,12 @@ describe("Tracker", () => {
 
       expect(window.localStorage.setItem).toHaveBeenCalledWith(`${config.namespace}-user-id`, "user-456");
       expect(tracker.getUserId()).toBe("user-456");
+
+      const identifyCall = vi.mocked(global.fetch).mock.calls.find(([url]) => String(url).endsWith("/identify"));
+      expect(JSON.parse(identifyCall?.[1]?.body as string)).toMatchObject({
+        anonymous_id: "visitor-123",
+        user_id: "user-456",
+      });
     });
 
     it("should validate user ID", () => {
@@ -460,7 +471,64 @@ describe("Tracker", () => {
       consoleSpy.mockRestore();
     });
 
+    it("rotates the anonymous identity when switching directly between accounts", () => {
+      tracker.identify("user-alice");
+      const firstIdentifyCall = vi.mocked(global.fetch).mock.calls.find(([url]) => String(url).endsWith("/identify"));
+      const firstAnonymousId = JSON.parse(firstIdentifyCall?.[1]?.body as string).anonymous_id;
+
+      tracker.identify("user-bob");
+      const identifyCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) => String(url).endsWith("/identify"));
+      const secondAnonymousId = JSON.parse(identifyCalls[1][1]?.body as string).anonymous_id;
+
+      expect(firstAnonymousId).toBe("visitor-123");
+      expect(secondAnonymousId).not.toBe(firstAnonymousId);
+      expect(window.localStorage.setItem).toHaveBeenCalledWith(`${config.namespace}-visitor-id`, secondAnonymousId);
+    });
+
+    it("rotates a conflicting anonymous ID and retries identify once", async () => {
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 409,
+          json: vi.fn().mockResolvedValue({
+            code: "ANONYMOUS_ID_ALREADY_LINKED",
+            rotateAnonymousId: true,
+          }),
+        } as unknown as Response)
+        .mockResolvedValue({ ok: true, status: 200, json: vi.fn().mockResolvedValue({}) } as unknown as Response);
+
+      tracker.identify("user-bob");
+
+      await vi.waitFor(() => {
+        const identifyCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) => String(url).endsWith("/identify"));
+        expect(identifyCalls).toHaveLength(2);
+      });
+      const identifyCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) => String(url).endsWith("/identify"));
+      const firstAnonymousId = JSON.parse(identifyCalls[0][1]?.body as string).anonymous_id;
+      const secondAnonymousId = JSON.parse(identifyCalls[1][1]?.body as string).anonymous_id;
+
+      expect(firstAnonymousId).toBe("visitor-123");
+      expect(secondAnonymousId).not.toBe(firstAnonymousId);
+      expect(config.visitorId).toBe(secondAnonymousId);
+    });
+
+    it("retries identify after a transient server error", async () => {
+      vi.useFakeTimers();
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({ ok: false, status: 503 } as Response)
+        .mockResolvedValue({ ok: true, status: 200, json: vi.fn().mockResolvedValue({}) } as unknown as Response);
+
+      tracker.identify("user-retry");
+      await vi.advanceTimersByTimeAsync(250);
+
+      const identifyCalls = vi.mocked(global.fetch).mock.calls.filter(([url]) => String(url).endsWith("/identify"));
+      expect(identifyCalls).toHaveLength(2);
+      vi.useRealTimers();
+    });
+
     it("should clear user ID", () => {
+      const previousVisitorId = config.visitorId;
       const updateReplayUserId = vi.fn();
       (
         tracker as unknown as { sessionReplayRecorder: { updateUserId: (userId: string) => void } }
@@ -474,6 +542,8 @@ describe("Tracker", () => {
       expect(window.localStorage.removeItem).toHaveBeenCalledWith(`${config.namespace}-user-id`);
       expect(tracker.getUserId()).toBeNull();
       expect(updateReplayUserId).toHaveBeenLastCalledWith("");
+      expect(window.localStorage.setItem).toHaveBeenCalledWith(`${config.namespace}-visitor-id`, expect.any(String));
+      expect(tracker.createBasePayload()?.anonymous_id).not.toBe(previousVisitorId);
     });
 
     it("should handle localStorage errors", () => {

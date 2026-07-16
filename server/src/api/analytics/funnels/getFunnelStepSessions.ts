@@ -5,6 +5,7 @@ import { enrichWithTraits, getTimeStatement, processResults } from "../utils/uti
 import { GetSessionsResponse } from "../sessions/getSessions.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { buildFunnelStepCondition, FunnelStep } from "./funnelSteps.js";
+import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
 
 type Funnel = {
   steps: FunnelStep[];
@@ -56,6 +57,7 @@ export async function getFunnelStepSessions(req: FastifyRequest<GetFunnelStepSes
     // Re-applying it to the aggregated outer query breaks on parameters the
     // aggregate doesn't project (utm_*, pathname, timezone → unknown identifier).
     const filterStatement = getFilterStatement(req.query.filters, Number(siteId), timeStatement);
+    const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("e");
 
     // Build conditional statements for each step we need
     const stepsToCheck = mode === "reached" ? stepNumber : stepNumber + 1;
@@ -140,7 +142,7 @@ export async function getFunnelStepSessions(req: FastifyRequest<GetFunnelStepSes
       SELECT
         e.session_id,
         e.user_id,
-        argMax(e.identified_user_id, e.timestamp) AS identified_user_id,
+        argMax(${resolvedIdentifiedUserId}, e.timestamp) AS identified_user_id,
         argMax(e.country, e.timestamp) AS country,
         argMax(e.region, e.timestamp) AS region,
         argMax(e.city, e.timestamp) AS city,

@@ -1,11 +1,13 @@
 import { getRecordNetworkPlugin, type NetworkReplayRecordPlugin } from "./networkReplay/networkPlugin.js";
 import { getJsonByteSize } from "./networkReplay/utils.js";
-import { getReplayBatchKey, getReplayEventsByteSize } from "./replayBatching.js";
+import { getReplayBatchKey } from "./replayBatching.js";
 import { ScriptConfig, SessionReplayBatch, SessionReplayEvent, SessionReplayTransportError } from "./types.js";
 
 const SAMPLE_STORAGE_KEY = "rybbit-replay-sampled";
 const ACTIVITY_CAPTURE_VERSION = 2;
 const MAX_BATCH_SEND_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 1_000;
+const RETRY_MAX_DELAY_MS = 30_000;
 
 /**
  * Determines if this session should have replay enabled based on sample rate.
@@ -68,10 +70,11 @@ export class SessionReplayRecorder {
   private eventBuffer: SessionReplayEvent[] = [];
   private eventBufferSizeBytes: number = 0;
   private nextSequenceNumber: number = 0;
-  private pendingBatches: SessionReplayEvent[][] = [];
+  private pendingBatches: SessionReplayBatch[] = [];
   private isSendingBatches: boolean = false;
   private retryAttempts = new Map<string, number>();
   private batchTimer?: number;
+  private retryTimer?: number;
   private sendBatch: (batch: SessionReplayBatch) => Promise<void>;
 
   constructor(config: ScriptConfig, userId: string, sendBatch: (batch: SessionReplayBatch) => Promise<void>) {
@@ -238,12 +241,14 @@ export class SessionReplayRecorder {
     this.batchTimer = window.setInterval(() => {
       if (this.eventBuffer.length > 0) {
         this.flushEvents();
+      } else if (this.pendingBatches.length > 0 && this.retryTimer === undefined) {
+        void this.processPendingBatches();
       }
     }, this.config.sessionReplayBatchInterval);
   }
 
   private clearBatchTimer(): void {
-    if (this.batchTimer) {
+    if (this.batchTimer !== undefined) {
       clearInterval(this.batchTimer);
       this.batchTimer = undefined;
     }
@@ -257,12 +262,12 @@ export class SessionReplayRecorder {
     const events = this.eventBuffer;
     this.eventBuffer = [];
     this.eventBufferSizeBytes = 0;
-    this.pendingBatches.push(events);
+    this.pendingBatches.push(this.createBatch(events));
     void this.processPendingBatches();
   }
 
   private async processPendingBatches(): Promise<void> {
-    if (this.isSendingBatches) {
+    if (this.isSendingBatches || this.retryTimer !== undefined) {
       return;
     }
 
@@ -270,12 +275,12 @@ export class SessionReplayRecorder {
 
     try {
       while (this.pendingBatches.length > 0) {
-        const events = this.pendingBatches.shift();
-        if (!events) {
+        const batch = this.pendingBatches.shift();
+        if (!batch) {
           continue;
         }
 
-        const unsentEvents = await this.sendEventsWithPayloadFallback(events);
+        const unsentEvents = await this.sendEventsWithPayloadFallback(batch);
         if (unsentEvents) {
           const batchKey = getReplayBatchKey(unsentEvents);
           const attempts = (this.retryAttempts.get(batchKey) ?? 0) + 1;
@@ -288,13 +293,16 @@ export class SessionReplayRecorder {
           }
 
           this.retryAttempts.set(batchKey, attempts);
-          const queuedEvents = this.pendingBatches.flat();
-          this.pendingBatches = [];
-          this.prependEvents([...unsentEvents, ...queuedEvents]);
-          console.warn(`[SessionReplay] ${unsentEvents.length + queuedEvents.length} events queued for retry`);
+          this.pendingBatches.unshift({ ...batch, events: unsentEvents });
+          const queuedEventCount = this.pendingBatches.reduce(
+            (total, queuedBatch) => total + queuedBatch.events.length,
+            0
+          );
+          console.warn(`[SessionReplay] ${queuedEventCount} events queued for retry`);
+          this.scheduleRetry(attempts);
           break;
         } else {
-          this.retryAttempts.delete(getReplayBatchKey(events));
+          this.retryAttempts.delete(getReplayBatchKey(batch.events));
         }
       }
     } finally {
@@ -302,9 +310,22 @@ export class SessionReplayRecorder {
     }
   }
 
-  private async sendEventsWithPayloadFallback(events: SessionReplayEvent[]): Promise<SessionReplayEvent[] | undefined> {
+  private scheduleRetry(attempt: number): void {
+    if (this.retryTimer !== undefined) {
+      return;
+    }
+
+    const delay = Math.min(RETRY_BASE_DELAY_MS * 2 ** Math.max(0, attempt - 1), RETRY_MAX_DELAY_MS);
+    this.retryTimer = window.setTimeout(() => {
+      this.retryTimer = undefined;
+      void this.processPendingBatches();
+    }, delay);
+  }
+
+  private async sendEventsWithPayloadFallback(batch: SessionReplayBatch): Promise<SessionReplayEvent[] | undefined> {
+    const { events } = batch;
     try {
-      await this.sendBatch(this.createBatch(events));
+      await this.sendBatch(batch);
       return undefined;
     } catch (error) {
       if (!this.isPayloadTooLargeError(error)) {
@@ -322,18 +343,19 @@ export class SessionReplayRecorder {
       const splitIndex = Math.ceil(events.length / 2);
       const firstBatch = events.slice(0, splitIndex);
       const secondBatch = events.slice(splitIndex);
-      const unsentFirstBatch = await this.sendEventsWithPayloadFallback(firstBatch);
+      const unsentFirstBatch = await this.sendEventsWithPayloadFallback({ ...batch, events: firstBatch });
 
       if (unsentFirstBatch) {
         return [...unsentFirstBatch, ...secondBatch];
       }
 
-      return this.sendEventsWithPayloadFallback(secondBatch);
+      return this.sendEventsWithPayloadFallback({ ...batch, events: secondBatch });
     }
   }
 
   private createBatch(events: SessionReplayEvent[]): SessionReplayBatch {
     return {
+      anonymousId: this.config.visitorId,
       userId: this.userId,
       events,
       metadata: {
@@ -353,11 +375,6 @@ export class SessionReplayRecorder {
     return typeof error === "object" && error !== null && "status" in error && error.status === 413;
   }
 
-  private prependEvents(events: SessionReplayEvent[]): void {
-    this.eventBuffer = [...events, ...this.eventBuffer];
-    this.eventBufferSizeBytes = getReplayEventsByteSize(this.eventBuffer);
-  }
-
   // Update user ID when it changes
   public updateUserId(userId: string): void {
     if (userId === this.userId) {
@@ -365,8 +382,8 @@ export class SessionReplayRecorder {
     }
 
     // Keep events captured under the previous identity in their original batch.
-    // flushEvents snapshots this.userId before its first await, so the identity
-    // can be changed immediately after starting the send.
+    // flushEvents snapshots both the identified and anonymous IDs so queued
+    // batches retain the identity that was active when they were captured.
     if (this.eventBuffer.length > 0) {
       void this.flushEvents();
     }

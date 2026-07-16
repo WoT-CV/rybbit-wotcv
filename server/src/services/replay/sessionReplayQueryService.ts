@@ -8,6 +8,11 @@ import { processResults, getTimeStatement } from "../../api/analytics/utils/util
 import { FilterParams } from "@rybbit/shared";
 import { r2Storage } from "../storage/r2StorageService.js";
 import { getFilterStatement } from "../../api/analytics/utils/getFilterStatement.js";
+import {
+  clickhouseEffectiveUserId,
+  clickhouseResolvedIdentifiedUserId,
+  resolveUserIdentity,
+} from "../userIdentity/userIdentityService.js";
 
 /**
  * Service responsible for querying/retrieving session replay data
@@ -24,7 +29,6 @@ export class SessionReplayQueryService {
     }>
   ): Promise<SessionReplayListItem[]> {
     const { limit = 50, offset = 0, userId, minDuration } = options;
-
     const timeStatement = getTimeStatement(options).replace(/timestamp/g, "start_time");
 
     const filterStatement = getFilterStatement(options.filters || "");
@@ -33,8 +37,9 @@ export class SessionReplayQueryService {
     const queryParams: any = { siteId, limit, offset };
 
     if (userId) {
-      whereConditions.push(`(user_id = {userId:String} OR identified_user_id = {userId:String})`);
-      queryParams.userId = userId;
+      const identity = await resolveUserIdentity(siteId, userId);
+      whereConditions.push(`${clickhouseEffectiveUserId()} = {userId:String}`);
+      queryParams.userId = identity.canonicalUserId;
     }
 
     if (minDuration !== undefined) {
@@ -74,7 +79,7 @@ export class SessionReplayQueryService {
       SELECT
         session_id,
         user_id,
-        identified_user_id,
+        ${clickhouseResolvedIdentifiedUserId()} AS identified_user_id,
         start_time,
         end_time,
         duration_ms,
@@ -107,18 +112,16 @@ export class SessionReplayQueryService {
       format: "JSONEachRow",
     });
 
-    const rawResults = await processResults<any>(result);
-
-    const finalResults = rawResults;
-
-    return finalResults;
+    return processResults<SessionReplayListItem>(result);
   }
 
   async getSessionReplayEvents(siteId: number, sessionId: string): Promise<GetSessionReplayEventsResponse> {
     // Get metadata
     const metadataResult = await clickhouse.query({
       query: `
-        SELECT *
+        SELECT
+          * EXCEPT (identified_user_id),
+          ${clickhouseResolvedIdentifiedUserId()} AS identified_user_id
         FROM session_replay_metadata
         FINAL
         WHERE site_id = {siteId:UInt16} 
@@ -282,7 +285,9 @@ export class SessionReplayQueryService {
   async getSessionReplayMetadata(siteId: number, sessionId: string): Promise<SessionReplayMetadata | null> {
     const result = await clickhouse.query({
       query: `
-        SELECT *
+        SELECT
+          * EXCEPT (identified_user_id),
+          ${clickhouseResolvedIdentifiedUserId()} AS identified_user_id
         FROM session_replay_metadata
         FINAL
         WHERE site_id = {siteId:UInt16}
@@ -293,8 +298,12 @@ export class SessionReplayQueryService {
       format: "JSONEachRow",
     });
 
-    const results = await processResults<SessionReplayMetadata>(result);
-    return results[0] || null;
+    const results = await processResults<SessionReplayMetadata & { user_id: string; identified_user_id?: string }>(
+      result
+    );
+    if (!results[0]) return null;
+
+    return results[0] as unknown as SessionReplayMetadata;
   }
 
   /**

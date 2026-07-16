@@ -33,10 +33,15 @@ services:
       # Profile (user-level) settings are only read from users.d, not config.d
       - source: clickhouse_user_settings
         target: /etc/clickhouse-server/users.d/user_settings.xml
+      - source: clickhouse_identity_dictionary
+        target: /etc/clickhouse-server/identity_dictionary.xml
     environment:
       - CLICKHOUSE_DB=${CLICKHOUSE_DB:-analytics}
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-frog}
+      - POSTGRES_DB=${POSTGRES_DB:-analytics}
+      - POSTGRES_USER=${POSTGRES_USER:-frog}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-frog}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
       interval: 3s
@@ -71,9 +76,6 @@ services:
   redis:
     image: redis:8.6.4-alpine
     container_name: redis
-    ports:
-      # Localhost-only: reach from outside via SSH tunnel
-      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -145,6 +147,7 @@ services:
       - CLUSTER_WORKERS=${CLUSTER_WORKERS:-4}
       - DEPLOYMENT=${DEPLOYMENT}
       - LITE_DASHBOARD=${LITE_DASHBOARD}
+      - IDENTITY_RESOLUTION_V2=${IDENTITY_RESOLUTION_V2:-true}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - OPENROUTER_MODEL=${OPENROUTER_MODEL}
     depends_on:
@@ -238,4 +241,48 @@ configs:
             <log_processors_profiles>0</log_processors_profiles>
           </default>
         </profiles>
+      </clickhouse>
+
+  clickhouse_identity_dictionary:
+    content: |
+      <clickhouse>
+        <dictionary>
+          <name>user_identity_dict</name>
+          <source>
+            <postgresql>
+              <host>postgres</host>
+              <port>5432</port>
+              <user from_env="POSTGRES_USER"/>
+              <password from_env="POSTGRES_PASSWORD"/>
+              <db from_env="POSTGRES_DB"/>
+              <table>user_aliases</table>
+              <invalidate_query>SELECT COALESCE(MAX(id), 0)::text || ':' || COUNT(*)::text || ':' || COALESCE(MAX(EXTRACT(EPOCH FROM updated_at)), 0)::text FROM user_aliases</invalidate_query>
+              <background_reconnect>true</background_reconnect>
+            </postgresql>
+          </source>
+          <lifetime>
+            <min>5</min>
+            <max>10</max>
+          </lifetime>
+          <layout>
+            <complex_key_hashed/>
+          </layout>
+          <structure>
+            <key>
+              <attribute>
+                <name>site_id</name>
+                <type>UInt64</type>
+              </attribute>
+              <attribute>
+                <name>anonymous_id</name>
+                <type>String</type>
+              </attribute>
+            </key>
+            <attribute>
+              <name>user_id</name>
+              <type>String</type>
+              <null_value></null_value>
+            </attribute>
+          </structure>
+        </dictionary>
       </clickhouse>

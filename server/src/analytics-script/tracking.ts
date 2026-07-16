@@ -13,6 +13,11 @@ import {
 import { findMatchingPattern } from "./utils.js";
 import { SessionReplayRecorder } from "./sessionReplay.js";
 import { getBotScore, getBotSignalMask } from "./botSignals.js";
+import { rotateVisitorId } from "./config.js";
+
+const IDENTIFY_MAX_ATTEMPTS = 3;
+const IDENTIFY_RETRY_BASE_DELAY_MS = 250;
+const IDENTIFY_RETRY_MAX_DELAY_MS = 2_000;
 
 export class Tracker {
   private config: ScriptConfig;
@@ -153,6 +158,7 @@ export class Tracker {
 
     const payload: BasePayload = {
       site_id: this.config.siteId,
+      anonymous_id: this.config.visitorId,
       hostname: url.hostname,
       pathname: pathname,
       querystring: this.config.trackQuerystring ? url.search : "",
@@ -425,7 +431,17 @@ export class Tracker {
       return;
     }
 
-    this.customUserId = userId.trim();
+    const nextUserId = userId.trim();
+    const isAccountSwitch = Boolean(this.customUserId && this.customUserId !== nextUserId);
+
+    if (isAccountSwitch) {
+      // Treat a direct account switch like logout + login even when the host
+      // application forgot to call clearUserId() between the two accounts.
+      this.sessionReplayRecorder?.updateUserId(nextUserId);
+      this.config.visitorId = rotateVisitorId(this.config.namespace);
+    }
+
+    this.customUserId = nextUserId;
     try {
       localStorage.setItem(`${this.config.namespace}-user-id`, this.customUserId);
     } catch (e) {
@@ -461,24 +477,61 @@ export class Tracker {
     traits?: Record<string, unknown>,
     isNewIdentify: boolean = true
   ): Promise<void> {
-    try {
-      await fetch(`${this.config.analyticsHost}/identify`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          site_id: this.config.siteId,
-          user_id: userId,
-          traits: traits,
-          is_new_identify: isNewIdentify,
-        }),
-        mode: "cors",
-        keepalive: true,
-      });
-    } catch (error) {
-      console.error("Failed to send identify event:", error);
+    let conflictRotationUsed = false;
+
+    for (let attempt = 1; attempt <= IDENTIFY_MAX_ATTEMPTS; attempt += 1) {
+      try {
+        const response = await fetch(`${this.config.analyticsHost}/identify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            site_id: this.config.siteId,
+            anonymous_id: this.config.visitorId,
+            user_id: userId,
+            traits: traits,
+            is_new_identify: isNewIdentify,
+          }),
+          mode: "cors",
+          keepalive: true,
+        });
+
+        if (response.ok) {
+          return;
+        }
+
+        if (response.status === 409 && isNewIdentify && !conflictRotationUsed) {
+          const body = await response.json().catch(() => null);
+          if (body?.code === "ANONYMOUS_ID_ALREADY_LINKED" && body?.rotateAnonymousId === true) {
+            conflictRotationUsed = true;
+            this.config.visitorId = rotateVisitorId(this.config.namespace);
+            continue;
+          }
+        }
+
+        if (response.status !== 429 && response.status < 500) {
+          console.error(`Failed to send identify event: HTTP ${response.status}`);
+          return;
+        }
+      } catch (error) {
+        if (attempt === IDENTIFY_MAX_ATTEMPTS) {
+          console.error("Failed to send identify event:", error);
+          return;
+        }
+      }
+
+      if (attempt < IDENTIFY_MAX_ATTEMPTS) {
+        const exponentialDelay = Math.min(
+          IDENTIFY_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1),
+          IDENTIFY_RETRY_MAX_DELAY_MS
+        );
+        const jitteredDelay = Math.round(exponentialDelay * (0.75 + Math.random() * 0.5));
+        await new Promise(resolve => window.setTimeout(resolve, jitteredDelay));
+      }
     }
+
+    console.error(`Failed to send identify event after ${IDENTIFY_MAX_ATTEMPTS} attempts`);
   }
 
   clearUserId(): void {
@@ -492,6 +545,10 @@ export class Tracker {
     if (this.sessionReplayRecorder) {
       this.sessionReplayRecorder.updateUserId("");
     }
+
+    // A logout is an identity boundary. Future anonymous activity must not be
+    // linked to the account that was active on this browser before the logout.
+    this.config.visitorId = rotateVisitorId(this.config.namespace);
 
     void this.refreshFeatureFlags();
   }

@@ -262,6 +262,8 @@ Usunięto redundantne screenshoty, HAR, CSV, raporty i README, aby paczka nadawa
 
 # 4. Tożsamość użytkownika i awatary
 
+Anonimowa historia urządzenia jest korelowana z kontem po `identify()` bez przepisywania tabel faktów w ClickHouse. Relacje przechowuje PostgreSQL, a zapytania użytkowników, sesji, globusa, replay, retencji i Growth Accounting rozwiązują je przez słownik ClickHouse. Wylogowanie i zmiana konta tworzą nową granicę anonimowej tożsamości. Szczegóły techniczne i procedura operacyjna znajdują się w [WOTCV_IDENTITY_RESOLUTION_V2.md](WOTCV_IDENTITY_RESOLUTION_V2.md).
+
 ## 4.1. Rozpoznawanie nazwy
 
 Kolejność wyboru nazwy:

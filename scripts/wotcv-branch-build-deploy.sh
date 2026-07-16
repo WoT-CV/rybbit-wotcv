@@ -7,6 +7,7 @@ source "${ROOT_DIR}/scripts/lib/wotcv-common.sh"
 STATE_FILE="${ROOT_DIR}/.wotcv-deployment.env"
 DEPLOY_BRANCH="${WOTCV_BRANCH:-feat/wotcv}"
 DEPLOY_REMOTE="${WOTCV_REMOTE:-origin}"
+EXPECTED_GIT_SHA="${WOTCV_EXPECTED_SHA:-}"
 HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
 BACKEND_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-backend"
 CLIENT_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-client"
@@ -105,8 +106,81 @@ PY
   done
 }
 
+wait_for_service_health() {
+  local service="$1"
+  local container_id
+  local state
+  local health
+
+  for _ in {1..60}; do
+    container_id="$("${COMPOSE[@]}" ps -q "${service}")"
+    if [[ -n "${container_id}" ]]; then
+      state="$(docker inspect "${container_id}" --format '{{.State.Status}}')"
+      health="$(docker inspect "${container_id}" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}')"
+      if [[ "${state}" == "running" && ("${health}" == "healthy" || "${health}" == "none") ]]; then
+        return 0
+      fi
+    fi
+    sleep 2
+  done
+
+  echo "Service ${service} did not become healthy in time." >&2
+  return 1
+}
+
+ensure_redis_internal_only() {
+  local container_id
+  local port_bindings
+
+  container_id="$("${COMPOSE[@]}" ps -q redis)"
+  if [[ -n "${container_id}" ]]; then
+    port_bindings="$(docker inspect "${container_id}" --format '{{json .HostConfig.PortBindings}}')"
+    if python3 - "${port_bindings}" <<'PY'
+import json
+import sys
+
+raise SystemExit(0 if not (json.loads(sys.argv[1]) or {}) else 1)
+PY
+    then
+      wait_for_service_health redis
+      return 0
+    fi
+
+    echo "Redis still publishes a host port; recreating it on the internal Compose network..."
+  else
+    echo "Redis is not created; starting it on the internal Compose network..."
+  fi
+
+  # Recreating the container preserves the named redis-data volume while
+  # applying the effective Compose configuration without a host port binding.
+  "${COMPOSE[@]}" up -d --no-deps --force-recreate redis
+  wait_for_service_health redis
+}
+
+prepare_identity_infrastructure() {
+  echo "Applying PostgreSQL migrations before loading the identity dictionary..."
+  "${COMPOSE[@]}" run --rm --no-deps --entrypoint sh backend -lc 'npm run db:migrate'
+
+  echo "Recreating ClickHouse with the PostgreSQL-backed identity dictionary..."
+  "${COMPOSE[@]}" up -d --no-deps --force-recreate clickhouse
+  wait_for_service_health clickhouse
+
+  printf '%s\n' "SELECT dictGetOrDefault('user_identity_dict', 'user_id', tuple(toUInt64(0), ''), '')" | \
+    docker exec -i clickhouse sh -lc \
+      'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"' \
+      >/dev/null
+}
+
 switch_to_branch() {
+  local remote_sha
+
   git fetch "${DEPLOY_REMOTE}" --prune
+
+  remote_sha="$(git rev-parse "${DEPLOY_REMOTE}/${DEPLOY_BRANCH}")"
+  if [[ -n "${EXPECTED_GIT_SHA}" && "${remote_sha}" != "${EXPECTED_GIT_SHA}" ]]; then
+    echo "Refusing deployment: ${DEPLOY_REMOTE}/${DEPLOY_BRANCH} is ${remote_sha}, expected ${EXPECTED_GIT_SHA}." >&2
+    return 1
+  fi
 
   if git show-ref --verify --quiet "refs/heads/${DEPLOY_BRANCH}"; then
     git switch "${DEPLOY_BRANCH}"
@@ -115,6 +189,11 @@ switch_to_branch() {
   fi
 
   git merge --ff-only "${DEPLOY_REMOTE}/${DEPLOY_BRANCH}"
+
+  if [[ -n "${EXPECTED_GIT_SHA}" && "$(git rev-parse HEAD)" != "${EXPECTED_GIT_SHA}" ]]; then
+    echo "Refusing deployment: checked out HEAD does not match ${EXPECTED_GIT_SHA}." >&2
+    return 1
+  fi
 }
 
 rollback() {
@@ -187,6 +266,7 @@ echo "Validating Compose configuration for ${DEPLOY_BRANCH} at ${WOTCV_GIT_SHA}.
 COMPOSE_CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/rybbit-wotcv-branch-build-compose.${UID}.XXXXXX.json")"
 "${COMPOSE[@]}" config --format json >"${COMPOSE_CONFIG_FILE}"
 validate_compose_config
+ensure_redis_internal_only
 validate_infrastructure
 
 BUILD_COMMAND=(build)
@@ -199,6 +279,9 @@ echo "Building backend and client locally from ${DEPLOY_BRANCH}..."
 
 echo "Validating runtime contents of backend and client images..."
 validate_runtime_images
+
+prepare_identity_infrastructure
+validate_infrastructure
 
 BACKEND_IMAGE_DIGEST="$(image_id "${BACKEND_IMAGE}" "${IMAGE_TAG}")"
 CLIENT_IMAGE_DIGEST="$(image_id "${CLIENT_IMAGE}" "${IMAGE_TAG}")"
@@ -226,6 +309,13 @@ fi
 
 if [[ "${HEALTH_RESPONSE}" != *"\"imageTag\":\"${IMAGE_TAG}\""* ]]; then
   echo "Health endpoint returned an unexpected image tag: ${HEALTH_RESPONSE}" >&2
+  rollback "${PREVIOUS_TAG}" "${PREVIOUS_GIT_SHA}" "${PREVIOUS_BUILD_TIME}" "${PREVIOUS_BACKEND_DIGEST}" "${PREVIOUS_CLIENT_DIGEST}" || true
+  exit 1
+fi
+
+echo "Running Identity Resolution v2 post-deployment preflight..."
+if ! bash scripts/wotcv-identity-v2-preflight.sh; then
+  echo "Identity preflight failed. Attempting application rollback..." >&2
   rollback "${PREVIOUS_TAG}" "${PREVIOUS_GIT_SHA}" "${PREVIOUS_BUILD_TIME}" "${PREVIOUS_BACKEND_DIGEST}" "${PREVIOUS_CLIENT_DIGEST}" || true
   exit 1
 fi

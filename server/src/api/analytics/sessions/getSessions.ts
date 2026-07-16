@@ -4,6 +4,10 @@ import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
 import { enrichWithTraits, getTimeStatement, processResults } from "../utils/utils.js";
+import {
+  clickhouseResolvedIdentifiedUserId,
+  resolveUserIdentity,
+} from "../../../services/userIdentity/userIdentityService.js";
 
 export type GetSessionsResponse = {
   session_id: string;
@@ -58,8 +62,7 @@ export interface GetSessionsRequest {
     limit: number;
     page: number;
     user_id?: string;
-    session_id?: string
-    ;
+    session_id?: string;
     identified_only?: string;
     min_pageviews?: string;
     min_events?: string;
@@ -104,14 +107,17 @@ export async function getSessions(req: FastifyRequest<GetSessionsRequest>, res: 
   const filterStatement = getFilterStatement(filters, Number(site), timeStatement, {
     sessionLevelParams: ["event_name", "pathname", "page_title", "querystring", "channel"],
     fieldMappings: SESSION_FIELD_MAPPINGS,
+    userIdExpression: "if(identified_user_id != '', identified_user_id, user_id)",
   });
+  const requestedIdentity = userId ? await resolveUserIdentity(Number(site), userId) : null;
+  const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
 
   const query = `
   WITH AggregatedSessions AS (
       SELECT
           session_id,
           argMax(user_id, timestamp) AS user_id,
-          argMax(identified_user_id, timestamp) AS identified_user_id,
+          argMax(${resolvedIdentifiedUserId}, timestamp) AS identified_user_id,
           argMax(country, timestamp) AS country,
           argMax(region, timestamp) AS region,
           argMax(city, timestamp) AS city,
@@ -152,7 +158,7 @@ export async function getSessions(req: FastifyRequest<GetSessionsRequest>, res: 
       FROM events
       WHERE
           site_id = {siteId:Int32}
-          ${userId ? ` AND (events.user_id = {user_id:String} OR events.identified_user_id = {user_id:String})` : ""}
+          ${userId ? ` AND COALESCE(NULLIF(${resolvedIdentifiedUserId}, ''), events.user_id) = {user_id:String}` : ""}
           ${sessionId ? ` AND events.session_id = {session_id:String}` : ""}
           ${timeStatement}
       GROUP BY
@@ -185,7 +191,7 @@ export async function getSessions(req: FastifyRequest<GetSessionsRequest>, res: 
       format: "JSONEachRow",
       query_params: {
         siteId: Number(site),
-        user_id: userId,
+        user_id: requestedIdentity?.canonicalUserId,
         session_id: sessionId,
         limit: limit || 100,
         offset: (page - 1) * (limit || 100),

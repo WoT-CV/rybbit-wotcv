@@ -7,6 +7,7 @@ import { userProfiles, userAliases } from "../../../db/postgres/schema.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
 import { getTimeStatement, processResults } from "../utils/utils.js";
+import { resolveUserIdentity } from "../../../services/userIdentity/userIdentityService.js";
 
 interface UserPageviewData {
   sessions: number;
@@ -98,6 +99,7 @@ export async function getUserInfo(
   const { filters } = req.query;
 
   const numericSiteId = Number(siteId);
+  const identity = await resolveUserIdentity(numericSiteId, userId);
 
   // Optional time range + dimension filters; both empty when the page is on
   // all-time with no filters, which keeps the original full-history behavior.
@@ -112,16 +114,26 @@ export async function getUserInfo(
         SELECT *
         FROM events
         WHERE
-            (events.identified_user_id = {userId:String} OR events.user_id = {userId:String})
+            (
+                events.identified_user_id = {canonicalUserId:String}
+                OR (
+                    events.identified_user_id = ''
+                    AND (
+                        events.user_id = {canonicalUserId:String}
+                        OR events.user_id IN ({anonymousIds:Array(String)})
+                    )
+                )
+            )
             AND site_id = {site:Int32}
             ${timeStatement}
             ${filterStatement}
     ) AS events`;
 
   try {
-    const [queryResult, vitalsResult, locationsResult, devicesResult, profileResult, aliasesResult] = await Promise.all([
-      clickhouse.query({
-        query: `
+    const [queryResult, vitalsResult, locationsResult, devicesResult, profileResult, aliasesResult] = await Promise.all(
+      [
+        clickhouse.query({
+          query: `
     WITH sessions AS (
         SELECT
             session_id,
@@ -191,17 +203,18 @@ export async function getUserInfo(
     FROM
         sessions
       `,
-        query_params: {
-          userId,
-          site: siteId,
-        },
-        format: "JSONEachRow",
-      }),
-      // p75 Web Vitals across every performance event this user produced.
-      // Separate query: the sessions CTE collapses rows per session, which
-      // would turn an event-level quantile into a quantile of session picks.
-      clickhouse.query({
-        query: `
+          query_params: {
+            canonicalUserId: identity.canonicalUserId,
+            anonymousIds: identity.anonymousIds,
+            site: siteId,
+          },
+          format: "JSONEachRow",
+        }),
+        // p75 Web Vitals across every performance event this user produced.
+        // Separate query: the sessions CTE collapses rows per session, which
+        // would turn an event-level quantile into a quantile of session picks.
+        clickhouse.query({
+          query: `
     SELECT
         quantile(0.75)(lcp) AS lcp_p75,
         quantile(0.75)(cls) AS cls_p75,
@@ -212,16 +225,17 @@ export async function getUserInfo(
     FROM ${scopedEvents}
     WHERE type = 'performance'
       `,
-        query_params: {
-          userId,
-          site: siteId,
-        },
-        format: "JSONEachRow",
-      }),
-      // Every location this user was seen in, by session share. A session that
-      // moves between cities counts once per city, so shares are approximate.
-      clickhouse.query({
-        query: `
+          query_params: {
+            canonicalUserId: identity.canonicalUserId,
+            anonymousIds: identity.anonymousIds,
+            site: siteId,
+          },
+          format: "JSONEachRow",
+        }),
+        // Every location this user was seen in, by session share. A session that
+        // moves between cities counts once per city, so shares are approximate.
+        clickhouse.query({
+          query: `
     SELECT
         country,
         region,
@@ -236,17 +250,18 @@ export async function getUserInfo(
         sessions DESC, last_seen DESC
     LIMIT 20
       `,
-        query_params: {
-          userId,
-          site: siteId,
-        },
-        format: "JSONEachRow",
-      }),
-      // Every device this user was seen on. Grouped without versions so a
-      // browser update doesn't split one physical device into many rows;
-      // versions and screen are argMax'd to the latest sighting instead.
-      clickhouse.query({
-        query: `
+          query_params: {
+            canonicalUserId: identity.canonicalUserId,
+            anonymousIds: identity.anonymousIds,
+            site: siteId,
+          },
+          format: "JSONEachRow",
+        }),
+        // Every device this user was seen on. Grouped without versions so a
+        // browser update doesn't split one physical device into many rows;
+        // versions and screen are argMax'd to the latest sighting instead.
+        clickhouse.query({
+          query: `
     SELECT
         device_type,
         browser,
@@ -265,27 +280,29 @@ export async function getUserInfo(
         sessions DESC, last_seen DESC
     LIMIT 20
       `,
-        query_params: {
-          userId,
-          site: siteId,
-        },
-        format: "JSONEachRow",
-      }),
-      // Get user profile traits from Postgres
-      db
-        .select()
-        .from(userProfiles)
-        .where(and(eq(userProfiles.siteId, numericSiteId), eq(userProfiles.userId, userId)))
-        .limit(1),
-      // Get linked devices (all anonymous IDs for this user) from Postgres
-      db
-        .select({
-          anonymous_id: userAliases.anonymousId,
-          created_at: userAliases.createdAt,
-        })
-        .from(userAliases)
-        .where(and(eq(userAliases.siteId, numericSiteId), eq(userAliases.userId, userId))),
-    ]);
+          query_params: {
+            canonicalUserId: identity.canonicalUserId,
+            anonymousIds: identity.anonymousIds,
+            site: siteId,
+          },
+          format: "JSONEachRow",
+        }),
+        // Get user profile traits from Postgres
+        db
+          .select()
+          .from(userProfiles)
+          .where(and(eq(userProfiles.siteId, numericSiteId), eq(userProfiles.userId, identity.canonicalUserId)))
+          .limit(1),
+        // Get linked devices (all anonymous IDs for this user) from Postgres
+        db
+          .select({
+            anonymous_id: userAliases.anonymousId,
+            created_at: userAliases.createdAt,
+          })
+          .from(userAliases)
+          .where(and(eq(userAliases.siteId, numericSiteId), eq(userAliases.userId, identity.canonicalUserId))),
+      ]
+    );
 
     const data = await processResults<UserPageviewData>(queryResult);
     const vitalsData = await processResults<UserVitalsData>(vitalsResult);
@@ -299,28 +316,9 @@ export async function getUserInfo(
       });
     }
 
-    let identifiedUserId = data[0].identified_user_id;
-    let traits = profileResult[0]?.traits || null;
-
-    // The identify backfill mutation in ClickHouse is async, so a freshly
-    // identified device can still have all-blank identified_user_id here.
-    // Fall back to the alias table so identity and traits show immediately.
-    if (!identifiedUserId) {
-      const alias = await db
-        .select({ userId: userAliases.userId })
-        .from(userAliases)
-        .where(and(eq(userAliases.siteId, numericSiteId), eq(userAliases.anonymousId, userId)))
-        .limit(1);
-      if (alias.length > 0) {
-        identifiedUserId = alias[0].userId;
-        const aliasProfile = await db
-          .select()
-          .from(userProfiles)
-          .where(and(eq(userProfiles.siteId, numericSiteId), eq(userProfiles.userId, identifiedUserId)))
-          .limit(1);
-        traits = aliasProfile[0]?.traits || traits;
-      }
-    }
+    const hasCanonicalIdentity = profileResult.length > 0 || aliasesResult.length > 0;
+    const identifiedUserId = data[0].identified_user_id || (hasCanonicalIdentity ? identity.canonicalUserId : "");
+    const traits = profileResult[0]?.traits || null;
 
     const linked_devices = aliasesResult.map(alias => ({
       anonymous_id: alias.anonymous_id,

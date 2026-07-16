@@ -53,6 +53,7 @@ export interface FeatureFlagAssignment {
 
 export interface BasePayload {
   site_id: string;
+  anonymous_id: string;
   hostname: string;
   pathname: string;
   querystring: string;
@@ -162,6 +163,7 @@ export interface SessionReplayEvent {
 }
 
 export interface SessionReplayBatch {
+  anonymousId: string;
   userId: string;
   events: SessionReplayEvent[];
   metadata?: {

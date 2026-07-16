@@ -225,7 +225,7 @@ export const memberSiteAccess = pgTable(
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
   },
-  (table) => [
+  table => [
     unique("member_site_access_unique").on(table.memberId, table.siteId),
     index("member_site_access_member_idx").on(table.memberId),
     index("member_site_access_site_idx").on(table.siteId),
@@ -236,7 +236,9 @@ export const memberSiteAccess = pgTable(
 export const team = pgTable("team", {
   id: text().primaryKey(),
   name: text().notNull(),
-  organizationId: text().notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: text()
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
   createdAt: timestamp({ mode: "string" }).notNull(),
   updatedAt: timestamp({ mode: "string" }),
 });
@@ -244,8 +246,12 @@ export const team = pgTable("team", {
 // Team member table (BetterAuth)
 export const teamMember = pgTable("teamMember", {
   id: text().primaryKey(),
-  teamId: text().notNull().references(() => team.id, { onDelete: "cascade" }),
-  userId: text().notNull().references(() => user.id, { onDelete: "cascade" }),
+  teamId: text()
+    .notNull()
+    .references(() => team.id, { onDelete: "cascade" }),
+  userId: text()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   createdAt: timestamp({ mode: "string" }),
 });
 
@@ -262,7 +268,7 @@ export const teamSiteAccess = pgTable(
       .references(() => sites.siteId, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
   },
-  (table) => [
+  table => [
     unique("team_site_access_unique").on(table.teamId, table.siteId),
     index("team_site_access_team_idx").on(table.teamId),
     index("team_site_access_site_idx").on(table.siteId),
@@ -564,35 +570,35 @@ export const uptimeMonitors = pgTable("uptime_monitors", {
   validationRules: jsonb("validation_rules").notNull().default([]).$type<
     Array<
       | {
-        type: "status_code";
-        operator: "equals" | "not_equals" | "in" | "not_in";
-        value: number | number[];
-      }
+          type: "status_code";
+          operator: "equals" | "not_equals" | "in" | "not_in";
+          value: number | number[];
+        }
       | {
-        type: "response_time";
-        operator: "less_than" | "greater_than";
-        value: number;
-      }
+          type: "response_time";
+          operator: "less_than" | "greater_than";
+          value: number;
+        }
       | {
-        type: "response_body_contains" | "response_body_not_contains";
-        value: string;
-        caseSensitive?: boolean;
-      }
+          type: "response_body_contains" | "response_body_not_contains";
+          value: string;
+          caseSensitive?: boolean;
+        }
       | {
-        type: "header_exists";
-        header: string;
-      }
+          type: "header_exists";
+          header: string;
+        }
       | {
-        type: "header_value";
-        header: string;
-        operator: "equals" | "contains";
-        value: string;
-      }
+          type: "header_value";
+          header: string;
+          operator: "equals" | "contains";
+          value: string;
+        }
       | {
-        type: "response_size";
-        operator: "less_than" | "greater_than";
-        value: number;
-      }
+          type: "response_size";
+          operator: "less_than" | "greater_than";
+          value: number;
+        }
     >
   >(),
 
@@ -808,10 +814,7 @@ export const userProfiles = pgTable(
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.siteId, table.userId] }),
-    index("user_profiles_site_idx").on(table.siteId),
-  ]
+  table => [primaryKey({ columns: [table.siteId, table.userId] }), index("user_profiles_site_idx").on(table.siteId)]
 );
 
 // User aliases - maps anonymous IDs to identified users (multi-device support)
@@ -822,14 +825,16 @@ export const userAliases = pgTable(
     siteId: integer("site_id")
       .notNull()
       .references(() => sites.siteId, { onDelete: "cascade" }),
-    anonymousId: text("anonymous_id").notNull(), // Hash of IP+UserAgent (device fingerprint)
+    anonymousId: text("anonymous_id").notNull(), // Site-scoped browser ID hash; legacy rows may use IP+UserAgent
     userId: text("user_id").notNull(), // The identified user ID
+    source: text("source").$type<"tracker" | "admin" | "legacy">().default("legacy").notNull(),
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
   },
-  (table) => [
+  table => [
     unique("user_aliases_site_anon_unique").on(table.siteId, table.anonymousId),
     index("user_aliases_user_idx").on(table.siteId, table.userId),
-    index("user_aliases_anon_idx").on(table.siteId, table.anonymousId),
+    check("user_aliases_source_check", sql`${table.source} in ('tracker', 'admin', 'legacy')`),
   ]
 );
 

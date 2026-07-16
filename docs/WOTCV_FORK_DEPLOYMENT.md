@@ -12,7 +12,8 @@ Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-C
 - obecny port hosta Postgresa pozostaje `127.0.0.1:5433`,
 - nie używamy `latest` jako identyfikatora wdrożenia,
 - każde uruchomienie aplikacji ma widoczny commit SHA w `/api/health`,
-- ręcznych migracji DB nie wykonujemy w ramach tych skryptów.
+- migracje PostgreSQL wykonuje automatycznie sprawdzony obraz backendu przed przełączeniem aplikacji,
+- szczegóły korelacji użytkowników opisuje [WOTCV_IDENTITY_RESOLUTION_V2.md](WOTCV_IDENTITY_RESOLUTION_V2.md).
 
 ## Inwentaryzacja serwera
 
@@ -189,7 +190,7 @@ docker port redis
 docker exec backend sh -lc 'getent hosts redis && nc -zvw3 redis 6379'
 ```
 
-`docker port redis` nie powinien zwrócić żadnego mapowania. Backend nadal łączy się z `redis:6379` po wewnętrznej sieci Compose. Przed właściwym wdrożeniem kontenery `postgres`, `clickhouse` i `redis` muszą być uruchomione i zdrowe; skrypt nie odtwarza ich automatycznie.
+`docker port redis` nie powinien zwrócić żadnego mapowania. Backend nadal łączy się z `redis:6379` po wewnętrznej sieci Compose. Skrypt nie odtwarza Postgresa. Jeżeli Redis nie istnieje albo nadal publikuje port hosta, odtwarza wyłącznie jego kontener z zachowaniem named volume i czeka na `healthy`. Po migracji PostgreSQL odtwarza ClickHouse, aby załadować aktualną konfigurację zewnętrznego słownika tożsamości.
 
 Wdrożenie:
 
@@ -206,11 +207,13 @@ Skrypt:
 5. waliduje efektywną konfigurację portów Compose oraz stan infrastruktury,
 6. buduje backend i client lokalnie na serwerze,
 7. taguje obrazy jako `sha-<commit>`,
-8. odtwarza wyłącznie `backend` i `client` z `--no-deps`,
-9. czeka na `/api/health`,
-10. sprawdza `gitSha` i `imageTag`,
-11. zapisuje stan do `.wotcv-deployment.env`,
-12. próbuje wrócić do poprzedniego lokalnego obrazu, jeżeli start lub health check nie przejdzie.
+8. uruchamia migracje PostgreSQL z nowego obrazu backendu,
+9. odtwarza ClickHouse i sprawdza słownik `user_identity_dict`,
+10. odtwarza `backend` i `client` z `--no-deps`,
+11. czeka na `/api/health` i sprawdza `gitSha` oraz `imageTag`,
+12. uruchamia pełny preflight Identity Resolution v2,
+13. zapisuje stan do `.wotcv-deployment.env`,
+14. próbuje wrócić do poprzedniego lokalnego obrazu, jeżeli start, health check lub preflight nie przejdzie.
 
 Parametry:
 
@@ -225,6 +228,20 @@ Jeżeli chcesz odświeżyć bazowe obrazy Dockera podczas builda:
 
 ```bash
 WOTCV_BUILD_PULL=1 bash scripts/wotcv-branch-build-deploy.sh
+```
+
+Wdrożenie konkretnego, wcześniej zweryfikowanego commita można zablokować przez:
+
+```bash
+WOTCV_EXPECTED_SHA=<pełne-SHA> bash scripts/wotcv-branch-build-deploy.sh
+```
+
+Skrypt przerwie pracę, jeżeli `origin/feat/wotcv` nie wskazuje dokładnie tego SHA.
+
+Preflight można powtórzyć niezależnie po wdrożeniu:
+
+```bash
+bash scripts/wotcv-identity-v2-preflight.sh
 ```
 
 ## Wrapper w `/home/wotcv/tools`

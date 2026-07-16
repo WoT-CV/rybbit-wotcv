@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { db } from "../../../db/postgres/postgres.js";
 import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
 import { processResults } from "../utils/utils.js";
+import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
 
 export async function getUserTraitKeys(
   req: FastifyRequest<{
@@ -23,7 +24,7 @@ export async function getUserTraitKeys(
     `);
 
     return res.send({
-      keys: (result as any[]).map((row) => ({
+      keys: (result as any[]).map(row => ({
         key: row.key,
         userCount: row.user_count,
       })),
@@ -71,7 +72,7 @@ export async function getUserTraitValues(
     const total = (countResult as any[])[0]?.total ?? 0;
 
     return res.send({
-      values: (valuesResult as any[]).map((row) => ({
+      values: (valuesResult as any[]).map(row => ({
         value: row.value,
         userCount: row.user_count,
       })),
@@ -126,14 +127,15 @@ export async function getUserTraitValueUsers(
     }
 
     const userIds = profiles.map((p: any) => p.user_id);
+    const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
 
     // Step 2: Get session counts + metadata from ClickHouse
     // Use events.identified_user_id to avoid conflict with the argMax alias
     const chQuery = `
       SELECT
-        COALESCE(NULLIF(events.identified_user_id, ''), events.user_id) AS effective_user_id,
+        COALESCE(NULLIF(${resolvedIdentifiedUserId}, ''), events.user_id) AS effective_user_id,
         argMax(events.user_id, timestamp) AS user_id,
-        argMax(events.identified_user_id, timestamp) AS identified_user_id,
+        argMax(${resolvedIdentifiedUserId}, timestamp) AS identified_user_id,
         argMax(country, timestamp) AS country,
         argMax(region, timestamp) AS region,
         argMax(city, timestamp) AS city,
@@ -143,7 +145,7 @@ export async function getUserTraitValueUsers(
         count(DISTINCT session_id) AS sessions
       FROM events
       WHERE site_id = {siteId:Int32}
-        AND events.identified_user_id IN ({userIds:Array(String)})
+        AND ${resolvedIdentifiedUserId} IN ({userIds:Array(String)})
       GROUP BY effective_user_id
     `;
 
@@ -172,9 +174,7 @@ export async function getUserTraitValueUsers(
     // Step 3: Build lookup from ClickHouse data keyed by identified_user_id,
     // then iterate Postgres profiles so every profile is returned even if
     // ClickHouse has no matching events (zero-session fallback).
-    const chLookup = new Map(
-      chData.map((row) => [row.identified_user_id, row])
-    );
+    const chLookup = new Map(chData.map(row => [row.identified_user_id, row]));
 
     const users = profiles.map((p: any) => {
       const ch = chLookup.get(p.user_id);

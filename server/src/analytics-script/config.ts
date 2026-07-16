@@ -29,6 +29,18 @@ function getOrCreateVisitorId(namespace: string): string {
   }
 }
 
+export function rotateVisitorId(namespace: string): string {
+  const visitorId = createVisitorId();
+
+  try {
+    localStorage.setItem(`${namespace}-visitor-id`, visitorId);
+  } catch (e) {
+    // localStorage may be unavailable; keep the rotated ID in memory.
+  }
+
+  return visitorId;
+}
+
 function getIdentifiedUserId(namespace: string): string | undefined {
   try {
     return localStorage.getItem(`${namespace}-user-id`) || undefined;

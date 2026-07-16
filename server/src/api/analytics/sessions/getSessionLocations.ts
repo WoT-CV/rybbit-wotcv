@@ -3,6 +3,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
 import { enrichWithTraits, getTimeStatement, processResults } from "../utils/utils.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
+import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
 
 export async function getSessionLocations(
   req: FastifyRequest<{
@@ -17,6 +18,7 @@ export async function getSessionLocations(
 
   const timeStatement = getTimeStatement(req.query);
   const filterStatement = getFilterStatement(req.query.filters, Number(siteId), timeStatement);
+  const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
 
   const result = await clickhouse.query({
     query: `
@@ -24,7 +26,7 @@ WITH stuff AS (
     SELECT
         session_id,
         argMax(user_id, timestamp) AS user_id,
-        argMax(identified_user_id, timestamp) AS identified_user_id,
+        argMax(${resolvedIdentifiedUserId}, timestamp) AS identified_user_id,
         any(lat) AS lat,
         any(lon) AS lon,
         any(city) AS city,

@@ -1,5 +1,5 @@
-import { Mail, Smartphone } from "lucide-react";
-import { SiDiscord, SiSlack } from "@icons-pack/react-simple-icons";
+import { Mail, MessageSquare, Smartphone } from "lucide-react";
+import { SiDiscord } from "@icons-pack/react-simple-icons";
 
 export interface ChannelConfigItem {
   icon: typeof Mail;
@@ -20,7 +20,7 @@ export const CHANNEL_CONFIG: Record<string, ChannelConfigItem> = {
     description: "Wysyłaj powiadomienia na kanał Discord przez webhook",
   },
   slack: {
-    icon: SiSlack,
+    icon: MessageSquare,
     title: "Slack",
     description: "Wysyłaj powiadomienia na kanał Slack",
   },

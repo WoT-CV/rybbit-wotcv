@@ -25,14 +25,13 @@ export class SessionReplayIngestService {
     request: RecordSessionReplayRequest,
     requestMeta?: RequestMetadata
   ): Promise<void> {
-    const { userId: clientUserId, events, metadata } = request;
+    const { anonymousId, userId: clientUserId, events, metadata } = request;
 
-    // Always generate device fingerprint (anonymous user ID) server-side
-    const deviceFingerprint = await userIdService.generateUserId(
-      requestMeta?.ipAddress || "",
-      requestMeta?.userAgent || "",
-      siteId
-    );
+    // New trackers provide a stable browser-scoped anonymous ID. Keep the
+    // server-derived fingerprint as a compatibility fallback for older scripts.
+    const deviceFingerprint = anonymousId
+      ? await userIdService.generateUserIdFromClientId(anonymousId, siteId)
+      : await userIdService.generateUserId(requestMeta?.ipAddress || "", requestMeta?.userAgent || "", siteId);
 
     // Check if client provided an identified user ID (different from device fingerprint)
     const trimmedClientUserId = clientUserId?.trim() || "";

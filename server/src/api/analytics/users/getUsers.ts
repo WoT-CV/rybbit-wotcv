@@ -6,6 +6,7 @@ import { enrichWithTraits, getTimeStatement, processResults } from "../utils/uti
 import { FilterParams } from "@rybbit/shared";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
+import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
 
 export type GetUsersResponse = {
   user_id: string; // Device fingerprint
@@ -76,7 +77,7 @@ export async function getUsers(req: FastifyRequest<GetUsersRequest>, res: Fastif
       LIMIT ${MAX_MATCHING_USER_IDS}
     `);
 
-    matchingUserIds = searchResult.map((r) => r.user_id);
+    matchingUserIds = searchResult.map(r => r.user_id);
     if (matchingUserIds.length === 0) {
       return res.send({
         data: [],
@@ -104,6 +105,7 @@ export async function getUsers(req: FastifyRequest<GetUsersRequest>, res: Fastif
   // utm_*, …), and event-level placement keeps the returned rows consistent
   // with totalCount.
   const filterStatement = getFilterStatement(filters, Number(site), timeStatement);
+  const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
 
   // Filters must run in a subquery below the aggregation: the aggregate SELECT
   // aliases argMax(...) to the same names as the raw columns (country, browser,
@@ -113,9 +115,9 @@ export async function getUsers(req: FastifyRequest<GetUsersRequest>, res: Fastif
 WITH AggregatedUsers AS (
     SELECT
         -- Group by effective user: identified_user_id for identified users, user_id (device) for anonymous
-        COALESCE(NULLIF(events.identified_user_id, ''), events.user_id) AS effective_user_id,
+        COALESCE(NULLIF(events.resolved_identified_user_id, ''), events.user_id) AS effective_user_id,
         argMax(user_id, timestamp) AS user_id,
-        argMax(identified_user_id, timestamp) AS identified_user_id,
+        argMax(resolved_identified_user_id, timestamp) AS identified_user_id,
         argMax(country, timestamp) AS country,
         argMax(region, timestamp) AS region,
         argMax(city, timestamp) AS city,
@@ -137,13 +139,13 @@ WITH AggregatedUsers AS (
         min(timestamp) AS first_seen,
         argMax(tag, timestamp) AS tag
     FROM (
-        SELECT *
+        SELECT *, ${resolvedIdentifiedUserId} AS resolved_identified_user_id
         FROM events
         WHERE
             site_id = {siteId:Int32}
             ${timeStatement}
             ${filterStatement}
-            ${matchingUserIds ? "AND events.identified_user_id IN ({matchingUserIds:Array(String)})" : ""}
+            ${matchingUserIds ? `AND ${resolvedIdentifiedUserId} IN ({matchingUserIds:Array(String)})` : ""}
     ) AS events
     GROUP BY
         effective_user_id
@@ -158,29 +160,20 @@ LIMIT {limit:Int32} OFFSET {offset:Int32}
   `;
 
   // Query to get total count
-  const countQuery = filterIdentified
-    ? `
-SELECT count(*) AS total_count
+  const countQuery = `
+SELECT count(DISTINCT effective_user_id) AS total_count
 FROM (
-    SELECT DISTINCT identified_user_id
+    SELECT
+        COALESCE(NULLIF(${resolvedIdentifiedUserId}, ''), events.user_id) AS effective_user_id,
+        ${resolvedIdentifiedUserId} AS resolved_identified_user_id
     FROM events
     WHERE
         site_id = {siteId:Int32}
-        AND identified_user_id != ''
         ${timeStatement}
         ${filterStatement}
-        ${matchingUserIds ? "AND events.identified_user_id IN ({matchingUserIds:Array(String)})" : ""}
+        ${matchingUserIds ? `AND ${resolvedIdentifiedUserId} IN ({matchingUserIds:Array(String)})` : ""}
 )
-`
-    : `
-SELECT
-    count(DISTINCT COALESCE(NULLIF(events.identified_user_id, ''), events.user_id)) AS total_count
-FROM events
-WHERE
-    site_id = {siteId:Int32}
-    ${filterStatement}
-    ${timeStatement}
-    ${matchingUserIds ? "AND events.identified_user_id IN ({matchingUserIds:Array(String)})" : ""}
+${filterIdentified ? "WHERE resolved_identified_user_id != ''" : ""}
   `;
 
   try {

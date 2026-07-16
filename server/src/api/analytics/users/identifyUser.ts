@@ -2,8 +2,8 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../../db/postgres/postgres.js";
-import { userAliases, userProfiles } from "../../../db/postgres/schema.js";
-import { backfillIdentifiedUserId } from "../../../services/tracker/identifyService.js";
+import { userProfiles } from "../../../db/postgres/schema.js";
+import { assignAdminAlias } from "../../../services/userIdentity/userIdentityService.js";
 
 // Max traits size in bytes (2KB) — matches the tracker identify endpoint
 const MAX_TRAITS_SIZE = 2048;
@@ -68,18 +68,7 @@ export async function identifyUser(req: FastifyRequest<IdentifyUserRequest>, res
       await db.insert(userProfiles).values({ siteId, userId: user_id }).onConflictDoNothing();
     }
 
-    await db
-      .insert(userAliases)
-      .values({ siteId, anonymousId: anonymous_id, userId: user_id })
-      .onConflictDoUpdate({
-        target: [userAliases.siteId, userAliases.anonymousId],
-        set: { userId: user_id },
-      });
-
-    // Fire-and-forget: the ClickHouse mutation can take a while on large sites,
-    // so don't hold the response on it. No backfill window — the operator is
-    // explicitly asserting this device's history belongs to this user.
-    backfillIdentifiedUserId(siteId, anonymous_id, user_id, null);
+    await assignAdminAlias(siteId, anonymous_id, user_id);
 
     return res.send({ success: true });
   } catch (error) {

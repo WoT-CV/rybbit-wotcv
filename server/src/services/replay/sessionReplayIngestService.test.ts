@@ -3,6 +3,7 @@ import type { RecordSessionReplayRequest } from "../../types/sessionReplay.js";
 
 const mocks = vi.hoisted(() => ({
   generateUserId: vi.fn(),
+  generateUserIdFromClientId: vi.fn(),
   insert: vi.fn(),
   updateSession: vi.fn(),
 }));
@@ -22,6 +23,7 @@ vi.mock("../sessions/sessionsService.js", () => ({
 vi.mock("../userId/userIdService.js", () => ({
   userIdService: {
     generateUserId: mocks.generateUserId,
+    generateUserIdFromClientId: mocks.generateUserIdFromClientId,
   },
 }));
 
@@ -44,8 +46,9 @@ const requestMeta = {
   referrer: "",
 };
 
-function replayRequest(identifiedUserId: string): RecordSessionReplayRequest {
+function replayRequest(identifiedUserId: string, anonymousId?: string): RecordSessionReplayRequest {
   return {
+    anonymousId,
     userId: identifiedUserId,
     events: [{ type: 2, data: { user: identifiedUserId }, timestamp: 1_700_000_000_000 }],
   };
@@ -55,6 +58,7 @@ describe("SessionReplayIngestService identity", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.generateUserId.mockResolvedValue("shared-fingerprint");
+    mocks.generateUserIdFromClientId.mockImplementation(async anonymousId => `fingerprint-${anonymousId}`);
     mocks.updateSession.mockImplementation(
       async ({ userId, identifiedUserId }: { userId: string; identifiedUserId?: string }) => ({
         sessionId: `session-${userId}-${identifiedUserId || "anonymous"}`,
@@ -66,26 +70,31 @@ describe("SessionReplayIngestService identity", () => {
   it("separates identified replay users behind a shared proxy", async () => {
     const service = new SessionReplayIngestService();
 
-    await service.recordEvents(42, replayRequest("employee-alice"), requestMeta);
-    await service.recordEvents(42, replayRequest("employee-bob"), requestMeta);
+    await service.recordEvents(42, replayRequest("employee-alice", "browser-alice"), requestMeta);
+    await service.recordEvents(42, replayRequest("employee-bob", "browser-bob"), requestMeta);
 
     expect(mocks.updateSession).toHaveBeenNthCalledWith(1, {
-      userId: "shared-fingerprint",
+      userId: "fingerprint-browser-alice",
       identifiedUserId: "employee-alice",
       siteId: 42,
     });
     expect(mocks.updateSession).toHaveBeenNthCalledWith(2, {
-      userId: "shared-fingerprint",
+      userId: "fingerprint-browser-bob",
       identifiedUserId: "employee-bob",
       siteId: 42,
     });
 
     const insertedRows = mocks.insert.mock.calls.flatMap(call => call[0].values);
-    expect(new Set(insertedRows.map(row => row.user_id))).toEqual(new Set(["shared-fingerprint"]));
+    expect(new Set(insertedRows.map(row => row.user_id))).toEqual(
+      new Set(["fingerprint-browser-alice", "fingerprint-browser-bob"])
+    );
     expect(new Set(insertedRows.map(row => row.identified_user_id))).toEqual(
       new Set(["employee-alice", "employee-bob"])
     );
     expect(new Set(insertedRows.map(row => row.session_id)).size).toBe(2);
+    expect(mocks.generateUserId).not.toHaveBeenCalled();
+    expect(mocks.generateUserIdFromClientId).toHaveBeenNthCalledWith(1, "browser-alice", 42);
+    expect(mocks.generateUserIdFromClientId).toHaveBeenNthCalledWith(2, "browser-bob", 42);
   });
 
   it("retains the existing anonymous replay session key", async () => {

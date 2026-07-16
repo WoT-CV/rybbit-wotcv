@@ -3,6 +3,7 @@ import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
 import { enrichWithTraits, processResults, getTimeStatement } from "../utils/utils.js";
 import { FilterParams } from "@rybbit/shared";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
+import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
 
 export type GetEventsResponse = {
   timestamp: string;
@@ -43,13 +44,14 @@ interface GetEventsRequest {
   }>;
 }
 
-const EVENT_COLUMNS = `
+function getEventColumns(resolvedIdentifiedUserId: string): string {
+  return `
   timestamp,
   event_name,
   toString(props) as properties,
   session_id,
   user_id,
-  identified_user_id,
+  ${resolvedIdentifiedUserId} AS identified_user_id,
   pathname,
   querystring,
   hostname,
@@ -70,31 +72,24 @@ const EVENT_COLUMNS = `
   device_type,
   type
 `;
+}
 
 const EVENT_TYPE_FILTER = `AND type IN ('custom_event', 'pageview', 'outbound', 'button_click', 'copy', 'form_submit', 'input_change')`;
 
-export async function getEvents(
-  req: FastifyRequest<GetEventsRequest>,
-  res: FastifyReply
-) {
+export async function getEvents(req: FastifyRequest<GetEventsRequest>, res: FastifyReply) {
   const { siteId } = req.params;
-  const {
-    since_timestamp,
-    before_timestamp,
-    page_size: pageSize = "50",
-    filters,
-  } = req.query;
+  const { since_timestamp, before_timestamp, page_size: pageSize = "50", filters } = req.query;
 
   const limit = parseInt(pageSize, 10);
-  const filterStatement = filters
-    ? getFilterStatement(filters, Number(siteId))
-    : "";
+  const filterStatement = filters ? getFilterStatement(filters, Number(siteId)) : "";
 
   try {
+    const eventColumns = getEventColumns(clickhouseResolvedIdentifiedUserId("events"));
+
     // Mode A: Poll for new events since a timestamp (Realtime polling)
     if (since_timestamp) {
       const query = `
-        SELECT ${EVENT_COLUMNS}
+        SELECT ${eventColumns}
         FROM events
         WHERE
           site_id = {siteId:Int32}
@@ -120,13 +115,10 @@ export async function getEvents(
     }
 
     // Mode B: Cursor-based pagination (initial load or scrolling back)
-    const timeStatement =
-      req.query.start_date || req.query.end_date
-        ? getTimeStatement(req.query)
-        : "";
+    const timeStatement = req.query.start_date || req.query.end_date ? getTimeStatement(req.query) : "";
 
     let cursorCondition = "";
-    const queryParams: Record<string, string | number> = {
+    const queryParams: Record<string, string | number | string[]> = {
       siteId: Number(siteId),
       limit: Number(limit),
     };
@@ -137,7 +129,7 @@ export async function getEvents(
     }
 
     const query = `
-      SELECT ${EVENT_COLUMNS}
+      SELECT ${eventColumns}
       FROM events
       WHERE
         site_id = {siteId:Int32}
@@ -162,8 +154,7 @@ export async function getEvents(
       data: eventsWithTraits,
       cursor: {
         hasMore: events.length === limit,
-        oldestTimestamp:
-          events.length > 0 ? events[events.length - 1].timestamp : null,
+        oldestTimestamp: events.length > 0 ? events[events.length - 1].timestamp : null,
       },
     });
   } catch (error) {

@@ -3,6 +3,7 @@ import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { processResults } from "../utils/utils.js";
 import SqlString from "sqlstring";
+import { resolveUserIdentity } from "../../../services/userIdentity/userIdentityService.js";
 
 export interface GetUserSessionCountRequest {
   Params: {
@@ -31,6 +32,7 @@ export async function getUserSessionCount(req: FastifyRequest<GetUserSessionCoun
   // The calendar spans the user's full history, so dimension filters apply
   // but no time range does.
   const filterStatement = getFilterStatement(filters ?? "", Number(siteId));
+  const identity = await resolveUserIdentity(Number(siteId), userId);
 
   const query = `
     SELECT
@@ -39,7 +41,13 @@ export async function getUserSessionCount(req: FastifyRequest<GetUserSessionCoun
     FROM events
     WHERE
       site_id = {siteId:Int32}
-      AND (user_id = {userId:String} OR identified_user_id = {userId:String})
+      AND (
+        identified_user_id = {canonicalUserId:String}
+        OR (
+          identified_user_id = ''
+          AND (user_id = {canonicalUserId:String} OR user_id IN ({anonymousIds:Array(String)}))
+        )
+      )
       ${filterStatement}
     GROUP BY date
     ORDER BY date ASC
@@ -51,7 +59,8 @@ export async function getUserSessionCount(req: FastifyRequest<GetUserSessionCoun
       format: "JSONEachRow",
       query_params: {
         siteId: Number(siteId),
-        userId,
+        canonicalUserId: identity.canonicalUserId,
+        anonymousIds: identity.anonymousIds,
       },
     });
 

@@ -9,6 +9,7 @@ import { logger } from "../../lib/logger/logger.js";
 import { getLocation } from "../../db/geolocation/geolocation.js";
 
 const recordSessionReplaySchema = z.object({
+  anonymousId: z.string().min(1).max(255).optional(),
   userId: z.string(),
   events: z.array(
     z.object({

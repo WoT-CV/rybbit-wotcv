@@ -89,3 +89,26 @@
 - Docker CLI nie jest dostępny w środowisku Windows, dlatego efektywny Compose oraz obrazy muszą zostać zweryfikowane na Ubuntu.
 - `npm ci` raportuje 49 znanych podatności zależności serwera i 7 klienta. Nie uruchamiano `npm audit fix`, ponieważ automatyczna zmiana wersji mogłaby wyjść poza zakres synchronizacji.
 - Obrazy nadal bazują na Node.js 20, podczas gdy część pakietów `@react-email` deklaruje Node.js 22 lub nowszy. Build przechodzi, ale aktualizacja obrazu bazowego wymaga osobnej decyzji i testów regresji.
+
+## Korekta po merge: Identity Resolution v2
+
+Po wdrożeniu merge commita `ce8f7c47` potwierdzono wcześniejszy błąd modelu tożsamości: lista użytkowników i globus grupowały historię po anonimowym `user_id`, podczas gdy widok szczegółów potrafił już odnaleźć alias wskazujący zidentyfikowane konto. Dotychczasowe `ALTER TABLE ... UPDATE` próbowały naprawiać dane asynchronicznymi mutacjami ClickHouse, co nie gwarantowało spójności wszystkich widoków i było kosztowne dla tabel faktów.
+
+W poprawce zastosowano następujący model:
+
+- PostgreSQL `user_aliases` jest źródłem prawdy dla mapowania `(site_id, anonymous_id) -> user_id`.
+- ClickHouse odczytuje aliasy przez zewnętrzny słownik `user_identity_dict`; jawny `identified_user_id` zapisany w zdarzeniu ma pierwszeństwo, potem używany jest alias, a dopiero na końcu anonimowy `user_id`.
+- Historyczne zdarzenia i replaye pozostają niemutowalne. Rejestracja lub logowanie natychmiast koreluje wcześniejszą historię tej samej przeglądarki po odświeżeniu słownika, bez przepisywania tabel ClickHouse.
+- Tracker używa stabilnego, losowego identyfikatora przeglądarki, obraca go po wylogowaniu i zmianie konta oraz nie pozwala przejąć aliasu należącego do innego użytkownika.
+- Zapytania użytkowników, cech, sesji, globusa, replayów, lejków, retencji i Growth Accounting korzystają z jednego sposobu rozwiązywania tożsamości.
+- Flaga `IDENTITY_RESOLUTION_V2=false` zapewnia awaryjny rollback logiki odczytu bez cofania addytywnej migracji PostgreSQL.
+
+Deployment został rozszerzony o kontrolowaną kolejność: walidacja portów, ewentualne odtworzenie wyłącznie kontenera Redis bez publikacji `6379`, build obrazów, migracja PostgreSQL, odtworzenie ClickHouse z konfiguracją słownika, start aplikacji, health check i preflight. Preflight potwierdza schemat aliasów, status słownika, przykładowe mapowanie PostgreSQL -> ClickHouse, izolację Redis oraz uruchomione SHA obrazów.
+
+Walidacja poprawki:
+
+- `server`: 50 plików testowych i 457 testów, TypeScript, Drizzle check oraz build przeszły poprawnie.
+- `client`: 6 plików testowych i 19 testów, TypeScript oraz produkcyjny build Next.js 16.2.6 przeszły poprawnie.
+- `shared`: build TypeScript przeszedł poprawnie.
+- Skrypty trackera przebudowano ze źródeł i sprawdzono deterministyczność artefaktów.
+- Oba skrypty wdrożeniowe przechodzą `bash -n`; rzeczywisty Compose, migracja i słownik wymagają końcowego preflightu na Ubuntu z Dockerem.

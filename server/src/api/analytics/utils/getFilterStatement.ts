@@ -2,6 +2,7 @@ import SqlString from "sqlstring";
 import { filterParamSchema, validateFilters } from "./query-validation.js";
 import { SESSION_CHANNEL_AGG } from "./sessionAttribution.js";
 import { FilterParameter, FilterType } from "../types.js";
+import { clickhouseEffectiveUserId } from "../../../db/clickhouse/identityDictionary.js";
 
 // Options for customizing filter behavior
 export interface FilterStatementOptions {
@@ -14,6 +15,10 @@ export interface FilterStatementOptions {
   // Field name mappings for CTEs that extract fields to different column names
   // e.g., { "url_parameters['utm_source']": "utm_source" }
   fieldMappings?: Record<string, string>;
+
+  // Override when filtering an aggregated CTE where the dictionary has already
+  // been applied and raw site_id is no longer projected.
+  userIdExpression?: string;
 }
 
 const DEFAULT_SESSION_LEVEL_PARAMS: FilterParameter[] = ["event_name", "channel"];
@@ -270,38 +275,16 @@ export function getFilterStatement(
           )`;
         }
 
-        // Special handling for user_id to also check identified_user_id
-        // This is needed because URLs may contain either the device fingerprint (user_id)
-        // or the custom identified user ID (identified_user_id)
+        // User filters operate on the canonical identity. With Identity
+        // Resolution v2 this also correlates anonymous history via the
+        // PostgreSQL-backed ClickHouse dictionary.
         if (filter.parameter === "user_id") {
-          if (filter.type === "is_null") {
-            return `((user_id IS NULL OR user_id = '') AND (identified_user_id IS NULL OR identified_user_id = ''))`;
-          }
-          if (filter.type === "is_not_null") {
-            return `((user_id IS NOT NULL AND user_id != '') OR (identified_user_id IS NOT NULL AND identified_user_id != ''))`;
-          }
-          if (filter.type === "equals" || filter.type === "not_equals") {
-            if (filter.value.length === 1) {
-              const escapedValue = SqlString.escape(filter.value[0]);
-              if (filter.type === "equals") {
-                return `(user_id = ${escapedValue} OR identified_user_id = ${escapedValue})`;
-              }
-              return `(user_id != ${escapedValue} AND identified_user_id != ${escapedValue})`;
-            }
-
-            const conditions = filter.value.map(value => {
-              const escapedValue = SqlString.escape(value);
-              if (filter.type === "equals") {
-                return `(user_id = ${escapedValue} OR identified_user_id = ${escapedValue})`;
-              }
-              return `(user_id != ${escapedValue} AND identified_user_id != ${escapedValue})`;
-            });
-
-            if (filter.type === "equals") {
-              return `(${conditions.join(" OR ")})`;
-            }
-            return `(${conditions.join(" AND ")})`;
-          }
+          return buildStringFilterCondition(
+            options?.userIdExpression ?? clickhouseEffectiveUserId(),
+            filter.type,
+            filter.value,
+            x
+          );
         }
 
         if (isNullCheck) {

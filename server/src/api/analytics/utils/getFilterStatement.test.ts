@@ -232,31 +232,35 @@ describe("getFilterStatement", () => {
   });
 
   describe("User ID special handling", () => {
-    it("should check both user_id and identified_user_id for equals", () => {
+    it("should filter by the canonical user identity", () => {
       const filters = JSON.stringify([{ parameter: "user_id", type: "equals", value: ["user123"] }]);
       const result = getFilterStatement(filters);
-      expect(result).toBe("AND (user_id = 'user123' OR identified_user_id = 'user123')");
+      expect(result).toContain("dictGetOrDefault('user_identity_dict'");
+      expect(result).toContain("= 'user123'");
     });
 
-    it("should check both user_id and identified_user_id for not_equals", () => {
+    it("should allow an already-resolved CTE expression", () => {
       const filters = JSON.stringify([{ parameter: "user_id", type: "not_equals", value: ["user123"] }]);
-      const result = getFilterStatement(filters);
-      expect(result).toBe("AND (user_id != 'user123' AND identified_user_id != 'user123')");
+      const result = getFilterStatement(filters, undefined, undefined, {
+        userIdExpression: "if(identified_user_id != '', identified_user_id, user_id)",
+      });
+      expect(result).toBe("AND if(identified_user_id != '', identified_user_id, user_id) != 'user123'");
     });
 
     it("should handle multiple user IDs with equals using OR", () => {
       const filters = JSON.stringify([{ parameter: "user_id", type: "equals", value: ["user1", "user2"] }]);
       const result = getFilterStatement(filters);
-      expect(result).toContain("user_id = 'user1' OR identified_user_id = 'user1'");
-      expect(result).toContain("user_id = 'user2' OR identified_user_id = 'user2'");
+      expect(result).toContain("= 'user1'");
+      expect(result).toContain("= 'user2'");
       expect(result).toContain(" OR ");
     });
 
     it("should handle multiple user IDs with not_equals using AND", () => {
       const filters = JSON.stringify([{ parameter: "user_id", type: "not_equals", value: ["user1", "user2"] }]);
       const result = getFilterStatement(filters);
-      expect(result).toContain("user_id != 'user1' AND identified_user_id != 'user1'");
-      expect(result).toContain("user_id != 'user2' AND identified_user_id != 'user2'");
+      expect(result).toContain("!= 'user1'");
+      expect(result).toContain("!= 'user2'");
+      expect(result).toContain(" AND ");
     });
   });
 

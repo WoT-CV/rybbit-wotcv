@@ -7,6 +7,7 @@ export const DEPLOYMENT = process.env.DEPLOYMENT;
 export const DISABLE_SIGNUP = process.env.DISABLE_SIGNUP === "true";
 export const DISABLE_TELEMETRY = process.env.DISABLE_TELEMETRY === "true";
 export const LITE_DASHBOARD = process.env.LITE_DASHBOARD === "true";
+export const IDENTITY_RESOLUTION_V2 = process.env.IDENTITY_RESOLUTION_V2 !== "false";
 export const SECRET = process.env.BETTER_AUTH_SECRET;
 export const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
 

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { processResults } from "./utils/utils.js";
+import { clickhouseEffectiveUserId } from "../../services/userIdentity/userIdentityService.js";
 
 export interface GrowthAccountingRow {
   period: string;
@@ -131,29 +132,30 @@ export const getGrowthAccounting = async (
     mode === "day" ? "addDays(current_activity.activity_period, -1)" : "addWeeks(current_activity.activity_period, -1)";
   const nextPeriodExpression =
     mode === "day" ? "addDays(previous_activity.activity_period, 1)" : "addWeeks(previous_activity.activity_period, 1)";
+  const effectiveUserId = clickhouseEffectiveUserId("events");
 
   const result = await clickhouse.query({
     query: `
 WITH
 FirstActivity AS (
     SELECT
-        COALESCE(NULLIF(identified_user_id, ''), user_id) AS effective_user_id,
+        ${effectiveUserId} AS effective_user_id,
         toDateTime(${firstPeriodExpression}) AS first_period
     FROM events
     PREWHERE site_id = {siteId:UInt16}
-    WHERE COALESCE(NULLIF(identified_user_id, ''), user_id) != ''
+    WHERE ${effectiveUserId} != ''
     GROUP BY effective_user_id
 ),
 PeriodActivity AS (
     SELECT
-        COALESCE(NULLIF(identified_user_id, ''), user_id) AS effective_user_id,
+        ${effectiveUserId} AS effective_user_id,
         toDateTime(${periodExpression}) AS activity_period,
         toUInt8(1) AS active
     FROM events
     PREWHERE site_id = {siteId:UInt16}
     WHERE timestamp >= {activityStart:DateTime}
       AND timestamp < {activityEnd:DateTime}
-      AND COALESCE(NULLIF(identified_user_id, ''), user_id) != ''
+      AND ${effectiveUserId} != ''
     GROUP BY effective_user_id, activity_period
 ),
 ActiveAccounting AS (

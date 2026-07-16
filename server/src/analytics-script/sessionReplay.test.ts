@@ -57,7 +57,7 @@ describe("SessionReplayRecorder identity", () => {
 
     await vi.waitFor(() => expect(sendBatch).toHaveBeenCalledTimes(1));
     const firstBatch = sendBatch.mock.calls[0][0];
-    expect(firstBatch).toMatchObject({ userId: "employee-alice" });
+    expect(firstBatch).toMatchObject({ anonymousId: "visitor-123", userId: "employee-alice" });
     expect(firstBatch.events).toContainEqual(expect.objectContaining({ data: { user: "employee-alice" } }));
 
     emit({ type: 2, data: { user: "employee-bob" }, timestamp: 1_700_000_001_000 });
@@ -65,7 +65,52 @@ describe("SessionReplayRecorder identity", () => {
 
     await vi.waitFor(() => expect(sendBatch).toHaveBeenCalledTimes(2));
     const secondBatch = sendBatch.mock.calls[1][0];
-    expect(secondBatch).toMatchObject({ userId: "employee-bob" });
+    expect(secondBatch).toMatchObject({ anonymousId: "visitor-123", userId: "employee-bob" });
     expect(secondBatch.events).toContainEqual(expect.objectContaining({ data: { user: "employee-bob" } }));
+  });
+
+  it("keeps the captured identity on batches queued behind an in-flight request", async () => {
+    let releaseFirstBatch: (() => void) | undefined;
+    sendBatch
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>(resolve => {
+            releaseFirstBatch = resolve;
+          })
+      )
+      .mockResolvedValue(undefined);
+
+    emit({ type: 2, data: { user: "employee-alice" }, timestamp: 1_700_000_000_000 });
+    recorder.updateUserId("employee-bob");
+    await vi.waitFor(() => expect(sendBatch).toHaveBeenCalledTimes(1));
+
+    emit({ type: 2, data: { user: "employee-bob" }, timestamp: 1_700_000_001_000 });
+    recorder.updateUserId("employee-carol");
+    releaseFirstBatch?.();
+
+    await vi.waitFor(() => expect(sendBatch).toHaveBeenCalledTimes(2));
+    expect(sendBatch.mock.calls[1][0]).toMatchObject({
+      anonymousId: "visitor-123",
+      userId: "employee-bob",
+    });
+  });
+
+  it("retries a failed batch while recording is idle", async () => {
+    vi.useFakeTimers();
+    sendBatch.mockRejectedValueOnce(new Error("temporary network failure")).mockResolvedValue(undefined);
+
+    emit({ type: 2, data: { user: "employee-alice" }, timestamp: 1_700_000_000_000 });
+    recorder.updateUserId("employee-bob");
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(sendBatch).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(sendBatch).toHaveBeenCalledTimes(2);
+    expect(sendBatch.mock.calls[1][0]).toMatchObject({
+      anonymousId: "visitor-123",
+      userId: "employee-alice",
+    });
+    vi.useRealTimers();
   });
 });

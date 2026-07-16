@@ -46,6 +46,7 @@ export interface SessionReplayMetadata {
 }
 
 export interface RecordSessionReplayRequest {
+  anonymousId?: string;
   userId: string;
   events: Array<{
     type: string | number;

@@ -85,6 +85,13 @@
       "when": 1784070943021,
       "tag": "0011_tiny_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1784178632670,
+      "tag": "0012_identity_resolution_v2",
+      "breakpoints": true
     }
   ]
 }

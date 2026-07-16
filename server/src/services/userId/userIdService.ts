@@ -71,6 +71,20 @@ class UserIdService {
     const config = await siteConfig.getConfig(siteId);
     const salt = config?.saltUserIds ? this.getDailySalt() : "";
 
+    // Browser IDs are random and site-scoped. Keep 128 bits of the hash to make
+    // collisions negligible at analytics scale. Daily salting intentionally
+    // prevents cross-day anonymous correlation when the privacy option is on.
+    return crypto.createHash("sha256").update(`${siteId}\0${clientId}\0${salt}`).digest("hex").substring(0, 32);
+  }
+
+  /**
+   * Compatibility hash used only while claiming an alias during the v2
+   * rollout. It lets a later login correlate anonymous events written by the
+   * previous tracker without reverting new events to the shorter identifier.
+   */
+  async generateLegacyUserIdFromClientId(clientId: string, siteId: number): Promise<string> {
+    const config = await siteConfig.getConfig(siteId);
+    const salt = config?.saltUserIds ? this.getDailySalt() : "";
     return crypto.createHash("sha256").update(`${siteId}:${clientId}:${salt}`).digest("hex").substring(0, 12);
   }
 }

@@ -106,6 +106,8 @@ Widok Retention domyślnie korzysta z okresów dziennych. Wykres jest również 
 
 WoT-CV przekazuje identyfikator użytkownika i traits przez API trackera. `avatarUrl` jest jedynym polem obrazu. Nazwa wyświetlana może zawierać tag klanu i username. W razie braku poprawnego logo używany jest deterministyczny fallback Rybbit.
 
+Po `identify()` wcześniejsza anonimowa historia tego samego identyfikatora przeglądarki jest rozwiązywana jako historia konta przez słownik ClickHouse zasilany z PostgreSQL. Mechanizm nie wykonuje mutacji historycznych tabel, nie pozwala trackerowi przejąć aliasu innego konta oraz obraca anonimowe ID przy wylogowaniu i zmianie konta.
+
 Globus pobiera dostępne dane użytkownika razem z lokalizacją sesji, aby tooltip nie wymagał dopiero ręcznego wejścia w szczegóły użytkownika.
 
 ## Funkcje self-hosted

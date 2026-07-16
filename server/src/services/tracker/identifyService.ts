@@ -1,13 +1,13 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { eq, and, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/postgres/postgres.js";
-import { clickhouse } from "../../db/clickhouse/clickhouse.js";
-import { userProfiles, userAliases } from "../../db/postgres/schema.js";
+import { userProfiles } from "../../db/postgres/schema.js";
 import { siteConfig } from "../../lib/siteConfig.js";
 import { userIdService } from "../userId/userIdService.js";
 import { resolveClientIp } from "./resolveClientIp.js";
 import { createServiceLogger } from "../../lib/logger/logger.js";
+import { claimLegacyClientAlias, claimTrackerAlias } from "../userIdentity/userIdentityService.js";
 
 const logger = createServiceLogger("identify-service");
 
@@ -35,42 +35,6 @@ const identifyPayloadSchema = z.object({
   is_new_identify: z.boolean().default(true),
 });
 
-// Backfill window limits partition scanning to recent data only.
-// Anonymous events older than this are unlikely to belong to the identifying user.
-const BACKFILL_DAYS = 30;
-
-// days: null backfills the device's full history — only for explicit admin
-// actions (dashboard identify), where the operator asserts the whole history
-// belongs to this user and the unbounded partition scan is a one-off.
-export async function backfillIdentifiedUserId(
-  siteId: number,
-  anonymousId: string,
-  userId: string,
-  days: number | null = BACKFILL_DAYS
-) {
-  try {
-    // session_replay_metadata has no `timestamp` column; its time column is
-    // `start_time`. Using `timestamp` there throws ClickHouse error 47
-    // (UNKNOWN_IDENTIFIER), so map each table to its actual time column.
-    const tables: Array<{ name: string; timeColumn: string }> = [
-      { name: "events", timeColumn: "timestamp" },
-      { name: "session_replay_events", timeColumn: "timestamp" },
-      { name: "session_replay_metadata", timeColumn: "start_time" },
-    ];
-    for (const { name, timeColumn } of tables) {
-      await clickhouse.command({
-        query: `ALTER TABLE ${name} UPDATE identified_user_id = {userId: String} WHERE site_id = {siteId: UInt16} AND user_id = {anonymousId: String} AND identified_user_id = ''${
-          days !== null ? ` AND ${timeColumn} >= now() - INTERVAL {days: UInt16} DAY` : ""
-        }`,
-        query_params: { userId, siteId, anonymousId, ...(days !== null ? { days } : {}) },
-      });
-    }
-    logger.info({ siteId, anonymousId, userId }, "Backfilled identified_user_id in ClickHouse");
-  } catch (error) {
-    logger.error({ siteId, anonymousId, userId, error }, "Error backfilling identified_user_id");
-  }
-}
-
 export async function handleIdentify(request: FastifyRequest, reply: FastifyReply) {
   try {
     const validationResult = identifyPayloadSchema.safeParse(request.body);
@@ -96,16 +60,44 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
 
     const siteId = siteConfiguration.siteId;
 
+    const requestIp = ip_address || resolveClientIp(request);
+    const requestUserAgent = user_agent || request.headers["user-agent"] || "";
     const anonymousId = anonymous_id
       ? await userIdService.generateUserIdFromClientId(anonymous_id, siteId)
-      : await userIdService.generateUserId(
-          ip_address || resolveClientIp(request),
-          user_agent || request.headers["user-agent"] || "",
-          siteId
-        );
-
+      : await userIdService.generateUserId(requestIp, requestUserAgent, siteId);
     // Create alias if this is a new identify call (links anonymous_id to user_id)
     if (is_new_identify) {
+      const aliasClaim = await claimTrackerAlias(siteId, anonymousId, user_id);
+      if (aliasClaim.status === "conflict") {
+        logger.warn(
+          { siteId, anonymousId, requestedUserId: user_id, existingUserId: aliasClaim.existingUserId },
+          "Rejected tracker alias reassignment"
+        );
+        return reply.status(409).send({
+          success: false,
+          code: "ANONYMOUS_ID_ALREADY_LINKED",
+          rotateAnonymousId: true,
+        });
+      }
+
+      if (anonymous_id) {
+        const legacyAnonymousId = await userIdService.generateLegacyUserIdFromClientId(anonymous_id, siteId);
+        if (legacyAnonymousId !== anonymousId) {
+          const legacyClaim = await claimLegacyClientAlias(siteId, legacyAnonymousId, user_id);
+          if (legacyClaim.status === "conflict") {
+            logger.warn(
+              {
+                siteId,
+                anonymousId: legacyAnonymousId,
+                requestedUserId: user_id,
+                existingUserId: legacyClaim.existingUserId,
+              },
+              "Skipped conflicting legacy client alias"
+            );
+          }
+        }
+      }
+
       // Ensure a user_profiles row exists at identify time so the user is
       // discoverable via search/inventory queries even when no traits are set,
       // and so createdAt reflects identification time rather than first setTraits.
@@ -113,35 +105,6 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
         await db.insert(userProfiles).values({ siteId, userId: user_id }).onConflictDoNothing();
       } catch (error) {
         logger.error({ siteId, userId: user_id, error }, "Error creating user profile shell");
-      }
-
-      try {
-        // Check if alias already exists
-        const existingAlias = await db
-          .select()
-          .from(userAliases)
-          .where(and(eq(userAliases.siteId, siteId), eq(userAliases.anonymousId, anonymousId)))
-          .limit(1);
-
-        if (existingAlias.length === 0) {
-          // Create new alias
-          await db.insert(userAliases).values({
-            siteId,
-            anonymousId,
-            userId: user_id,
-          });
-          // Fire-and-forget: backfill identified_user_id on past anonymous events
-          backfillIdentifiedUserId(siteId, anonymousId, user_id);
-        } else if (existingAlias[0].userId !== user_id) {
-          // Update alias to point to new user
-          await db
-            .update(userAliases)
-            .set({ userId: user_id })
-            .where(and(eq(userAliases.siteId, siteId), eq(userAliases.anonymousId, anonymousId)));
-        }
-      } catch (error) {
-        // Handle unique constraint violation gracefully (race condition)
-        logger.debug({ siteId, anonymousId, userId: user_id, error }, "Alias may already exist");
       }
     }
 
