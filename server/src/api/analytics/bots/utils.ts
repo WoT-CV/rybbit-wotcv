@@ -89,11 +89,13 @@ const filterTypeToOperator = (type: FilterType) => {
   }
 };
 
+const escapeLikePattern = (value: string): string => value.replace(/[\\%_]/g, "\\$&");
+
 const wrapLikeValue = (type: FilterType, value: string | number): string => {
   const v = String(value);
-  if (type === "contains" || type === "not_contains") return `%${v}%`;
-  if (type === "starts_with") return `${v}%`;
-  if (type === "ends_with") return `%${v}`;
+  if (type === "contains" || type === "not_contains") return `%${escapeLikePattern(v)}%`;
+  if (type === "starts_with") return `${escapeLikePattern(v)}%`;
+  if (type === "ends_with") return `%${escapeLikePattern(v)}`;
   return v;
 };
 
@@ -120,7 +122,7 @@ export const getBotSqlParam = (parameter: BotDimensionKey) => {
   return parameter;
 };
 
-const buildStringFilterCondition = (expression: string, filterType: FilterType, values: (string | number)[]) => {
+export const buildStringFilterCondition = (expression: string, filterType: FilterType, values: (string | number)[]) => {
   if (filterType === "is_null") {
     return `(${expression} IS NULL OR ${expression} = '')`;
   }
@@ -133,7 +135,11 @@ const buildStringFilterCondition = (expression: string, filterType: FilterType, 
     if (!pattern) {
       throw new Error("Regex pattern cannot be empty");
     }
-    new RegExp(pattern);
+    try {
+      new RegExp(pattern);
+    } catch (e) {
+      throw new Error(`Invalid regex pattern: ${e instanceof Error ? e.message : "Unknown error"}`);
+    }
     if (pattern.length > 500) {
       throw new Error("Regex pattern too long (max 500 characters)");
     }
