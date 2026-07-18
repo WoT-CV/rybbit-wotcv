@@ -46,6 +46,12 @@ const allTools: Tool[] = [
     href: "/tools/utm-builder",
     category: "seo",
   },
+  {
+    name: "Color Picker",
+    description: "Convert color formats and check accessible contrast",
+    href: "/tools/color-picker",
+    category: "seo",
+  },
 
   // Calculator/Analytics Tools
   {
@@ -145,12 +151,79 @@ const allTools: Tool[] = [
     category: "analytics",
     toolType: "calculator",
   },
+  {
+    name: "NPS Calculator",
+    description: "Calculate Net Promoter Score from survey responses",
+    href: "/tools/nps-calculator",
+    category: "analytics",
+    toolType: "calculator",
+  },
+  {
+    name: "Engagement Rate Calculator",
+    description: "Measure engagement by followers, reach, or impressions",
+    href: "/tools/engagement-rate-calculator",
+    category: "analytics",
+    toolType: "calculator",
+  },
+  {
+    name: "ROAS Calculator",
+    description: "Calculate return on ad spend and campaign profit",
+    href: "/tools/roas-calculator",
+    category: "analytics",
+    toolType: "calculator",
+  },
+  {
+    name: "Payback Period Calculator",
+    description: "Estimate how quickly acquisition costs are recovered",
+    href: "/tools/payback-period-calculator",
+    category: "analytics",
+    toolType: "calculator",
+  },
+  {
+    name: "CAC Calculator",
+    description: "Calculate customer acquisition cost from total spend",
+    href: "/tools/cac-calculator",
+    category: "analytics",
+    toolType: "calculator",
+  },
+  {
+    name: "Churn Rate Calculator",
+    description: "Measure customer or revenue churn over a period",
+    href: "/tools/churn-rate-calculator",
+    category: "analytics",
+    toolType: "calculator",
+  },
+  {
+    name: "MRR / ARR Calculator",
+    description: "Calculate monthly and annual recurring revenue",
+    href: "/tools/mrr-arr-calculator",
+    category: "analytics",
+    toolType: "calculator",
+  },
+  {
+    name: "Core Web Vitals Checker",
+    description: "Check field and lab performance metrics for a page",
+    href: "/tools/core-web-vitals-checker",
+    category: "analytics",
+  },
+  {
+    name: "Tracking Pixel Generator",
+    description: "Generate a consent-conscious image tracking snippet",
+    href: "/tools/tracking-pixel-generator",
+    category: "analytics",
+  },
 
   // Privacy Tools
   {
     name: "Analytics Detector",
     description: "Detect analytics tools on any website",
     href: "/tools/analytics-detector",
+    category: "privacy",
+  },
+  {
+    name: "Cookie / Tracker Scanner",
+    description: "Inspect response cookies and recognizable tracking scripts",
+    href: "/tools/cookie-tracker-scanner",
     category: "privacy",
   },
   {
@@ -1374,7 +1447,9 @@ export function RelatedTools({ currentToolHref, category, maxTools = 6 }: Relate
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">Related tools</h2>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Keep working with a nearby calculator or utility.</p>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            Keep working with a nearby calculator or utility.
+          </p>
         </div>
         <Link
           href="/tools"
@@ -1387,14 +1462,19 @@ export function RelatedTools({ currentToolHref, category, maxTools = 6 }: Relate
 
       <ul className="mt-6 grid border-x border-t border-neutral-200 dark:border-neutral-800 sm:grid-cols-2 lg:grid-cols-3">
         {relatedTools.map(tool => (
-          <li key={tool.href} className="border-b border-neutral-200 dark:border-neutral-800 sm:odd:border-r lg:border-r lg:nth-[3n]:border-r-0">
+          <li
+            key={tool.href}
+            className="border-b border-neutral-200 dark:border-neutral-800 sm:odd:border-r lg:border-r lg:nth-[3n]:border-r-0"
+          >
             <Link
               href={tool.href}
               className="group flex h-full min-h-28 flex-col justify-between gap-4 px-4 py-4 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500 dark:hover:bg-neutral-900/50"
             >
               <span>
                 <span className="block text-sm font-semibold text-neutral-900 dark:text-neutral-100">{tool.name}</span>
-                <span className="mt-1 block text-sm leading-5 text-neutral-500 dark:text-neutral-400">{tool.description}</span>
+                <span className="mt-1 block text-sm leading-5 text-neutral-500 dark:text-neutral-400">
+                  {tool.description}
+                </span>
               </span>
               <ArrowRight
                 className="size-3.5 text-neutral-400 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none dark:text-neutral-600"

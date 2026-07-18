@@ -67,7 +67,7 @@ import {
 export const metadata = {
   title: "Free Marketing Tools | Rybbit",
   description:
-    "Free calculators and AI-powered tools for marketers. UTM builder, CTR calculator, ROI calculator, SEO generators, and more.",
+    "Free calculators, site checks, and generators for marketers. Measure growth, inspect tracking, test performance, and build campaign assets.",
 };
 
 const calculators = [
@@ -162,6 +162,63 @@ const calculators = [
     description:
       "Calculate cost per view for video ads and compare across platforms to optimize your video advertising strategy and maximize engagement.",
   },
+  {
+    href: "/tools/nps-calculator",
+    icon: MessageCircle,
+    title: "NPS Calculator",
+    description: "Calculate Net Promoter Score from promoter, passive, and detractor responses.",
+  },
+  {
+    href: "/tools/engagement-rate-calculator",
+    icon: Activity,
+    title: "Engagement Rate Calculator",
+    description: "Measure engagement by followers, reach, or impressions across social platforms.",
+  },
+  {
+    href: "/tools/roas-calculator",
+    icon: TrendingUp,
+    title: "ROAS Calculator",
+    description: "Calculate return on ad spend, profit after ad costs, and break-even ROAS.",
+  },
+  {
+    href: "/tools/payback-period-calculator",
+    icon: Gauge,
+    title: "Payback Period Calculator",
+    description: "Estimate how many months it takes to recover customer acquisition costs.",
+  },
+  {
+    href: "/tools/cac-calculator",
+    icon: Target,
+    title: "CAC Calculator",
+    description: "Calculate customer acquisition cost from sales and marketing spend.",
+  },
+  {
+    href: "/tools/churn-rate-calculator",
+    icon: TrendingDown,
+    title: "Churn Rate Calculator",
+    description: "Measure customer or revenue churn and see the corresponding retention rate.",
+  },
+  {
+    href: "/tools/mrr-arr-calculator",
+    icon: DollarSign,
+    title: "MRR / ARR Calculator",
+    description: "Convert recurring revenue into monthly and annual run-rate metrics.",
+  },
+];
+
+const siteCheckTools = [
+  {
+    href: "/tools/cookie-tracker-scanner",
+    icon: Search,
+    title: "Cookie / Tracker Scanner",
+    description: "Inspect a public page for response cookies and recognizable tracking scripts.",
+  },
+  {
+    href: "/tools/core-web-vitals-checker",
+    icon: Gauge,
+    title: "Core Web Vitals Checker",
+    description: "Check field and lab performance data for LCP, INP, CLS, and supporting metrics.",
+  },
 ];
 
 const aiPoweredTools = [
@@ -216,6 +273,18 @@ const utilityTools = [
     title: "Funnel Visualizer",
     description:
       "Visualize your conversion funnel step-by-step. Input visitor counts at each stage and see where you're losing customers.",
+  },
+  {
+    href: "/tools/tracking-pixel-generator",
+    icon: Eye,
+    title: "Tracking Pixel Generator",
+    description: "Build a consent-conscious 1×1 image pixel snippet with campaign parameters.",
+  },
+  {
+    href: "/tools/color-picker",
+    icon: Palette,
+    title: "Color Picker",
+    description: "Pick colors, convert HEX, RGB, and HSL values, and check text contrast.",
   },
 ];
 
@@ -328,7 +397,8 @@ const socialToolGroups: SocialToolGroup[] = [
 ];
 
 const socialToolCount = socialToolGroups.reduce((sum, group) => sum + group.platforms.length, 0);
-const totalToolCount = calculators.length + aiPoweredTools.length + utilityTools.length + socialToolCount;
+const totalToolCount =
+  calculators.length + siteCheckTools.length + aiPoweredTools.length + utilityTools.length + socialToolCount;
 
 interface Tool {
   href: string;
@@ -396,6 +466,7 @@ function ToolSection({
 
 const directoryLinks = [
   { href: "#calculators-title", label: "Calculators", count: calculators.length },
+  { href: "#site-checks-title", label: "Site checks", count: siteCheckTools.length },
   { href: "#ai-tools-title", label: "AI tools", count: aiPoweredTools.length },
   { href: "#utilities-title", label: "Utilities", count: utilityTools.length },
   { href: "#social-tools-title", label: "Social media", count: socialToolCount },
@@ -410,18 +481,18 @@ export default function ToolsPage() {
         eventLocation="tools_hero"
         primaryAction={null}
         secondaryAction={null}
-        note="No signup. No usage limits."
+        note="No signup. Free to use."
       />
 
       <nav aria-label="Tool categories" className="border-b border-neutral-200 dark:border-neutral-800">
-        <div className="mx-auto grid max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto grid max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800 sm:grid-cols-2 lg:grid-cols-5">
           {directoryLinks.map((item, index) => (
             <Link
               key={item.href}
               href={item.href}
               className={`group flex min-h-14 items-center justify-between gap-4 border-neutral-200 px-5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900/60 dark:hover:text-neutral-50 ${
-                index < directoryLinks.length - 1 ? "border-b sm:border-b-0 sm:odd:border-r lg:border-r" : ""
-              }`}
+                index < directoryLinks.length - 1 ? "border-b lg:border-b-0 lg:border-r" : ""
+              } ${index % 2 === 0 && index < directoryLinks.length - 1 ? "sm:border-r" : ""}`}
             >
               <span>{item.label}</span>
               <span className="tabular-nums text-neutral-400 dark:text-neutral-500">{item.count}</span>
@@ -433,8 +504,15 @@ export default function ToolsPage() {
       <ToolSection
         id="calculators-title"
         title="Calculators"
-        description="Benchmark your funnel math — CTR, ROI, CPA, retention, and more, with industry comparisons built in."
+        description="Work through funnel and business math — engagement, ROAS, CAC, retention, recurring revenue, and more."
         tools={calculators}
+      />
+
+      <ToolSection
+        id="site-checks-title"
+        title="Site checks"
+        description="Inspect the public signals a page exposes, from browser performance data to cookies and recognizable trackers."
+        tools={siteCheckTools}
       />
 
       <ToolSection
