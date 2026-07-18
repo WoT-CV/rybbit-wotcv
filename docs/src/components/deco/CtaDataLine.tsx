@@ -56,7 +56,10 @@ export function CtaDataLine({ className }: { className?: string }) {
       </svg>
       {/* Endpoint marker at (784, 12) in the 800x200 viewBox */}
       <span
-        className={cn("absolute left-[98%] top-[6%] flex size-2 -translate-x-1/2 -translate-y-1/2", animate && "dataline-dot")}
+        className={cn(
+          "absolute left-[98%] top-[6%] flex size-2 -translate-x-1/2 -translate-y-1/2",
+          animate && "dataline-dot"
+        )}
       >
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50 [animation-duration:2.4s] motion-reduce:hidden" />
         <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />

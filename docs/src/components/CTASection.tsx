@@ -26,7 +26,8 @@ export function CTASection({
 }: CTASectionProps) {
   const t = useExtracted();
   const resolvedTitle = title ?? t("Ready for better analytics?");
-  const resolvedDescription = description ?? t("Powerful insights without the complexity. Privacy-focused analytics that just works.");
+  const resolvedDescription =
+    description ?? t("Powerful insights without the complexity. Privacy-focused analytics that just works.");
   const resolvedPrimaryButtonText = primaryButtonText ?? t("Start for $0");
   const resolvedSecondaryButtonText = secondaryButtonText ?? t("Live demo");
 
@@ -36,7 +37,7 @@ export function CTASection({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-60 [background-image:linear-gradient(to_right,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:40px_40px] [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
       />
-      <CtaDataLine className="h-36 lg:h-44" />
+      {/* <CtaDataLine className="h-36 lg:h-44" /> */}
       <div className="relative mx-auto grid max-w-[1200px] border-x border-white/10 lg:grid-cols-12">
         <GridCrosses className="text-white/30 dark:text-white/30" />
         {/* The watermark frog, awake: it perks up when you hover the section,
