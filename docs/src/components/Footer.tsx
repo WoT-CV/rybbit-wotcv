@@ -63,7 +63,6 @@ export function Footer() {
         { href: "/blog", label: t("Blog") },
         { href: "/tools", label: t("Tools") },
         { href: "https://github.com/rybbit-io/rybbit", label: "GitHub", external: true },
-        { href: "https://discord.gg/DEhGb4hYBj", label: t("Community"), external: true },
         { href: "/docs/api/getting-started", label: t("API Reference") },
         { href: "/oss-friends", label: t("OSS Friends") },
         { href: "/affiliate", label: t("50% Affiliate Program") },
@@ -141,14 +140,14 @@ export function Footer() {
           </div>
 
           <nav aria-label="Footer" className="grid grid-cols-2 lg:col-span-9 md:grid-cols-4">
-            {footerGroups.map((group) => (
+            {footerGroups.map(group => (
               <section
                 key={group.title}
                 className="border-b border-neutral-200 px-5 py-10 last:border-b-0 dark:border-neutral-800 sm:px-8 [&:nth-last-child(2)]:border-b-0 md:border-b-0 md:px-6 md:py-14"
               >
                 <h2 className="text-sm font-semibold text-neutral-950 dark:text-neutral-50">{group.title}</h2>
                 <ul className="mt-4">
-                  {group.links.map((link) => (
+                  {group.links.map(link => (
                     <li key={link.href}>
                       {link.external ? (
                         <a

@@ -15,6 +15,7 @@ interface InteriorPageHeroProps {
   title: ReactNode;
   description: ReactNode;
   eyebrow?: ReactNode;
+  breadcrumbs?: ReactNode;
   eventLocation: string;
   primaryAction?: HeroAction | null;
   secondaryAction?: HeroAction | null;
@@ -25,6 +26,7 @@ export function InteriorPageHero({
   title,
   description,
   eyebrow,
+  breadcrumbs,
   eventLocation,
   primaryAction,
   secondaryAction,
@@ -56,6 +58,7 @@ export function InteriorPageHero({
         <div className="relative border-b border-neutral-200 px-5 py-12 dark:border-neutral-800 sm:px-8 sm:py-16 lg:col-span-7 lg:border-b-0 lg:border-r lg:px-10 lg:py-20">
           <HeroDataLine id="interior" className="hidden h-28 sm:block lg:h-36" />
           <div className="relative">
+            {breadcrumbs && <div className="mb-6">{breadcrumbs}</div>}
             {eyebrow && (
               <p className="mb-6 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                 {eyebrow}

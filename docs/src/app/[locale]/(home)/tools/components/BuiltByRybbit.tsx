@@ -5,7 +5,7 @@ const inlineLinkClassName =
 
 export function BuiltByRybbit() {
   return (
-    <div className="mt-16 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-100/50 dark:bg-neutral-800/20 p-6 sm:p-8">
+    <div className="mt-16 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900/40 p-6 sm:p-8">
       <div className="flex items-start gap-4">
         <span className="text-2xl leading-none mt-0.5" aria-hidden="true">
           🐸

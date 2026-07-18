@@ -1,9 +1,11 @@
 import { ReactNode } from "react";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { GridCrosses } from "@/components/GridCrosses";
 import { RelatedTools } from "@/components/RelatedTools";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BuiltByRybbit } from "./BuiltByRybbit";
 import { ToolCTA } from "./ToolCTA";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export interface FAQItem {
   question: string;
@@ -47,67 +49,113 @@ export function ToolPageLayout({
   structuredData,
 }: ToolPageLayoutProps) {
   return (
-    <>
+    <div className="overflow-x-clip">
       {structuredData && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       )}
 
-      <div className="min-h-screen">
-        <div className="max-w-4xl mx-auto px-6 py-20">
-          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Tools", href: "/tools" }, { label: title }]} />
+      {/* 1. Header — on the rail, matching the marketing interior pages */}
+      <section className="border-b border-neutral-200 dark:border-neutral-800">
+        <div className="relative mx-auto max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800 lg:grid lg:grid-cols-12">
+          <GridCrosses />
+          <div className="border-b border-neutral-200 px-5 pb-10 pt-8 dark:border-neutral-800 sm:px-8 lg:col-span-8 lg:border-b-0 lg:border-r lg:px-10 lg:pb-16 lg:pt-10">
+            <nav aria-label="Breadcrumb">
+              <ol className="flex flex-wrap items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                <li>
+                  <Link
+                    href="/"
+                    className="rounded-sm transition-colors hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 dark:hover:text-white"
+                  >
+                    Home
+                  </Link>
+                </li>
+                <ChevronRight className="size-3.5 text-neutral-400 dark:text-neutral-600" aria-hidden="true" />
+                <li>
+                  <Link
+                    href="/tools"
+                    className="rounded-sm transition-colors hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 dark:hover:text-white"
+                  >
+                    Tools
+                  </Link>
+                </li>
+                <ChevronRight className="size-3.5 text-neutral-400 dark:text-neutral-600" aria-hidden="true" />
+                <li aria-current="page" className="font-medium text-neutral-950 dark:text-neutral-50">
+                  {title}
+                </li>
+              </ol>
+            </nav>
 
-          {/* 1. Header */}
-          <div className="mb-16">
-            <div className="inline-block mb-4 px-4 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-full">
-              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">{badge}</span>
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-neutral-900 dark:text-white mb-6 tracking-tight">
+            <p className="mt-8 flex items-center gap-2.5 text-sm font-semibold tracking-tight text-emerald-700 dark:text-emerald-400">
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-[1px] bg-emerald-600 [animation:kicker-pulse_3.2s_ease-in-out_infinite] dark:bg-emerald-400 motion-reduce:animate-none"
+              />
+              {badge}
+            </p>
+            <h1 className="mt-4 max-w-2xl text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-neutral-950 text-balance dark:text-neutral-50 md:text-5xl">
               {title}
             </h1>
-            <p className="text-xl text-neutral-600 dark:text-neutral-400 max-w-2xl leading-relaxed">{description}</p>
           </div>
 
-          {/* 2. The Actual Tool */}
-          <div className="mb-16">{toolComponent}</div>
-
-          {/* 3. Educational Content */}
-          <div className="mb-16 prose prose-neutral dark:prose-invert max-w-none">{educationalContent}</div>
-
-          {/* 4. FAQ Section */}
-          {faqs.length > 0 && (
-            <div className="mb-16">
-              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-6">Frequently Asked Questions</h2>
-              <div className="bg-neutral-100/50 dark:bg-neutral-800/20 backdrop-blur-sm border border-neutral-300/50 dark:border-neutral-800/50 rounded-xl overflow-hidden">
-                <Accordion type="single" collapsible className="w-full">
-                  {faqs.map((faq, index) => (
-                    <AccordionItem
-                      key={index}
-                      value={`item-${index}`}
-                      className={index === faqs.length - 1 ? "border-b-0" : ""}
-                    >
-                      <AccordionTrigger>{faq.question}</AccordionTrigger>
-                      <AccordionContent>{faq.answer}</AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </div>
-            </div>
-          )}
-
-          {/* 5. Related Tools */}
-          <RelatedTools currentToolHref={`/tools/${toolSlug}`} category={relatedToolsCategory} />
-
-          <BuiltByRybbit />
+          <div className="flex items-end px-5 py-10 sm:px-8 lg:col-span-4 lg:px-10 lg:py-16">
+            <p className="max-w-md text-base leading-7 text-neutral-600 text-pretty dark:text-neutral-400">
+              {description}
+            </p>
+          </div>
         </div>
+      </section>
 
-        {/* 6. CTA */}
-        <ToolCTA
-          title={ctaTitle}
-          description={ctaDescription}
-          eventLocation={ctaEventLocation}
-          buttonText={ctaButtonText}
-        />
-      </div>
-    </>
+      {/* 2–5. Tool, article, FAQ, related — a readable column on the rail */}
+      <section className="border-b border-neutral-200 dark:border-neutral-800">
+        <div className="relative mx-auto max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800">
+          <GridCrosses />
+          <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8 md:py-16 lg:px-10">
+            {/* 2. The Actual Tool */}
+            <div>{toolComponent}</div>
+
+            {/* 3. Educational Content */}
+            <div className="mt-16 prose prose-neutral max-w-none dark:prose-invert prose-headings:tracking-tight prose-a:text-emerald-700 dark:prose-a:text-emerald-400">
+              {educationalContent}
+            </div>
+
+            {/* 4. FAQ Section */}
+            {faqs.length > 0 && (
+              <div className="mt-16">
+                <h2 className="text-2xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
+                  Frequently asked questions
+                </h2>
+                <div className="mt-6 border-t border-neutral-200 dark:border-neutral-800">
+                  <Accordion type="single" collapsible className="w-full">
+                    {faqs.map((faq, index) => (
+                      <AccordionItem
+                        key={index}
+                        value={`item-${index}`}
+                        className="border-b border-neutral-200 px-0 dark:border-neutral-800"
+                      >
+                        <AccordionTrigger className="px-0 text-left">{faq.question}</AccordionTrigger>
+                        <AccordionContent className="px-0">{faq.answer}</AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+              </div>
+            )}
+
+            {/* 5. Related Tools */}
+            <RelatedTools currentToolHref={`/tools/${toolSlug}`} category={relatedToolsCategory} />
+
+            <BuiltByRybbit />
+          </div>
+        </div>
+      </section>
+
+      {/* 6. CTA */}
+      <ToolCTA
+        title={ctaTitle}
+        description={ctaDescription}
+        eventLocation={ctaEventLocation}
+        buttonText={ctaButtonText}
+      />
+    </div>
   );
 }

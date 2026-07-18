@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   Activity,
+  ArrowRight,
   Calculator,
   DollarSign,
   Eye,
@@ -12,7 +13,6 @@ import {
   PlayCircle,
   Search,
   Share2,
-  Sparkles,
   Target,
   TrendingDown,
   TrendingUp,
@@ -23,6 +23,9 @@ import {
   Briefcase,
   Zap,
 } from "lucide-react";
+import { CTASection } from "@/components/CTASection";
+import { GridCrosses } from "@/components/GridCrosses";
+import { InteriorPageHero } from "@/components/InteriorPageHero";
 import { platformList } from "./(social-media-tools)/components/platform-configs";
 import { commentPlatformList } from "./(social-media-tools)/components/comment-platform-configs";
 import { pageNamePlatformList } from "./(social-media-tools)/components/page-name-platform-configs";
@@ -199,7 +202,7 @@ const aiPoweredTools = [
   },
 ];
 
-const otherTools = [
+const utilityTools = [
   {
     href: "/tools/utm-builder",
     icon: LinkIcon,
@@ -217,7 +220,7 @@ const otherTools = [
 ];
 
 // Map platform IDs to Simple Icons components (with Lucide fallbacks)
-const platformIconMap: Record<string, any> = {
+const platformIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   linkedin: Briefcase, // LinkedIn not available in simple-icons, using Lucide
   discord: SiDiscord,
   x: SiX,
@@ -248,175 +251,228 @@ const platformIconMap: Record<string, any> = {
   whatsapp: SiWhatsapp,
 };
 
-const fontGeneratorTools = platformList.map(platform => ({
-  href: `/tools/${platform.id}-font-generator`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Transform your text into unique Unicode fonts for ${platform.name}. Stand out with stylish text.`,
-}));
+interface SocialPlatform {
+  id: string;
+  name: string;
+  displayName: string;
+}
 
-const commentGeneratorTools = commentPlatformList.map(platform => ({
-  href: `/tools/${platform.id}-comment-generator`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Generate engaging AI-powered comments for ${platform.name}. Create authentic, contextual responses.`,
-}));
+interface SocialToolGroup {
+  title: string;
+  description: string;
+  suffix: string;
+  platforms: SocialPlatform[];
+}
 
-const pageNameGeneratorTools = pageNamePlatformList.map(platform => ({
-  href: `/tools/${platform.id}-page-name-generator`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Generate creative ${platform.pageType.toLowerCase()} names for ${platform.name} with AI.`,
-}));
-
-const postGeneratorTools = postGeneratorPlatformList.map(platform => ({
-  href: `/tools/${platform.id}-post-generator`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Generate engaging posts for ${platform.name} with AI-powered content creation.`,
-}));
-
-const usernameGeneratorTools = usernameGeneratorPlatformList.map(platform => ({
-  href: `/tools/${platform.id}-username-generator`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Generate creative usernames for ${platform.name} with AI.`,
-}));
-
-const hashtagGeneratorTools = hashtagGeneratorPlatformList.map(platform => ({
-  href: `/tools/${platform.id}-hashtag-generator`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Generate strategic hashtags for ${platform.name} to boost discoverability.`,
-}));
-
-const characterCounterTools = characterCounterPlatformList.map(platform => ({
-  href: `/tools/${platform.id}-character-counter`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Count characters for ${platform.name} posts and stay within limits.`,
-}));
-
-const bioGeneratorTools = bioGeneratorPlatformList.map(platform => ({
-  href: `/tools/${platform.id}-bio-generator`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Generate compelling ${platform.name} bios with AI.`,
-}));
-
-const imageResizerTools = imageResizerPlatformList.map(platform => ({
-  href: `/tools/${platform.id}-photo-resizer`,
-  icon: platformIconMap[platform.id],
-  title: platform.displayName,
-  description: `Resize and crop images for ${platform.name} profiles, covers, and posts.`,
-}));
-
-const logoGeneratorTools = logoGeneratorPlatformList.map(platform => ({
-  href: `/tools/${platform.id}-logo-generator`,
-  icon: platformIconMap[platform.id] || Palette,
-  title: platform.displayName,
-  description: `Generate AI-powered brand logos for ${platform.name}.`,
-}));
-
-const socialMediaTools = [
-  ...fontGeneratorTools,
-  ...commentGeneratorTools,
-  ...pageNameGeneratorTools,
-  ...postGeneratorTools,
-  ...usernameGeneratorTools,
-  ...hashtagGeneratorTools,
-  ...characterCounterTools,
-  ...bioGeneratorTools,
-  ...imageResizerTools,
-  ...logoGeneratorTools,
+const socialToolGroups: SocialToolGroup[] = [
+  {
+    title: "Font generators",
+    description: "Unicode text styling for posts, bios, and comments.",
+    suffix: "font-generator",
+    platforms: platformList,
+  },
+  {
+    title: "Comment generators",
+    description: "AI-written, contextual replies for busy feeds.",
+    suffix: "comment-generator",
+    platforms: commentPlatformList,
+  },
+  {
+    title: "Page name generators",
+    description: "Creative names for pages, servers, and channels.",
+    suffix: "page-name-generator",
+    platforms: pageNamePlatformList,
+  },
+  {
+    title: "Post generators",
+    description: "AI-drafted posts tuned to each platform's voice.",
+    suffix: "post-generator",
+    platforms: postGeneratorPlatformList,
+  },
+  {
+    title: "Username generators",
+    description: "Available-sounding handles that fit your brand.",
+    suffix: "username-generator",
+    platforms: usernameGeneratorPlatformList,
+  },
+  {
+    title: "Hashtag generators",
+    description: "Strategic tags to boost discoverability.",
+    suffix: "hashtag-generator",
+    platforms: hashtagGeneratorPlatformList,
+  },
+  {
+    title: "Character counters",
+    description: "Stay inside every platform's post limits.",
+    suffix: "character-counter",
+    platforms: characterCounterPlatformList,
+  },
+  {
+    title: "Bio generators",
+    description: "Profile bios written to convert visitors into followers.",
+    suffix: "bio-generator",
+    platforms: bioGeneratorPlatformList,
+  },
+  {
+    title: "Image resizers",
+    description: "Crop to exact profile, cover, and post dimensions.",
+    suffix: "photo-resizer",
+    platforms: imageResizerPlatformList,
+  },
+  {
+    title: "Logo generators",
+    description: "AI-generated brand marks sized for each platform.",
+    suffix: "logo-generator",
+    platforms: logoGeneratorPlatformList,
+  },
 ];
 
-const totalToolCount = calculators.length + aiPoweredTools.length + otherTools.length + socialMediaTools.length;
+const socialToolCount = socialToolGroups.reduce((sum, group) => sum + group.platforms.length, 0);
+const totalToolCount = calculators.length + aiPoweredTools.length + utilityTools.length + socialToolCount;
 
-function ToolCard({ tool }: { tool: { href: string; icon: any; title: string; description: string } }) {
+interface Tool {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}
+
+function ToolCell({ tool }: { tool: Tool }) {
   const Icon = tool.icon;
   return (
     <Link
       href={tool.href}
-      className="group bg-white/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 transition-all hover:border-emerald-500/40 dark:hover:border-emerald-500/30 hover:-translate-y-1 duration-300"
+      className="group block bg-white px-5 py-8 transition-colors duration-200 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500 dark:bg-neutral-950 dark:hover:bg-neutral-900/60 sm:px-8"
     >
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 dark:from-emerald-500/20 dark:to-emerald-600/10 border border-emerald-500/40 dark:border-emerald-500/30 shadow-md shadow-emerald-500/20 dark:shadow-emerald-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-        <Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+      <div className="mb-5 text-neutral-500 dark:text-neutral-400">
+        <Icon className="size-5" aria-hidden="true" />
       </div>
-      <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-2">{tool.title}</h2>
-      <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-4">{tool.description}</p>
-      <div className="flex items-center text-emerald-600 dark:text-emerald-400 text-sm font-medium group-hover:translate-x-1 transition-transform duration-300">
-        Try it now →
-      </div>
+      <h3 className="flex items-baseline justify-between gap-3 font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
+        {tool.title}
+        <ArrowRight
+          className="size-3.5 shrink-0 self-center text-neutral-400 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none dark:text-neutral-600"
+          aria-hidden="true"
+        />
+      </h3>
+      <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">{tool.description}</p>
     </Link>
+  );
+}
+
+function ToolSection({
+  id,
+  title,
+  description,
+  tools,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  tools: Tool[];
+}) {
+  return (
+    <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby={id}>
+      <div className="relative mx-auto grid max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800 lg:grid-cols-12">
+        <GridCrosses />
+        <div className="border-b border-neutral-200 px-5 py-12 dark:border-neutral-800 sm:px-8 lg:col-span-4 lg:border-b-0 lg:border-r lg:px-10 lg:py-16">
+          <div className="lg:sticky lg:top-24">
+            <h2 id={id} className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+              {title}
+            </h2>
+            <p className="mt-5 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">{description}</p>
+          </div>
+        </div>
+        <div className="grid gap-px bg-neutral-200 dark:bg-neutral-800 md:grid-cols-2 lg:col-span-8">
+          {tools.map(tool => (
+            <ToolCell key={tool.href} tool={tool} />
+          ))}
+          {tools.length % 2 === 1 && <div aria-hidden="true" className="hidden bg-white dark:bg-neutral-950 md:block" />}
+        </div>
+      </div>
+    </section>
   );
 }
 
 export default function ToolsPage() {
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[1200px] mx-auto px-6 py-20">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-white mb-4">{totalToolCount} Free Marketing Tools</h1>
-          <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-            Powerful calculators and generators to help you make data-driven marketing decisions. All tools are 100%
-            free to use.
-          </p>
-        </div>
+    <div className="overflow-x-clip">
+      <InteriorPageHero
+        title={`${totalToolCount} free marketing tools`}
+        description="Calculators, generators, and utilities to help you make data-driven marketing decisions. Every tool is free — no account required."
+        eventLocation="tools_hero"
+      />
 
-        {/* Calculators Section */}
-        <div className="mb-16">
-          <div className="flex items-center gap-3 mb-8">
-            <Calculator className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Calculators</h2>
+      <ToolSection
+        id="calculators-title"
+        title="Calculators"
+        description="Benchmark your funnel math — CTR, ROI, CPA, retention, and more, with industry comparisons built in."
+        tools={calculators}
+      />
+
+      <ToolSection
+        id="ai-tools-title"
+        title="AI-powered tools"
+        description="Generators and detectors that do the drafting for you: titles, meta descriptions, OG tags, and a privacy policy builder."
+        tools={aiPoweredTools}
+      />
+
+      <ToolSection
+        id="utilities-title"
+        title="Utilities"
+        description="Small, focused tools for everyday campaign work."
+        tools={utilityTools}
+      />
+
+      <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby="social-tools-title">
+        <div className="relative mx-auto grid max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800 lg:grid-cols-12">
+          <GridCrosses />
+          <div className="border-b border-neutral-200 px-5 py-12 dark:border-neutral-800 sm:px-8 lg:col-span-4 lg:border-b-0 lg:border-r lg:px-10 lg:py-16">
+            <div className="lg:sticky lg:top-24">
+              <h2 id="social-tools-title" className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                Social media tools
+              </h2>
+              <p className="mt-5 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
+                {socialToolCount} generators, counters, and resizers covering every major platform. Pick a tool, then
+                pick your platform.
+              </p>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {calculators.map(tool => (
-              <ToolCard key={tool.href} tool={tool} />
+          <div className="lg:col-span-8">
+            {socialToolGroups.map((group, index) => (
+              <div
+                key={group.suffix}
+                className={`px-5 py-8 sm:px-8 ${
+                  index < socialToolGroups.length - 1 ? "border-b border-neutral-200 dark:border-neutral-800" : ""
+                }`}
+              >
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                  <h3 className="font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">{group.title}</h3>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">{group.description}</p>
+                </div>
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {group.platforms.map(platform => {
+                    const Icon = platformIconMap[platform.id] ?? Palette;
+                    return (
+                      <li key={platform.id}>
+                        <Link
+                          href={`/tools/${platform.id}-${group.suffix}`}
+                          title={platform.displayName}
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1 text-xs font-medium text-neutral-600 transition-colors duration-200 hover:border-neutral-300 hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-neutral-800 dark:text-neutral-400 dark:hover:border-neutral-700 dark:hover:text-white"
+                        >
+                          <Icon className="size-3.5" aria-hidden="true" />
+                          {platform.name}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* AI-Powered Tools Section */}
-        <div className="mb-16">
-          <div className="flex items-center gap-3 mb-8">
-            <Sparkles className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">AI-Powered Tools</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {aiPoweredTools.map(tool => (
-              <ToolCard key={tool.href} tool={tool} />
-            ))}
-          </div>
-        </div>
-
-        {/* Social Media Tools Section */}
-        <div className="mb-16">
-          <div className="flex items-center gap-3 mb-8">
-            <MessageCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Social Media Tools</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {socialMediaTools.map(tool => (
-              <ToolCard key={tool.href} tool={tool} />
-            ))}
-          </div>
-        </div>
-
-        {/* Other Tools Section */}
-        <div>
-          <div className="flex items-center gap-3 mb-8">
-            <Activity className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Other Tools</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {otherTools.map(tool => (
-              <ToolCard key={tool.href} tool={tool} />
-            ))}
-          </div>
-        </div>
-      </div>
+      <CTASection eventLocation="tools_bottom_cta" />
     </div>
   );
 }

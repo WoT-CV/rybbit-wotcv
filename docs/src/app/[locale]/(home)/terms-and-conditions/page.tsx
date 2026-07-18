@@ -1,3 +1,4 @@
+import { LegalPageShell } from "@/components/LegalPageShell";
 import { createMetadata, createOGImageUrl } from "@/lib/metadata";
 
 export const metadata = createMetadata({
@@ -13,14 +14,7 @@ export const metadata = createMetadata({
 
 export default function TermsAndConditions() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-3xl md:text-4xl font-bold mb-8">Terms and Conditions</h1>
-
-      <div className="prose prose-invert max-w-none">
-        <p className="text-lg">
-          Last updated: November 8, 2025
-        </p>
-
+    <LegalPageShell title="Terms and Conditions" lastUpdated="November 8, 2025">
         <h2 className="text-2xl font-semibold mt-8 mb-4">Acceptance of Terms</h2>
         <p>
           By accessing and using Rybbit, you accept and agree to be bound by the terms and provision of this agreement.
@@ -132,7 +126,7 @@ export default function TermsAndConditions() {
           Rybbit does not collect personally identifiable information from your website visitors. Our service is
           designed to be privacy-friendly and compliant with GDPR, CCPA, and other privacy regulations. Our full data
           practices are described in our
-          <a href="/privacy" className="text-emerald-400 hover:text-emerald-300 mx-1">
+          <a href="/privacy" className="mx-1">
             Privacy Policy
           </a>
           .
@@ -215,11 +209,10 @@ export default function TermsAndConditions() {
         <h2 className="text-2xl font-semibold mt-8 mb-4">Contact Information</h2>
         <p>
           If you have any questions about these Terms and Conditions, please contact us at:
-          <a href="https://www.rybbit.com/contact" className="text-emerald-400 hover:text-emerald-300 ml-1">
+          <a href="https://www.rybbit.com/contact" className="ml-1">
             hello@rybbit.com
           </a>
         </p>
-      </div>
-    </div>
+    </LegalPageShell>
   );
 }
