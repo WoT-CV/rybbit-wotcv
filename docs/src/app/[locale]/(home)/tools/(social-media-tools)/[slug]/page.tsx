@@ -38,6 +38,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Hash, Palette, Type, User } from "lucide-react";
 
+// Only build slugs returned by generateStaticParams; retired tool slugs 404 (then 301 via next.config.mjs).
+export const dynamicParams = false;
+
 interface PageProps {
   params: Promise<{
     slug: string;

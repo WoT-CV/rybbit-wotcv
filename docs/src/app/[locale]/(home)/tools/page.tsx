@@ -31,11 +31,9 @@ import { commentPlatformList } from "./(social-media-tools)/components/comment-p
 import { pageNamePlatformList } from "./(social-media-tools)/components/page-name-platform-configs";
 import { postGeneratorPlatformList } from "./(social-media-tools)/components/post-generator-platform-configs";
 import { usernameGeneratorPlatformList } from "./(social-media-tools)/components/username-generator-platform-configs";
-import { hashtagGeneratorPlatformList } from "./(social-media-tools)/components/hashtag-generator-platform-configs";
 import { characterCounterPlatformList } from "./(social-media-tools)/components/character-counter-platform-configs";
 import { bioGeneratorPlatformList } from "./(social-media-tools)/components/bio-generator-platform-configs";
 import { imageResizerPlatformList } from "./(social-media-tools)/components/image-resizer-platform-configs";
-import { logoGeneratorPlatformList } from "./(social-media-tools)/components/logo-generator-platform-configs";
 import {
   SiDiscord,
   SiX,
@@ -365,12 +363,6 @@ const socialToolGroups: SocialToolGroup[] = [
     platforms: usernameGeneratorPlatformList,
   },
   {
-    title: "Hashtag generators",
-    description: "Strategic tags to boost discoverability.",
-    suffix: "hashtag-generator",
-    platforms: hashtagGeneratorPlatformList,
-  },
-  {
     title: "Character counters",
     description: "Stay inside every platform's post limits.",
     suffix: "character-counter",
@@ -387,12 +379,6 @@ const socialToolGroups: SocialToolGroup[] = [
     description: "Crop to exact profile, cover, and post dimensions.",
     suffix: "photo-resizer",
     platforms: imageResizerPlatformList,
-  },
-  {
-    title: "Logo generators",
-    description: "AI-generated brand marks sized for each platform.",
-    suffix: "logo-generator",
-    platforms: logoGeneratorPlatformList,
   },
 ];
 

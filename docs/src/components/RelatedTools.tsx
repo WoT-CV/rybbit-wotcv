@@ -1071,189 +1071,189 @@ const allTools: Tool[] = [
   {
     name: "Facebook Photo Resizer",
     description: "Resize images for Facebook profiles, covers, posts, and stories",
-    href: "/tools/facebook-image-resizer",
+    href: "/tools/facebook-photo-resizer",
     category: "social-media",
     platform: "facebook",
   },
   {
     name: "Instagram Photo Resizer",
     description: "Crop and resize photos for Instagram posts, stories, and profiles",
-    href: "/tools/instagram-image-resizer",
+    href: "/tools/instagram-photo-resizer",
     category: "social-media",
     platform: "instagram",
   },
   {
     name: "X (Twitter) Photo Resizer",
     description: "Resize images for X posts, headers, and profile pictures",
-    href: "/tools/x-image-resizer",
+    href: "/tools/x-photo-resizer",
     category: "social-media",
     platform: "x",
   },
   {
     name: "LinkedIn Photo Resizer",
     description: "Professional image resizing for LinkedIn profiles and banners",
-    href: "/tools/linkedin-image-resizer",
+    href: "/tools/linkedin-photo-resizer",
     category: "social-media",
     platform: "linkedin",
   },
   {
     name: "YouTube Photo Resizer",
     description: "Create perfect YouTube thumbnails and channel art",
-    href: "/tools/youtube-image-resizer",
+    href: "/tools/youtube-photo-resizer",
     category: "social-media",
     platform: "youtube",
   },
   {
     name: "TikTok Photo Resizer",
     description: "Resize images for TikTok profile pictures and video covers",
-    href: "/tools/tiktok-image-resizer",
+    href: "/tools/tiktok-photo-resizer",
     category: "social-media",
     platform: "tiktok",
   },
   {
     name: "Pinterest Photo Resizer",
     description: "Create perfectly sized Pins and board covers",
-    href: "/tools/pinterest-image-resizer",
+    href: "/tools/pinterest-photo-resizer",
     category: "social-media",
     platform: "pinterest",
   },
   {
     name: "Discord Photo Resizer",
     description: "Resize images for Discord avatars, server icons, and banners",
-    href: "/tools/discord-image-resizer",
+    href: "/tools/discord-photo-resizer",
     category: "social-media",
     platform: "discord",
   },
   {
     name: "Reddit Photo Resizer",
     description: "Resize images for Reddit community icons, banners, and posts",
-    href: "/tools/reddit-image-resizer",
+    href: "/tools/reddit-photo-resizer",
     category: "social-media",
     platform: "reddit",
   },
   {
     name: "Twitch Photo Resizer",
     description: "Create Twitch offline screens, profile banners, and panel images",
-    href: "/tools/twitch-image-resizer",
+    href: "/tools/twitch-photo-resizer",
     category: "social-media",
     platform: "twitch",
   },
   {
     name: "Bluesky Photo Resizer",
     description: "Resize images for Bluesky profiles and posts",
-    href: "/tools/bluesky-image-resizer",
+    href: "/tools/bluesky-photo-resizer",
     category: "social-media",
     platform: "bluesky",
   },
   {
     name: "Threads Photo Resizer",
     description: "Resize photos for Threads profiles and posts",
-    href: "/tools/threads-image-resizer",
+    href: "/tools/threads-photo-resizer",
     category: "social-media",
     platform: "threads",
   },
   {
     name: "Mastodon Photo Resizer",
     description: "Resize images for Mastodon profiles and headers",
-    href: "/tools/mastodon-image-resizer",
+    href: "/tools/mastodon-photo-resizer",
     category: "social-media",
     platform: "mastodon",
   },
   {
     name: "Snapchat Photo Resizer",
     description: "Create content for Snapchat Stories and ads",
-    href: "/tools/snapchat-image-resizer",
+    href: "/tools/snapchat-photo-resizer",
     category: "social-media",
     platform: "snapchat",
   },
   {
     name: "Spotify Photo Resizer",
     description: "Resize images for Spotify playlists and artist profiles",
-    href: "/tools/spotify-image-resizer",
+    href: "/tools/spotify-photo-resizer",
     category: "social-media",
     platform: "spotify",
   },
   {
     name: "Steam Photo Resizer",
     description: "Create Steam avatars and workshop images",
-    href: "/tools/steam-image-resizer",
+    href: "/tools/steam-photo-resizer",
     category: "social-media",
     platform: "steam",
   },
   {
     name: "VK Photo Resizer",
     description: "Resize images for VK posts, communities, and profiles",
-    href: "/tools/vk-image-resizer",
+    href: "/tools/vk-photo-resizer",
     category: "social-media",
     platform: "vk",
   },
   {
     name: "Tumblr Photo Resizer",
     description: "Resize images for Tumblr blogs and posts",
-    href: "/tools/tumblr-image-resizer",
+    href: "/tools/tumblr-photo-resizer",
     category: "social-media",
     platform: "tumblr",
   },
   {
     name: "Substack Photo Resizer",
     description: "Resize publication logos and cover images for Substack",
-    href: "/tools/substack-image-resizer",
+    href: "/tools/substack-photo-resizer",
     category: "social-media",
     platform: "substack",
   },
   {
     name: "Telegram Photo Resizer",
     description: "Resize images for Telegram profiles and channels",
-    href: "/tools/telegram-image-resizer",
+    href: "/tools/telegram-photo-resizer",
     category: "social-media",
     platform: "telegram",
   },
   {
     name: "Nostr Photo Resizer",
     description: "Resize images for Nostr clients",
-    href: "/tools/nostr-image-resizer",
+    href: "/tools/nostr-photo-resizer",
     category: "social-media",
     platform: "nostr",
   },
   {
     name: "Dribbble Photo Resizer",
     description: "Format your design shots for Dribbble",
-    href: "/tools/dribbble-image-resizer",
+    href: "/tools/dribbble-photo-resizer",
     category: "social-media",
     platform: "dribbble",
   },
   {
     name: "Lemmy Photo Resizer",
     description: "Resize icons and banners for Lemmy communities",
-    href: "/tools/lemmy-image-resizer",
+    href: "/tools/lemmy-photo-resizer",
     category: "social-media",
     platform: "lemmy",
   },
   {
     name: "Slack Photo Resizer",
     description: "Create perfect Slack profile photos and emojis",
-    href: "/tools/slack-image-resizer",
+    href: "/tools/slack-photo-resizer",
     category: "social-media",
     platform: "slack",
   },
   {
     name: "Medium Photo Resizer",
     description: "Resize images for Medium articles and profiles",
-    href: "/tools/medium-image-resizer",
+    href: "/tools/medium-photo-resizer",
     category: "social-media",
     platform: "medium",
   },
   {
     name: "GitHub Photo Resizer",
     description: "Resize images for GitHub profiles and social previews",
-    href: "/tools/github-image-resizer",
+    href: "/tools/github-photo-resizer",
     category: "social-media",
     platform: "github",
   },
   {
     name: "Warpcast Photo Resizer",
     description: "Resize images for Farcaster/Warpcast profiles",
-    href: "/tools/warpcast-image-resizer",
+    href: "/tools/warpcast-photo-resizer",
     category: "social-media",
     platform: "warpcast",
   },
@@ -1401,6 +1401,17 @@ const allTools: Tool[] = [
   },
 ];
 
+// Retired 2026-07-18 (off-brand / no organic traffic) — excluded from related-tool listings; pages 301 → /tools.
+const RETIRED_TOOL_SUFFIXES = ["-logo-generator", "-hashtag-generator"];
+const RETIRED_PLATFORMS = new Set(["nostr", "lemmy", "warpcast", "dribbble", "mastodon", "medium", "whatsapp", "tumblr"]);
+const RETIRED_HREFS = new Set(["/tools/vk-comment-generator", "/tools/vk-photo-resizer"]);
+const activeTools = allTools.filter(
+  tool =>
+    !RETIRED_TOOL_SUFFIXES.some(suffix => tool.href.endsWith(suffix)) &&
+    !(tool.platform && RETIRED_PLATFORMS.has(tool.platform)) &&
+    !RETIRED_HREFS.has(tool.href)
+);
+
 interface RelatedToolsProps {
   currentToolHref: string;
   category?: "seo" | "analytics" | "privacy" | "social-media";
@@ -1409,11 +1420,11 @@ interface RelatedToolsProps {
 
 export function RelatedTools({ currentToolHref, category, maxTools = 6 }: RelatedToolsProps) {
   // Determine current tool properties
-  const currentTool = allTools.find(t => t.href === currentToolHref);
+  const currentTool = activeTools.find(t => t.href === currentToolHref);
   const currentPlatform = currentTool?.platform;
   const currentToolType = currentTool?.toolType;
 
-  let relatedTools = allTools.filter(tool => tool.href !== currentToolHref);
+  let relatedTools = activeTools.filter(tool => tool.href !== currentToolHref);
 
   // For social media tools: prioritize same platform, randomized
   if (category === "social-media" && currentPlatform) {
