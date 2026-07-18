@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { createOGImageUrl } from "@/lib/metadata";
 
 export const metadata: Metadata = {
-  title: "Rybbit vs Google Analytics: Best Privacy-First Alternative",
+  title: "Rybbit vs GA4: The Open Source Google Analytics Alternative",
   description:
-    "Compare Rybbit and Google Analytics. Discover why privacy-conscious businesses are switching from GA4 to Rybbit's open-source, cookie-free analytics.",
+    "Looking for a Google Analytics alternative? Compare Rybbit and GA4: open-source, cookieless, GDPR-compliant analytics with session replay and funnels.",
   openGraph: {
     title: "Rybbit vs Google Analytics: The Privacy-First Alternative",
     description:

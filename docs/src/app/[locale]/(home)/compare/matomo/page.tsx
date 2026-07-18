@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { createOGImageUrl } from "@/lib/metadata";
 
 export const metadata: Metadata = {
-  title: "Rybbit vs Matomo: Modern Analytics Alternative",
+  title: "Rybbit vs Matomo: The Modern Matomo Alternative",
   description:
-    "Compare Rybbit and Matomo analytics. See how Rybbit offers simpler setup, modern UI, privacy by default, and zero maintenance vs Matomo's complex PHP-based system.",
+    "Looking for a Matomo alternative? Rybbit offers simpler setup, a modern UI, and privacy by default — no PHP maintenance. See the full feature comparison.",
   openGraph: {
     title: "Rybbit vs Matomo: Which Analytics Platform is Right for You?",
     description: "Side-by-side comparison of Rybbit and Matomo. Modern, privacy-first analytics vs legacy PHP system.",

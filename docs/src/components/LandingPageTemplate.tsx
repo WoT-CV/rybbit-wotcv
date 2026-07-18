@@ -269,7 +269,10 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
           </div>
         </section>
 
-        <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby="capability-index-title">
+        <section
+          className="border-b border-neutral-200 dark:border-neutral-800"
+          aria-labelledby="capability-index-title"
+        >
           <div className="relative mx-auto max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800">
             <GridCrosses />
             <div className="flex flex-col gap-3 border-b border-neutral-200 px-5 py-10 dark:border-neutral-800 sm:px-8 md:flex-row md:items-baseline md:justify-between md:gap-8 lg:px-10">
@@ -277,7 +280,9 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
                 {t("Everything behind one script tag.")}
               </h2>
               <p className="max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                {t("Replay, funnels, goals, vitals, exports — everything Google Analytics made complicated, one click deeper.")}
+                {t(
+                  "Replay, funnels, goals, vitals, exports — everything Google Analytics made complicated, one click deeper."
+                )}
               </p>
             </div>
             <nav
@@ -417,7 +422,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
                     id="testimonials-title"
                     className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.04] tracking-[-0.035em] md:text-5xl text-balance"
                   >
-                    {t("Built in public. Used in the real world.")}
+                    {t("Loved by users in the real world.")}
                   </h2>
                 </div>
               </div>

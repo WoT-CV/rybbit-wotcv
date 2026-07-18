@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { createOGImageUrl } from "@/lib/metadata";
 
 export const metadata: Metadata = {
-  title: "Rybbit vs Fathom: Open-Source Privacy Alternative",
+  title: "Rybbit vs Fathom: The Open Source Fathom Alternative",
   description:
-    "Compare Rybbit and Fathom analytics. Both prioritize privacy, but Rybbit offers more features like session replay, funnels, and open-source flexibility.",
+    "Looking for a Fathom alternative? Rybbit matches its privacy focus and adds session replay, funnels, error tracking, and open-source self-hosting.",
   openGraph: {
     title: "Rybbit vs Fathom: More Features, Same Privacy Focus",
     description: "Fathom is simple. Rybbit is simple AND powerful. Compare session replay, funnels, and more.",

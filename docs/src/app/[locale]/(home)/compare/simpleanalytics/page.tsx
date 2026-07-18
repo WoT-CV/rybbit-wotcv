@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { createOGImageUrl } from "@/lib/metadata";
 
 export const metadata: Metadata = {
-  title: "Rybbit vs Simple Analytics: Feature-Rich Alternative",
+  title: "Rybbit: The Open Source Simple Analytics Alternative",
   description:
-    "Compare Rybbit and Simple Analytics. Both are privacy-focused, but Rybbit offers more advanced features like session replay, funnels, and user journeys.",
+    "Looking for a Simple Analytics alternative? Rybbit is privacy-first too, with session replay, funnels, user journeys, and open-source self-hosting.",
   openGraph: {
     title: "Rybbit vs Simple Analytics: Simple AND Powerful",
     description: "Simple Analytics keeps it basic. Rybbit adds power without complexity. Compare features.",

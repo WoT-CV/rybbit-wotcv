@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { createOGImageUrl } from "@/lib/metadata";
 
 export const metadata: Metadata = {
-  title: "Rybbit vs PostHog: Simple Analytics Alternative",
+  title: "Rybbit vs PostHog: The Lightweight PostHog Alternative",
   description:
-    "Compare Rybbit and PostHog. See why Rybbit's focused web analytics beats PostHog's complex product suite for teams wanting simplicity without sacrificing power.",
+    "Looking for a lighter PostHog alternative? Rybbit focuses on web analytics done well — simple setup, session replay, funnels, no product-suite bloat.",
   openGraph: {
     title: "Rybbit vs PostHog: Focused Analytics vs Feature Bloat",
     description: "PostHog does everything. Rybbit does web analytics perfectly. Compare the approaches.",

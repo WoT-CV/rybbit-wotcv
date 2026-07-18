@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { RelatedTools } from "@/components/RelatedTools";
+import { BuiltByRybbit } from "./BuiltByRybbit";
 import { ToolCTA } from "./ToolCTA";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -95,6 +96,8 @@ export function ToolPageLayout({
 
           {/* 5. Related Tools */}
           <RelatedTools currentToolHref={`/tools/${toolSlug}`} category={relatedToolsCategory} />
+
+          <BuiltByRybbit />
         </div>
 
         {/* 6. CTA */}
