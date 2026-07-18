@@ -9,6 +9,7 @@
 
 :root {
   --color-fd-primary: rgb(16 185 129); /* emerald-500 */
+  --dataviz: #7c8fe8; /* periwinkle data hue, deepened one step for white surfaces */
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -45,6 +46,7 @@
 
 .dark {
   --color-fd-primary: rgb(16 185 129); /* emerald-500 */
+  --dataviz: #b3bfff; /* periwinkle data hue (DESIGN.md, dark) */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -85,6 +87,89 @@ body {
 code,
 pre {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* ── Marketing decoration: graph paper + signal ──────────────────────────
+   The marketing pages are laid out as a bordered instrument sheet (1200px
+   container, hairline seams). These utilities give selected cells the sheet's
+   material back: a fine graph-paper grid, in a neutral ink or the emerald
+   signal ink. Pair `.bg-graph-accent` with `.bg-plate-accent` to make a
+   section header read as a "signal plate". Line colors are theme-aware and
+   deliberately faint so text contrast on top is unaffected. */
+:root {
+  --graph-line: oklch(0 0 0 / 0.05);
+  --graph-line-accent: oklch(0.55 0.12 163 / 0.16);
+}
+.dark {
+  --graph-line: oklch(1 0 0 / 0.055);
+  --graph-line-accent: oklch(0.75 0.14 163 / 0.13);
+}
+.bg-graph,
+.bg-graph-accent {
+  background-image:
+    linear-gradient(to right, var(--_graph-ink) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--_graph-ink) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.bg-graph {
+  --_graph-ink: var(--graph-line);
+}
+.bg-graph-accent {
+  --_graph-ink: var(--graph-line-accent);
+}
+
+/* Solid (opaque) emerald-tinted surface for section header plates. Solid on
+   purpose: plates often sit inside `gap-px` grids where a translucent cell
+   would let the seam color bleed through. */
+.bg-plate-accent {
+  background-color: color-mix(in oklab, #ffffff 95.5%, #059669);
+}
+.dark .bg-plate-accent {
+  background-color: color-mix(in oklab, #0a0a0a 94%, #34d399);
+}
+
+/* ── Marketing data-line decoration ──────────────────────────────────────
+   The plotted line draws itself on load (pathLength=1, so dasharray/offset
+   run 1 → 0). Base state is the fully-drawn line: with reduced motion the
+   animation is simply removed and the decoration is static. */
+.dataline-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: dataline-draw 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.dataline-area {
+  animation: dataline-fade 1s ease-out 0.9s both;
+}
+
+.dataline-dot {
+  animation: dataline-fade 0.5s ease-out 1.5s both;
+}
+
+@keyframes dataline-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dataline-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dataline-path,
+  .dataline-area,
+  .dataline-dot {
+    animation: none;
+  }
 }
 
 @keyframes accordion-down {
