@@ -71,7 +71,7 @@ const faqSchema = {
       name: "What platforms does Rybbit support?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "The script tag works anywhere you can add HTML — WordPress, Shopify, Next.js, React, Vue, and the rest. For apps, install @rybbit/js from npm.",
+        text: "The script tag works anywhere you can add HTML: WordPress, Shopify, Next.js, React, Vue, and the rest. For apps, install @rybbit/js from npm.",
       },
     },
     {
@@ -284,7 +284,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
               </h2>
               <p className="max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 {t(
-                  "Replay, funnels, goals, vitals, exports — everything Google Analytics made complicated, one click deeper."
+                  "Replay, funnels, goals, vitals, exports: everything Google Analytics made complicated, one click deeper."
                 )}
               </p>
             </div>
@@ -334,7 +334,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
                 </h2>
                 <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
                   {t(
-                    "A hosted MCP server on top of Rybbit's full REST API. Your agent reads live traffic, debugs errors, and manages goals — with the same permissions as a teammate."
+                    "A hosted MCP server on top of Rybbit's full REST API. Your agent reads live traffic, debugs errors, and manages goals, with the same permissions as a teammate."
                   )}
                 </p>
                 <div className="mt-10 max-w-sm">
@@ -425,7 +425,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
                     id="testimonials-title"
                     className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.04] tracking-[-0.035em] md:text-5xl text-balance"
                   >
-                    {t("Loved by users in the real world.")}
+                    {t("Real posts from people who switched.")}
                   </h2>
                 </div>
               </div>
@@ -475,7 +475,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
                   {t("Questions, answered plainly.")}
                 </h2>
                 <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                  {t("Everything you need to know before adding Rybbit to your site.")}
+                  {t("The questions people ask before adding Rybbit to their site.")}
                 </p>
               </div>
             </div>

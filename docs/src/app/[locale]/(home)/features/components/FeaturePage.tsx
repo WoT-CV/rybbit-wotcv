@@ -279,7 +279,7 @@ export function FeaturePage({
         title={ctaTitle || t("Ready for better analytics?")}
         description={
           ctaDescription ||
-          t("The full analytics surface on one dashboard — cookieless, open source, and live in minutes.")
+          t("The full analytics surface on one dashboard: cookieless, open source, and live in minutes.")
         }
         eventLocation={`feature_${featureName}_bottom_cta`}
       />

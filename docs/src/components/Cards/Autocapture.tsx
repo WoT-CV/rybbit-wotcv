@@ -123,7 +123,7 @@ export function Autocapture() {
     <Card
       title={t("Autocapture")}
       description={t(
-        "Clicks, form submits, copied text, outbound links, and errors — captured automatically, with zero instrumentation."
+        "Clicks, form submits, copied text, outbound links, and errors. All captured automatically, with zero instrumentation."
       )}
       icon={SquareDashedMousePointer}
     >

@@ -30,7 +30,7 @@ export function WebVitals() {
   return (
     <Card
       title={t("Web Vitals")}
-      description={t("Core Web Vitals from real visits — see where your pages feel slow by route, country, and device.")}
+      description={t("Core Web Vitals from real visits. See where your pages feel slow by route, country, and device.")}
       icon={Gauge}
     >
       <DemoFrame label="web-vitals" right={<span className="font-mono">p75 · 30d</span>}>

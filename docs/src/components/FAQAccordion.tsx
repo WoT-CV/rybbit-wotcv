@@ -29,7 +29,7 @@ export function FAQAccordion() {
               >
                 {t("demo site")}
               </Link>
-              {t(" — one dashboard, not 150+ reports to dig through.")}
+              {t(": one dashboard, not 150+ reports to dig through.")}
             </p>
           </AccordionContent>
         </AccordionItem>
@@ -42,7 +42,7 @@ export function FAQAccordion() {
             </p>
             <br />
             <p>
-              {t("We're not just a lightweight counter — every feature is built to be understandable without reading pages of documentation.")}
+              {t("Every feature, from replay to funnels, is built to be understandable without reading pages of documentation.")}
             </p>
           </AccordionContent>
         </AccordionItem>
@@ -89,7 +89,7 @@ export function FAQAccordion() {
         <AccordionItem value="item-7">
           <AccordionTrigger className="md:text-lg">{t("What platforms does Rybbit support?")}</AccordionTrigger>
           <AccordionContent>
-            {t("The script tag works anywhere you can add HTML — WordPress, Shopify, Next.js, React, Vue, and the rest. For apps, install @rybbit/js from npm. Our")}{" "}
+            {t("The script tag works anywhere you can add HTML: WordPress, Shopify, Next.js, React, Vue, and the rest. For apps, install @rybbit/js from npm. Our")}{" "}
             <Link
               href="/docs"
               className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300"

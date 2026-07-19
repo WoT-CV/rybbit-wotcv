@@ -15,7 +15,7 @@ export function ConsoleGreeting() {
     if (greeted) return;
     greeted = true;
     console.log(
-      "%c🐸 ribbit — you found the console.\n" +
+      "%c🐸 ribbit. you found the console.\n" +
         "%cThis page is tracked by Rybbit itself: no cookies, no fingerprinting, and every line of it is open source.\n" +
         "%chttps://github.com/rybbit-io/rybbit",
       "color:#10b981;font-size:14px;font-weight:600;line-height:2.2",

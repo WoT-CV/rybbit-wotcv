@@ -50,7 +50,7 @@ export function AgentConsole() {
         { name: "analyze_funnel", args: "/signup → /verify" },
       ],
       answer: t(
-        "Signups are down 14% since Tuesday's deploy. A new TypeError on /signup fires only in Safari — 312 sessions hit it, and it accounts for nearly all of the drop at the /signup → /verify step."
+        "Signups are down 14% since Tuesday's deploy. A new TypeError on /signup fires only in Safari. 312 sessions hit it, and it accounts for nearly all of the drop at the /signup → /verify step."
       ),
     },
     {
@@ -60,7 +60,7 @@ export function AgentConsole() {
         { name: "get_goals", args: "conversion stats" },
       ],
       answer: t(
-        "Done — “Checkout complete” is now tracked as a goal. It would have matched 89 conversions over the past 7 days, a 3.9% conversion rate."
+        "Done. “Checkout complete” is now tracked as a goal. It would have matched 89 conversions over the past 7 days, a 3.9% conversion rate."
       ),
     },
     {
@@ -70,7 +70,7 @@ export function AgentConsole() {
         { name: "run_query", args: "scoped_events" },
       ],
       answer: t(
-        "Three posts drive 61% of blog-sourced trials. The ClickHouse deep-dive converts 4.2× better than your median post — worth writing a follow-up."
+        "Three posts drive 61% of blog-sourced trials. The ClickHouse deep-dive converts 4.2× better than your median post. Worth writing a follow-up."
       ),
     },
   ];
