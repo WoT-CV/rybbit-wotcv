@@ -23,10 +23,14 @@ export const metadata = createMetadata({
     title: pageTitle,
     description: pageDescription,
     url: "https://rybbit.com/enterprise",
-    images: [createOGImageUrl("Rybbit for Enterprise", "Open-source analytics your security team can read.", "Solutions")],
+    images: [
+      createOGImageUrl("Rybbit for Enterprise", "Open-source analytics your security team can read.", "Solutions"),
+    ],
   },
   twitter: {
-    images: [createOGImageUrl("Rybbit for Enterprise", "Open-source analytics your security team can read.", "Solutions")],
+    images: [
+      createOGImageUrl("Rybbit for Enterprise", "Open-source analytics your security team can read.", "Solutions"),
+    ],
   },
 });
 
@@ -38,8 +42,7 @@ const faqItems = [
   },
   {
     question: "Does Rybbit support Single Sign-On?",
-    answer:
-      "Yes, SSO is included on the Enterprise plan. Contact us about your identity provider and setup.",
+    answer: "Yes, SSO is included on the Enterprise plan. Contact us about your identity provider and setup.",
   },
   {
     question: "How long is data retained?",
@@ -67,12 +70,12 @@ const faqItems = [
 const whiteSvgLogo = "opacity-40 invert dark:opacity-60 dark:invert-0";
 
 const enterpriseLogos = [
-  { src: "/logos/bosch.svg", alt: "Bosch", width: 120, className: whiteSvgLogo },
+  { src: "/logos/bosch.svg", alt: "bosch", width: 120, className: whiteSvgLogo },
+  { src: "/logos/texas-instruments.svg", alt: "Texas Instruments", width: 120, className: whiteSvgLogo },
   { src: "/logos/govuk-logo.svg", alt: "GOV.UK", width: 120, className: whiteSvgLogo },
   { src: "/logos/royalcaribbean.svg", alt: "Royal Caribbean", width: 120, className: whiteSvgLogo },
-  { src: "/logos/op.svg", alt: "OP.GG", width: 120, className: whiteSvgLogo },
-  { src: "/logos/ustwo.svg", alt: "ustwo", width: 100, className: whiteSvgLogo },
-  { src: "/logos/softr.svg", alt: "Softr", width: 100, className: whiteSvgLogo },
+  { src: "/logos/netapp.svg", alt: "NetApp", width: 120, className: whiteSvgLogo },
+  { src: "/logos/trafigura.svg", alt: "Trafigura", width: 120, className: whiteSvgLogo },
 ];
 
 const enterpriseFeatures = [
@@ -144,7 +147,10 @@ export default function EnterprisePage() {
         </div>
       </section>
 
-      <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby="enterprise-features-title">
+      <section
+        className="border-b border-neutral-200 dark:border-neutral-800"
+        aria-labelledby="enterprise-features-title"
+      >
         <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 border-x border-neutral-200 dark:border-neutral-800 lg:grid-cols-12">
           <GridCrosses />
           <div className="border-b border-neutral-200 px-5 py-12 dark:border-neutral-800 sm:px-8 lg:col-span-4 lg:border-b-0 lg:border-r lg:px-10 lg:py-16">
@@ -157,8 +163,8 @@ export default function EnterprisePage() {
                 Everything procurement will ask about.
               </h2>
               <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                Enterprise is everything in Pro — funnels, replays, unlimited websites and team members — plus the
-                layer large organizations actually negotiate over.
+                Enterprise is everything in Pro — funnels, replays, unlimited websites and team members — plus the layer
+                large organizations actually negotiate over.
               </p>
               <Link
                 href="/pricing"
@@ -211,8 +217,8 @@ export default function EnterprisePage() {
             </div>
             <div className="flex flex-col justify-center px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
-                Every line of Rybbit — including the cloud and enterprise code — is public on GitHub under AGPL v3.
-                Your security team reviews the actual data path, not a marketing diagram of it.
+                Every line of Rybbit — including the cloud and enterprise code — is public on GitHub under AGPL v3. Your
+                security team reviews the actual data path, not a marketing diagram of it.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
                 <a

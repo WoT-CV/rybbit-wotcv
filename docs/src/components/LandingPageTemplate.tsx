@@ -96,20 +96,21 @@ const whiteSvgLogo = "opacity-40 hover:opacity-70 invert dark:opacity-60 dark:ho
 
 const customerLogos = [
   { src: "/logos/bosch.svg", alt: "bosch", width: 120, className: whiteSvgLogo },
+  { src: "/logos/texas-instruments.svg", alt: "Texas Instruments", width: 120, className: whiteSvgLogo },
   { src: "/logos/govuk-logo.svg", alt: "GOV.UK", width: 120, className: whiteSvgLogo },
   { src: "/logos/royalcaribbean.svg", alt: "Royal Caribbean", width: 120, className: whiteSvgLogo },
-  // { src: "/logos/convex.svg", alt: "Convex", width: 120, className: whiteSvgLogo },
+  { src: "/logos/netapp.svg", alt: "NetApp", width: 120, className: whiteSvgLogo },
+  { src: "/logos/trafigura.svg", alt: "Trafigura", width: 120, className: whiteSvgLogo },
   { src: "/logos/op.svg", alt: "OP.GG", width: 120, className: whiteSvgLogo },
-  { src: "/logos/softr.svg", alt: "Softr", width: 100, className: whiteSvgLogo },
-  {
-    src: "/logos/onyx.webp",
-    alt: "Onyx",
-    width: 100,
-    href: "https://onyx.app",
-    className: "opacity-40 hover:opacity-70 dark:opacity-60 dark:hover:opacity-100 dark:invert",
-  },
-  { src: "/logos/ustwo.svg", alt: "ustwo", width: 100, className: whiteSvgLogo },
-  // { src: "/logos/dtelecom.svg", alt: "DTelecom", width: 120, className: whiteSvgLogo },
+  // { src: "/logos/softr.svg", alt: "Softr", width: 100, className: whiteSvgLogo },
+  // {
+  //   src: "/logos/onyx.webp",
+  //   alt: "Onyx",
+  //   width: 100,
+  //   href: "https://onyx.app",
+  //   className: "opacity-40 hover:opacity-70 dark:opacity-60 dark:hover:opacity-100 dark:invert",
+  // },
+  // { src: "/logos/ustwo.svg", alt: "ustwo", width: 100, className: whiteSvgLogo },
   {
     src: "/logos/automatio.webp",
     alt: "Automatio",
