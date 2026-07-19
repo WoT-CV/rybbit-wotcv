@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const pageTitle = "Rybbit for Creators & Publishers | Know What Resonates";
 const pageDescription =
-  "See which posts land, where readers come from, and which searches bring them in — without putting cookies or a consent banner on your audience. Share your dashboard publicly if you build in public.";
+  "See which posts land, where readers come from, and which searches bring them in. No cookies, no consent banner on your audience. Share your dashboard publicly if you build in public.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -38,12 +38,12 @@ const faqItems = [
   {
     question: "Will analytics slow my site down?",
     answer:
-      "The script loads async, so it doesn't block your pages from rendering. Rybbit also measures web vitals from real visits, so you can see your site's actual speed instead of guessing.",
+      "The script loads async, so it doesn't block your pages from rendering. Rybbit also measures web vitals from real visits: your site's actual speed, not a guess.",
   },
   {
     question: "Can I share my stats publicly?",
     answer:
-      "Yes. Any dashboard can be made fully public or shared with a secret link — useful if you build in public, or if a sponsor asks for your numbers.",
+      "Yes. Any dashboard can be made fully public or shared with a secret link, useful if you build in public or if a sponsor asks for your numbers.",
   },
   {
     question: "Does Rybbit work with my platform?",
@@ -58,7 +58,7 @@ const faqItems = [
   {
     question: "What does it cost for a personal site?",
     answer:
-      "Standard starts at $13/month billed annually for 100K pageviews, with a 7-day free trial. Rybbit is also open source — self-hosting on your own server is free.",
+      "Standard starts at $13/month billed annually for 100K pageviews, with a 7-day free trial. Rybbit is also open source: self-hosting on your own server is free.",
   },
 ];
 
@@ -81,7 +81,7 @@ export default function ForCreatorsPage() {
       <InteriorPageHero
         eyebrow="Rybbit for creators & publishers"
         title="Know what resonates. Skip the surveillance."
-        description="See which posts land, where readers come from, and which searches bring them in — without putting cookies, fingerprinting, or a consent banner on the people who read you."
+        description="See which posts land, where readers come from, and which searches bring them in. No cookies, no fingerprinting, no consent banner on the people who read you."
         eventLocation="for_creators_hero"
       />
 
@@ -107,7 +107,7 @@ export default function ForCreatorsPage() {
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
                 Free analytics is paid for with your audience's data. Rybbit's answer is structural: no cookies, no
-                personal data, daily-salted IDs that can't fingerprint anyone — and a subscription instead of an ad
+                personal data, daily-salted IDs that can't fingerprint anyone, and a subscription instead of an ad
                 machine behind the numbers.
               </p>
             </div>
@@ -122,7 +122,7 @@ export default function ForCreatorsPage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-7 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Which posts actually land</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                Top pages in realtime, so on publish day you watch a post find its readers — and over months you learn
+                Top pages in realtime, so on publish day you watch a post find its readers. Over months, you learn
                 which topics deserve the sequel.
               </p>
               <ul className="mt-6 max-w-lg divide-y divide-neutral-200 rounded-md border border-neutral-200 text-sm dark:divide-neutral-800 dark:border-neutral-800">
@@ -138,7 +138,7 @@ export default function ForCreatorsPage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-5 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Where readers come from</h3>
               <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                Referrers and UTM tags separate the newsletter from the socials from the search traffic — so you know
+                Referrers and UTM tags separate the newsletter from the socials from the search traffic, so you know
                 which channel is worth the effort.
               </p>
               <ul className="mt-6 max-w-sm space-y-2 text-sm">
@@ -155,7 +155,7 @@ export default function ForCreatorsPage() {
               <h3 className="text-lg font-semibold tracking-tight">The searches that find you</h3>
               <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Connect Google Search Console and see the queries that bring searchers in, next to the rest of your
-                traffic — no second tab, no export.
+                traffic. No second tab, no export.
               </p>
             </article>
 
@@ -163,7 +163,7 @@ export default function ForCreatorsPage() {
               <h3 className="text-lg font-semibold tracking-tight">Goals for the numbers that pay</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Set a goal on newsletter signups or a product page, and see which posts convert readers into
-                subscribers — the difference between traffic and an audience.
+                subscribers. That&apos;s the difference between traffic and an audience.
               </p>
               <Link
                 href="/features/goals"
@@ -204,7 +204,7 @@ export default function ForCreatorsPage() {
               </span>
             </div>
             <p className="mt-4 max-w-sm text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-              Public, secret-link, or private — per dashboard, switchable any time.
+              Public, secret-link, or private. Per dashboard, switchable any time.
             </p>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function ForCreatorsPage() {
 
       <CTASection
         title="Publish. Then watch it land."
-        description="Top pages, reader sources, and search queries — on analytics your audience never has to click 'accept' for."
+        description="Top pages, reader sources, and search queries, on analytics your audience never has to click 'accept' for."
         eventLocation="for_creators_bottom_cta"
       />
     </div>

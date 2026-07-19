@@ -35,7 +35,7 @@ const faqItems = [
   {
     question: "Can my clients see their dashboard without a Rybbit account?",
     answer:
-      "Yes. Share any dashboard with a secret link or make it fully public. People with the link see that site's dashboard and nothing else — no account required.",
+      "Yes. Share any dashboard with a secret link or make it fully public. People with the link see that site's dashboard and nothing else. No account required.",
   },
   {
     question: "Can a client accidentally see another client's numbers?",
@@ -50,12 +50,12 @@ const faqItems = [
   {
     question: "Can I import a client's analytics history?",
     answer:
-      "Yes. Rybbit imports historical data from Plausible, Umami, and Simple Analytics — up to 36 months on Standard and 60 months on Pro, with no limits when self-hosting. Clients switching to you don't lose their history.",
+      "Yes. Rybbit imports historical data from Plausible, Umami, and Simple Analytics: up to 36 months on Standard and 60 months on Pro, with no limits when self-hosting. Clients switching to you don't lose their history.",
   },
   {
     question: "Can I give a client or teammate limited access?",
     answer:
-      "Yes. Organizations support owner, admin, and member roles. Members can be limited to specific sites, and teams let you group sites — for example, one team per client — so access follows the roster automatically.",
+      "Yes. Organizations support owner, admin, and member roles. Members can be limited to specific sites, and teams let you group sites (one team per client, for example) so access follows the roster automatically.",
   },
   {
     question: "Can clients change settings or break anything?",
@@ -75,7 +75,7 @@ const faqItems = [
   {
     question: "Can I white-label Rybbit for my clients?",
     answer:
-      "You can embed read-only dashboards in your own portal on any plan, and full white-labeling — rebranding, custom domain, dedicated instance — is available on Enterprise. See the white-label page for the full range.",
+      "You can embed read-only dashboards in your own portal on any plan, and full white-labeling (rebranding, custom domain, dedicated instance) is available on Enterprise. See the white-label page for the full range.",
   },
   {
     question: "What happens if a client wants to take over their analytics?",
@@ -111,7 +111,7 @@ const onboardingSteps = [
   {
     step: "03",
     title: "Set the access",
-    body: "Invite the client as a member scoped to their site — or skip accounts entirely and send a share link.",
+    body: "Invite the client as a member scoped to their site, or skip accounts entirely and send a share link.",
   },
   {
     step: "04",
@@ -145,7 +145,7 @@ const depthRows = [
   {
     href: "/features/web-vitals",
     title: "Web vitals",
-    fact: "Prove the site you shipped is fast — and catch regressions after every release",
+    fact: "Prove the site you shipped is fast, and catch regressions after every release",
   },
   {
     href: "/features/user-journeys",
@@ -176,7 +176,7 @@ export default function ForAgenciesPage() {
         <InteriorPageHero
           eyebrow="Rybbit for agencies"
           title="Client reporting without the training call."
-          description="Run every client site from one workspace. Hand clients a dashboard they can read in thirty seconds — no GA4 walkthroughs, no cookie-banner liability on their sites, no per-site fees eating your margin."
+          description="Run every client site from one workspace. Hand clients a dashboard they can read in thirty seconds: no GA4 walkthroughs, no cookie-banner liability on their sites, no per-site fees eating your margin."
           eventLocation="for_agencies_hero"
         />
 
@@ -230,7 +230,7 @@ export default function ForAgenciesPage() {
             <div className="border-t border-neutral-200 px-5 py-10 dark:border-neutral-800 sm:px-8 lg:px-10">
               <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
                 <p className="max-w-lg text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                  The hidden cost of GA4 on a client roster isn&apos;t the price — it&apos;s the explaining. Every
+                  The hidden cost of GA4 on a client roster is the explaining, not the price. Every
                   report needs a translation layer, every dashboard needs a walkthrough, and every walkthrough is
                   unbilled time. An analytics tool a client can read on their own takes the walkthrough off the
                   calendar.
@@ -238,7 +238,7 @@ export default function ForAgenciesPage() {
                 <p className="max-w-lg text-base leading-7 text-neutral-600 dark:text-neutral-400">
                   There&apos;s a compliance angle too. Every GA-instrumented site you hand over ships with a cookie
                   banner and a consent-declined blind spot in its numbers. Rybbit is cookieless, so the sites you
-                  build need neither — and the traffic you report is the traffic that actually happened.{" "}
+                  build need neither, and the traffic you report is the traffic that actually happened.{" "}
                   <Link
                     href="/compare/google-analytics"
                     className="font-medium text-emerald-700 transition-colors duration-200 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
@@ -277,7 +277,7 @@ export default function ForAgenciesPage() {
               <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
                 <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
                   Onboarding a client onto analytics shouldn&apos;t be a project with a kickoff meeting. This is the
-                  whole workflow — most of it is done before the coffee goes cold.
+                  whole workflow. Most of it is done before the coffee goes cold.
                 </p>
               </div>
             </div>
@@ -326,8 +326,8 @@ export default function ForAgenciesPage() {
               <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-5 lg:px-10">
                 <h3 className="text-lg font-semibold tracking-tight">One team per client</h3>
                 <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                  Teams group sites and the people responsible for them. Set up a team per client — or per retainer
-                  tier — and access follows the roster instead of being managed site by site.
+                  Teams group sites and the people responsible for them. Set up a team per client, or per retainer
+                  tier, and access follows the roster instead of being managed site by site.
                 </p>
                 <ul className="mt-6 max-w-sm divide-y divide-neutral-200 rounded-md border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
                   {teamRows.map(row => (
@@ -361,7 +361,7 @@ export default function ForAgenciesPage() {
               <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-7 lg:px-10">
                 <h3 className="text-lg font-semibold tracking-tight">Share a dashboard, not a login</h3>
                 <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                  Any dashboard can be shared with a secret link or made fully public — and read-only dashboards can be
+                  Any dashboard can be shared with a secret link or made fully public, and read-only dashboards can be
                   embedded straight into your own client portal. Clients see their site&apos;s numbers without creating
                   an account, and never anyone else&apos;s.{" "}
                   <Link
@@ -390,7 +390,7 @@ export default function ForAgenciesPage() {
                   <Mail aria-hidden="true" className="size-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
                   <div className="min-w-0 text-xs leading-5">
                     <p className="truncate font-medium text-neutral-700 dark:text-neutral-300">
-                      Weekly report — acme-cycles.com
+                      Weekly report: acme-cycles.com
                     </p>
                     <p className="text-neutral-500 dark:text-neutral-400">Arrives Monday, 9:00</p>
                   </div>
@@ -401,7 +401,7 @@ export default function ForAgenciesPage() {
                 <h3 className="text-lg font-semibold tracking-tight">No cookie banner on any client site</h3>
                 <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                   Rybbit is cookieless and compliant with GDPR and CCPA out of the box, so the sites you build
-                  don&apos;t need a consent banner for analytics. One less awkward conversation per launch — and no
+                  don&apos;t need a consent banner for analytics. One less awkward conversation per launch, and no
                   consent-declined gap in the numbers you report.
                 </p>
                 <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
@@ -477,10 +477,10 @@ export default function ForAgenciesPage() {
                   .
                 </p>
                 <p className="max-w-lg text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                  Moving clients off Google Analytics? GA4 history can&apos;t be imported — no tool maps its event
-                  model honestly — so those clients start fresh with numbers they can finally read. The comparison
-                  pages cover how the metrics line up, so you can answer &ldquo;why don&apos;t these match GA?&rdquo;
-                  before it&apos;s asked:{" "}
+                  Moving clients off Google Analytics? GA4 history can&apos;t be imported (no tool maps its event
+                  model honestly), so those clients start fresh with numbers they can finally read. The comparison
+                  pages cover how the metrics line up, and answer &ldquo;why don&apos;t these match GA?&rdquo;
+                  before a client asks:{" "}
                   <Link
                     href="/compare/google-analytics"
                     className="font-medium text-emerald-700 transition-colors duration-200 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
@@ -530,7 +530,7 @@ export default function ForAgenciesPage() {
               <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
                 <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
                   Simple to read doesn&apos;t mean shallow. The same script that counts visitors powers the tools that
-                  justify a retainer — one layer down, never in the way.
+                  justify a retainer: one layer down, never in the way.
                 </p>
               </div>
             </div>
@@ -577,7 +577,7 @@ export default function ForAgenciesPage() {
               <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
                 <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
                   No per-site packs, no per-seat surprises. One subscription covers the whole roster, priced by
-                  traffic — and referrals pay 50% through the affiliate program.
+                  traffic. Referrals pay 50% through the affiliate program.
                 </p>
               </div>
             </div>
@@ -641,7 +641,7 @@ export default function ForAgenciesPage() {
               <p className="mt-6 max-w-xl text-base leading-7 text-neutral-600 dark:text-neutral-400">
                 Rybbit is 100% open source under AGPL v3. If you or a client ever want out of the cloud, self-host the
                 exact same product and keep the workflow. With full API access and data export, the numbers were never
-                locked in to begin with — which is an easier pitch to put in front of a client than a contract.
+                locked in to begin with. That&apos;s an easier pitch to put in front of a client than a contract.
               </p>
             </div>
             <div className="flex flex-col justify-center gap-4 px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">

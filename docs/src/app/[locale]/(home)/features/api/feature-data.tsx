@@ -43,19 +43,19 @@ export const capabilities: FeatureCapability[] = [
     icon: <Database className="w-5 h-5" />,
     title: "Raw data access",
     description:
-      "Pull raw events and sessions — newest first, filterable, paginated — to sync your analytics into a warehouse or join it with your product data.",
+      "Pull raw events and sessions (newest first, filterable, paginated) to sync your analytics into a warehouse or join it with your product data.",
   },
   {
     icon: <KeyRound className="w-5 h-5" />,
     title: "Organization & personal keys",
     description:
-      "Organization keys access every site in the org and survive team changes — built for integrations. Personal keys act as you. Both can be restricted to specific permissions and revoked anytime.",
+      "Organization keys access every site in the org and survive team changes, which makes them the right choice for integrations. Personal keys have exactly your access. Both can be restricted to specific permissions and revoked anytime.",
   },
   {
     icon: <Settings className="w-5 h-5" />,
     title: "Full management surface",
     description:
-      "Create sites, invite members, manage teams, define goals and funnels, and run data imports programmatically — automate provisioning end to end.",
+      "Create sites, invite members, manage teams, define goals and funnels, and run data imports programmatically. You can automate provisioning end to end.",
   },
 ];
 
@@ -82,7 +82,7 @@ export const howItWorks: HowItWorksStep[] = [
     step: 4,
     title: "Ship it",
     description:
-      "Scheduled reports, internal dashboards, warehouse syncs, user-facing stats in your own product — anything that can make an HTTP request can build on your analytics.",
+      "Scheduled reports, internal dashboards, warehouse syncs, user-facing stats in your own product: anything that can make an HTTP request can build on your analytics.",
   },
 ];
 
@@ -91,7 +91,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Code className="w-6 h-6" />,
     title: "Product engineers",
     description:
-      "Surface analytics inside your own product — show creators their post views or customers their campaign stats, powered by live Rybbit data.",
+      "Surface analytics inside your own product: show creators their post views or customers their campaign stats, powered by live Rybbit data.",
   },
   {
     icon: <Database className="w-6 h-6" />,
@@ -109,7 +109,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Smartphone className="w-6 h-6" />,
     title: "Backend & mobile developers",
     description:
-      "Track events where a script tag can't run — server-rendered flows, mobile apps, payment webhooks, CLI tools.",
+      "Track events where a script tag can't run: server-rendered flows, mobile apps, payment webhooks, CLI tools.",
   },
   {
     icon: <Rocket className="w-6 h-6" />,
@@ -129,17 +129,17 @@ export const faqItems: FAQItem[] = [
   {
     question: "How is the API different from the MCP server?",
     answer:
-      "Same data, different consumer. The REST API is for code — apps, pipelines, scheduled jobs, product features. The MCP server wraps the same access in tools an AI assistant can call. Build integrations on the API; connect Claude or Cursor through MCP.",
+      "Same data, different consumer. The REST API is for code: apps, pipelines, scheduled jobs, product features. The MCP server wraps the same access in tools an AI assistant can call. Build integrations on the API; connect Claude or Cursor through MCP.",
   },
   {
-    question: "Can I send events through the API, not just read data?",
+    question: "Can I send events through the API as well as read data?",
     answer:
       "Yes. The track endpoint accepts pageviews, custom events, outbound clicks, errors, and performance data from any platform. Sending with an API key marks the traffic as trusted server-side ingestion, bypassing bot detection and domain validation.",
   },
   {
     question: "Should I use an organization key or a personal key?",
     answer:
-      "Organization keys are recommended for integrations: they cover every site in the organization and keep working when team members leave. Personal keys act as you, with exactly your access — best for personal scripts. Both support permission restrictions.",
+      "Organization keys are recommended for integrations: they cover every site in the organization and keep working when team members leave. Personal keys carry exactly your access, which suits personal scripts. Both support permission restrictions.",
   },
   {
     question: "What are the rate limits?",
@@ -154,7 +154,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "Can I explore the API without writing code?",
     answer:
-      "Yes — the API Playground in your dashboard lets you browse endpoints, adjust parameters with visual controls, and see live responses from your own site before you write a single line.",
+      "Yes. The API Playground in your dashboard lets you browse endpoints, adjust parameters with visual controls, and see live responses from your own site before you write a single line.",
   },
 ];
 
@@ -182,7 +182,7 @@ export const relatedFeatures: RelatedFeature[] = [
   {
     title: "Bot Detection",
     href: "/features/bot-detection",
-    description: "API-key ingestion is trusted — your server events are never filtered.",
+    description: "API-key ingestion is trusted, so your server events are never filtered.",
   },
   {
     title: "Dashboard Sharing",

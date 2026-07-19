@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const pageTitle = "Web Analytics for Small Businesses | Rybbit";
 const pageDescription =
-  "The handful of numbers your business actually needs — visitors, sources, top pages, and goals — on one screen you can read in thirty seconds. No GA4 setup, no cookie banner, and a free trial to start.";
+  "The handful of numbers your business actually needs (visitors, sources, top pages, and goals) on one screen you can read in thirty seconds. No GA4 setup, no cookie banner, and a free trial to start.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -62,17 +62,17 @@ const faqItems = [
   {
     question: "Will I actually understand the dashboard?",
     answer:
-      "That's the whole idea. Rybbit shows visitors, where they came from, your top pages, and your goals on a single screen you can read at a glance — no analyst and no GA4 walkthrough needed.",
+      "That's the whole idea. Rybbit shows visitors, where they came from, your top pages, and your goals on a single screen you can read at a glance. No analyst and no GA4 walkthrough needed.",
   },
   {
     question: "Can I track sales, bookings, or signups?",
     answer:
-      "Yes. Set up goals and custom events to see how many people bought, booked, or signed up, and which sources actually drive them — without a complex tagging setup.",
+      "Yes. Set up goals and custom events to see how many people bought, booked, or signed up, and which sources actually drive them. No complex tagging setup needed.",
   },
   {
     question: "What happens when my site grows?",
     answer:
-      "You move up a plan when you're ready. Standard covers up to 5 websites and 3 team members and is priced by traffic, and Pro removes the limits — same simple dashboard the whole way up.",
+      "You move up a plan when you're ready. Standard covers up to 5 websites and 3 team members and is priced by traffic, and Pro removes the limits. Same simple dashboard the whole way up.",
   },
 ];
 
@@ -96,7 +96,7 @@ export default function ForSmallBusinessPage() {
       <InteriorPageHero
         eyebrow="Rybbit for small businesses"
         title="The numbers your business needs. Nothing you don't."
-        description="You don't need a data team to know if your website is working. Rybbit puts visitors, sources, top pages, and goals on one screen you can read in thirty seconds — no GA4 maze, no cookie banner, and a free trial to start."
+        description="You don't need a data team to know if your website is working. Rybbit puts visitors, sources, top pages, and goals on one screen you can read in thirty seconds. No GA4 maze, no cookie banner, and a free trial to start."
         eventLocation="for_small_business_hero"
       />
 
@@ -121,8 +121,8 @@ export default function ForSmallBusinessPage() {
             </div>
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
-                GA4 was built for analysts with time to configure it. When you run the business, you have one question —
-                is the website bringing people in? — and no interest in learning a reporting tool to answer it. Rybbit
+                GA4 was built for analysts with time to configure it. When you run the business, you have one question
+                (is the website bringing people in?) and no interest in learning a reporting tool to answer it. Rybbit
                 answers it on the first screen.
               </p>
             </div>
@@ -138,7 +138,7 @@ export default function ForSmallBusinessPage() {
               <h3 className="text-lg font-semibold tracking-tight">The four numbers that matter</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Visitors, where they came from, what they looked at, and whether they did the thing you care about.
-                That&apos;s the dashboard — no report-building, no forty tabs to get lost in.
+                That&apos;s the dashboard: no report-building, no forty tabs to get lost in.
               </p>
               <ul className="mt-6 max-w-md divide-y divide-neutral-200 rounded-md border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
                 {numberRows.map(row => (
@@ -177,7 +177,7 @@ export default function ForSmallBusinessPage() {
               </h3>
               <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Rybbit is cookieless and GDPR- and CCPA-compliant out of the box, so your site doesn&apos;t need a
-                consent pop-up — and you don&apos;t lose visitors who decline one.
+                consent pop-up, and you don&apos;t lose visitors who decline one.
               </p>
               <Link
                 href="/privacy"
@@ -198,7 +198,7 @@ export default function ForSmallBusinessPage() {
               </h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Run a promotion, post to social, or send a newsletter and watch visitors arrive live. It&apos;s the
-                fastest way to know a campaign landed — without waiting a day for a report to catch up.
+                fastest way to know a campaign landed, without waiting a day for a report to catch up.
               </p>
               <div className="mt-6 inline-flex items-center gap-2.5 rounded-md border border-neutral-200 px-3.5 py-2.5 text-sm dark:border-neutral-800">
                 <span aria-hidden="true" className="relative flex size-2">
@@ -236,7 +236,7 @@ export default function ForSmallBusinessPage() {
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
                 No enterprise sales call, no per-seat surprises. Every plan starts with a 7-day free trial, and
-                pricing scales by traffic — so you only pay more once your site is actually busier.
+                pricing scales by traffic. You only pay more once your site is actually busier.
               </p>
             </div>
           </div>
@@ -272,8 +272,8 @@ export default function ForSmallBusinessPage() {
               No analyst required.
             </h2>
             <p className="mt-6 max-w-xl text-base leading-7 text-neutral-600 dark:text-neutral-400">
-              Rybbit is built so the owner of the business can read it, not just a marketing hire. And because it&apos;s
-              open source with data export on every plan, the numbers are yours — nothing is locked away behind a tool
+              Rybbit is built so the owner of the business can read it, no marketing hire needed. And because it&apos;s
+              open source with data export on every plan, the numbers are yours. Nothing is locked away behind a tool
               you&apos;d have to pay an expert to operate.
             </p>
           </div>
@@ -308,7 +308,7 @@ export default function ForSmallBusinessPage() {
       <PersonaCrossLinks current="for-small-business" />
 
       <CTASection
-        title="Know if your website is working — in thirty seconds."
+        title="Know if your website is working in thirty seconds."
         description="A 7-day free trial, no cookie banner, and a dashboard you'll actually open."
         eventLocation="for_small_business_bottom_cta"
       />

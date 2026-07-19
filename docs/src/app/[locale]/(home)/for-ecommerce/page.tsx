@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const pageTitle = "Rybbit for Ecommerce | See Every Step From Ad Click to Checkout";
 const pageDescription =
-  "Checkout funnels, campaign tracking, and custom events with properties — cookieless, so there's no consent banner between a visitor and your store and no consent gap in your numbers.";
+  "Checkout funnels, campaign tracking, and custom events with properties. Cookieless, so there's no consent banner between a visitor and your store and no consent gap in your numbers.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -43,17 +43,17 @@ const faqItems = [
   {
     question: "Does Rybbit have a revenue report?",
     answer:
-      "Not a dedicated one yet. Purchases and order values live in custom events and funnels today, so you can see which sources and campaigns convert — but there's no revenue-attribution dashboard.",
+      "Not a dedicated one yet. Purchases and order values live in custom events and funnels today: you can see which sources and campaigns convert, but there's no revenue-attribution dashboard.",
   },
   {
     question: "Why do my current analytics undercount my traffic?",
     answer:
-      "Consent banners and ad blockers stop cookie-based analytics from seeing a large share of visitors. Rybbit doesn't use cookies or collect personal data, so it isn't gated behind a consent choice — you see the whole audience.",
+      "Consent banners and ad blockers stop cookie-based analytics from seeing a large share of visitors. Rybbit doesn't use cookies or collect personal data, so it isn't gated behind a consent choice. You see the whole audience.",
   },
   {
     question: "Will the tracking script slow my store down?",
     answer:
-      "The script loads async, so it doesn't block your pages from rendering. Rybbit also measures web vitals from real visits, so you can watch your store's speed by page and device.",
+      "The script loads async, so it doesn't block your pages from rendering. Rybbit also measures web vitals from real visits and shows your store's speed by page and device.",
   },
   {
     question: "Do I need a cookie consent banner for Rybbit?",
@@ -81,7 +81,7 @@ export default function ForEcommercePage() {
       <InteriorPageHero
         eyebrow="Rybbit for ecommerce"
         title="See every step between ad click and checkout."
-        description="Campaign tracking, checkout funnels, and custom events with order properties — cookieless, so there's no consent banner between a visitor and your store, and no consent gap in your numbers."
+        description="Campaign tracking, checkout funnels, and custom events with order properties. Cookieless, so there's no consent banner between a visitor and your store, and no consent gap in your numbers."
         eventLocation="for_ecommerce_hero"
       />
 
@@ -107,7 +107,7 @@ export default function ForEcommercePage() {
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
                 Cookie-based analytics only measures shoppers who click accept, so campaign numbers drift further from
-                reality as consent rates fall. Rybbit doesn&apos;t sit behind that choice — the campaign you&apos;re
+                reality as consent rates fall. Rybbit doesn&apos;t sit behind that choice. The campaign you&apos;re
                 judging gets judged on all of its traffic.
               </p>
             </div>
@@ -173,8 +173,8 @@ export default function ForEcommercePage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-7 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Judge campaigns on conversions, not clicks</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                UTM parameters work out of the box, so every source, campaign, and creative gets its own line — with
-                conversion rates from your goals, not just visit counts.
+                UTM parameters work out of the box, so every source, campaign, and creative gets its own line, with
+                visit counts and conversion rates from your goals.
               </p>
               <ul className="mt-6 max-w-lg divide-y divide-neutral-200 rounded-md border border-neutral-200 text-sm dark:divide-neutral-800 dark:border-neutral-800">
                 {campaignRows.map(row => (
@@ -195,7 +195,7 @@ export default function ForEcommercePage() {
               <h3 className="text-lg font-semibold tracking-tight">Events that carry the order</h3>
               <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Track add-to-cart, checkout steps, and purchases as custom events with properties like SKU and order
-                value — then build goals and funnels on exactly those moments.
+                value, then build goals and funnels on exactly those moments.
               </p>
               <Link
                 href="/features/custom-events"
@@ -212,16 +212,16 @@ export default function ForEcommercePage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-5 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Launch-drop realtime</h3>
               <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                When the drop goes live, watch traffic, sources, and purchases move in realtime — and let bot
-                blocking keep the scrapers out of your conversion math.
+                When the drop goes live, watch traffic, sources, and purchases move in realtime. Bot blocking keeps
+                the scrapers out of your conversion math.
               </p>
             </article>
 
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-7 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">A slow store is a silent discount</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                Web vitals from real shopper visits show which pages feel slow, by route, country, and device — so
-                you fix the product page that's quietly costing conversions instead of guessing.
+                Web vitals from real shopper visits show which pages feel slow, by route, country, and device. You
+                fix the product page that's quietly costing conversions instead of guessing.
               </p>
               <Link
                 href="/features/web-vitals"
@@ -242,8 +242,8 @@ export default function ForEcommercePage() {
       <PersonaCrossLinks current="for-ecommerce" />
 
       <CTASection
-        title="Know which campaigns sell, not just which ones click."
-        description="Checkout funnels, campaign conversion, and full traffic — with no consent banner in the way."
+        title="Know which campaigns sell, and which only get clicked."
+        description="Checkout funnels, campaign conversion, and full traffic, with no consent banner in the way."
         eventLocation="for_ecommerce_bottom_cta"
       />
     </div>

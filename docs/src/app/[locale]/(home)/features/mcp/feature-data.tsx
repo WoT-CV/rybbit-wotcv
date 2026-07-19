@@ -25,7 +25,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Plug className="w-5 h-5" />,
     title: "Works with your AI tools",
     description:
-      "Claude Code, Claude Desktop, Cursor, Codex, VS Code, opencode — any MCP client that speaks Streamable HTTP connects to the hosted endpoint in minutes.",
+      "Claude Code, Claude Desktop, Cursor, Codex, VS Code, opencode: any MCP client that speaks Streamable HTTP connects to the hosted endpoint in minutes.",
   },
   {
     icon: <BarChart3 className="w-5 h-5" />,
@@ -37,11 +37,11 @@ export const capabilities: FeatureCapability[] = [
     icon: <Database className="w-5 h-5" />,
     title: "Read-only SQL",
     description:
-      "Let your assistant write ClickHouse SQL against a site-scoped events table — with a schema tool, row limits, and execution-time caps. Ad-hoc questions without a BI tool.",
+      "Let your assistant write ClickHouse SQL against a site-scoped events table, with a schema tool, row limits, and execution-time caps. Ad-hoc questions without a BI tool.",
   },
   {
     icon: <Settings className="w-5 h-5" />,
-    title: "Manage, not just read",
+    title: "Manage as well as read",
     description:
       "39 tools mirror the dashboard: create goals, save funnels, configure sites, identify users and update traits, and manage organization members and teams.",
   },
@@ -49,7 +49,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <KeyRound className="w-5 h-5" />,
     title: "OAuth or scoped API keys",
     description:
-      "Log in with OAuth in supporting clients, or create a revocable API key per integration — optionally scoped to exactly the permissions an agent needs, like analytics read-only.",
+      "Log in with OAuth in supporting clients, or create a revocable API key per integration, optionally scoped to exactly the permissions an agent needs, like analytics read-only.",
   },
   {
     icon: <ShieldCheck className="w-5 h-5" />,
@@ -64,19 +64,19 @@ export const howItWorks: HowItWorksStep[] = [
     step: 1,
     title: "Add the endpoint",
     description:
-      "Point your MCP client at https://app.rybbit.io/api/mcp — or your own domain if you self-host. Per-client walkthroughs cover Claude Code, Cursor, Codex, Claude Desktop, VS Code, and opencode.",
+      "Point your MCP client at https://app.rybbit.io/api/mcp (or your own domain if you self-host). Per-client walkthroughs cover Claude Code, Cursor, Codex, Claude Desktop, VS Code, and opencode.",
   },
   {
     step: 2,
     title: "Authenticate",
     description:
-      "OAuth-capable clients open a browser login and you approve access. Everywhere else, create an API key in your account settings — scoped, if you want the agent limited to specific permissions.",
+      "OAuth-capable clients open a browser login and you approve access. Everywhere else, create an API key in your account settings, scoped if you want the agent limited to specific permissions.",
   },
   {
     step: 3,
     title: "Start with context",
     description:
-      "The assistant calls list_sites to discover your organizations, sites, and its role in each — everything the other tools need.",
+      "The assistant calls list_sites to discover your organizations, sites, and its role in each: everything the other tools need.",
   },
   {
     step: 4,
@@ -91,7 +91,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Terminal className="w-6 h-6" />,
     title: "Developers & coding agents",
     description:
-      "Check whether the error you just fixed still occurs in production, or look up which pages actually matter before a refactor — without leaving the editor.",
+      "Check whether the error you just fixed still occurs in production, or look up which pages actually matter before a refactor, without leaving the editor.",
   },
   {
     icon: <Rocket className="w-6 h-6" />,
@@ -103,7 +103,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Megaphone className="w-6 h-6" />,
     title: "Marketing teams",
     description:
-      "Compare campaigns, break down UTM performance, and draft reports by asking — no query builder, no CSV exports.",
+      "Compare campaigns, break down UTM performance, and draft reports by asking. No query builder, no CSV exports.",
   },
   {
     icon: <Database className="w-6 h-6" />,
@@ -121,7 +121,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Bot className="w-6 h-6" />,
     title: "Automation builders",
     description:
-      "Agents can create goals, save funnels, and manage sites, members, and teams — the write tools mirror what the dashboard can do.",
+      "Agents can create goals, save funnels, and manage sites, members, and teams. The write tools mirror what the dashboard can do.",
   },
 ];
 
@@ -134,12 +134,12 @@ export const faqItems: FAQItem[] = [
   {
     question: "Is my analytics data sent to an AI provider?",
     answer:
-      "Not by Rybbit. The server contains no AI model and never sends your data to one — data only leaves Rybbit in response to the MCP client you configure. Which model sees it is entirely determined by the client you connect.",
+      "Not by Rybbit. The server contains no AI model and never sends your data to one. Data only leaves Rybbit in response to the MCP client you configure, so which model sees it is entirely determined by the client you connect.",
   },
   {
     question: "Can I make the connection read-only?",
     answer:
-      "Yes. Create an API key scoped to read permissions (or request read scopes via OAuth) and the tool list shrinks to match — any out-of-scope call is refused with a clear error naming the missing scope.",
+      "Yes. Create an API key scoped to read permissions (or request read scopes via OAuth) and the tool list shrinks to match. Any out-of-scope call is refused with a clear error naming the missing scope.",
   },
   {
     question: "Can an AI assistant delete my data?",
@@ -154,7 +154,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "Does it work on self-hosted Rybbit?",
     answer:
-      "Yes. The MCP endpoint ships with self-hosted installations too — same tools, same permission model, under your own domain.",
+      "Yes. The MCP endpoint ships with self-hosted installations too: same tools, same permission model, under your own domain.",
   },
 ];
 
@@ -177,7 +177,7 @@ export const relatedFeatures: RelatedFeature[] = [
   {
     title: "Funnels",
     href: "/features/funnels",
-    description: "Compute ad-hoc funnels or save them — via a tool call.",
+    description: "Compute ad-hoc funnels or save them, all via a tool call.",
   },
   {
     title: "User Profiles",
@@ -187,7 +187,7 @@ export const relatedFeatures: RelatedFeature[] = [
   {
     title: "Analytics API",
     href: "/features/api",
-    description: "The same access as plain REST — for code instead of assistants.",
+    description: "The same access as plain REST, for code instead of assistants.",
   },
   {
     title: "Dashboard Sharing",

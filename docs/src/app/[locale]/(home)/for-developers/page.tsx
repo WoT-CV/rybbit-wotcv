@@ -25,10 +25,10 @@ export const metadata = createMetadata({
     title: pageTitle,
     description: pageDescription,
     url: "https://rybbit.com/for-developers",
-    images: [createOGImageUrl("Rybbit for Developers", "Script tag, SDK, REST API, MCP server, and self-hosting — all open source.", "Solutions")],
+    images: [createOGImageUrl("Rybbit for Developers", "Script tag, SDK, REST API, MCP server, and self-hosting. All open source.", "Solutions")],
   },
   twitter: {
-    images: [createOGImageUrl("Rybbit for Developers", "Script tag, SDK, REST API, MCP server, and self-hosting — all open source.", "Solutions")],
+    images: [createOGImageUrl("Rybbit for Developers", "Script tag, SDK, REST API, MCP server, and self-hosting. All open source.", "Solutions")],
   },
 });
 
@@ -47,7 +47,7 @@ const faqItems = [
   {
     question: "What do I need to self-host Rybbit?",
     answer:
-      "A server with Docker. Clone the repository and run the setup script with your domain — it brings up the full stack with Docker Compose. Self-hosting is free for personal and business use.",
+      "A server with Docker. Clone the repository and run the setup script with your domain. It brings up the full stack with Docker Compose. Self-hosting is free for personal and business use.",
   },
   {
     question: "Is the open-source version the full product?",
@@ -57,7 +57,7 @@ const faqItems = [
   {
     question: "Does Rybbit have an SDK?",
     answer:
-      "Yes — @rybbit/js on npm for websites and web apps, plus Node and React Native SDKs. The plain script tag works anywhere HTML does.",
+      "Yes. @rybbit/js on npm for websites and web apps, plus Node and React Native SDKs. The plain script tag works anywhere HTML does.",
   },
   {
     question: "Can I access my data programmatically?",
@@ -157,7 +157,7 @@ export default function ForDevelopersPage() {
           title="Analytics that behaves like good software."
           description="One script tag, or one npm package. A REST API for everything the dashboard shows, an MCP server your agents can operate, and a codebase you can read, audit, and run on your own server."
           eventLocation="for_developers_hero"
-          note="7-day free trial — or self-host free forever."
+          note="7-day free trial, or self-host free forever."
         />
 
         <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby="dev-install-title">
@@ -208,7 +208,7 @@ export default function ForDevelopersPage() {
                   Everything in the dashboard, over HTTP.
                 </h2>
                 <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                  Every metric Rybbit shows is available from the REST API with a bearer key — pull traffic into your
+                  Every metric Rybbit shows is available from the REST API with a bearer key. Pull traffic into your
                   own tools, build a live feed, or export events to a warehouse. An API playground in the dashboard
                   generates ready-to-use snippets.
                 </p>
@@ -229,7 +229,7 @@ export default function ForDevelopersPage() {
               <CodeCard label="response.json" tokens={apiResponseTokens} />
               <p className="max-w-2xl text-sm leading-6 text-neutral-500 dark:text-neutral-400">
                 Organization keys or personal keys, rate-limited per plan. Sessions, metrics, funnels, goals, errors,
-                and events are all endpoints — see the reference for the full surface.
+                and events are all endpoints. See the reference for the full surface.
               </p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function ForDevelopersPage() {
                 </h2>
                 <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
                   A hosted MCP server sits on top of the full REST API. Your agent reads live traffic, debugs errors,
-                  and manages goals — with the same permissions as a teammate.
+                  and manages goals, with the same permissions as a teammate.
                 </p>
                 <Link
                   href="/docs/mcp"
@@ -297,7 +297,7 @@ export default function ForDevelopersPage() {
                   Read the code. Run the code.
                 </h2>
                 <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                  Every line of Rybbit is on GitHub under AGPL v3 — including the cloud and enterprise features. Clone
+                  Every line of Rybbit is on GitHub under AGPL v3, including the cloud and enterprise features. Clone
                   it, audit it, and run the full stack on your own VPS with Docker.
                 </p>
                 <div className="mt-8 flex flex-col items-start gap-4">
@@ -330,7 +330,7 @@ export default function ForDevelopersPage() {
 
         <CTASection
           title="Ship analytics in the next ten minutes."
-          description="One script tag now — the API, the MCP server, and self-hosting whenever you want them."
+          description="One script tag now. The API, the MCP server, and self-hosting whenever you want them."
           eventLocation="for_developers_bottom_cta"
         />
       </div>

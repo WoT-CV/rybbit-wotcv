@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const pageTitle = "Rybbit for European Companies | EU-Hosted, Cookieless Analytics";
 const pageDescription =
-  "EU-hosted cloud, no cookies, no consent banner, a DPA ready to sign — and a self-host option when residency has to go all the way down to the server. GDPR compliant by design.";
+  "EU-hosted cloud, no cookies, no consent banner, a DPA ready to sign, and a self-host option when residency has to go all the way down to the server. GDPR compliant by design.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -43,7 +43,7 @@ const faqItems = [
   {
     question: "Do you offer a Data Processing Agreement?",
     answer:
-      "Yes. Rybbit provides a DPA — see rybbit.com/dpa. Dedicated isolated instances and on-premise installation are available on the Enterprise plan for stricter setups.",
+      "Yes. Rybbit provides a DPA (see rybbit.com/dpa). Dedicated isolated instances and on-premise installation are available on the Enterprise plan for stricter setups.",
   },
   {
     question: "Do visitors need to consent before Rybbit runs?",
@@ -53,14 +53,14 @@ const faqItems = [
   {
     question: "Can we keep the data entirely on our own infrastructure?",
     answer:
-      "Yes. Rybbit is open source under AGPL v3 — the full product self-hosts with Docker on your own servers, which is the strongest data-residency answer there is.",
+      "Yes. Rybbit is open source under AGPL v3. The full product self-hosts with Docker on your own servers, which is the strongest data-residency answer there is.",
   },
 ];
 
 const complianceRows = [
   {
     title: "EU-hosted cloud",
-    description: "Rybbit's managed cloud is EU-hosted — the default option is already the compliant one.",
+    description: "Rybbit's managed cloud is EU-hosted, so the default option is already the compliant one.",
   },
   {
     title: "No cookies, no banner",
@@ -70,7 +70,7 @@ const complianceRows = [
   {
     title: "No fingerprinting, by construction",
     description:
-      "Visitor IDs are salted daily, so they can't be used to fingerprint or follow a person over time — a design property, not a policy promise.",
+      "Visitor IDs are salted daily, so they can't be used to fingerprint or follow a person over time. That's a design property, not a policy promise.",
   },
   {
     title: "DPA ready to sign",
@@ -84,7 +84,7 @@ export default function ForEuropeanCompaniesPage() {
       <InteriorPageHero
         eyebrow="Rybbit for European companies"
         title="Analytics that doesn't need a legal review."
-        description="EU-hosted cloud, no cookies, no consent banner, and a DPA ready to sign — with a self-host option when residency has to go all the way down to the server."
+        description="EU-hosted cloud, no cookies, no consent banner, and a DPA ready to sign, plus a self-host option when residency has to go all the way down to the server."
         eventLocation="for_european_companies_hero"
       />
 
@@ -110,7 +110,7 @@ export default function ForEuropeanCompaniesPage() {
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
                 Consent-gated analytics only measures the visitors who click accept, so every report starts from a
-                partial number. Analytics that never touches personal data doesn&apos;t have that gap — compliance
+                partial number. Analytics that never touches personal data doesn&apos;t have that gap. Compliance
                 and accurate data stop being a trade-off.
               </p>
             </div>
@@ -130,7 +130,7 @@ export default function ForEuropeanCompaniesPage() {
                 What your DPO will ask. In order.
               </h2>
               <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                The short version of the review, in one place — with the documents linked below it.
+                The short version of the review, in one place, with the documents linked below it.
               </p>
               <div className="mt-8 flex flex-col gap-4">
                 <Link
@@ -194,7 +194,7 @@ export default function ForEuropeanCompaniesPage() {
             </h2>
             <p className="mt-6 max-w-xl text-base leading-7 text-neutral-600 dark:text-neutral-400">
               Rybbit is 100% open source under AGPL v3 and self-hosts with Docker. For regulated setups, Enterprise
-              adds dedicated isolated instances and on-premise installation — the residency conversation ends at
+              adds dedicated isolated instances and on-premise installation. The residency conversation ends at
               your own rack.
             </p>
           </div>
@@ -228,7 +228,7 @@ export default function ForEuropeanCompaniesPage() {
 
       <CTASection
         title="Compliant by default. Accurate because of it."
-        description="EU-hosted, cookieless, and banner-free — with self-hosting when the answer has to be your own servers."
+        description="EU-hosted, cookieless, and banner-free, with self-hosting when the answer has to be your own servers."
         eventLocation="for_european_companies_bottom_cta"
       />
     </div>

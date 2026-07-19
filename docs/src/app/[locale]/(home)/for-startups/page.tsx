@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const pageTitle = "Rybbit for Startups | Growth Answers Without a Data Team";
 const pageDescription =
-  "See where signups come from, watch where trials stall, and catch errors early — on one cookieless dashboard your whole team reads without training. Set up in minutes.";
+  "See where signups come from, watch where trials stall, and catch errors early, all on one cookieless dashboard your whole team reads without training. Set up in minutes.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -38,7 +38,7 @@ const faqItems = [
   {
     question: "What happens to the price as our traffic grows?",
     answer:
-      "Pricing is a slider over monthly pageviews, so you always see the number before you hit it. Plans start at 100K pageviews and scale in steps — no surprise invoices, and you can change plans at any time.",
+      "Pricing is a slider over monthly pageviews, so you always see the number before you hit it. Plans start at 100K pageviews and scale in steps: no surprise invoices, and you can change plans at any time.",
   },
   {
     question: "Can I import my Google Analytics history?",
@@ -53,12 +53,12 @@ const faqItems = [
   {
     question: "Do we need a cookie consent banner?",
     answer:
-      "No. Rybbit doesn't use cookies or collect personal data, so it's GDPR and CCPA compliant without a consent banner — and you see all of your traffic, not just the visitors who click accept.",
+      "No. Rybbit doesn't use cookies or collect personal data, so it's GDPR and CCPA compliant without a consent banner. You also see all of your traffic, including the visitors who would have clicked decline.",
   },
   {
     question: "Is our data locked in?",
     answer:
-      "No. Every plan includes API access and data export, and the whole product is open source under AGPL v3 — you can self-host the same stack whenever you want.",
+      "No. Every plan includes API access and data export, and the whole product is open source under AGPL v3. You can self-host the same stack whenever you want.",
   },
 ];
 
@@ -67,7 +67,7 @@ const firstWeek = [
     step: 1,
     title: "Install in minutes",
     description:
-      "One script tag on your marketing site and app, or @rybbit/js from npm. Pageviews, clicks, outbound links, and errors are captured automatically — no instrumentation plan required.",
+      "One script tag on your marketing site and app, or @rybbit/js from npm. Pageviews, clicks, outbound links, and errors are captured automatically. No instrumentation plan required.",
   },
   {
     step: 2,
@@ -79,7 +79,7 @@ const firstWeek = [
     step: 3,
     title: "Watch the sessions behind the numbers",
     description:
-      "When the funnel shows a drop-off, open the sessions that hit it. Session replay on Pro shows exactly what a stuck trial saw — including the error they never reported.",
+      "When the funnel shows a drop-off, open the sessions that hit it. Session replay on Pro shows exactly what a stuck trial saw, including the error they never reported.",
   },
 ];
 
@@ -89,7 +89,7 @@ export default function ForStartupsPage() {
       <InteriorPageHero
         eyebrow="Rybbit for startups"
         title="Growth answers without a data team."
-        description="See where signups come from, watch where trials stall, and catch errors before your users tweet about them — on one dashboard your whole team reads without training."
+        description="See where signups come from, watch where trials stall, and catch errors before your users tweet about them, all on one dashboard your whole team reads without training."
         eventLocation="for_startups_hero"
       />
 
@@ -114,8 +114,8 @@ export default function ForStartupsPage() {
             </div>
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
-                Analytics at a startup is a Tuesday-morning question — did the launch work, where did those signups
-                come from — not a discipline someone owns. Rybbit is built for the person answering that question
+                Analytics at a startup is a Tuesday-morning question (did the launch work, where did those signups
+                come from?), not a discipline someone owns. Rybbit is built for the person answering that question
                 between two other jobs.
               </p>
             </div>
@@ -168,8 +168,8 @@ export default function ForStartupsPage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-7 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Launch-day realtime</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                On the morning you hit the front page, watch visitors, referrers, and signups move in realtime —
-                and because Rybbit is cookieless, the Hacker News crowd running ad blockers still shows up in your
+                On the morning you hit the front page, watch visitors, referrers, and signups move in realtime.
+                And because Rybbit is cookieless, the Hacker News crowd running ad blockers still shows up in your
                 numbers.
               </p>
               <div className="mt-6 flex max-w-md items-center justify-between rounded-md border border-neutral-200 px-3.5 py-3 text-sm dark:border-neutral-800">
@@ -188,7 +188,7 @@ export default function ForStartupsPage() {
               <h3 className="text-lg font-semibold tracking-tight">Errors before bug reports</h3>
               <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Error tracking is on the same dashboard as traffic, so a broken signup page shows up as both a
-                falling funnel and a rising error — usually before the first support email lands.
+                falling funnel and a rising error, usually before the first support email lands.
               </p>
             </article>
 
@@ -203,7 +203,7 @@ export default function ForStartupsPage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-7 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Speed you can defend</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                Web vitals from real visits show where your pages feel slow, by route and device — so performance
+                Web vitals from real visits show where your pages feel slow, by route and device. Performance
                 arguments in standup end with a number instead of a feeling.
               </p>
               <Link

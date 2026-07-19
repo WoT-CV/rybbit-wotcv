@@ -46,10 +46,10 @@ export const metadata: Metadata = createMetadata({
   description:
     "Privacy-friendly analytics from one cookieless script: real-time traffic, session replay, funnels, web vitals, error tracking, and more.",
   openGraph: {
-    images: [createOGImageUrl("Features - Rybbit Analytics", "Real-time traffic, session replay, funnels, web vitals, and error tracking — from one cookieless script.", "Features")],
+    images: [createOGImageUrl("Features - Rybbit Analytics", "Real-time traffic, session replay, funnels, web vitals, and error tracking, from one cookieless script.", "Features")],
   },
   twitter: {
-    images: [createOGImageUrl("Features - Rybbit Analytics", "Real-time traffic, session replay, funnels, web vitals, and error tracking — from one cookieless script.", "Features")],
+    images: [createOGImageUrl("Features - Rybbit Analytics", "Real-time traffic, session replay, funnels, web vitals, and error tracking, from one cookieless script.", "Features")],
   },
 });
 
@@ -130,12 +130,12 @@ export default function FeaturesPage() {
     {
       icon: <ListFilter className="w-5 h-5" />,
       title: t("Filtering"),
-      description: t("Stack filters on any dimension — country, referrer, page, event — to narrow to the exact segment."),
+      description: t("Stack filters on any dimension (country, referrer, page, event) to narrow to the exact segment."),
     },
     {
       icon: <Activity className="w-5 h-5" />,
       title: t("Realtime data"),
-      description: t("See visitors, pageviews, and events the moment they happen — no sampling, no delay."),
+      description: t("See visitors, pageviews, and events the moment they happen. No sampling, no delay."),
     },
     {
       icon: <MousePointerClick className="w-5 h-5" />,
@@ -236,7 +236,7 @@ export default function FeaturesPage() {
     {
       icon: <Globe2 className="w-5 h-5" />,
       title: t("Public dashboards"),
-      description: t("Make your dashboards publicly accessible with a single click—no login required."),
+      description: t("Make your dashboards publicly accessible with a single click. No login required."),
     },
     {
       icon: <Lock className="w-5 h-5" />,
@@ -269,7 +269,7 @@ export default function FeaturesPage() {
     {
       icon: <Database className="w-5 h-5" />,
       title: t("Data ownership"),
-      description: t("Your data, your rules. Self-host or use our cloud—you're always in control."),
+      description: t("Your data, your rules. Self-host or use our cloud; you're always in control."),
     },
   ];
 
@@ -309,14 +309,14 @@ export default function FeaturesPage() {
   return (
     <div className="overflow-x-clip">
       <InteriorPageHero
-        title={t("Everything you need to understand your audience")}
-        description={t("The full analytics surface — traffic, sessions, funnels, replay, errors — behind one cookieless script tag.")}
+        title={t("See what's happening on your site")}
+        description={t("Traffic, sessions, funnels, replay, and errors, all behind one cookieless script tag.")}
         eventLocation="features_hero"
       />
 
       <FeatureGrid
         title={t("Core Web Analytics")}
-        description={t("The metrics you check first — visitors, pages, sources, devices — in real time and clickable to filter.")}
+        description={t("The metrics you check first (visitors, pages, sources, devices) in real time and clickable to filter.")}
         features={coreWebAnalyticsFeatures}
       />
 
@@ -340,7 +340,7 @@ export default function FeaturesPage() {
 
       <FeatureGrid
         title={t("Cloud")}
-        description={t("We run the infrastructure — updates, scaling, backups — so you only ever read the dashboard.")}
+        description={t("We run the infrastructure (updates, scaling, backups) so you only ever read the dashboard.")}
         features={cloudFeatures}
       />
 

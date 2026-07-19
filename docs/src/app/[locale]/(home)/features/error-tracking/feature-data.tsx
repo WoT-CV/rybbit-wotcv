@@ -31,7 +31,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Layers className="w-5 h-5" />,
     title: "Error aggregation",
     description:
-      "Errors are grouped by name and message so you can see which errors occur most frequently instead of drowning in individual occurrences.",
+      "Errors are grouped by name and message. You see which errors occur most frequently instead of drowning in individual occurrences.",
   },
   {
     icon: <LineChart className="w-5 h-5" />,
@@ -103,7 +103,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Headset className="w-6 h-6" />,
     title: "Support teams",
     description:
-      "When users report issues, check the error log first. See if there's a JavaScript error explaining the behavior before asking for screenshots.",
+      "When a customer writes in, check the error log first. See if there's a JavaScript error explaining the behavior before asking for screenshots.",
   },
   {
     icon: <Settings className="w-6 h-6" />,
@@ -139,7 +139,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "How is this different from Sentry or Bugsnag?",
     answer:
-      "Rybbit error tracking is lightweight and integrated into your analytics platform — no separate tool, no extra SDK, no additional billing. It's designed for monitoring and triage, not as a full error management platform. For most teams, it provides enough signal to catch and prioritize issues.",
+      "Rybbit error tracking is lightweight and integrated into your analytics platform: no separate tool, no extra SDK, no additional billing. It's designed for monitoring and triage, not as a full error management platform. For most teams, it provides enough signal to catch and prioritize issues.",
   },
   {
     question: "Can I pair errors with session replay?",

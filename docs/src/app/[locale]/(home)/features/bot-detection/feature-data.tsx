@@ -25,7 +25,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Bot className="w-5 h-5" />,
     title: "User-agent & AI crawler patterns",
     description:
-      "Catches search engine crawlers, headless browsers, SEO and monitoring tools, script and framework HTTP clients — and the growing wave of AI crawlers and agents.",
+      "Catches search engine crawlers, headless browsers, SEO and monitoring tools, script and framework HTTP clients, and the growing wave of AI crawlers and agents.",
   },
   {
     icon: <Fingerprint className="w-5 h-5" />,
@@ -37,7 +37,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Network className="w-5 h-5" />,
     title: "ASN & network intelligence",
     description:
-      "Curated ASNs of known AI, scanner, and measurement providers trigger detection directly. Generic hosting ASNs only count as supporting evidence — so visitors on VPNs, corporate gateways, and CDNs aren't falsely flagged.",
+      "Curated ASNs of known AI, scanner, and measurement providers trigger detection directly. Generic hosting ASNs only count as supporting evidence, so visitors on VPNs, corporate gateways, and CDNs aren't falsely flagged.",
   },
   {
     icon: <Activity className="w-5 h-5" />,
@@ -49,7 +49,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <BarChart3 className="w-5 h-5" />,
     title: "A dedicated Bots report",
     description:
-      "See everything that was filtered: total blocked requests, bot share of traffic, trends over time, and breakdowns by page, referrer, country, device, and user-agent — with the exact detection layers that matched.",
+      "See everything that was filtered: total blocked requests, bot share of traffic, trends over time, and breakdowns by page, referrer, country, device, and user-agent, with the exact detection layers that matched.",
   },
   {
     icon: <CreditCard className="w-5 h-5" />,
@@ -76,7 +76,7 @@ export const howItWorks: HowItWorksStep[] = [
     step: 3,
     title: "Bot traffic is filtered, not lost",
     description:
-      "Detected bots never touch your normal analytics — dashboards, funnels, journeys, and session lists stay human-only. A compact bot event record is stored separately so nothing disappears silently.",
+      "Detected bots never touch your normal analytics. Dashboards, funnels, journeys, and session lists stay human-only, and a compact bot event record is stored separately so nothing disappears silently.",
   },
   {
     step: 4,
@@ -103,7 +103,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Newspaper className="w-6 h-6" />,
     title: "Content & docs sites",
     description:
-      "AI crawlers now rival search engines in crawl volume. See exactly which bots are reading your content — without them polluting your stats.",
+      "AI crawlers now rival search engines in crawl volume. See exactly which bots are reading your content, without them polluting your stats.",
   },
   {
     icon: <Rocket className="w-6 h-6" />,
@@ -129,7 +129,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "How is this different from the bot filtering other analytics tools do?",
     answer:
-      "Most tools silently drop requests matching a known user-agent list. Rybbit runs five detection layers — user-agent patterns, header heuristics, client-side browser signals, ASN intelligence, and rate anomaly detection — and then shows you everything it filtered in a dedicated Bots report, including which layers matched each request.",
+      "Most tools silently drop requests matching a known user-agent list. Rybbit runs five detection layers (user-agent patterns, header heuristics, client-side browser signals, ASN intelligence, and rate anomaly detection) and then shows you everything it filtered in a dedicated Bots report, including which layers matched each request.",
   },
   {
     question: "Do blocked bots count toward my bill?",
@@ -139,7 +139,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "Will real visitors get blocked by mistake?",
     answer:
-      "The layers are weighted to avoid this. Generic hosting or datacenter ASNs are never enough to block a request on their own — they only count as supporting evidence when another layer also matches. Visitors on VPNs, corporate gateways, or unusual network paths are not filtered just for their network.",
+      "The layers are weighted to avoid this. Generic hosting or datacenter ASNs are never enough to block a request on their own; they only count as supporting evidence when another layer also matches. Visitors on VPNs, corporate gateways, or unusual network paths are not filtered just for their network.",
   },
   {
     question: "Does it catch AI crawlers and agents?",
@@ -154,7 +154,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "Does it work behind a proxy or CDN?",
     answer:
-      "Yes, as long as your proxy forwards the original visitor IP and user-agent headers. If the proxy's own IP is forwarded instead, traffic can inherit the proxy's location and ASN — the proxy guide covers the correct header setup.",
+      "Yes, as long as your proxy forwards the original visitor IP and user-agent headers. If the proxy's own IP is forwarded instead, traffic can inherit the proxy's location and ASN. The proxy guide covers the correct header setup.",
   },
 ];
 

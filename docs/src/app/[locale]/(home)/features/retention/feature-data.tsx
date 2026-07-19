@@ -138,7 +138,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "Can I see retention for specific user segments?",
     answer:
-      "Yes. Apply any filter — country, device, referrer, UTM source — to see retention data for specific segments. This helps you understand which audiences have the best long-term engagement.",
+      "Yes. Apply any filter (country, device, referrer, UTM source) to see retention data for specific segments. This helps you understand which audiences have the best long-term engagement.",
   },
   {
     question: "What time ranges are available?",

@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const pageTitle = "Rybbit for SaaS | Funnels, Retention, and Sessions in One Tool";
 const pageDescription =
-  "Signup funnels, retention cohorts, user profiles, session replay, feature flags, and A/B experiments — the product-analytics surface without the enterprise setup project. Cookieless and GDPR compliant.";
+  "Signup funnels, retention cohorts, user profiles, session replay, feature flags, and A/B experiments: the product-analytics surface without the enterprise setup project. Cookieless and GDPR compliant.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -35,7 +35,7 @@ const faqItems = [
   {
     question: "Is Rybbit web analytics or product analytics?",
     answer:
-      "Both, from one script. Traffic, sources, and campaigns sit next to funnels, retention, user profiles, session replay, and error tracking — you don't glue a marketing tool to a product tool.",
+      "Both, from one script. Traffic, sources, and campaigns sit next to funnels, retention, user profiles, session replay, and error tracking. You don't glue a marketing tool to a product tool.",
   },
   {
     question: "Do I need an instrumentation plan before I see anything?",
@@ -45,32 +45,32 @@ const faqItems = [
   {
     question: "Can I tie sessions to actual user accounts?",
     answer:
-      "Yes. Identify logged-in users with your own user IDs and their sessions, events, and errors roll up into one profile — so 'what did this customer experience' has an answer.",
+      "Yes. Identify logged-in users with your own user IDs, and their sessions, events, and errors roll up into one profile, so 'what did this customer experience' has an answer.",
   },
   {
     question: "Does Rybbit do feature flags and A/B tests?",
     answer:
-      "Yes. Feature flags handle gradual rollouts, remote config, and variant targeting, and experiments run A/B tests on flag variants and measure conversion lift — in the same tool that already tracks the conversions.",
+      "Yes. Feature flags handle gradual rollouts, remote config, and variant targeting, and experiments run A/B tests on flag variants and measure conversion lift, in the same tool that already tracks the conversions.",
   },
   {
     question: "Can I see what an individual user experienced?",
     answer:
-      "Yes. User profiles show a visitor's sessions and events over time, and on Pro you can watch session replays — useful when a support ticket says 'it just doesn't work.'",
+      "Yes. User profiles show a visitor's sessions and events over time, and on Pro you can watch session replays. Useful when a support ticket says 'it just doesn't work.'",
   },
   {
     question: "Which plan do SaaS teams usually need?",
     answer:
-      "Standard includes funnels, goals, journeys, retention, user profiles, and error tracking. Pro adds session replays, unlimited websites, and unlimited team members — most product teams end up on Pro for the replays.",
+      "Standard includes funnels, goals, journeys, retention, user profiles, and error tracking. Pro adds session replays, unlimited websites, and unlimited team members. Most product teams end up on Pro for the replays.",
   },
   {
     question: "Does the tracking script need a cookie banner in our app?",
     answer:
-      "No. Rybbit is cookieless and doesn't collect personal data that could identify visitors, so it's GDPR and CCPA compliant without a consent banner — in the app and on the marketing site.",
+      "No. Rybbit is cookieless and doesn't collect personal data that could identify visitors, so it's GDPR and CCPA compliant without a consent banner, in the app and on the marketing site.",
   },
   {
     question: "We're on Plausible or Umami. Do we lose our history?",
     answer:
-      "No. Rybbit imports historical data from Plausible, Umami, and Simple Analytics — up to 36 months on Standard and 60 months on Pro — so your growth charts keep their past.",
+      "No. Rybbit imports historical data from Plausible, Umami, and Simple Analytics (up to 36 months on Standard and 60 months on Pro), so your growth charts keep their past.",
   },
   {
     question: "Can we pull the data into our own systems?",
@@ -80,7 +80,7 @@ const faqItems = [
   {
     question: "Can we self-host it?",
     answer:
-      "Yes. Rybbit is open source under AGPL v3 — self-host the full product on your own infrastructure with unlimited events, or start on cloud and move later. The workflow is identical either way.",
+      "Yes. Rybbit is open source under AGPL v3: self-host the full product on your own infrastructure with unlimited events, or start on cloud and move later. The workflow is identical either way.",
   },
 ];
 
@@ -114,7 +114,7 @@ const setupSteps = [
   {
     step: "03",
     title: "Name the moments",
-    body: "Add custom events for the steps that define activation — from the browser, or server-side with the Node SDK.",
+    body: "Add custom events for the steps that define activation, from the browser or server-side with the Node SDK.",
   },
   {
     step: "04",
@@ -139,7 +139,7 @@ export default function ForSaasPage() {
       <InteriorPageHero
         eyebrow="Rybbit for SaaS"
         title="See the funnel. Then watch the sessions inside it."
-        description="Signup funnels, retention cohorts, user profiles, and error tracking on the same dashboard as your traffic — the product-analytics surface without the enterprise setup project."
+        description="Signup funnels, retention cohorts, user profiles, and error tracking on the same dashboard as your traffic: the product-analytics surface without the enterprise setup project."
         eventLocation="for_saas_hero"
       />
 
@@ -190,8 +190,8 @@ export default function ForSaasPage() {
             <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
               <p className="max-w-lg text-base leading-7 text-neutral-600 dark:text-neutral-400">
                 The usual stack is GA4 for marketing plus a product-analytics suite for the app: two scripts, two event
-                schemas, two logins, and an integration that quietly drifts. Rybbit covers the whole path — first visit
-                to retained account — in one schema, so answering &ldquo;which channel brings users who stick?&rdquo;
+                schemas, two logins, and an integration that quietly drifts. Rybbit covers the whole path (first visit
+                to retained account) in one schema, so answering &ldquo;which channel brings users who stick?&rdquo;
                 takes one filter. If you&apos;re weighing the heavier route, see how Rybbit compares to{" "}
                 <Link
                   href="/compare/posthog"
@@ -211,7 +211,7 @@ export default function ForSaasPage() {
               <p className="max-w-lg text-base leading-7 text-neutral-600 dark:text-neutral-400">
                 There&apos;s also the banner problem. Cookie-based analytics inside a product means a consent prompt in
                 your own app and a tracking gap wherever users decline. Rybbit is cookieless and collects no personal
-                data by default, so it&apos;s GDPR and CCPA compliant without consent UI — your onboarding flow stays
+                data by default, so it&apos;s GDPR and CCPA compliant without consent UI. Your onboarding flow stays
                 clean, and the numbers cover everyone.{" "}
                 <Link
                   href="/privacy"
@@ -247,7 +247,7 @@ export default function ForSaasPage() {
             </div>
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
-                Product analytics tools fail at the instrumentation-plan stage — the meeting happens, the spreadsheet
+                Product analytics tools fail at the instrumentation-plan stage: the meeting happens, the spreadsheet
                 gets made, the events never ship. Rybbit inverts it: autocapture first, naming later.
               </p>
             </div>
@@ -309,8 +309,8 @@ export default function ForSaasPage() {
                 Find the step that loses trials.
               </h2>
               <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                Build a funnel from page paths or custom events in a few clicks — pricing page to trial to activation
-                to paid — and see exactly where the numbers fall off. Then open the sessions that dropped.
+                Build a funnel from page paths or custom events in a few clicks (pricing page to trial to activation
+                to paid) and see exactly where the numbers fall off. Then open the sessions that dropped.
               </p>
               <Link
                 href="/features/funnels"
@@ -402,7 +402,7 @@ export default function ForSaasPage() {
                 Know if this month&apos;s users stick better than last month&apos;s.
               </h2>
               <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                Retention cohorts show how each week&apos;s new users keep coming back — the first number a SaaS
+                Retention cohorts show how each week&apos;s new users keep coming back: the first number a SaaS
                 should watch, and usually the last one a web-analytics tool offers.
               </p>
               <Link
@@ -450,7 +450,7 @@ export default function ForSaasPage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Feature flags</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                Gate features, roll out gradually, serve remote config, and target variants — without a separate flags
+                Gate features, roll out gradually, serve remote config, and target variants, without a separate flags
                 vendor or another SDK in the bundle.
               </p>
               <Link
@@ -467,7 +467,7 @@ export default function ForSaasPage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Experiments</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                Run A/B tests on flag variants and measure conversion lift against the goals you already track — no
+                Run A/B tests on flag variants and measure conversion lift against the goals you already track. No
                 exporting events to a separate testing platform to find out who won.
               </p>
               <Link
@@ -535,7 +535,7 @@ export default function ForSaasPage() {
               <h3 className="text-lg font-semibold tracking-tight">The release-day watch</h3>
               <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Errors and web vitals sit next to traffic, so a deploy that breaks a form or slows a page shows up in
-                the same place you&apos;re already looking — not in a separate monitoring tab.
+                the same place you&apos;re already looking, not in a separate monitoring tab.
               </p>
               <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-sm">
                 <Link
@@ -564,7 +564,7 @@ export default function ForSaasPage() {
             <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-7 lg:px-10">
               <h3 className="text-lg font-semibold tracking-tight">Ask your analytics, in your editor</h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                The MCP server puts your analytics in reach of your AI assistant — ask &ldquo;what changed in signups
+                The MCP server puts your analytics in reach of your AI assistant. Ask &ldquo;what changed in signups
                 this week?&rdquo; from the same place you write code, and get answers backed by the real numbers.
               </p>
               <Link
@@ -594,7 +594,7 @@ export default function ForSaasPage() {
             </h2>
             <p className="mt-6 max-w-xl text-base leading-7 text-neutral-600 dark:text-neutral-400">
               Rybbit is 100% open source under AGPL v3, with API access and data export on every plan. Start on cloud
-              and self-host later — or the other way around — and the funnels, cohorts, and profiles come with you.
+              and self-host later, or the other way around, and the funnels, cohorts, and profiles come with you.
               For a product team, that means the analytics layer is a dependency you can read, patch, and pin.
             </p>
           </div>
@@ -642,7 +642,7 @@ export default function ForSaasPage() {
 
       <CTASection
         title="Product analytics without the onboarding project."
-        description="Funnels, retention, profiles, and replays — running the afternoon you install the script."
+        description="Funnels, retention, profiles, and replays, all running the afternoon you install the script."
         eventLocation="for_saas_bottom_cta"
       />
     </div>

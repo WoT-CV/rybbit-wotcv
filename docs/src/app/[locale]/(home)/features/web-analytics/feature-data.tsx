@@ -34,7 +34,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Layers className="w-5 h-5" />,
     title: "Traffic sources",
     description:
-      "See where your visitors come from — direct, referral, organic search, social, or paid campaigns — all in one view.",
+      "See where your visitors come from (direct, referral, organic search, social, or paid campaigns) all in one view.",
   },
   {
     icon: <MapPin className="w-5 h-5" />,
@@ -58,7 +58,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Filter className="w-5 h-5" />,
     title: "Advanced filtering",
     description:
-      "Filter by any dimension — country, browser, referrer, page, or custom event. Click any value to apply it.",
+      "Filter by any dimension: country, browser, referrer, page, or custom event. Click any value to apply it.",
   },
   {
     icon: <Activity className="w-5 h-5" />,
@@ -85,7 +85,7 @@ export const howItWorks: HowItWorksStep[] = [
     step: 1,
     title: "Add one script tag",
     description:
-      "Paste a single line of code into your site or install @rybbit/js from npm. It works with any framework — React, Vue, Next.js, WordPress, Shopify, and more.",
+      "Paste a single line of code into your site or install @rybbit/js from npm. It works with any framework: React, Vue, Next.js, WordPress, Shopify, and more.",
   },
   {
     step: 2,
@@ -118,7 +118,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <PenTool className="w-6 h-6" />,
     title: "Content creators & bloggers",
     description:
-      "See which posts resonate, where readers come from, and how they navigate your site — without the complexity of enterprise tools.",
+      "See which posts resonate, where readers come from, and how they navigate your site, without the complexity of enterprise tools.",
   },
   {
     icon: <Rocket className="w-6 h-6" />,
@@ -165,12 +165,12 @@ export const faqItems: FAQItem[] = [
   {
     question: "Can I filter by multiple properties at once?",
     answer:
-      "Yes. You can stack as many filters as you need — country, browser, referrer, page path, custom events, and more. Click any value in your dashboard to instantly apply it as a filter.",
+      "Yes. You can stack as many filters as you need: country, browser, referrer, page path, custom events, and more. Click any value in your dashboard to instantly apply it as a filter.",
   },
   {
     question: "What UTM parameters are supported?",
     answer:
-      "Rybbit automatically captures utm_source, utm_medium, utm_campaign, utm_term, and utm_content from your URLs. No extra setup required — they appear in your traffic sources breakdown.",
+      "Rybbit automatically captures utm_source, utm_medium, utm_campaign, utm_term, and utm_content from your URLs. No extra setup required; they appear in your traffic sources breakdown.",
   },
   {
     question: "Is real-time data actually real-time?",
