@@ -5,14 +5,9 @@ import { recordSessionReplay } from "./recordSessionReplay.js";
 
 const mocks = vi.hoisted(() => ({
   getConfig: vi.fn(),
-  isIPExcluded: vi.fn(),
-  isCountryExcluded: vi.fn(),
-  isPathExcluded: vi.fn(),
-  isHostnameExcluded: vi.fn(),
-  isUserAgentExcluded: vi.fn(),
+  decideSiteExclusion: vi.fn(),
   isSiteOverLimit: vi.fn(),
   isSiteWithoutReplay: vi.fn(),
-  getLocation: vi.fn(),
   recordEvents: vi.fn(),
   loggerInfo: vi.fn(),
   loggerError: vi.fn(),
@@ -21,12 +16,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../lib/siteConfig.js", () => ({
   siteConfig: {
     getConfig: mocks.getConfig,
-    isIPExcluded: mocks.isIPExcluded,
-    isCountryExcluded: mocks.isCountryExcluded,
-    isPathExcluded: mocks.isPathExcluded,
-    isHostnameExcluded: mocks.isHostnameExcluded,
-    isUserAgentExcluded: mocks.isUserAgentExcluded,
   },
+}));
+
+vi.mock("../../services/sites/siteExclusionDecision.js", () => ({
+  decideSiteExclusion: mocks.decideSiteExclusion,
 }));
 
 vi.mock("../../services/usageService.js", () => ({
@@ -34,10 +28,6 @@ vi.mock("../../services/usageService.js", () => ({
     isSiteOverLimit: mocks.isSiteOverLimit,
     isSiteWithoutReplay: mocks.isSiteWithoutReplay,
   },
-}));
-
-vi.mock("../../db/geolocation/geolocation.js", () => ({
-  getLocation: mocks.getLocation,
 }));
 
 vi.mock("../../services/replay/sessionReplayIngestService.js", () => ({
@@ -127,28 +117,51 @@ describe("recordSessionReplay exclusions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getConfig.mockResolvedValue(baseConfig);
-    mocks.isIPExcluded.mockResolvedValue(false);
-    mocks.isCountryExcluded.mockResolvedValue(false);
-    mocks.isPathExcluded.mockResolvedValue(false);
-    mocks.isHostnameExcluded.mockResolvedValue(false);
-    mocks.isUserAgentExcluded.mockResolvedValue(false);
+    mocks.decideSiteExclusion.mockResolvedValue({ excluded: false });
     mocks.isSiteOverLimit.mockReturnValue(false);
     mocks.isSiteWithoutReplay.mockReturnValue(false);
-    mocks.getLocation.mockResolvedValue({});
     mocks.recordEvents.mockResolvedValue(undefined);
   });
 
-  it("uses the shared IP exclusion matcher before recording replay batches", async () => {
+  it("records the replay when the Site Exclusion Decision accepts the request", async () => {
+    const reply = createReply();
+
+    await recordSessionReplay(createRequest(), reply);
+
+    expect(mocks.decideSiteExclusion).toHaveBeenCalledOnce();
+    expect(mocks.recordEvents).toHaveBeenCalledWith(42, baseBody, {
+      userAgent: "Mozilla/5.0 HeadlessChrome/120",
+      ipAddress: "198.51.100.10",
+      origin: "https://example.com",
+      referrer: "https://example.com/admin/users",
+    });
+    expect(reply.sentPayload).toEqual({ success: true });
+  });
+
+  it("maps an IP Site Exclusion Decision to the replay skip response", async () => {
     mocks.getConfig.mockResolvedValue({
       ...baseConfig,
       excludedIPs: ["198.51.100.0/24"],
     });
-    mocks.isIPExcluded.mockResolvedValue(true);
+    mocks.decideSiteExclusion.mockResolvedValue({
+      excluded: true,
+      reason: "ip",
+      label: "IP",
+      value: "198.51.100.10",
+    });
 
     const reply = createReply();
     await recordSessionReplay(createRequest(), reply);
 
-    expect(mocks.isIPExcluded).toHaveBeenCalledWith("198.51.100.10", "site_abc");
+    expect(mocks.decideSiteExclusion).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: 42, excludedIPs: ["198.51.100.0/24"] }),
+      {
+        ipAddress: "198.51.100.10",
+        pathname: "/admin/users",
+        hostname: "example.com",
+        userAgent: "Mozilla/5.0 HeadlessChrome/120",
+      }
+    );
     expect(mocks.recordEvents).not.toHaveBeenCalled();
     expect(reply.sentPayload).toEqual({
       success: true,
@@ -161,12 +174,20 @@ describe("recordSessionReplay exclusions", () => {
       ...baseConfig,
       excludedPaths: ["/admin/*"],
     });
-    mocks.isPathExcluded.mockResolvedValue(true);
+    mocks.decideSiteExclusion.mockResolvedValue({
+      excluded: true,
+      reason: "path",
+      label: "path",
+      value: "/admin/users",
+    });
 
     const reply = createReply();
     await recordSessionReplay(createRequest(), reply);
 
-    expect(mocks.isPathExcluded).toHaveBeenCalledWith("/admin/users", "site_abc");
+    expect(mocks.decideSiteExclusion).toHaveBeenCalledWith(
+      expect.objectContaining({ excludedPaths: ["/admin/*"] }),
+      expect.objectContaining({ pathname: "/admin/users" })
+    );
     expect(mocks.recordEvents).not.toHaveBeenCalled();
     expect(reply.status).toHaveBeenCalledWith(200);
     expect(reply.sentPayload).toEqual({
@@ -180,7 +201,12 @@ describe("recordSessionReplay exclusions", () => {
       ...baseConfig,
       excludedHostnames: ["*.vercel.app"],
     });
-    mocks.isHostnameExcluded.mockResolvedValue(true);
+    mocks.decideSiteExclusion.mockResolvedValue({
+      excluded: true,
+      reason: "hostname",
+      label: "hostname",
+      value: "preview.vercel.app",
+    });
 
     const reply = createReply();
     await recordSessionReplay(
@@ -195,7 +221,10 @@ describe("recordSessionReplay exclusions", () => {
       reply
     );
 
-    expect(mocks.isHostnameExcluded).toHaveBeenCalledWith("preview.vercel.app", "site_abc");
+    expect(mocks.decideSiteExclusion).toHaveBeenCalledWith(
+      expect.objectContaining({ excludedHostnames: ["*.vercel.app"] }),
+      expect.objectContaining({ hostname: "preview.vercel.app", pathname: "/app" })
+    );
     expect(mocks.recordEvents).not.toHaveBeenCalled();
     expect(reply.sentPayload).toEqual({
       success: true,
@@ -208,12 +237,20 @@ describe("recordSessionReplay exclusions", () => {
       ...baseConfig,
       excludedUserAgents: ["HeadlessChrome"],
     });
-    mocks.isUserAgentExcluded.mockResolvedValue(true);
+    mocks.decideSiteExclusion.mockResolvedValue({
+      excluded: true,
+      reason: "user_agent",
+      label: "user agent",
+      value: "Mozilla/5.0 HeadlessChrome/120",
+    });
 
     const reply = createReply();
     await recordSessionReplay(createRequest(), reply);
 
-    expect(mocks.isUserAgentExcluded).toHaveBeenCalledWith("Mozilla/5.0 HeadlessChrome/120", "site_abc");
+    expect(mocks.decideSiteExclusion).toHaveBeenCalledWith(
+      expect.objectContaining({ excludedUserAgents: ["HeadlessChrome"] }),
+      expect.objectContaining({ userAgent: "Mozilla/5.0 HeadlessChrome/120" })
+    );
     expect(mocks.recordEvents).not.toHaveBeenCalled();
     expect(reply.sentPayload).toEqual({
       success: true,

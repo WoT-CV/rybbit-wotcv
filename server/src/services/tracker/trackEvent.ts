@@ -6,12 +6,12 @@ import { sessionsService } from "../sessions/sessionsService.js";
 import { usageService } from "../usageService.js";
 import { pageviewQueue } from "./pageviewQueue.js";
 import { createBasePayload } from "./utils.js";
-import { getLocation } from "../../db/geolocation/geolocation.js";
 import { checkApiKey } from "../../lib/auth-utils.js";
 import { hasScope } from "../../lib/scopes.js";
 import { botEventQueue } from "./botBlocking/botEventQueue.js";
 import { checkBotBlocking } from "./botBlocking/index.js";
 import { resolveTrackingIdentity } from "./requestIdentity.js";
+import { decideSiteExclusion } from "../sites/siteExclusionDecision.js";
 
 // Shared fields for all event types
 const baseEventFields = {
@@ -317,84 +317,22 @@ export async function trackEvent(request: FastifyRequest, reply: FastifyReply) {
       return reply.status(200).send("Site over monthly limit, event not tracked");
     }
 
-    // Check if the IP should be excluded from tracking
-    if (siteConfiguration.excludedIPs && siteConfiguration.excludedIPs.length > 0) {
-      const isExcluded = await siteConfig.isIPExcluded(requestIP, validatedPayload.site_id);
-      if (isExcluded) {
-        logger.info({ siteId: validatedPayload.site_id, ip: requestIP }, "IP excluded from tracking");
-        return reply.status(200).send({
-          success: true,
-          message: "Event not tracked - IP excluded",
-        });
-      }
-    }
+    const exclusionDecision = await decideSiteExclusion(siteConfiguration, {
+      ipAddress: requestIP,
+      pathname: validatedPayload.pathname,
+      hostname: validatedPayload.hostname,
+      userAgent: trackingIdentity.userAgent,
+    });
 
-    // Check if the country should be excluded from tracking
-    if (siteConfiguration.excludedCountries && siteConfiguration.excludedCountries.length > 0) {
-      const locationResults = await getLocation([requestIP]);
-      const locationData = locationResults[requestIP];
-
-      if (locationData?.countryIso) {
-        const isCountryExcluded = await siteConfig.isCountryExcluded(locationData.countryIso, validatedPayload.site_id);
-        if (isCountryExcluded) {
-          logger.info(
-            { siteId: validatedPayload.site_id, country: locationData.countryIso },
-            "Country excluded from tracking"
-          );
-          return reply.status(200).send({
-            success: true,
-            message: "Event not tracked - country excluded",
-          });
-        }
-      }
-    }
-
-    // Check if the pathname should be excluded from tracking
-    if (siteConfiguration.excludedPaths && siteConfiguration.excludedPaths.length > 0) {
-      const isPathExcluded = await siteConfig.isPathExcluded(validatedPayload.pathname, validatedPayload.site_id);
-      if (isPathExcluded) {
-        logger.info(
-          { siteId: validatedPayload.site_id, pathname: validatedPayload.pathname },
-          "Path excluded from tracking"
-        );
-        return reply.status(200).send({
-          success: true,
-          message: "Event not tracked - path excluded",
-        });
-      }
-    }
-
-    // Check if the hostname should be excluded from tracking
-    if (siteConfiguration.excludedHostnames && siteConfiguration.excludedHostnames.length > 0) {
-      const isHostnameExcluded = await siteConfig.isHostnameExcluded(
-        validatedPayload.hostname,
-        validatedPayload.site_id
+    if (exclusionDecision.excluded) {
+      logger.info(
+        { siteId: validatedPayload.site_id, exclusionReason: exclusionDecision.reason },
+        "Site exclusion matched"
       );
-      if (isHostnameExcluded) {
-        logger.info(
-          { siteId: validatedPayload.site_id, hostname: validatedPayload.hostname },
-          "Hostname excluded from tracking"
-        );
-        return reply.status(200).send({
-          success: true,
-          message: "Event not tracked - hostname excluded",
-        });
-      }
-    }
-
-    // Check if the user agent should be excluded from tracking
-    if (siteConfiguration.excludedUserAgents && siteConfiguration.excludedUserAgents.length > 0) {
-      const isUserAgentExcluded = await siteConfig.isUserAgentExcluded(
-        trackingIdentity.userAgent,
-        validatedPayload.site_id
-      );
-      if (isUserAgentExcluded) {
-        logger.info({ siteId: validatedPayload.site_id }, "User agent excluded from tracking");
-        return reply.status(200).send({
-          success: true,
-          message: "Event not tracked - user agent excluded",
-        });
-      }
+      return reply.status(200).send({
+        success: true,
+        message: `Event not tracked - ${exclusionDecision.label} excluded`,
+      });
     }
 
     // Create base payload for the event using validated data

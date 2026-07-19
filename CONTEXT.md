@@ -12,6 +12,10 @@ _Avoid_: Website, property
 The mutable identity, visibility, tracking, exclusion, and feature settings attached to a Site.
 _Avoid_: Site settings, tracking config
 
+**Site Exclusion Decision**:
+The ordered determination that an ingestion request should not be recorded because it matches a Site Configuration exclusion rule.
+_Avoid_: Filter result, blocked event
+
 **Public Website Target**:
 A caller-supplied HTTP or HTTPS location that resolves only to public network addresses and can be inspected by Rybbit's free analytics tools.
 _Avoid_: External URL, safe URL, validated URL
