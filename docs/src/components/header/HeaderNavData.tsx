@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   BookOpen,
   Bot,
+  Braces,
   Building2,
   Funnel,
   Gauge,
@@ -125,6 +126,12 @@ export function useHeaderNav() {
       label: t("MCP Server"),
       description: t("Your analytics in your AI assistant"),
       icon: Plug,
+    },
+    {
+      href: "/features/api",
+      label: t("Analytics API"),
+      description: t("Query and ingest data with REST"),
+      icon: Braces,
     },
   ];
 

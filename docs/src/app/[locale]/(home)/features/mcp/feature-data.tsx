@@ -185,6 +185,11 @@ export const relatedFeatures: RelatedFeature[] = [
     description: "Identify users and manage traits programmatically.",
   },
   {
+    title: "Analytics API",
+    href: "/features/api",
+    description: "The same access as plain REST — for code instead of assistants.",
+  },
+  {
     title: "Dashboard Sharing",
     href: "/features/dashboard-sharing",
     description: "Prefer humans over agents? Share the dashboard directly.",

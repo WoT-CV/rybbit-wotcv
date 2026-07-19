@@ -10,7 +10,6 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { ArrowRight, ArrowUpRight, Star } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useHeaderNav, type HeaderNavGroup, type HeaderNavLink } from "./HeaderNavData";
 
@@ -120,15 +119,6 @@ export function DesktopNav() {
                     <FeatureCell link={link} />
                   </li>
                 ))}
-                <li aria-hidden="true" className={`${seamCell} relative`}>
-                  <Image
-                    src="/rybbit/frog_black.svg"
-                    alt=""
-                    width={44}
-                    height={44}
-                    className="absolute bottom-3 right-3 opacity-[0.08] dark:invert"
-                  />
-                </li>
               </ul>
             </div>
           </NavigationMenuContent>
