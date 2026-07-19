@@ -162,7 +162,7 @@ class PdfReportService {
 
       return await processResults<ChartDataPoint>(result);
     } catch (error) {
-      this.logger.error({ error, siteId }, "Error fetching chart data");
+      this.logger.error({ err: error, siteId }, "Error fetching chart data");
       return [];
     }
   }
@@ -226,7 +226,7 @@ class PdfReportService {
       const data = await processResults<OverviewData>(result);
       return data[0] || null;
     } catch (error) {
-      this.logger.error({ error, siteId }, "Error fetching overview data");
+      this.logger.error({ err: error, siteId }, "Error fetching overview data");
       return null;
     }
   }
@@ -454,7 +454,7 @@ class PdfReportService {
 
       return await processResults<MetricData>(result);
     } catch (error) {
-      this.logger.error({ error, siteId, parameter }, "Error fetching top N data");
+      this.logger.error({ err: error, siteId, parameter }, "Error fetching top N data");
       return [];
     }
   }

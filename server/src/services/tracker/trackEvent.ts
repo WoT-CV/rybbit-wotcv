@@ -373,7 +373,7 @@ export async function trackEvent(request: FastifyRequest, reply: FastifyReply) {
       success: true,
     });
   } catch (error) {
-    logger.error(error, "Error tracking event");
+    logger.error({ err: error }, "Error tracking event");
     if (error instanceof ZodError) {
       return reply.status(400).send({
         success: false,

@@ -23,7 +23,7 @@ export async function getUsers(request: FastifyRequest, reply: FastifyReply) {
     request.log.debug({ userCount: users.length }, "Users fetched");
     return users;
   } catch (error) {
-    request.log.error(error, "Failed to fetch users");
+    request.log.error({ err: error }, "Failed to fetch users");
     throw error;
   }
 }
@@ -68,18 +68,25 @@ Prefer stable structured fields over interpolation:
 logger.info({ monitorId, region }, "Running monitor check");
 ```
 
-For exceptions, pass the error directly or use Pino's `err` key:
+For exceptions, use Pino's canonical `err` key:
 
 ```typescript
-logger.error(error, "Monitor check failed");
 logger.error({ err: error, monitorId }, "Monitor check failed");
 ```
 
-Do not use `{ error }`: Pino does not apply its Error serializer to that key, so native errors become empty objects.
+The runtime also normalizes legacy direct `Error` arguments and `{ error }` objects to `err`, so stack and message data survive. If code throws a non-`Error` value, the runtime emits a safe `NonErrorThrown` error with only the thrown value's type; it does not serialize the unknown value.
+
+Keep changing call sites on the canonical form above. This gives events stable fields and makes the intended exception explicit during review.
 
 ## Redaction
 
-The shared runtime redacts common credentials, authentication headers, cookies, and structured AppSumo license fields. Redaction only applies to structured fields at configured paths; it cannot remove sensitive values interpolated into message strings.
+The shared runtime recursively censors sensitive structured fields before Pino serializes an event. The policy covers credentials, authentication headers, cookies, license keys, webhook URLs, email addresses, phone numbers, request/response bodies, prompts, and query/SQL content. Pino path redaction remains enabled as a second layer for child bindings and serializer output.
+
+Redaction cannot reliably identify a sensitive value interpolated into a message string. Keep messages constant and put operational metadata in structured fields:
+
+```typescript
+logger.info({ organizationId, eventType }, "Processed integration event");
+```
 
 Never log passwords, tokens, cookies, authentication headers, raw credentials, or full user records. Keep email addresses, phone numbers, prompts, queries, and request payloads out of logs unless the operational need and retention policy are explicit.
 

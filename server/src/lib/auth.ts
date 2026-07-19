@@ -176,7 +176,7 @@ const pluginList = [
             .delete(invitation)
             .where(and(eq(invitation.email, removedUser.email), eq(invitation.organizationId, org.id)));
         } catch (error) {
-          console.error("Error deleting invitations for removed member:", error);
+          authLogger.error({ err: error, organizationId: org.id }, "Error deleting invitations for removed member");
         }
         invalidateSitesAccessCache(removedMember.userId);
       },
@@ -320,7 +320,7 @@ export const auth = betterAuth({
         try {
           await db.delete(schema.apiKey).where(eq(schema.apiKey.referenceId, deletedUser.id));
         } catch (error) {
-          console.error("Error deleting API keys for removed user:", error);
+          authLogger.error({ err: error, userId: deletedUser.id }, "Error deleting API keys for removed user");
         }
       },
     },
@@ -353,7 +353,7 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async u => {
-          console.log(u);
+          authLogger.info({ userId: u.id }, "User created");
           const users = await db.select().from(schema.user).orderBy(asc(user.createdAt));
 
           // If this is the first user, make them an admin
@@ -373,7 +373,7 @@ export const auth = betterAuth({
               await db.update(user).set({ scheduledTipEmailIds: emailIds }).where(eq(user.id, u.id));
             }
           } catch (error) {
-            console.error("Error setting up onboarding emails:", error);
+            authLogger.error({ err: error, userId: u.id }, "Error setting up onboarding emails");
           }
         },
       },
@@ -548,7 +548,7 @@ export const auth = betterAuth({
 
           invalidateSitesAccessCache(userRecord[0].id);
         } catch (error) {
-          console.error("Error applying invitation site restrictions:", error);
+          authLogger.error({ err: error }, "Error applying invitation Site restrictions");
         }
       }
 
@@ -572,7 +572,7 @@ export const auth = betterAuth({
             invalidateSitesAccessCache(userId);
           }
         } catch (error) {
-          console.error("Error cleaning up after organization leave:", error);
+          authLogger.error({ err: error }, "Error cleaning up after organization leave");
         }
       }
     }),

@@ -123,7 +123,7 @@ describe("handleAppSumoWebhook — payload validation", () => {
     expect(reply.payload).toEqual({
       event: "refund",
       success: false,
-      error: "Invalid event type: refund",
+      error: "Invalid AppSumo event type",
     });
     expect(mocks.execute).not.toHaveBeenCalled();
   });
@@ -152,6 +152,29 @@ describe("handleAppSumoWebhook — audit trail", () => {
       success: false,
       error: "connection refused",
     });
+  });
+
+  it("does not send license credentials or the raw payload to the request logger", async () => {
+    const secrets = ["lic_current_secret", "lic_previous_secret", "lic_parent_secret"];
+
+    await invoke({
+      event: "deactivate",
+      license_key: secrets[0],
+      prev_license_key: secrets[1],
+      parent_license_key: secrets[2],
+      extra: { reason: "Customer request" },
+    });
+
+    const serializedLogCalls = JSON.stringify([
+      ...mocks.loggerInfo.mock.calls,
+      ...mocks.loggerWarn.mock.calls,
+      ...mocks.loggerError.mock.calls,
+      ...requestLogger.debug.mock.calls,
+    ]);
+    for (const secret of secrets) {
+      expect(serializedLogCalls).not.toContain(secret);
+    }
+    expect(serializedLogCalls).not.toContain('"payload"');
   });
 });
 

@@ -369,7 +369,7 @@ export async function observeTrackingAnomaly(input: AnomalyInput): Promise<Anoma
       // A Redis blip must never break ingestion. Fall back to the in-process
       // counters — accuracy degrades under clustering, but detection keeps working
       // and recovers automatically once Redis is back.
-      logger.error(error as Error, "Redis anomaly counters failed; using in-process fallback");
+      logger.error({ err: error }, "Redis anomaly counters failed; using in-process fallback");
       counters = observeViaLocal(plan, nowMs);
     }
   } else {

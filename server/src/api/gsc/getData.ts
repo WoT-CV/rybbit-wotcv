@@ -61,7 +61,7 @@ export async function getGSCData(req: FastifyRequest<GetGSCDataRequest>, res: Fa
 
     if (!gscResponse.ok) {
       const errorText = await gscResponse.text();
-      req.log.error({ responseBody: errorText, statusCode: gscResponse.status }, "GSC request failed");
+      req.log.error({ responseBodyLength: errorText.length, statusCode: gscResponse.status }, "GSC request failed");
       return res.status(gscResponse.status).send({ error: "Failed to fetch GSC data", details: errorText });
     }
 

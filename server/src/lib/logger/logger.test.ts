@@ -1,4 +1,4 @@
-import type { LoggerOptions } from "pino";
+import type { LogFn, LoggerOptions } from "pino";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { childLogger, childMock, pinoMock, rootLogger } = vi.hoisted(() => {
@@ -27,6 +27,18 @@ async function importLogger(nodeEnv: string, logLevel = "") {
   if (!options) throw new Error("Logging runtime did not create the root logger");
 
   return { loggerModule, options };
+}
+
+function applyLogMethodHook(options: LoggerOptions, inputArgs: unknown[]): unknown[] {
+  let normalizedArgs: unknown[] | undefined;
+  const method = function (...args: unknown[]) {
+    normalizedArgs = args;
+  } as LogFn;
+
+  options.hooks?.logMethod?.call(rootLogger as never, inputArgs as Parameters<LogFn>, method, 50);
+
+  if (!normalizedArgs) throw new Error("Logging runtime did not invoke the Pino log method");
+  return normalizedArgs;
 }
 
 beforeEach(() => {
@@ -102,5 +114,104 @@ describe("logging runtime", () => {
       parameters: { siteId: 1 },
     });
     expect(options.serializers?.res({ statusCode: 204 })).toEqual({ statusCode: 204 });
+  });
+
+  it("normalizes direct and structured errors to the canonical err field", async () => {
+    const { options } = await importLogger("production");
+    const failure = Object.assign(new Error("database unavailable"), {
+      code: "ECONNREFUSED",
+      details: { requestId: "provider-request", responseBodyPreview: "private provider response" },
+    });
+
+    const [directContext] = applyLogMethodHook(options, [failure, "Direct failure"]);
+    const [structuredContext] = applyLogMethodHook(options, [{ error: failure, siteId: 42 }, "Structured failure"]);
+
+    expect(directContext).toMatchObject({
+      err: expect.objectContaining({
+        message: "database unavailable",
+        code: "ECONNREFUSED",
+        details: { requestId: "provider-request", responseBodyPreview: "[REDACTED]" },
+      }),
+    });
+    expect(structuredContext).toMatchObject({
+      err: expect.objectContaining({ message: "database unavailable", code: "ECONNREFUSED" }),
+      siteId: 42,
+    });
+    expect(structuredContext).not.toHaveProperty("error");
+  });
+
+  it("turns non-Error failures into safe errors without logging the thrown value", async () => {
+    const { options } = await importLogger("production");
+    const [context] = applyLogMethodHook(options, [
+      { err: { token: "secret", reason: "provider failed" } },
+      "Provider failure",
+    ]);
+
+    expect(context).toMatchObject({
+      err: expect.objectContaining({
+        name: "NonErrorThrown",
+        message: "A non-Error value was thrown",
+        thrownType: "object",
+      }),
+    });
+    expect(JSON.stringify(context)).not.toContain("secret");
+    expect(JSON.stringify(context)).not.toContain("provider failed");
+  });
+
+  it("recursively censors sensitive structured fields without mutating caller data", async () => {
+    const { options } = await importLogger("production");
+    const input = {
+      eventType: "activate",
+      integration: {
+        auth: { newPassword: "password-secret" },
+        contact: { recipientEmail: "person@example.com" },
+      },
+      promptPreview: "show revenue by customer",
+    };
+
+    const [context] = applyLogMethodHook(options, [input, "Safe event"]);
+
+    expect(context).toEqual({
+      eventType: "activate",
+      integration: {
+        auth: { newPassword: "[REDACTED]" },
+        contact: { recipientEmail: "[REDACTED]" },
+      },
+      promptPreview: "[REDACTED]",
+    });
+    expect(input.integration.auth.newPassword).toBe("password-secret");
+  });
+
+  it("emits a normalized, redacted JSON event through Pino", async () => {
+    const { options } = await importLogger("production");
+    const { pino: actualPino } = await vi.importActual<typeof import("pino")>("pino");
+    const output: string[] = [];
+    class ProviderError extends Error {
+      details = { requestId: "provider-request", responseBodyPreview: "private provider response" };
+    }
+
+    const outputLogger = actualPino(
+      { ...options, base: undefined, timestamp: false },
+      { write: (line: string) => output.push(line) }
+    );
+    outputLogger
+      .child({ email: "person@example.com" })
+      .error(
+        { error: new ProviderError("provider failed"), nested: { apiKey: "api-secret" } },
+        "Provider request failed"
+      );
+
+    expect(output).toHaveLength(1);
+    expect(JSON.parse(output[0])).toMatchObject({
+      level: 50,
+      email: "[REDACTED]",
+      nested: { apiKey: "[REDACTED]" },
+      err: {
+        type: "ProviderError",
+        message: "provider failed",
+        details: { requestId: "provider-request", responseBodyPreview: "[REDACTED]" },
+      },
+      msg: "Provider request failed",
+    });
   });
 });
