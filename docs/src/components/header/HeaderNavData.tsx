@@ -4,6 +4,7 @@ import { useExtracted } from "next-intl";
 import {
   AlertTriangle,
   BookOpen,
+  Bot,
   Building2,
   Funnel,
   Gauge,
@@ -11,9 +12,11 @@ import {
   Map,
   MousePointerClick,
   Newspaper,
+  Plug,
   Rewind,
   Route,
   Server,
+  Share2,
   Target,
   TrendingUp,
   UserCheck,
@@ -104,6 +107,24 @@ export function useHeaderNav() {
       label: t("Web Vitals"),
       description: t("Monitor site performance"),
       icon: Gauge,
+    },
+    {
+      href: "/features/bot-detection",
+      label: t("Bot Detection"),
+      description: t("Filter crawlers, scrapers, and AI agents"),
+      icon: Bot,
+    },
+    {
+      href: "/features/dashboard-sharing",
+      label: t("Dashboard Sharing"),
+      description: t("Public dashboards, links, and embeds"),
+      icon: Share2,
+    },
+    {
+      href: "/features/mcp",
+      label: t("MCP Server"),
+      description: t("Your analytics in your AI assistant"),
+      icon: Plug,
     },
   ];
 

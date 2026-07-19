@@ -185,8 +185,8 @@ export const relatedFeatures: RelatedFeature[] = [
     description: "Identify which users are affected by specific errors.",
   },
   {
-    title: "Goals",
-    href: "/features/goals",
-    description: "Track whether errors are impacting conversion rates.",
+    title: "MCP Server",
+    href: "/features/mcp",
+    description: "Let your coding agent check production errors right from the editor.",
   },
 ];

@@ -206,8 +206,13 @@ export const relatedFeatures: RelatedFeature[] = [
     description: "Set conversion goals and track progress automatically.",
   },
   {
-    title: "Web Vitals",
-    href: "/features/web-vitals",
-    description: "Monitor Core Web Vitals for fast user experiences.",
+    title: "Bot Detection",
+    href: "/features/bot-detection",
+    description: "Five-layer filtering keeps crawlers and AI agents out of your data.",
+  },
+  {
+    title: "Dashboard Sharing",
+    href: "/features/dashboard-sharing",
+    description: "Share your dashboard publicly, via private link, or as an embed.",
   },
 ];

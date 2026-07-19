@@ -36,6 +36,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Feature pages
+  const featuresPath = join(process.cwd(), "src/app/[locale]/(home)/features");
+  const featureSlugs = readdirSync(featuresPath, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory() && dirent.name !== "components")
+    .map(dirent => dirent.name);
+
+  const featurePages = [
+    {
+      url: `${baseUrl}/features`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    },
+    ...featureSlugs.map(slug => ({
+      url: `${baseUrl}/features/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
+  ];
+
   // Comparison pages
   const competitors = [
     "google-analytics",
@@ -116,5 +137,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...personaPages, ...comparisonPages, ...toolPages, ...docPages, ...blogPosts];
+  return [...staticPages, ...personaPages, ...featurePages, ...comparisonPages, ...toolPages, ...docPages, ...blogPosts];
 }
