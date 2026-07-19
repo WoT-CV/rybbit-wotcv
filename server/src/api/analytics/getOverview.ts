@@ -1,8 +1,8 @@
 import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { getFilterStatement } from "./utils/getFilterStatement.js";
-import { getTimeStatement, processResults } from "./utils/utils.js";
+import { getTimeStatement } from "./utils/utils.js";
+import { analyticsRoute, runAnalyticsQuery } from "./utils/analyticsQuery.js";
 
 type GetOverviewResponse = {
   sessions: number;
@@ -13,7 +13,7 @@ type GetOverviewResponse = {
   session_duration: number;
 };
 
-const getQuery = (params: FilterParams, siteId: number) => {
+export const buildOverviewQuery = (params: FilterParams, siteId: number) => {
   const timeStatement = getTimeStatement(params);
   const filterStatement = getFilterStatement(params.filters, siteId, timeStatement);
 
@@ -61,46 +61,16 @@ export interface OverviewRequest {
   Querystring: FilterParams;
 }
 
-export async function getOverview(req: FastifyRequest<OverviewRequest>, res: FastifyReply) {
-  const {
-    start_date,
-    end_date,
-    time_zone,
-    filters,
-    start_datetime,
-    end_datetime,
-    past_minutes_start,
-    past_minutes_end,
-  } = req.query;
-  const site = req.params.siteId;
+export const getOverview = analyticsRoute<OverviewRequest>(
+  "overview",
+  async (req: FastifyRequest<OverviewRequest>, res: FastifyReply) => {
+    const siteId = Number(req.params.siteId);
 
-  const query = getQuery(
-    {
-      start_date,
-      end_date,
-      time_zone,
-      filters,
-      start_datetime,
-      end_datetime,
-      past_minutes_start,
-      past_minutes_end,
-    },
-    Number(site)
-  );
-
-  try {
-    const result = await clickhouse.query({
-      query,
-      format: "JSONEachRow",
-      query_params: {
-        siteId: Number(site),
-      },
+    const data = await runAnalyticsQuery<GetOverviewResponse>({
+      query: buildOverviewQuery(req.query, siteId),
+      params: { siteId },
     });
 
-    const data = await processResults<GetOverviewResponse>(result);
     return res.send({ data: data[0] });
-  } catch (error) {
-    console.error("Error fetching overview:", error);
-    return res.status(500).send({ error: "Failed to fetch overview" });
   }
-}
+);
