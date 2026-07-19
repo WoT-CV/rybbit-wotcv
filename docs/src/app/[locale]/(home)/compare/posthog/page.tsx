@@ -102,6 +102,7 @@ export default function PostHog() {
         chooseCompetitor={posthogExtendedData.chooseCompetitor}
         rybbitPricing={posthogExtendedData.rybbitPricing}
         competitorPricing={posthogExtendedData.competitorPricing}
+        deepDive={posthogExtendedData.deepDive}
         faqItems={posthogExtendedData.faqItems}
         relatedResources={posthogExtendedData.relatedResources}
       />

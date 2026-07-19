@@ -76,7 +76,7 @@ export default function Security() {
 
         <h3 className="text-xl font-semibold mt-6 mb-3">Data Deletion</h3>
         <p>
-          After cancellation or downgrade to free tier, your analytics data will be permanently deleted within 60 days.
+          After cancellation, your analytics data will be permanently deleted within 60 days.
           We recommend exporting your data before cancellation if you wish to retain it. Once deleted, data cannot be
           recovered.
         </p>

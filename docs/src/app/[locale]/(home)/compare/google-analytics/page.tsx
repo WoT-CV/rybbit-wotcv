@@ -103,6 +103,7 @@ export default function GoogleAnalytics() {
         chooseCompetitor={googleAnalyticsExtendedData.chooseCompetitor}
         rybbitPricing={googleAnalyticsExtendedData.rybbitPricing}
         competitorPricing={googleAnalyticsExtendedData.competitorPricing}
+        deepDive={googleAnalyticsExtendedData.deepDive}
         faqItems={googleAnalyticsExtendedData.faqItems}
         relatedResources={googleAnalyticsExtendedData.relatedResources}
       />

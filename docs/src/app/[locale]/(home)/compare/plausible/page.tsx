@@ -102,6 +102,7 @@ export default function Plausible() {
         chooseCompetitor={plausibleExtendedData.chooseCompetitor}
         rybbitPricing={plausibleExtendedData.rybbitPricing}
         competitorPricing={plausibleExtendedData.competitorPricing}
+        deepDive={plausibleExtendedData.deepDive}
         faqItems={plausibleExtendedData.faqItems}
         relatedResources={plausibleExtendedData.relatedResources}
       />

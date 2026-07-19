@@ -102,6 +102,7 @@ export default function SimpleAnalytics() {
         chooseCompetitor={simpleAnalyticsExtendedData.chooseCompetitor}
         rybbitPricing={simpleAnalyticsExtendedData.rybbitPricing}
         competitorPricing={simpleAnalyticsExtendedData.competitorPricing}
+        deepDive={simpleAnalyticsExtendedData.deepDive}
         faqItems={simpleAnalyticsExtendedData.faqItems}
         relatedResources={simpleAnalyticsExtendedData.relatedResources}
       />

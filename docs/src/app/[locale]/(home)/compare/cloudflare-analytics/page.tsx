@@ -102,6 +102,7 @@ export default function CloudflareAnalytics() {
         chooseCompetitor={cloudflareAnalyticsExtendedData.chooseCompetitor}
         rybbitPricing={cloudflareAnalyticsExtendedData.rybbitPricing}
         competitorPricing={cloudflareAnalyticsExtendedData.competitorPricing}
+        deepDive={cloudflareAnalyticsExtendedData.deepDive}
         faqItems={cloudflareAnalyticsExtendedData.faqItems}
         relatedResources={cloudflareAnalyticsExtendedData.relatedResources}
       />

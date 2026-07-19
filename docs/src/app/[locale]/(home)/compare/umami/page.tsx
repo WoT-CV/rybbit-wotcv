@@ -102,6 +102,7 @@ export default function Umami() {
         chooseCompetitor={umamiExtendedData.chooseCompetitor}
         rybbitPricing={umamiExtendedData.rybbitPricing}
         competitorPricing={umamiExtendedData.competitorPricing}
+        deepDive={umamiExtendedData.deepDive}
         faqItems={umamiExtendedData.faqItems}
         relatedResources={umamiExtendedData.relatedResources}
       />

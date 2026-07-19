@@ -102,6 +102,7 @@ export default function Fathom() {
         chooseCompetitor={fathomExtendedData.chooseCompetitor}
         rybbitPricing={fathomExtendedData.rybbitPricing}
         competitorPricing={fathomExtendedData.competitorPricing}
+        deepDive={fathomExtendedData.deepDive}
         faqItems={fathomExtendedData.faqItems}
         relatedResources={fathomExtendedData.relatedResources}
       />

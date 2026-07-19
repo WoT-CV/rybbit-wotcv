@@ -41,6 +41,16 @@ export interface RelatedResource {
   description: string;
 }
 
+export interface DeepDiveSection {
+  heading: string;
+  paragraphs: React.ReactNode[];
+}
+
+export interface DeepDive {
+  title: string;
+  sections: DeepDiveSection[];
+}
+
 export interface ComparisonPageProps {
   competitorName: string;
   sections: ComparisonSection[];
@@ -52,6 +62,7 @@ export interface ComparisonPageProps {
   chooseCompetitor?: string[];
   rybbitPricing?: PricingInfo;
   competitorPricing?: PricingInfo;
+  deepDive?: DeepDive;
   faqItems?: FAQItem[];
   relatedResources?: RelatedResource[];
 }
@@ -67,6 +78,7 @@ export function ComparisonPage({
   chooseCompetitor,
   rybbitPricing,
   competitorPricing,
+  deepDive,
   faqItems,
   relatedResources,
 }: ComparisonPageProps) {
@@ -238,6 +250,40 @@ export function ComparisonPage({
                     ))}
                   </ul>
                 </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {deepDive && (
+        <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby="deep-dive-title">
+          <div className="mx-auto grid max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800 lg:grid-cols-12">
+            <div className="border-b border-neutral-200 px-5 py-12 dark:border-neutral-800 sm:px-8 lg:col-span-4 lg:border-b-0 lg:border-r lg:px-10 lg:py-16">
+              <div className="lg:sticky lg:top-24">
+                <h2 id="deep-dive-title" className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                  {deepDive.title}
+                </h2>
+              </div>
+            </div>
+            <div className="lg:col-span-8">
+              {deepDive.sections.map((section) => (
+                <div
+                  key={section.heading}
+                  className="border-b border-neutral-200 px-5 py-10 last:border-b-0 dark:border-neutral-800 sm:px-8 lg:px-10"
+                >
+                  <h3 className="text-xl font-semibold tracking-[-0.02em]">{section.heading}</h3>
+                  <div className="mt-5 space-y-4">
+                    {section.paragraphs.map((paragraph, paragraphIndex) => (
+                      <div
+                        key={paragraphIndex}
+                        className="max-w-3xl text-base leading-7 text-neutral-600 dark:text-neutral-300 [&_a]:font-medium [&_a]:text-emerald-600 [&_a]:underline [&_a]:underline-offset-4 dark:[&_a]:text-emerald-400 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-5"
+                      >
+                        {paragraph}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

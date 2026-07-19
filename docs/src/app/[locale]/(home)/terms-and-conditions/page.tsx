@@ -95,14 +95,14 @@ export default function TermsAndConditions() {
 
         <h3 className="text-xl font-semibold mt-6 mb-3">Downgrading Your Plan</h3>
         <p>
-          You may downgrade to a lower-tier plan or the free tier at any time. Downgrades take effect at the end of your
+          You may downgrade to a lower-tier plan at any time. Downgrades take effect at the end of your
           current billing period. If your usage exceeds the limits of the downgraded plan, you may need to reduce your
           websites or accept data retention limitations.
         </p>
 
         <h3 className="text-xl font-semibold mt-6 mb-3">Data After Cancellation</h3>
         <p>
-          After cancellation or downgrade to free tier, your analytics data will be permanently deleted within 60 days.
+          After cancellation, your analytics data will be permanently deleted within 60 days.
           We recommend exporting your data before cancellation if you wish to retain it. Once deleted, data cannot be
           recovered.
         </p>

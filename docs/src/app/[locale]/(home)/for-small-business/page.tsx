@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const pageTitle = "Web Analytics for Small Businesses | Rybbit";
 const pageDescription =
-  "The handful of numbers your business actually needs — visitors, sources, top pages, and goals — on one screen you can read in thirty seconds. No GA4 setup, no cookie banner, free to start.";
+  "The handful of numbers your business actually needs — visitors, sources, top pages, and goals — on one screen you can read in thirty seconds. No GA4 setup, no cookie banner, and a free trial to start.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -45,9 +45,9 @@ export const metadata = createMetadata({
 // array, so the schema can never drift from the visible answers.
 const faqItems = [
   {
-    question: "Is there really a free plan?",
+    question: "Can I try Rybbit before paying?",
     answer:
-      "Yes. Rybbit is free for one website up to 3,000 events a month, with no credit card required. When you outgrow it, the Standard plan adds more sites and traffic.",
+      "Yes. Every plan starts with a 7-day free trial with all features included, and you won't be charged until the trial ends. Rybbit is also open source, so self-hosting it yourself is always free.",
   },
   {
     question: "Do I need a cookie consent banner?",
@@ -85,7 +85,7 @@ const numberRows = [
 ];
 
 const planFacts = [
-  { tier: "Free", fact: "1 website, 3,000 events a month, no credit card" },
+  { tier: "Trial", fact: "7 days free, every feature included, cancel anytime" },
   { tier: "Standard", fact: "Up to 5 websites and 3 team members, priced by traffic" },
   { tier: "Pro", fact: "Unlimited websites and team members" },
 ];
@@ -96,7 +96,7 @@ export default function ForSmallBusinessPage() {
       <InteriorPageHero
         eyebrow="Rybbit for small businesses"
         title="The numbers your business needs. Nothing you don't."
-        description="You don't need a data team to know if your website is working. Rybbit puts visitors, sources, top pages, and goals on one screen you can read in thirty seconds — no GA4 maze, no cookie banner, free to start."
+        description="You don't need a data team to know if your website is working. Rybbit puts visitors, sources, top pages, and goals on one screen you can read in thirty seconds — no GA4 maze, no cookie banner, and a free trial to start."
         eventLocation="for_small_business_hero"
       />
 
@@ -229,14 +229,14 @@ export default function ForSmallBusinessPage() {
                   id="smb-pricing-title"
                   className="mt-5 max-w-2xl text-4xl font-semibold leading-[1.04] tracking-[-0.035em] text-balance md:text-5xl"
                 >
-                  Start free. Upgrade when you grow.
+                  Start small. Upgrade when you grow.
                 </h2>
               </div>
             </div>
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
-                No enterprise sales call, no per-seat surprises. The free plan is genuinely free, and paid plans are
-                priced by traffic — so you only pay more once your site is actually busier.
+                No enterprise sales call, no per-seat surprises. Every plan starts with a 7-day free trial, and
+                pricing scales by traffic — so you only pay more once your site is actually busier.
               </p>
             </div>
           </div>
@@ -309,7 +309,7 @@ export default function ForSmallBusinessPage() {
 
       <CTASection
         title="Know if your website is working — in thirty seconds."
-        description="Free for your first site, no cookie banner, and a dashboard you'll actually open."
+        description="A 7-day free trial, no cookie banner, and a dashboard you'll actually open."
         eventLocation="for_small_business_bottom_cta"
       />
     </div>
