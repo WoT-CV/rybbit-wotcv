@@ -65,9 +65,11 @@ function makeRequest(body: Record<string, unknown>, organizationId = "org_1") {
   } as any;
 }
 
-/** Shape returned by getSubscriptionInner — only the fields addSite reads. */
-function subscription(overrides: Partial<{ planName: string; status: string; siteLimit: number | null }> = {}) {
-  return { planName: "basic-100k", status: "active", siteLimit: 1, ...overrides };
+/** Shape returned by getSubscriptionInner — only the fields the lifecycle module reads. */
+function subscription(
+  overrides: Partial<{ planName: string; status: string; siteLimit: number | null; includesReplay: boolean }> = {}
+) {
+  return { planName: "basic-100k", status: "active", siteLimit: 1, includesReplay: false, ...overrides };
 }
 
 beforeEach(() => {
@@ -102,7 +104,9 @@ describe("addSite — cloud pro-feature gating (session replay)", () => {
   });
 
   it("allows session replay on a pro plan", async () => {
-    mocks.getSubscriptionInner.mockResolvedValue(subscription({ planName: "pro-1m", siteLimit: null }));
+    mocks.getSubscriptionInner.mockResolvedValue(
+      subscription({ planName: "pro-1m", siteLimit: null, includesReplay: true })
+    );
     const reply = replyStub();
 
     await addSite(makeRequest({ sessionReplay: true }), reply);

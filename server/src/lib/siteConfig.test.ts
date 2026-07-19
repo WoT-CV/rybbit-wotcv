@@ -178,6 +178,28 @@ describe("siteConfig.getConfig", () => {
       { column: "site_id", value: 123 },
     ]);
   });
+
+  it("invalidates every identifier for one site without evicting other sites", async () => {
+    dbMock.rows.push(
+      createSiteRow({ id: "abcdef123456", siteId: 123, domain: "before.example" }),
+      createSiteRow({ id: "fedcba654321", siteId: 456, domain: "other.example" })
+    );
+
+    await siteConfig.getConfig(123);
+    await siteConfig.getConfig("123");
+    await siteConfig.getConfig("abcdef123456");
+    await siteConfig.getConfig(456);
+    const queriesBeforeInvalidation = dbMock.queries.length;
+
+    dbMock.rows[0].domain = "after.example";
+    siteConfig.invalidate({ id: "abcdef123456", siteId: 123 });
+
+    expect((await siteConfig.getConfig(123))?.domain).toBe("after.example");
+    expect((await siteConfig.getConfig("123"))?.domain).toBe("after.example");
+    expect((await siteConfig.getConfig("abcdef123456"))?.domain).toBe("after.example");
+    expect((await siteConfig.getConfig(456))?.domain).toBe("other.example");
+    expect(dbMock.queries).toHaveLength(queriesBeforeInvalidation + 4);
+  });
 });
 
 describe("siteConfig exclusion matchers", () => {

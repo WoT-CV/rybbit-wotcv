@@ -141,54 +141,13 @@ class SiteConfig {
     return this.getSiteByAnyId(siteIdOrId);
   }
 
-  async updateConfig(siteIdOrId: number | string, config: Partial<SiteConfigData>): Promise<void> {
-    try {
-      const isNumeric = this.isNumericId(siteIdOrId);
-      await db
-        .update(sites)
-        .set(config)
-        .where(isNumeric ? eq(sites.siteId, Number(siteIdOrId)) : eq(sites.id, String(siteIdOrId)));
+  invalidate(site: Pick<SiteConfigData, "id" | "siteId">): void {
+    const identifiers: Array<string | number | null> = [site.siteId, String(site.siteId), site.id];
 
-      // Invalidate cache after update
-      this.cache.clear();
-    } catch (error) {
-      logger.error(error as Error, `Error updating site configuration for ${siteIdOrId}`);
-    }
-  }
-
-  /**
-   * Add a new site
-   */
-  async addSite(config: Omit<SiteConfigData, "siteId">): Promise<void> {
-    try {
-      await db.insert(sites).values({
-        id: config.id,
-        name: "", // This would need to be provided
-        domain: config.domain,
-        public: config.public,
-        saltUserIds: config.saltUserIds,
-        blockBots: config.blockBots,
-        excludedIPs: config.excludedIPs,
-        createdBy: "", // This would need to be provided
-      });
-    } catch (error) {
-      logger.error(error as Error, `Error adding site`);
-    }
-  }
-
-  /**
-   * Remove a site
-   */
-  async removeSite(siteIdOrId: number | string): Promise<void> {
-    try {
-      const isNumeric = this.isNumericId(siteIdOrId);
-
-      await db.delete(sites).where(isNumeric ? eq(sites.siteId, Number(siteIdOrId)) : eq(sites.id, String(siteIdOrId)));
-
-      // Invalidate cache after deletion
-      this.cache.clear();
-    } catch (error) {
-      logger.error(error as Error, `Error removing site ${siteIdOrId}`);
+    for (const identifier of identifiers) {
+      if (identifier !== null) {
+        this.cache.delete(this.getCacheKey(identifier));
+      }
     }
   }
 
