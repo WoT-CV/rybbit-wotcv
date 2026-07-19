@@ -144,7 +144,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "Can I pair errors with session replay?",
     answer:
-      "Yes. When a user session includes an error, you can watch the session replay to see exactly what happened before, during, and after the error occurred. This is incredibly useful for reproduction.",
+      "Yes. When a user session includes an error, you can watch the session replay to see exactly what happened before, during, and after the error occurred. This makes reproduction straightforward.",
   },
   {
     question: "Are errors aggregated or shown individually?",

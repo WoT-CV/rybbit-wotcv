@@ -47,7 +47,7 @@ const faqSchema = {
       name: "How does Rybbit compare to Google Analytics?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Rybbit is much less bloated than Google Analytics, both in terms of our tracking script and the UX of the dashboard. We show you exactly what you need to see. The difference in usability is night and day.",
+        text: "Rybbit is far less bloated than Google Analytics, both in the tracking script and the dashboard. It's one dashboard instead of 150+ reports, and the script is 18KB against GA4's 371KB.",
       },
     },
     {
@@ -55,7 +55,7 @@ const faqSchema = {
       name: "Can I self-host Rybbit?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Absolutely! Rybbit is available as a self-hosted option. You can install it on your own server and have complete control over your data. We also offer a cloud version if you prefer a managed solution.",
+        text: "Yes. You can run Rybbit on your own server with Docker and keep full control of your data, or use the managed cloud if you'd rather not host it yourself.",
       },
     },
     {
@@ -63,7 +63,7 @@ const faqSchema = {
       name: "How easy is it to set up Rybbit?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Setting up Rybbit is incredibly simple. Just add a small script to your website or install @rybbit/js from npm, and you're good to go. Most users are up and running in less than 5 minutes.",
+        text: "Add one script tag to your site, or install @rybbit/js from npm. Most sites are collecting data in under 5 minutes.",
       },
     },
     {
@@ -71,7 +71,7 @@ const faqSchema = {
       name: "What platforms does Rybbit support?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Rybbit works with virtually any website platform. Whether you're using WordPress, Shopify, Next.js, React, Vue, or any other framework, our simple tracking snippet integrates seamlessly.",
+        text: "The script tag works anywhere you can add HTML — WordPress, Shopify, Next.js, React, Vue, and the rest. For apps, install @rybbit/js from npm.",
       },
     },
     {
@@ -189,7 +189,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
             <GridCrosses />
             <div className="col-span-full flex min-h-14 items-center bg-white px-5 dark:bg-neutral-950 sm:px-8">
               <p id="customer-proof" className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                {t("Trusted by 10,000+ organizations worldwide")}
+                {t("Trusted by 10,000+ organizations")}
               </p>
             </div>
             {customerLogos.map(logo => {

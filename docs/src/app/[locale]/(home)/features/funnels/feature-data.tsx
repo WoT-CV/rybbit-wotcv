@@ -103,7 +103,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Rocket className="w-6 h-6" />,
     title: "Founders & operators",
     description:
-      "Get a clear picture of your core conversion metrics without hiring a data team. Simple setup, instant insights.",
+      "Get a clear picture of your core conversion metrics without hiring a data team.",
   },
   {
     icon: <ShoppingCart className="w-6 h-6" />,

@@ -108,7 +108,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Rocket className="w-6 h-6" />,
     title: "Startup founders",
     description:
-      "Set clear conversion targets and track them without building custom analytics infrastructure. Focus on what moves the needle.",
+      "Set clear conversion targets and track them without building custom analytics infrastructure.",
   },
   {
     icon: <PenTool className="w-6 h-6" />,

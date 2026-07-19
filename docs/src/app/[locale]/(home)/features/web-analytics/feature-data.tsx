@@ -46,7 +46,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Smartphone className="w-5 h-5" />,
     title: "Device & browser breakdown",
     description:
-      "Know which devices, browsers, and operating systems your visitors use so you can optimize for what matters.",
+      "Know which devices, browsers, and operating systems your visitors use.",
   },
   {
     icon: <Tag className="w-5 h-5" />,
@@ -58,7 +58,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Filter className="w-5 h-5" />,
     title: "Advanced filtering",
     description:
-      "Slice your data by any dimension — country, browser, referrer, page, or custom event. Click any value to instantly filter.",
+      "Filter by any dimension — country, browser, referrer, page, or custom event. Click any value to apply it.",
   },
   {
     icon: <Activity className="w-5 h-5" />,
@@ -76,7 +76,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <BarChart3 className="w-5 h-5" />,
     title: "Period comparisons",
     description:
-      "Compare any date range against a previous period. Spot trends, measure growth, and understand seasonality at a glance.",
+      "Compare any date range against a previous period. Spot trends, measure growth, and understand seasonality.",
   },
 ];
 
@@ -124,13 +124,13 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Rocket className="w-6 h-6" />,
     title: "Developers & indie hackers",
     description:
-      "Lightweight, privacy-first analytics that doesn't slow your site down. Get a clear picture of your product's traction in seconds.",
+      "Lightweight, privacy-first analytics that doesn't slow your site down. Get a clear picture of your product's traction.",
   },
   {
     icon: <Palette className="w-6 h-6" />,
     title: "Agencies",
     description:
-      "Manage multiple client sites from one account with organizations. Share beautiful, public dashboards clients can understand instantly.",
+      "Manage multiple client sites from one account with organizations. Share public dashboards clients can understand.",
   },
   {
     icon: <Users className="w-6 h-6" />,

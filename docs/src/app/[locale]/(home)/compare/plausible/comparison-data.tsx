@@ -52,7 +52,7 @@ export const plausibleExtendedData = {
   introParagraphs: [
     "Plausible is a well-respected privacy-first analytics tool known for its clean dashboard and lightweight script. It's a great choice for websites that want simple traffic metrics without cookies or consent banners. But Plausible is intentionally limited to basic web analytics: no session replay, no funnel analysis, no user journey visualization, and no error tracking.",
     "Rybbit shares Plausible's commitment to privacy and simplicity but goes significantly further. You get advanced analytics features including session replay, funnel analysis, user journey visualization with Sankey diagrams, Web Vitals monitoring, and error tracking. This means you can understand not just how many visitors you get, but how they navigate your site, where they drop off, and what errors they encounter.",
-    "Both platforms are open source and self-hostable, but Rybbit uses ClickHouse for superior query performance at scale while Plausible relies on Elixir/ClickHouse. Pricing starts at the same $19/month, but Rybbit uses events-based pricing which includes all interaction types, while Plausible charges by pageviews only. If you love Plausible's privacy-first approach but need deeper analytics to grow your product, Rybbit gives you that depth without sacrificing simplicity.",
+    "Both platforms are open source and self-hostable, and both run on ClickHouse; Rybbit's stack is TypeScript, Plausible's is Elixir. Rybbit uses events-based pricing that includes all interaction types, while Plausible charges by pageviews only. If you like Plausible's privacy-first approach but need deeper analytics to grow your product, Rybbit gives you that depth without giving up simplicity.",
   ],
 
   chooseRybbit: [

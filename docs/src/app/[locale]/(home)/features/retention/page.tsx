@@ -105,7 +105,7 @@ export default function RetentionPage() {
         faqItems={faqItems}
         relatedFeatures={relatedFeatures}
         ctaTitle="Measure what really matters"
-        ctaDescription="Cohort retention analysis that works out of the box. No cookies, no setup, just clarity."
+        ctaDescription="Cohort retention analysis with no cookies and no setup."
       />
     </>
   );

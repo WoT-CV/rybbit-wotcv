@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   description:
     "Looking for a Fathom alternative? Rybbit matches its privacy focus and adds session replay, funnels, error tracking, and open-source self-hosting.",
   openGraph: {
-    title: "Rybbit vs Fathom: More Features, Same Privacy Focus",
-    description: "Fathom is simple. Rybbit is simple AND powerful. Compare session replay, funnels, and more.",
+    title: "Rybbit vs Fathom: More Features, Same Privacy",
+    description: "Fathom keeps it simple. Rybbit stays simple and adds session replay, funnels, and error tracking.",
     type: "website",
     url: "https://rybbit.com/compare/fathom",
-    images: [createOGImageUrl("Rybbit vs Fathom: More Features, Same Privacy Focus", "Fathom is simple. Rybbit is simple AND powerful. Compare session replay, funnels, and more.", "Compare")],
+    images: [createOGImageUrl("Rybbit vs Fathom: More Features, Same Privacy", "Fathom keeps it simple. Rybbit stays simple and adds session replay, funnels, and error tracking.", "Compare")],
   },
   twitter: {
     card: "summary_large_image",

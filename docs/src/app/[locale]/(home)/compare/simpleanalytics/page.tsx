@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   description:
     "Looking for a Simple Analytics alternative? Rybbit is privacy-first too, with session replay, funnels, user journeys, and open-source self-hosting.",
   openGraph: {
-    title: "Rybbit vs Simple Analytics: Simple AND Powerful",
-    description: "Simple Analytics keeps it basic. Rybbit adds power without complexity. Compare features.",
+    title: "Rybbit vs Simple Analytics: Session Replay, Funnels, Self-Hosting",
+    description: "Simple Analytics keeps it basic. Rybbit adds session replay, funnels, and self-hosting.",
     type: "website",
     url: "https://rybbit.com/compare/simpleanalytics",
-    images: [createOGImageUrl("Rybbit vs Simple Analytics: Simple AND Powerful", "Simple Analytics keeps it basic. Rybbit adds power without complexity. Compare features.", "Compare")],
+    images: [createOGImageUrl("Rybbit vs Simple Analytics: Session Replay, Funnels, Self-Hosting", "Simple Analytics keeps it basic. Rybbit adds session replay, funnels, and self-hosting.", "Compare")],
   },
   twitter: {
     card: "summary_large_image",

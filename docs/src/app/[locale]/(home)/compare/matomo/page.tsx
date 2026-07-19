@@ -48,7 +48,7 @@ const structuredData = {
           name: "Is Rybbit really simpler than Matomo?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. Matomo has 70+ reports across 12 sections, inheriting Google Analytics-style complexity. Rybbit shows all essential metrics on a single intuitive dashboard. Your team can start using Rybbit immediately without training.",
+            text: "Yes. Matomo has 70+ reports across 12 sections, inheriting Google Analytics-style complexity. Rybbit shows all essential metrics on a single dashboard. Your team can start using Rybbit immediately without training.",
           },
         },
         {

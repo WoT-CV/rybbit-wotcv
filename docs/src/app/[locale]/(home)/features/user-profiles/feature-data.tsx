@@ -52,7 +52,7 @@ export const capabilities: FeatureCapability[] = [
     icon: <Clock className="w-5 h-5" />,
     title: "First seen & last seen",
     description:
-      "See when each user first visited and when they were last active. Understand engagement frequency at a glance.",
+      "See when each user first visited and when they were last active. Understand engagement frequency.",
   },
   {
     icon: <Search className="w-5 h-5" />,

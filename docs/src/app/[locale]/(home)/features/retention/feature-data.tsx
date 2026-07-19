@@ -118,7 +118,7 @@ export const whoUses: WhoUsesItem[] = [
   },
   {
     icon: <BarChart3 className="w-6 h-6" />,
-    title: "Data-driven teams",
+    title: "Analytics teams",
     description:
       "Combine retention data with event tracking and funnels to build a complete picture of user engagement over time.",
   },

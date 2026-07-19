@@ -90,7 +90,7 @@ export const whoUses: WhoUsesItem[] = [
     icon: <Rocket className="w-6 h-6" />,
     title: "Build-in-public founders",
     description:
-      "Share an open stats page and let anyone follow your growth. Transparency that markets itself.",
+      "Share an open stats page and let anyone follow your growth.",
   },
   {
     icon: <Monitor className="w-6 h-6" />,

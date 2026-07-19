@@ -81,7 +81,7 @@ const structuredData = {
           name: "Does Rybbit offer real-time analytics?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes, Rybbit provides real-time data out of the box with no sampling. Unlike GA4 which may sample data on high-traffic properties, Rybbit shows every event as it happens.",
+            text: "Yes, Rybbit provides real-time data with no sampling. Unlike GA4 which may sample data on high-traffic properties, Rybbit shows every event as it happens.",
           },
         },
       ],

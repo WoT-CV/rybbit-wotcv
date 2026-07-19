@@ -9,10 +9,10 @@ export const metadata: Metadata = {
     "Looking for a lighter PostHog alternative? Rybbit focuses on web analytics done well — simple setup, session replay, funnels, no product-suite bloat.",
   openGraph: {
     title: "Rybbit vs PostHog: Focused Analytics vs Feature Bloat",
-    description: "PostHog does everything. Rybbit does web analytics perfectly. Compare the approaches.",
+    description: "PostHog does everything. Rybbit focuses on web analytics. Compare the approaches.",
     type: "website",
     url: "https://rybbit.com/compare/posthog",
-    images: [createOGImageUrl("Rybbit vs PostHog: Focused Analytics vs Feature Bloat", "PostHog does everything. Rybbit does web analytics perfectly. Compare the approaches.", "Compare")],
+    images: [createOGImageUrl("Rybbit vs PostHog: Focused Analytics vs Feature Bloat", "PostHog does everything. Rybbit focuses on web analytics. Compare the approaches.", "Compare")],
   },
   twitter: {
     card: "summary_large_image",
@@ -56,7 +56,7 @@ const structuredData = {
           name: "Is Rybbit really simpler than PostHog?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. Rybbit provides a single-page dashboard where all essential metrics are visible at a glance. PostHog's extensive feature set means more menus, more configuration, and a steeper learning curve, especially for non-technical team members.",
+            text: "Yes. Rybbit provides a single-page dashboard where all essential metrics are visible on one screen. PostHog's extensive feature set means more menus, more configuration, and a steeper learning curve, especially for non-technical team members.",
           },
         },
         {
@@ -64,7 +64,7 @@ const structuredData = {
           name: "Does PostHog have features Rybbit doesn't?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes, PostHog offers feature flags, A/B testing, surveys, heatmaps, and a SQL query interface that Rybbit doesn't have. These are powerful tools for product teams, but they add complexity. Rybbit intentionally focuses on doing web analytics well.",
+            text: "Yes, PostHog offers feature flags, A/B testing, surveys, heatmaps, and a SQL query interface that Rybbit doesn't have. These are useful tools for product teams, but they add complexity. Rybbit intentionally focuses on doing web analytics well.",
           },
         },
         {

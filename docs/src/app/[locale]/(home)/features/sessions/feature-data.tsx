@@ -28,13 +28,13 @@ export const capabilities: FeatureCapability[] = [
     icon: <List className="w-5 h-5" />,
     title: "Rich session cards",
     description:
-      "Each session displays the user, country, browser, OS, device type, entry and exit pages, duration, pageview count, and event count — all at a glance.",
+      "Each session displays the user, country, browser, OS, device type, entry and exit pages, duration, pageview count, and event count.",
   },
   {
     icon: <Filter className="w-5 h-5" />,
     title: "Click-to-filter everything",
     description:
-      "Click any country flag, browser icon, device type, or page path in a session card to instantly filter down to matching sessions.",
+      "Click any country flag, browser icon, device type, or page path in a session card to filter down to matching sessions.",
   },
   {
     icon: <UserCheck className="w-5 h-5" />,

@@ -27,7 +27,7 @@ export function CTASection({
   const t = useExtracted();
   const resolvedTitle = title ?? t("Ready for better analytics?");
   const resolvedDescription =
-    description ?? t("Powerful insights without the complexity. Privacy-focused analytics that just works.");
+    description ?? t("The full analytics surface on one dashboard — cookieless, open source, and live in minutes.");
   const resolvedPrimaryButtonText = primaryButtonText ?? t("Start for $0");
   const resolvedSecondaryButtonText = secondaryButtonText ?? t("Live demo");
 

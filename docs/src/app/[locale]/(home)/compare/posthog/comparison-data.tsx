@@ -50,8 +50,8 @@ export const posthogExtendedData = {
 
   introHeading: "Why consider Rybbit over PostHog?",
   introParagraphs: [
-    "PostHog is an ambitious all-in-one product analytics platform that bundles analytics, session replay, feature flags, A/B testing, and surveys into a single tool. It's powerful, but that power comes with significant complexity. Teams often find themselves spending more time configuring PostHog than actually using it, and the ~60KB script can noticeably impact page performance.",
-    "Rybbit takes the opposite approach: do web analytics exceptionally well instead of doing everything adequately. The single-page dashboard gives your entire team instant access to the metrics that matter, with no training required. Non-technical team members can understand user behavior, track conversions, and watch session replays without learning a complex query language or navigating dozens of menus.",
+    "PostHog is an all-in-one product analytics platform that bundles analytics, session replay, feature flags, A/B testing, and surveys into a single tool. That breadth comes with significant complexity, and teams often spend more time configuring PostHog than using it. The ~60KB script can also weigh on page performance.",
+    "Rybbit takes the opposite approach: do web analytics well instead of doing everything adequately. The single-page dashboard gives your whole team the metrics they need, with no training required. Non-technical team members can understand user behavior, track conversions, and watch session replays without learning a query language or navigating dozens of menus.",
     "Privacy is another key difference. Rybbit is cookie-free by default and never collects personal data, with no configuration needed. PostHog uses cookies by default and requires setup to achieve privacy compliance. Self-hosting is also dramatically simpler: Rybbit runs on TypeScript and ClickHouse, while PostHog requires Kafka, Redis, PostgreSQL, and ClickHouse. If you need focused, privacy-first web analytics that your whole team can use from day one, Rybbit is the better fit.",
   ],
 
@@ -104,11 +104,11 @@ export const posthogExtendedData = {
     },
     {
       question: "Is Rybbit really simpler than PostHog?",
-      answer: "Yes. Rybbit provides a single-page dashboard where all essential metrics are visible at a glance. PostHog's extensive feature set means more menus, more configuration, and a steeper learning curve, especially for non-technical team members.",
+      answer: "Yes. Rybbit provides a single-page dashboard where all essential metrics are visible on one screen. PostHog's extensive feature set means more menus, more configuration, and a steeper learning curve, especially for non-technical team members.",
     },
     {
       question: "Does PostHog have features Rybbit doesn't?",
-      answer: "Yes, PostHog offers feature flags, A/B testing, surveys, heatmaps, and a SQL query interface that Rybbit doesn't have. These are powerful tools for product teams, but they add complexity. Rybbit intentionally focuses on doing web analytics well.",
+      answer: "Yes, PostHog offers feature flags, A/B testing, surveys, heatmaps, and a SQL query interface that Rybbit doesn't have. These are useful tools for product teams, but they add complexity. Rybbit intentionally focuses on doing web analytics well.",
     },
     {
       question: "How does self-hosting compare?",

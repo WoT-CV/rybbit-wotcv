@@ -90,7 +90,7 @@ export const simpleAnalyticsExtendedData = {
     startingPrice: "$19/mo",
     highlights: [
       "Starts at 100k pageviews/month",
-      "No free tier.14-day trial only",
+      "No free tier, 14-day trial only",
       "AI assistant included on all plans",
       "Cloud-only, no self-hosting option",
     ],
