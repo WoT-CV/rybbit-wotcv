@@ -174,6 +174,7 @@ import { mcpRoutes } from "./mcp/index.js";
 import { oauthWellKnownRoutes } from "./mcp/wellKnown.js";
 import { createCorsOptionsDelegate, createRejectUntrustedOriginHook } from "./lib/cors.js";
 import { IS_CLOUD } from "./lib/const.js";
+import { logger } from "./lib/logger/logger.js";
 import { reengagementService } from "./services/reengagement/reengagementService.js";
 import { telemetryService } from "./services/telemetryService.js";
 import { handleIdentify } from "./services/tracker/identifyService.js";
@@ -262,35 +263,7 @@ const __dirname = dirname(__filename);
 
 const server = Fastify({
   disableRequestLogging: true,
-  logger: {
-    level: "debug",
-    transport: {
-      target: "pino-pretty",
-      level: process.env.LOG_LEVEL || "debug",
-      options: {
-        colorize: true,
-        singleLine: true,
-        translateTime: "HH:MM:ss",
-        ignore: "pid,hostname,name",
-        destination: 1, // stdout
-      },
-    },
-    serializers: {
-      req(request) {
-        return {
-          method: request.method,
-          url: request.url,
-          path: request.url,
-          parameters: request.params,
-        };
-      },
-      res(reply) {
-        return {
-          statusCode: reply.statusCode,
-        };
-      },
-    },
-  },
+  loggerInstance: logger,
   maxParamLength: 1500,
   trustProxy: true,
   bodyLimit: 10 * 1024 * 1024, // 10MB limit for session replay data
