@@ -175,6 +175,7 @@ import { oauthWellKnownRoutes } from "./mcp/wellKnown.js";
 import { createCorsOptionsDelegate, createRejectUntrustedOriginHook } from "./lib/cors.js";
 import { IS_CLOUD } from "./lib/const.js";
 import { logger } from "./lib/logger/logger.js";
+import { registerRequestLogging } from "./lib/logger/requestLogging.js";
 import { reengagementService } from "./services/reengagement/reengagementService.js";
 import { telemetryService } from "./services/telemetryService.js";
 import { handleIdentify } from "./services/tracker/identifyService.js";
@@ -268,6 +269,8 @@ const server = Fastify({
   trustProxy: true,
   bodyLimit: 10 * 1024 * 1024, // 10MB limit for session replay data
 });
+
+registerRequestLogging(server);
 
 server.register(cors, {
   delegator: createCorsOptionsDelegate(),

@@ -116,7 +116,7 @@ export async function updateSubscription(
       },
     });
   } catch (error: any) {
-    console.error("Subscription Update Error:", error);
+    request.log.error({ err: error }, "Subscription Update Error");
     return reply.status(500).send({
       error: "Failed to update subscription",
       details: error.message,

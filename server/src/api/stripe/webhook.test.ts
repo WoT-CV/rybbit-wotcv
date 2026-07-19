@@ -48,6 +48,12 @@ import { handleWebhook } from "./webhook.js";
 const dialect = new PgDialect();
 
 const SIGNATURE = "t=1700000000,v1=deadbeef";
+const requestLogger = {
+  debug: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+};
 
 type RequestOverrides = {
   rawBody?: string | Buffer | null;
@@ -61,6 +67,7 @@ function createRequest(overrides: RequestOverrides = {}) {
     headers: overrides.headers ?? { "stripe-signature": SIGNATURE },
     body: overrides.parsedBody,
     raw: rawBody === null ? {} : { body: rawBody },
+    log: requestLogger,
   } as any;
 }
 

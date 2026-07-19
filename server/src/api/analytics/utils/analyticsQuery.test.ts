@@ -19,6 +19,10 @@ import {
 const mockQuery = vi.mocked(clickhouse.query);
 
 const resultSet = (rows: unknown[]) => ({ json: async () => rows }) as any;
+const requestLog = {
+  debug: vi.fn(),
+  error: vi.fn(),
+};
 
 const mockRes = () => {
   const res: any = {};
@@ -122,28 +126,29 @@ describe("analyticsRoute", () => {
     const res = mockRes();
     const handler = analyticsRoute("things", async (_req, reply) => reply.send({ data: [1] }));
 
-    await handler({} as any, res);
+    await handler({ log: requestLog } as any, res);
 
     expect(res.send).toHaveBeenCalledWith({ data: [1] });
     expect(res.status).not.toHaveBeenCalled();
   });
 
   it("maps errors to a 500 with the label", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = mockRes();
     const handler = analyticsRoute("things", async () => {
       throw new Error("boom");
     });
 
-    await handler({} as any, res);
+    await handler({ log: requestLog } as any, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith({ error: "Failed to fetch things" });
-    consoleError.mockRestore();
+    expect(requestLog.error).toHaveBeenCalledWith(
+      { err: expect.any(Error), label: "things" },
+      "Analytics query failed"
+    );
   });
 
   it("derives the label from the request and logs failed SQL", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = mockRes();
     const handler = analyticsRoute<{ Querystring: { parameter: string } }>(
       req => req.query.parameter,
@@ -152,10 +157,9 @@ describe("analyticsRoute", () => {
       }
     );
 
-    await handler({ query: { parameter: "browser" } } as any, res);
+    await handler({ query: { parameter: "browser" }, log: requestLog } as any, res);
 
     expect(res.send).toHaveBeenCalledWith({ error: "Failed to fetch browser" });
-    expect(consoleError).toHaveBeenCalledWith("Failed query:", "SELECT bad");
-    consoleError.mockRestore();
+    expect(requestLog.debug).toHaveBeenCalledWith({ query: "SELECT bad" }, "Failed analytics query");
   });
 });

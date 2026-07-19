@@ -30,7 +30,7 @@ export async function addSite(
       });
     }
 
-    console.error("Error adding site:", error);
+    request.log.error({ err: error }, "Error adding site");
     return reply.status(500).send({
       error: "Internal server error",
     });

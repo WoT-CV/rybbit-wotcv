@@ -95,7 +95,7 @@ export async function moveSite(
 
     return reply.status(200).send({ success: true, organizationId: targetOrganizationId });
   } catch (error) {
-    console.error("Error moving site:", error);
+    request.log.error({ err: error }, "Error moving site");
     return reply.status(500).send({ error: "Failed to move site" });
   }
 }

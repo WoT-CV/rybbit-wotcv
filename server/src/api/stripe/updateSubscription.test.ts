@@ -57,7 +57,11 @@ function replyStub() {
 }
 
 function requestStub(userId: string | undefined, body: Record<string, unknown>) {
-  return { user: userId ? { id: userId } : undefined, body } as any;
+  return {
+    user: userId ? { id: userId } : undefined,
+    body,
+    log: { error: vi.fn() },
+  } as any;
 }
 
 function fakeSubscription(status: "active" | "trialing", overrides: Record<string, unknown> = {}) {

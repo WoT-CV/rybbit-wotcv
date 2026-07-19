@@ -38,7 +38,7 @@ export async function updateSitePrivateLinkConfig(request: FastifyRequest, reply
       return reply.status(error.statusCode).send({ success: false, error: error.message });
     }
 
-    console.error("Error updating site private link config:", error);
+    request.log.error({ err: error }, "Error updating site private link config");
     return reply.status(500).send({
       success: false,
       error: "Failed to update site API configuration",

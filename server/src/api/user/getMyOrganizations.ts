@@ -131,7 +131,7 @@ export const getMyOrganizations = async (request: FastifyRequest, reply: Fastify
 
     return reply.send(organizationsWithMembersAndSites);
   } catch (error) {
-    console.error("Error fetching organizations with members:", error);
+    request.log.error({ err: error }, "Error fetching organizations with members");
     return reply.status(500).send({ error: "Failed to fetch organizations" });
   }
 };

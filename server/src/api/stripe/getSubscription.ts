@@ -242,7 +242,7 @@ export async function getSubscription(
     const responseData = await getSubscriptionInner(organizationId);
     return reply.send(responseData);
   } catch (error: any) {
-    console.error("Get Subscription Error:", error);
+    request.log.error({ err: error }, "Get Subscription Error");
     // Handle specific Stripe errors if necessary
     if (error instanceof Stripe.errors.StripeError) {
       return reply.status(error.statusCode || 500).send({ error: error.message });

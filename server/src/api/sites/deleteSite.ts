@@ -16,7 +16,7 @@ export async function deleteSite(request: FastifyRequest<{ Params: { siteId: str
       return reply.status(error.statusCode).send({ success: false, error: error.message });
     }
 
-    console.error("Error deleting site:", error);
+    request.log.error({ err: error }, "Error deleting site");
     return reply.status(500).send({ success: false, error: "Failed to delete site" });
   }
 }

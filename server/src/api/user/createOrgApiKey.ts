@@ -3,12 +3,7 @@ import { z } from "zod";
 import { apiKeyLimitForPlan, createApiKeyWithinLimit } from "../../lib/apiKeyLimits.js";
 import { auth } from "../../lib/auth.js";
 import { ORG_API_KEY_CONFIG_ID } from "../../lib/bearerAuth.js";
-import {
-  API_RATE_LIMIT_WINDOW,
-  IS_CLOUD,
-  PRO_API_RATE_LIMIT,
-  STANDARD_API_RATE_LIMIT,
-} from "../../lib/const.js";
+import { API_RATE_LIMIT_WINDOW, IS_CLOUD, PRO_API_RATE_LIMIT, STANDARD_API_RATE_LIMIT } from "../../lib/const.js";
 import { apiKeyPermissionsSchema } from "../../lib/scopes.js";
 import { getSubscriptionInner } from "../stripe/getSubscription.js";
 
@@ -70,8 +65,7 @@ export async function createOrgApiKey(
 
     rateLimitEnabled = true;
     rateLimitTimeWindow = API_RATE_LIMIT_WINDOW;
-    rateLimitMax =
-      planName.includes("pro") || planName === "custom" ? PRO_API_RATE_LIMIT : STANDARD_API_RATE_LIMIT;
+    rateLimitMax = planName.includes("pro") || planName === "custom" ? PRO_API_RATE_LIMIT : STANDARD_API_RATE_LIMIT;
   }
 
   const keyLimit = apiKeyLimitForPlan(planName);
@@ -106,10 +100,15 @@ export async function createOrgApiKey(
     // validation) by message; anything else stays a generic 500 so internal
     // error detail never reaches the client.
     const err = error as { name?: string; statusCode?: unknown; message?: string };
-    if (err?.name === "APIError" && typeof err.statusCode === "number" && err.statusCode >= 400 && err.statusCode < 500) {
+    if (
+      err?.name === "APIError" &&
+      typeof err.statusCode === "number" &&
+      err.statusCode >= 400 &&
+      err.statusCode < 500
+    ) {
       return reply.status(err.statusCode).send({ error: err.message || "Failed to create API key" });
     }
-    console.error("Error creating organization API key:", error);
+    request.log.error({ err: error }, "Error creating organization API key");
     return reply.status(500).send({ error: "Failed to create API key" });
   }
 }

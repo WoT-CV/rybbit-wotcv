@@ -151,7 +151,7 @@ export const getJourneys = async (request: FastifyRequest<GetJourneysRequest>, r
       })),
     });
   } catch (error) {
-    console.error("Error getting journeys:", error instanceof AnalyticsQueryError ? error.original : error);
+    request.log.error({ err: error instanceof AnalyticsQueryError ? error.original : error }, "Error getting journeys");
     return reply.status(500).send({ error: "Failed to get journeys" });
   }
 };

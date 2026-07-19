@@ -29,7 +29,18 @@ export async function getUsers(request: FastifyRequest, reply: FastifyReply) {
 }
 ```
 
-Automatic Fastify request logging is currently disabled. Do not assume that every request produces a completion or duration event.
+Fastify's default request logging is disabled and replaced by `requestLogging.ts`. The replacement emits one lifecycle event per request with `method`, `url`, `route`, `statusCode`, `responseTimeMs`, and Fastify's bound `reqId`.
+
+| Outcome                                      | Level   | Message                               |
+| -------------------------------------------- | ------- | ------------------------------------- |
+| thrown server failure                        | `error` | `Request failed` with `err`           |
+| thrown client failure                        | `warn`  | `Request failed` with `err`           |
+| handled response with status 500 or greater  | `error` | `Request completed with server error` |
+| handled response with status 400–499         | `warn`  | `Request completed with client error` |
+| successful response                          | `info`  | `Request completed`                   |
+| successful ingestion or static-asset request | `debug` | `Request completed`                   |
+
+Routes configured with `logLevel: "silent"`, such as health checks, emit no lifecycle event. Thrown failures are marked internally so the later response hook does not log the same lifecycle failure twice.
 
 ## Background Modules
 
@@ -74,11 +85,11 @@ Never log passwords, tokens, cookies, authentication headers, raw credentials, o
 
 ## Legacy Calls
 
-Direct `console` logging still exists in the server. New and modified code should use:
+Route and MCP modules no longer use direct `console` logging or the process-wide logger. Direct `console` logging still exists elsewhere in the server. New and modified code should use:
 
 - `request.log` for request-bound work
 - `server.log` for Fastify lifecycle work
 - `createServiceLogger` for background modules
 - `logger` for process-wide work
 
-Migrating existing `console` calls and adding HTTP lifecycle events are separate refactors from the shared runtime.
+Remaining `console` migration in background modules is separate from request lifecycle logging.

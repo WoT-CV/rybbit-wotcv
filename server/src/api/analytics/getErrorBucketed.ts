@@ -106,7 +106,10 @@ export async function getErrorBucketed(req: FastifyRequest<GetErrorBucketedReque
       data: data,
     });
   } catch (error) {
-    console.error("Error getting error bucketed data:", error instanceof AnalyticsQueryError ? error.original : error);
+    req.log.error(
+      { err: error instanceof AnalyticsQueryError ? error.original : error },
+      "Error getting error bucketed data"
+    );
     return res.status(500).send({
       success: false,
       error: "Failed to get error data",

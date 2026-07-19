@@ -16,17 +16,17 @@ vi.mock("../../lib/const.js", () => ({
   IS_CLOUD: true,
 }));
 
-vi.mock("../../lib/logger/logger.js", () => ({
-  logger: {
-    info: mocks.loggerInfo,
-    warn: mocks.loggerWarn,
-    error: mocks.loggerError,
-  },
-}));
-
 import { handleAppSumoWebhook } from "./webhook.js";
 
 const dialect = new PgDialect();
+const requestLogger: any = {
+  debug: vi.fn(),
+  error: mocks.loggerError,
+  info: mocks.loggerInfo,
+  warn: mocks.loggerWarn,
+  child: vi.fn(),
+};
+requestLogger.child.mockReturnValue(requestLogger);
 
 // Renders the drizzle sql`` object passed to db.execute on the nth call into
 // { sql, params } so we can assert the intended statement and bind values.
@@ -35,7 +35,7 @@ function executedQuery(n: number) {
 }
 
 function createRequest(body: Record<string, unknown>) {
-  return { body } as any;
+  return { body, log: requestLogger } as any;
 }
 
 function createReply() {

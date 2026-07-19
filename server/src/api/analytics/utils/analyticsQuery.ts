@@ -104,12 +104,12 @@ export function analyticsRoute<R extends RouteGenericInterface>(
     } catch (error) {
       const label = typeof errorLabel === "function" ? errorLabel(req) : errorLabel;
       if (error instanceof AnalyticsQueryError) {
-        console.error(`Error fetching ${label}:`, error.original);
+        req.log.error({ err: error.original, label }, "Analytics query failed");
         for (const query of error.queries) {
-          console.error("Failed query:", query);
+          req.log.debug({ query }, "Failed analytics query");
         }
       } else {
-        console.error(`Error fetching ${label}:`, error);
+        req.log.error({ err: error, label }, "Analytics query failed");
       }
       return res.status(500).send({ error: `Failed to fetch ${label}` });
     }

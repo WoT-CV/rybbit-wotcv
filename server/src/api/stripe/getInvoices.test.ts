@@ -43,7 +43,11 @@ function replyStub() {
 }
 
 function requestStub(userId: string | undefined, query: Record<string, unknown>) {
-  return { user: userId ? { id: userId } : undefined, query } as any;
+  return {
+    user: userId ? { id: userId } : undefined,
+    query,
+    log: { error: vi.fn() },
+  } as any;
 }
 
 const fakeInvoice = {

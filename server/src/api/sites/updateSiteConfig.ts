@@ -78,7 +78,7 @@ export async function updateSiteConfig(
       });
     }
 
-    console.error("Error updating site configuration:", error);
+    request.log.error({ err: error }, "Error updating site configuration");
     return reply.status(500).send({
       success: false,
       error: "Failed to update site configuration",

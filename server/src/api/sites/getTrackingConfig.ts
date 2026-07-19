@@ -34,7 +34,7 @@ export async function getTrackingConfig(request: FastifyRequest<{ Params: { site
       trackFormInteractions: config.trackFormInteractions || false,
     });
   } catch (error) {
-    console.error("Error getting tracking config:", error);
+    request.log.error({ err: error }, "Error getting tracking config");
     return reply.status(500).send({ error: "Failed to get tracking configuration" });
   }
 }

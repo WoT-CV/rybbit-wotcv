@@ -36,13 +36,6 @@ vi.mock("../../services/replay/sessionReplayIngestService.js", () => ({
   })),
 }));
 
-vi.mock("../../lib/logger/logger.js", () => ({
-  logger: {
-    info: mocks.loggerInfo,
-    error: mocks.loggerError,
-  },
-}));
-
 type ReplyStub = FastifyReply & {
   statusCodeValue: number;
   sentPayload: unknown;
@@ -93,6 +86,10 @@ function createRequest(overrides: RequestOverrides = {}): ReplayRequest {
       ...overrides.headers,
     },
     ip: overrides.ip ?? "203.0.113.10",
+    log: {
+      error: mocks.loggerError,
+      info: mocks.loggerInfo,
+    },
   } as unknown as ReplayRequest;
 }
 

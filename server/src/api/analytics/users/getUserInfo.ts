@@ -326,7 +326,7 @@ export async function getUserInfo(
       },
     });
   } catch (error) {
-    console.error("Error fetching user info:", error);
+    req.log.error({ err: error }, "Error fetching user info");
     return res.status(500).send({
       error: "Internal server error",
     });

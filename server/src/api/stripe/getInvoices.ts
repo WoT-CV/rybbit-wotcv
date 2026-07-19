@@ -72,7 +72,7 @@ export async function getInvoices(
 
     return reply.send(formatted);
   } catch (error: any) {
-    console.error("Get Invoices Error:", error);
+    request.log.error({ err: error }, "Get Invoices Error");
     return reply.status(500).send({
       error: "Failed to fetch invoices",
     });

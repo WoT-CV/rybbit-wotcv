@@ -141,12 +141,12 @@ export async function getFunnel(
     return reply.send({ data });
   } catch (error) {
     if (error instanceof AnalyticsQueryError) {
-      console.error("Error executing funnel query:", error.original);
+      request.log.error({ err: error.original }, "Error executing funnel query");
       for (const query of error.queries) {
-        console.error("Failed query:", query);
+        request.log.debug({ query }, "Failed funnel query");
       }
     } else {
-      console.error("Error executing funnel query:", error);
+      request.log.error({ err: error }, "Error executing funnel query");
     }
     return reply.status(500).send({ error: "Failed to execute funnel analysis" });
   }
