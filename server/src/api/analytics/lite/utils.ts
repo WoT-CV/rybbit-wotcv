@@ -2,6 +2,7 @@ import { FilterParams } from "@rybbit/shared";
 import SqlString from "sqlstring";
 import { FilterType, TimeBucket } from "../types.js";
 import { TimeBucketToFn, bucketIntervalMap } from "../utils/utils.js";
+import { buildStringFilterCondition, wrapLikeValue } from "../utils/getFilterStatement.js";
 import { validateFilters, validateTimeStatementParams } from "../utils/query-validation.js";
 
 // Lite endpoints back the simplified high-traffic dashboard. They read from
@@ -45,27 +46,20 @@ const LITE_SESSION_FILTER_COLUMNS: Record<string, string> = {
   hostname: "hostname",
 };
 
-const LITE_FILTER_OPERATORS: Record<string, string> = {
-  equals: "=",
-  not_equals: "!=",
-  contains: "LIKE",
-  not_contains: "NOT LIKE",
-  starts_with: "LIKE",
-  ends_with: "LIKE",
-};
+// The session rollup can only serve simple string operators; anything else
+// (regex, numeric comparisons, lat/lon) forces the raw-events fallback.
+const LITE_SUPPORTED_FILTER_TYPES = new Set<FilterType>([
+  "equals",
+  "not_equals",
+  "contains",
+  "not_contains",
+  "starts_with",
+  "ends_with",
+]);
 
-// Escape LIKE pattern metacharacters in user-supplied values so they match
-// literally. Only the % wildcards that wrapLiteLikeValue itself adds around
-// the value remain functional.
-const escapeLikePattern = (value: string): string => value.replace(/[\\%_]/g, "\\$&");
-
-export function wrapLiteLikeValue(type: FilterType, value: string | number): string {
-  const v = String(value);
-  if (type === "contains" || type === "not_contains") return `%${escapeLikePattern(v)}%`;
-  if (type === "starts_with") return `${escapeLikePattern(v)}%`;
-  if (type === "ends_with") return `%${escapeLikePattern(v)}`;
-  return v;
-}
+// LIKE-value wrapping is shared with the events surface; re-exported under the
+// historical lite name for existing importers and tests.
+export const wrapLiteLikeValue = wrapLikeValue;
 
 // Build a WHERE-clause fragment (prefixed " AND ") against sessions_mv_target
 // columns. Returns `supported: false` when any filter targets a column or type
@@ -82,25 +76,16 @@ export function getLiteSessionFilter(filters: string | undefined): { supported: 
     const column = LITE_SESSION_FILTER_COLUMNS[filter.parameter];
     if (!column) return { supported: false, sql: "" };
 
-    if (filter.type === "is_null") {
-      conditions.push(`(${column} IS NULL OR ${column} = '')`);
-      continue;
-    }
-    if (filter.type === "is_not_null") {
-      conditions.push(`(${column} IS NOT NULL AND ${column} != '')`);
+    if (filter.type === "is_null" || filter.type === "is_not_null") {
+      conditions.push(buildStringFilterCondition(column, filter.type, filter.value));
       continue;
     }
 
-    const op = LITE_FILTER_OPERATORS[filter.type];
-    if (!op || filter.value.length === 0) return { supported: false, sql: "" };
+    if (!LITE_SUPPORTED_FILTER_TYPES.has(filter.type) || filter.value.length === 0) {
+      return { supported: false, sql: "" };
+    }
 
-    const parts = filter.value.map(
-      value => `${column} ${op} ${SqlString.escape(wrapLiteLikeValue(filter.type, value))}`
-    );
-    // Negative filters must AND-join across values (NOT IN semantics): OR-joining
-    // negations is a tautology — (x != 'a' OR x != 'b') matches every row.
-    const joiner = filter.type === "not_equals" || filter.type === "not_contains" ? " AND " : " OR ";
-    conditions.push(parts.length === 1 ? parts[0] : `(${parts.join(joiner)})`);
+    conditions.push(buildStringFilterCondition(column, filter.type, filter.value));
   }
 
   return { supported: true, sql: conditions.length ? `AND ${conditions.join(" AND ")}` : "" };

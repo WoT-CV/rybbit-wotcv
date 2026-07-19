@@ -17,6 +17,17 @@ export interface FilterStatementOptions {
   // output); the mapping is applied where column identifiers are produced, so
   // user-supplied filter values are never rewritten.
   fieldMappings?: Record<string, string>;
+
+  // When set, filters on parameters outside this list are silently dropped.
+  // Used by surfaces (e.g. bot_events) whose table carries only a subset of
+  // the filterable columns.
+  parameterAllowlist?: ReadonlySet<FilterParameter>;
+
+  // user_id filters normally match user_id OR identified_user_id, because URLs
+  // may carry either the device fingerprint or the custom identified ID.
+  // Surfaces whose table has no identified_user_id column (bot_events) set
+  // this to false to treat user_id as a plain column. Default: true.
+  dualUserIdColumns?: boolean;
 }
 
 const DEFAULT_SESSION_LEVEL_PARAMS: FilterParameter[] = ["event_name", "channel"];
@@ -54,12 +65,64 @@ const filterTypeToOperator = (type: FilterType) => {
 // value remain functional.
 const escapeLikePattern = (value: string): string => value.replace(/[\\%_]/g, "\\$&");
 
-const wrapLikeValue = (type: FilterType, value: string | number): string => {
+export const wrapLikeValue = (type: FilterType, value: string | number): string => {
   const v = String(value);
   if (type === "contains" || type === "not_contains") return `%${escapeLikePattern(v)}%`;
   if (type === "starts_with") return `${escapeLikePattern(v)}%`;
   if (type === "ends_with") return `%${escapeLikePattern(v)}`;
   return v;
+};
+
+// Renders one filter condition against a column expression: null checks,
+// validated regex matches, and (NOT) LIKE / comparison operators with
+// NOT-IN-style AND-joining for negative filters. Shared by every filter→SQL
+// surface (events, bots, lite) so escaping and joiner semantics can only be
+// fixed in one place.
+export const buildStringFilterCondition = (
+  expression: string,
+  filterType: FilterType,
+  values: (string | number)[]
+): string => {
+  if (filterType === "is_null") {
+    return `(${expression} IS NULL OR ${expression} = '')`;
+  }
+  if (filterType === "is_not_null") {
+    return `(${expression} IS NOT NULL AND ${expression} != '')`;
+  }
+
+  if (filterType === "regex" || filterType === "not_regex") {
+    const pattern = String(values[0] ?? "");
+
+    if (!pattern) {
+      throw new Error("Regex pattern cannot be empty");
+    }
+
+    try {
+      new RegExp(pattern);
+    } catch (e) {
+      throw new Error(`Invalid regex pattern: ${e instanceof Error ? e.message : "Unknown error"}`);
+    }
+
+    if (pattern.length > 500) {
+      throw new Error("Regex pattern too long (max 500 characters)");
+    }
+
+    const matchExpr = `match(${expression}, ${SqlString.escape(pattern)})`;
+    return filterType === "regex" ? matchExpr : `NOT ${matchExpr}`;
+  }
+
+  const op = filterTypeToOperator(filterType);
+  // Negative filters must AND-join across values (NOT IN semantics): OR-joining
+  // negations is a tautology — (x != 'a' OR x != 'b') matches every row.
+  const joiner = filterType === "not_equals" || filterType === "not_contains" ? " AND " : " OR ";
+  const condition =
+    values.length === 1
+      ? `${expression} ${op} ${SqlString.escape(wrapLikeValue(filterType, values[0]))}`
+      : `(${values
+          .map(value => `${expression} ${op} ${SqlString.escape(wrapLikeValue(filterType, value))}`)
+          .join(joiner)})`;
+
+  return condition;
 };
 
 export const getSqlParam = (parameter: FilterParameter) => {
@@ -121,7 +184,8 @@ export function getFilterStatement(
   }
 
   // Sanitize inputs with Zod
-  const filtersArray = validateFilters(filters);
+  const allowlist = options?.parameterAllowlist;
+  const filtersArray = validateFilters(filters).filter(filter => !allowlist || allowlist.has(filter.parameter));
 
   if (filtersArray.length === 0) {
     return "";
@@ -138,67 +202,18 @@ export function getFilterStatement(
   // Strip leading "AND " from timeStatement since we'll be constructing WHERE clauses
   const timeFilter = timeStatement ? timeStatement.replace(/^AND\s+/i, "").trim() : "";
 
-  const buildStringFilterCondition = (
-    expression: string,
-    filterType: FilterType,
-    values: (string | number)[],
-    _legacyWildcardPrefix?: string
-  ): string => {
-    if (filterType === "is_null") {
-      return `(${expression} IS NULL OR ${expression} = '')`;
-    }
-    if (filterType === "is_not_null") {
-      return `(${expression} IS NOT NULL AND ${expression} != '')`;
-    }
-
-    if (filterType === "regex" || filterType === "not_regex") {
-      const pattern = String(values[0] ?? "");
-
-      if (!pattern) {
-        throw new Error("Regex pattern cannot be empty");
-      }
-
-      try {
-        new RegExp(pattern);
-      } catch (e) {
-        throw new Error(`Invalid regex pattern: ${e instanceof Error ? e.message : "Unknown error"}`);
-      }
-
-      if (pattern.length > 500) {
-        throw new Error("Regex pattern too long (max 500 characters)");
-      }
-
-      const matchExpr = `match(${expression}, ${SqlString.escape(pattern)})`;
-      return filterType === "regex" ? matchExpr : `NOT ${matchExpr}`;
-    }
-
-    const op = filterTypeToOperator(filterType);
-    // Negative filters must AND-join across values (NOT IN semantics): OR-joining
-    // negations is a tautology — (x != 'a' OR x != 'b') matches every row.
-    const joiner = filterType === "not_equals" || filterType === "not_contains" ? " AND " : " OR ";
-    const condition =
-      values.length === 1
-        ? `${expression} ${op} ${SqlString.escape(wrapLikeValue(filterType, values[0]))}`
-        : `(${values
-            .map(value => `${expression} ${op} ${SqlString.escape(wrapLikeValue(filterType, value))}`)
-            .join(joiner)})`;
-
-    return condition;
-  };
-
   // Helper to build session-level subquery for a parameter
   const buildSessionLevelSubquery = (
     param: FilterParameter,
     filterType: FilterType,
-    values: (string | number)[],
-    wildcardPrefix: string
+    values: (string | number)[]
   ): string => {
     const whereClause = [siteIdFilter, timeFilter].filter(Boolean).join(" AND ");
     // getSqlParam keeps transformed params (city, browser_version, ...) correct
     // inside the subquery. fieldMappings deliberately do NOT apply here: the
     // subquery selects from the raw events table, where the caller's CTE
     // aliases don't exist.
-    const condition = buildStringFilterCondition(getSqlParam(param), filterType, values, wildcardPrefix);
+    const condition = buildStringFilterCondition(getSqlParam(param), filterType, values);
 
     const finalWhere = whereClause ? `WHERE ${whereClause} AND ${condition}` : `WHERE ${condition}`;
 
@@ -209,14 +224,10 @@ export function getFilterStatement(
           )`;
   };
 
-  const buildSessionChannelSubquery = (
-    filterType: FilterType,
-    values: (string | number)[],
-    wildcardPrefix: string
-  ): string => {
+  const buildSessionChannelSubquery = (filterType: FilterType, values: (string | number)[]): string => {
     const whereClause = [siteIdFilter, timeFilter].filter(Boolean).join(" AND ");
     const whereStatement = whereClause ? `WHERE ${whereClause}` : "";
-    const condition = buildStringFilterCondition("session_channel", filterType, values, wildcardPrefix);
+    const condition = buildStringFilterCondition("session_channel", filterType, values);
 
     return `session_id IN (
             SELECT session_id
@@ -236,7 +247,6 @@ export function getFilterStatement(
     "AND " +
     filtersArray
       .map(filter => {
-        const x = filter.type === "contains" || filter.type === "not_contains" ? "%" : "";
         const isNumericParam = filter.parameter === "lat" || filter.parameter === "lon";
         const isNullCheck = filter.type === "is_null" || filter.type === "is_not_null";
 
@@ -244,10 +254,10 @@ export function getFilterStatement(
         // Most parameters match sessions containing an event; channel uses the session's first attributed value.
         if (sessionLevelParams.includes(filter.parameter)) {
           if (filter.parameter === "channel") {
-            return buildSessionChannelSubquery(filter.type, filter.value, x);
+            return buildSessionChannelSubquery(filter.type, filter.value);
           }
 
-          return buildSessionLevelSubquery(filter.parameter, filter.type, filter.value, x);
+          return buildSessionLevelSubquery(filter.parameter, filter.type, filter.value);
         }
 
         if (filter.parameter === "entry_page") {
@@ -291,7 +301,7 @@ export function getFilterStatement(
         // Special handling for user_id to also check identified_user_id
         // This is needed because URLs may contain either the device fingerprint (user_id)
         // or the custom identified user ID (identified_user_id)
-        if (filter.parameter === "user_id") {
+        if (filter.parameter === "user_id" && (options?.dualUserIdColumns ?? true)) {
           if (filter.type === "is_null") {
             return `((user_id IS NULL OR user_id = '') AND (identified_user_id IS NULL OR identified_user_id = ''))`;
           }
@@ -327,7 +337,7 @@ export function getFilterStatement(
         }
 
         if (filter.type === "regex" || filter.type === "not_regex") {
-          return buildStringFilterCondition(mapField(getSqlParam(filter.parameter)), filter.type, filter.value, x);
+          return buildStringFilterCondition(mapField(getSqlParam(filter.parameter)), filter.type, filter.value);
         }
 
         // Handle numeric comparison filters (>, <, >=, <=)
