@@ -78,7 +78,8 @@ const educationalContent = (
       </p>
       <p>
         Google&apos;s current good boundaries are 2.5 seconds for LCP, 200 milliseconds for INP, and 0.1 for CLS. Field
-        assessment uses the 75th percentile so the target reflects what most visits experience, not just a fast median.
+        assessment uses the 75th percentile, so the target reflects what most visits experience rather than a fast
+        median.
       </p>
     </section>
 

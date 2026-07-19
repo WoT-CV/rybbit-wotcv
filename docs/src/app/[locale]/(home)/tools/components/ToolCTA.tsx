@@ -23,7 +23,7 @@ export function ToolCTA({ title, description, eventLocation, buttonText = "Start
 
         <div className="relative z-10 flex flex-col justify-center px-5 py-12 sm:px-8 lg:col-span-4 lg:px-10">
           <p className="max-w-md text-base leading-7 text-emerald-100/80">
-            {description} Start with a 7-day free trial — setup takes about five minutes.
+            {description} Start with a 7-day free trial. Setup takes about five minutes.
           </p>
 
           <div className="mt-8">

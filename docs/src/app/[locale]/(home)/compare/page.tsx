@@ -55,7 +55,7 @@ const competitors = [
   {
     name: "PostHog",
     slug: "posthog",
-    description: "Focused web analytics vs all-in-one product suite",
+    description: "Focused web analytics vs a full product suite",
   },
   {
     name: "Umami",

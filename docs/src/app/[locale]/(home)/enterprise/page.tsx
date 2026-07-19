@@ -11,7 +11,7 @@ import Link from "next/link";
 
 const pageTitle = "Rybbit for Enterprise | Open-Source Analytics Your Security Team Can Read";
 const pageDescription =
-  "SSO, dedicated isolated instances, on-premise installation, infinite retention, whitelabeling, and an uptime SLA — on a 100% open-source codebase your security review can audit line by line.";
+  "SSO, dedicated isolated instances, on-premise installation, infinite retention, whitelabeling, and an uptime SLA, all on a 100% open-source codebase your security review can audit line by line.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -38,7 +38,7 @@ const faqItems = [
   {
     question: "Can we run Rybbit on our own infrastructure?",
     answer:
-      "Yes. Enterprise includes on-premise installation and dedicated isolated instances, and the product itself is open source under AGPL v3 — self-hosting is free for personal and business use.",
+      "Yes. Enterprise includes on-premise installation and dedicated isolated instances, and the product itself is open source under AGPL v3. Self-hosting is free for personal and business use.",
   },
   {
     question: "Does Rybbit support Single Sign-On?",
@@ -47,7 +47,7 @@ const faqItems = [
   {
     question: "How long is data retained?",
     answer:
-      "Standard keeps 3 years, Pro keeps 5, and Enterprise retention is infinite — your history doesn't expire out from under you.",
+      "Standard keeps 3 years, Pro keeps 5, and Enterprise retention is infinite. Your history doesn't expire out from under you.",
   },
   {
     question: "What does enterprise support look like?",
@@ -57,12 +57,12 @@ const faqItems = [
   {
     question: "Is there a Data Processing Agreement?",
     answer:
-      "Yes — a DPA is available at rybbit.com/dpa, alongside a public security page. The cloud is EU-hosted, and visitor tracking is cookieless with daily-salted IDs.",
+      "Yes. A DPA is available at rybbit.com/dpa, alongside a public security page. The cloud is EU-hosted, and visitor tracking is cookieless with daily-salted IDs.",
   },
   {
     question: "Can we white-label the dashboard?",
     answer:
-      "Yes. Whitelabeling is an Enterprise feature, along with custom features scoped to your deployment — talk to us about what your rollout needs.",
+      "Yes. Whitelabeling is an Enterprise feature, along with custom features scoped to your deployment. Talk to us about what your rollout needs.",
   },
 ];
 
@@ -119,7 +119,7 @@ export default function EnterprisePage() {
       <InteriorPageHero
         eyebrow="Rybbit for enterprise"
         title="Open-source analytics your security team can read."
-        description="SSO, dedicated instances, on-premise installation, infinite retention, and an SLA — on a codebase your security review can audit line by line instead of taking on faith."
+        description="SSO, dedicated instances, on-premise installation, infinite retention, and an SLA, all on a codebase your security review can audit line by line instead of taking on faith."
         eventLocation="enterprise_hero"
         primaryAction={{ href: "/contact", label: "Contact us", eventName: "contact" }}
         note="Prefer self-serve? Every plan starts with a 7-day free trial."
@@ -163,7 +163,7 @@ export default function EnterprisePage() {
                 Everything procurement will ask about.
               </h2>
               <p className="mt-6 max-w-sm text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                Enterprise is everything in Pro — funnels, replays, unlimited websites and team members — plus the layer
+                Enterprise is everything in Pro (funnels, replays, unlimited websites and team members) plus the layer
                 large organizations actually negotiate over.
               </p>
               <Link
@@ -217,7 +217,7 @@ export default function EnterprisePage() {
             </div>
             <div className="flex flex-col justify-center px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
-                Every line of Rybbit — including the cloud and enterprise code — is public on GitHub under AGPL v3. Your
+                Every line of Rybbit, including the cloud and enterprise code, is public on GitHub under AGPL v3. Your
                 security team reviews the actual data path, not a marketing diagram of it.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
@@ -264,7 +264,7 @@ export default function EnterprisePage() {
 
       <CTASection
         title="Bring your security team. We like it that way."
-        description="SSO, dedicated instances, on-prem, and an SLA — on a codebase you can audit before you sign."
+        description="SSO, dedicated instances, on-prem, and an SLA, all on a codebase you can audit before you sign."
         primaryButtonText="Contact us"
         primaryButtonHref="/contact"
         eventLocation="enterprise_bottom_cta"

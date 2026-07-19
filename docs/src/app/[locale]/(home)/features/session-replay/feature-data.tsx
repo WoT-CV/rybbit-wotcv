@@ -139,7 +139,7 @@ export const faqItems: FAQItem[] = [
   {
     question: "How is this different from Hotjar or FullStory?",
     answer:
-      "Rybbit session replay is integrated directly into your analytics platform: no separate tool, no extra billing, and no data silos. It's also privacy-first with automatic input masking, and it's fully open source so you can self-host everything.",
+      "Rybbit session replay is integrated directly into your analytics platform: no separate tool, no extra billing, and no data silos. It's also privacy-first with automatic input masking, and it's fully open source: you can self-host everything.",
   },
   {
     question: "Are form inputs recorded?",

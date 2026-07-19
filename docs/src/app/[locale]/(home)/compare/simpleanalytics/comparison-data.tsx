@@ -53,7 +53,7 @@ export const simpleAnalyticsExtendedData = {
   introParagraphs: [
     "Simple Analytics lives up to its name: it's a privacy-focused analytics tool that keeps things minimal. It offers a clean dashboard, cookie-free tracking, and EU-based data storage. But its simplicity means no session replay, no funnel analysis, no user journeys, and only country-level geolocation. It's also entirely closed-source with no self-hosting option.",
     "Rybbit matches Simple Analytics on privacy (cookie-free, no personal data collection, EU data storage) but adds the advanced features growing teams actually need. Session replay lets you watch how users interact with your site. Funnel analysis shows where visitors drop off in your conversion flow. User journey visualization reveals the paths people take through your content. And city-level geolocation gives you much more granular insights into where your audience is.",
-    "The business model difference matters too. Rybbit is fully open source under AGPL v3, so you can self-host it for free and verify exactly how your data is handled. Simple Analytics is proprietary, so you're locked into their cloud service with no alternative. If you want privacy-first analytics with the depth to actually improve your product and the transparency of open source, Rybbit is the stronger choice.",
+    "The business model difference matters too. Rybbit is fully open source under AGPL v3: you can self-host it for free and verify exactly how your data is handled. Simple Analytics is proprietary, so you're locked into their cloud service with no alternative. If you want privacy-first analytics with the depth to actually improve your product and the transparency of open source, Rybbit is the stronger choice.",
   ],
 
   chooseRybbit: [
@@ -107,7 +107,7 @@ export const simpleAnalyticsExtendedData = {
             Simple Analytics prices by user. Paid plans start at $20 per month for one user, with a usage slider that
             scales the price by pageviews (the slider runs from 100k up to 2.5M), and every additional team member
             costs another $20 per month. Annual billing gives you two months free, and there&apos;s a genuinely useful
-            free tier for hobby sites &mdash; one user, five websites, one month of history, no card required.
+            free tier for hobby sites: one user, five websites, one month of history, no card required.
           </>,
           <>
             For a solo founder that model works fine. For a team it compounds quickly: five people looking at the same
@@ -124,7 +124,7 @@ export const simpleAnalyticsExtendedData = {
             Simple Analytics deserves credit for being exactly what it says. The Amsterdam-based team collects the
             least data of any paid analytics tool in this category, hosts everything in the EU end to end, and ships a
             clean dashboard with an AI chat over your stats. In 2026 it also repositioned itself: rather than pitching
-            a full GA replacement, it now markets itself as a complement that fixes consent loss &mdash; arguing that
+            a full GA replacement, it now markets itself as a complement that fixes consent loss, arguing that
             Google Analytics can miss up to 60% of traffic and telling you &ldquo;Don&apos;t replace your analytics.
             Fix it.&rdquo; If you want the most conservative data collection available in a managed EU service, or you
             plan to keep GA and run a privacy-friendly counter next to it, that&apos;s a coherent offer.
@@ -132,7 +132,7 @@ export const simpleAnalyticsExtendedData = {
           <>
             The trade-off is depth. There&apos;s no <Link href="/features/session-replay">session replay</Link>, no{" "}
             <Link href="/features/funnels">funnel analysis</Link>, no user journeys, no error tracking, no Web Vitals,
-            and no user profiles &mdash; when a conversion drops, Simple Analytics can tell you that it happened, but
+            and no user profiles. When a conversion drops, Simple Analytics can tell you that it happened, but
             not where in the flow or what the user saw. Rybbit stays cookieless with a daily-rotating salt while
             shipping all of those, so you don&apos;t have to choose between privacy and being able to answer
             &ldquo;why.&rdquo;
@@ -148,7 +148,7 @@ export const simpleAnalyticsExtendedData = {
             there&apos;s no self-hosting option, and your data lives on their infrastructure under their terms.
           </>,
           <>
-            Rybbit is open source, so you can audit exactly how visitor data is handled &mdash; and you can{" "}
+            Rybbit is open source: you can audit exactly how visitor data is handled, and you can{" "}
             <Link href="/docs/self-hosting">self-host it for free</Link>, which beats even the best EU hosting for data
             sovereignty: analytics data never leaves infrastructure you control. If you&apos;d rather not run servers,
             the cloud version keeps the same cookieless, no-personal-data model.
@@ -160,17 +160,17 @@ export const simpleAnalyticsExtendedData = {
         paragraphs: [
           <>
             Unusually for an analytics migration, you don&apos;t have to start from zero: Rybbit ships a data importer
-            for Simple Analytics, so you can bring your historical stats with you. See the{" "}
+            for Simple Analytics, and your historical stats come with you. See the{" "}
             <Link href="/docs">docs</Link> for the import walkthrough.
           </>,
           <ol>
             <li>
-              Add the Rybbit tracking script &mdash; one tag, and data appears within minutes. The 7-day trial covers
-              every feature, so you can evaluate replay and funnels on real traffic.
+              Add the Rybbit tracking script: one tag, and data appears within minutes. The 7-day trial covers
+              every feature; use it to evaluate replay and funnels on real traffic.
             </li>
             <li>Run the Simple Analytics importer to backfill your history, then compare the two dashboards.</li>
             <li>
-              Once the numbers line up, remove the Simple Analytics script &mdash; or keep both during a transition
+              Once the numbers line up, remove the Simple Analytics script, or keep both during a transition
               period; the scripts don&apos;t conflict.
             </li>
           </ol>,
@@ -186,7 +186,7 @@ export const simpleAnalyticsExtendedData = {
   faqItems: [
     {
       question: "Is Rybbit open source while Simple Analytics is not?",
-      answer: "Yes. Rybbit is fully open source under the AGPL v3 license, so you can inspect the code and self-host it. Simple Analytics is proprietary and closed-source with no self-hosting option.",
+      answer: "Yes. Rybbit is fully open source under the AGPL v3 license: you can inspect the code and self-host it. Simple Analytics is proprietary and closed-source with no self-hosting option.",
     },
     {
       question: "What features does Rybbit have that Simple Analytics doesn't?",

@@ -131,8 +131,8 @@ export default function DataProcessingAgreement() {
         <h2 className="text-2xl font-semibold mt-8 mb-4">10. Data Retention</h2>
         <p>
           Rybbit retains Personal Data for the retention period associated with the Controller&apos;s plan, as set out in
-          our Privacy Policy — currently 3 years for Standard plans and 5 years for Pro plans, and indefinitely for
-          Enterprise plans — or for such other period as agreed with the Controller. Upon termination of the Services,
+          our Privacy Policy (currently 3 years for Standard plans and 5 years for Pro plans, and indefinitely for
+          Enterprise plans), or for such other period as agreed with the Controller. Upon termination of the Services,
           Personal Data will be deleted or returned as requested by the Controller within 30 days.
         </p>
 

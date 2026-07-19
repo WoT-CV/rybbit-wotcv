@@ -108,7 +108,7 @@ export default function Security() {
         </ul>
 
         <h2 className="text-2xl font-semibold mt-8 mb-4">Compliance</h2>
-        <p>Rybbit is designed to help you comply with privacy regulations:</p>
+        <p>Rybbit helps you comply with privacy regulations:</p>
         <ul className="list-disc pl-6 space-y-2">
           <li>GDPR compliant (no personal data collection)</li>
           <li>CCPA compliant</li>

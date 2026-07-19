@@ -114,7 +114,7 @@ export function Footer() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1028220&theme=neutral&period=daily&t=1761001525479"
-                    alt="Rybbit — Product Hunt number one product of the day"
+                    alt="Rybbit: Product Hunt number one product of the day"
                     width="250"
                     height="54"
                     className="h-auto max-w-full"

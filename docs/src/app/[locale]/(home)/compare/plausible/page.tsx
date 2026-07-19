@@ -6,7 +6,7 @@ import { createOGImageUrl } from "@/lib/metadata";
 export const metadata: Metadata = {
   title: "Rybbit vs Plausible: The Open Source Plausible Alternative",
   description:
-    "Looking for a Plausible alternative? Rybbit is open-source and privacy-first too — plus session replay, funnels, user journeys, and error tracking.",
+    "Looking for a Plausible alternative? Rybbit is open-source and privacy-first too, plus session replay, funnels, user journeys, and error tracking.",
   openGraph: {
     title: "Rybbit vs Plausible: Which Privacy-First Analytics Wins?",
     description: "Both respect privacy, but Rybbit offers more power. Compare session replay, funnels, and pricing.",

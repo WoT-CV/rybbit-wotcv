@@ -71,7 +71,7 @@ export default async function OSSFriendsPage() {
 
           {friends.length === 0 ? (
             <p className="px-5 py-16 text-neutral-600 dark:text-neutral-400 sm:px-8 lg:px-10">
-              No OSS friends found. Check back later!
+              No OSS friends found. Check back later.
             </p>
           ) : (
             <div className="grid gap-px bg-neutral-200 p-px dark:bg-neutral-800 sm:grid-cols-2">

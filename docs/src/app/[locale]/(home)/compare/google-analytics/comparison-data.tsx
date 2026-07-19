@@ -106,13 +106,13 @@ export const googleAnalyticsExtendedData = {
           <>
             GA4 is free because your visitors&apos; data feeds Google&apos;s advertising business. The practical costs
             show up elsewhere. Because GA4 relies on cookies, GDPR and ePrivacy require a consent banner in most of the
-            world &mdash; and a large share of visitors decline or ignore it, so the sessions they represent never reach
+            world, and a large share of visitors decline or ignore it, so the sessions they represent never reach
             your reports. Teams switching to cookieless analytics routinely discover their real traffic is 30&ndash;60%
             higher than GA4 showed.
           </>,
           <>
             On top of consent loss, GA4 applies sampling to complex reports on busy properties, holds standard-property
-            event data for at most 14 months, and locks unsampled exploration behind GA360 &mdash; which starts around
+            event data for at most 14 months, and locks unsampled exploration behind GA360, which starts around
             $50,000 per year. Rybbit&apos;s <Link href="/pricing">pricing</Link> is a flat, events-based subscription:
             every feature on every plan, no sampling at any traffic level, and your data is never used for anything
             except showing you your analytics.
@@ -134,8 +134,8 @@ export const googleAnalyticsExtendedData = {
           <>
             What GA4 genuinely does better is the Google ecosystem: bidirectional Google Ads integration, BigQuery
             export, and advanced attribution modeling for paid campaigns. If your team lives in Google Ads, keeping GA4
-            for ad attribution while running Rybbit as your source of truth for real traffic is a reasonable setup
-            &mdash; the two scripts don&apos;t conflict.
+            for ad attribution while running Rybbit as your source of truth for real traffic is a reasonable setup;
+            the two scripts don&apos;t conflict.
           </>,
         ],
       },
@@ -148,7 +148,7 @@ export const googleAnalyticsExtendedData = {
           </>,
           <ol>
             <li>
-              Add the Rybbit <Link href="/docs/script">tracking script</Link> &mdash; one tag, and data appears in
+              Add the Rybbit <Link href="/docs/script">tracking script</Link>: one tag, and data appears in
               minutes. Keep GA4 running alongside it.
             </li>
             <li>
@@ -157,12 +157,12 @@ export const googleAnalyticsExtendedData = {
               GA4&apos;s model pushed them into.
             </li>
             <li>
-              Compare a few weeks of numbers. Expect Rybbit to report noticeably more traffic &mdash; that&apos;s the
+              Compare a few weeks of numbers. Expect Rybbit to report noticeably more traffic. That&apos;s the
               consent-banner and ad-blocker loss GA4 never showed you.
             </li>
             <li>
               If you need the history, export your GA4 property to BigQuery for archival before Google&apos;s retention
-              window trims it. Then remove the GA tag &mdash; and the cookie banner with it.
+              window trims it. Then remove the GA tag, and the cookie banner with it.
             </li>
           </ol>,
         ],
@@ -174,7 +174,7 @@ export const googleAnalyticsExtendedData = {
             Multiple EU data-protection authorities (Austria, France, and Italy among them) have ruled that Google
             Analytics transfers violated GDPR, and enforcement keeps tightening. Rybbit sidesteps the whole category of
             risk: no cookies, no persistent identifiers, no personal data collection, with visitor hashes rotated
-            daily. You can run it with no consent banner at all &mdash; or go further and{" "}
+            daily. You can run it with no consent banner at all, or go further and{" "}
             <Link href="/docs/self-hosting">self-host the open-source version</Link> so analytics data never leaves
             your own infrastructure.
           </>,
@@ -220,7 +220,7 @@ export const googleAnalyticsExtendedData = {
     {
       title: "Rybbit vs PostHog",
       href: "/compare/posthog",
-      description: "Focused analytics vs all-in-one product suite",
+      description: "Focused analytics vs a full product suite",
     },
     {
       title: "Rybbit vs Matomo",

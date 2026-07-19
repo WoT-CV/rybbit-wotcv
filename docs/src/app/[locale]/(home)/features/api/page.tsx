@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Analytics API - Rybbit",
     description:
-      "Query every metric, ingest events server-side, and export raw data over REST — with a built-in playground and scoped API keys.",
+      "Query every metric, ingest events server-side, and export raw data over REST, with a built-in playground and scoped API keys.",
     type: "website",
     url: "https://rybbit.com/features/api",
     images: [
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Analytics API - Rybbit",
     description:
-      "Query every metric, ingest events server-side, and export raw data over REST — with a built-in playground and scoped API keys.",
+      "Query every metric, ingest events server-side, and export raw data over REST, with a built-in playground and scoped API keys.",
     images: [
       createOGImageUrl(
         "Analytics API",
@@ -85,17 +85,16 @@ export default function ApiPage() {
       <FeaturePage
         featureName="api"
         headline="Build on your analytics"
-        subtitle="A REST API over everything Rybbit collects — query any metric, ingest events from any platform, and pull raw data into your own systems. Prototype it all in the built-in playground."
+        subtitle="A REST API over everything Rybbit collects: query any metric, ingest events from any platform, and pull raw data into your own systems. Prototype it all in the built-in playground."
         badgeText="Analytics API"
         introParagraphs={[
           <>
             Your analytics shouldn&apos;t be locked inside a dashboard. The Rybbit API exposes{" "}
-            <strong className="text-neutral-900 dark:text-white">everything the dashboard shows as REST endpoints</strong>{" "}
-            — overview stats, time series, breakdowns, sessions, user profiles, goals, funnels, errors, Web Vitals, and raw events — so you can build reports, internal tools, and product features on live data.
+            <strong className="text-neutral-900 dark:text-white">everything the dashboard shows as REST endpoints</strong>: overview stats, time series, breakdowns, sessions, user profiles, goals, funnels, errors, Web Vitals, and raw events. Build reports, internal tools, and product features on live data.
           </>,
           <>
             It works in both directions. Read endpoints power custom dashboards, scheduled digests, and warehouse syncs. The{" "}
-            <strong className="text-neutral-900 dark:text-white">track endpoint ingests events from anywhere</strong> — backends, mobile apps, webhooks, CLI tools — with geolocation and user-agent parsing handled for you, and API-key requests trusted past bot detection. Management endpoints automate the rest: sites, members, teams, goals, and imports.
+            <strong className="text-neutral-900 dark:text-white">track endpoint ingests events from anywhere</strong> (backends, mobile apps, webhooks, CLI tools), with geolocation and user-agent parsing handled for you, and API-key requests trusted past bot detection. Management endpoints automate the rest: sites, members, teams, goals, and imports.
           </>,
           <>
             Start without writing code: the{" "}

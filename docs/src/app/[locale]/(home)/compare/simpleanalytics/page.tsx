@@ -48,7 +48,7 @@ const structuredData = {
           name: "Is Rybbit open source while Simple Analytics is not?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. Rybbit is fully open source under the AGPL v3 license, so you can inspect the code and self-host it. Simple Analytics is proprietary and closed-source with no self-hosting option.",
+            text: "Yes. Rybbit is fully open source under the AGPL v3 license: you can inspect the code and self-host it. Simple Analytics is proprietary and closed-source with no self-hosting option.",
           },
         },
         {

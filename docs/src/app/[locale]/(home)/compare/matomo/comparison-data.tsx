@@ -125,7 +125,7 @@ export const matomoExtendedData = {
         heading: "“Free self-hosting” and the plugin-bundle math",
         paragraphs: [
           <>
-            Matomo&apos;s On-Premise Community Edition is genuinely free forever, with unlimited users and hits &mdash;
+            Matomo&apos;s On-Premise Community Edition is genuinely free forever, with unlimited users and hits,
             a real point in its favor. The catch is what happens when you want the advanced features. On self-hosted
             Matomo, those come as paid plugin bundles: the Team bundle starts at &euro;275 for 4 users and 5M hits per
             month, Business runs &euro;1,450, and Enterprise &euro;3,400. &ldquo;Free&rdquo; quietly becomes a
@@ -133,7 +133,7 @@ export const matomoExtendedData = {
           </>,
           <>
             Rybbit&apos;s model is simpler on both sides. <Link href="/docs/self-hosting">Self-hosting</Link> is free,
-            open source, deploys with Docker, and includes every feature &mdash; there are no plugin bundles to buy.
+            open source, deploys with Docker, and includes every feature: there are no plugin bundles to buy.
             Cloud <Link href="/pricing">pricing</Link> starts at $19/month for 100k events with all features on every
             plan and a 7-day trial. Matomo Cloud scales through hit-based tiers from 50k up past 10M (contact sales
             above that), with Business-tier caps of 30 websites, 30 team members, and 100 segments.
@@ -144,7 +144,7 @@ export const matomoExtendedData = {
         heading: "Cookieless by design vs cookieless by configuration",
         paragraphs: [
           <>
-            Matomo can run without cookies &mdash; it&apos;s a supported configuration, and the company takes privacy
+            Matomo can run without cookies. It&apos;s a supported configuration, and the company takes privacy
             seriously. But it&apos;s a configuration, not the default posture, and many real-world Matomo deployments
             (especially older ones) still set cookies and still ship a consent flow. Rybbit doesn&apos;t have a
             cookie mode to turn off: it&apos;s cookieless only, identifying visitors with a salted hash whose salt
@@ -163,14 +163,14 @@ export const matomoExtendedData = {
           </>,
           <ol>
             <li>
-              Add the Rybbit tracking script alongside your existing Matomo tag &mdash; the two don&apos;t conflict,
+              Add the Rybbit tracking script alongside your existing Matomo tag. The two don&apos;t conflict,
               and data appears in minutes.
             </li>
             <li>
               Recreate your Matomo goals and key events in Rybbit, and compare a few weeks of numbers side by side.
             </li>
             <li>
-              When you&apos;re confident, remove the Matomo tag &mdash; but keep your Matomo instance (or a database
+              When you&apos;re confident, remove the Matomo tag, but keep your Matomo instance (or a database
               archive) queryable rather than deleting it, so historical reports stay available.
             </li>
           </ol>,
@@ -216,7 +216,7 @@ export const matomoExtendedData = {
     {
       title: "Rybbit vs PostHog",
       href: "/compare/posthog",
-      description: "Focused analytics vs all-in-one product suite",
+      description: "Focused analytics vs a full product suite",
     },
     {
       title: "Rybbit vs Umami",

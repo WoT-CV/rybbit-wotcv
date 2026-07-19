@@ -73,8 +73,8 @@ const educationalContent = (
       <h2>How an image pixel records an event</h2>
       <p>
         When a browser renders an image element, it requests the URL in its src attribute. A server can count that
-        request as an event and read standard request details such as time, user agent, IP address, and—depending on the
-        referrer policy—the page origin. Query parameters can add a concise event name or campaign identifier.
+        request as an event and read standard request details such as time, user agent, IP address, and (depending on
+        the referrer policy) the page origin. Query parameters can add a concise event name or campaign identifier.
       </p>
       <p>
         The generated element is one pixel wide and has empty alternative text, so assistive technology treats it as
@@ -123,7 +123,7 @@ export default function TrackingPixelGeneratorPage() {
       educationalContent={educationalContent}
       faqs={faqs}
       relatedToolsCategory="analytics"
-      ctaTitle="Need more than a single pixel?"
+      ctaTitle="Upgrade from a single pixel to full analytics"
       ctaDescription="Rybbit turns privacy-friendly pageviews and events into clear journeys, funnels, and conversion insights."
       ctaEventLocation="tracking_pixel_generator_cta"
       structuredData={structuredData}

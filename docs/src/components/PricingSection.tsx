@@ -165,7 +165,7 @@ export function PricingSection({
 
   const standardProps: PricingCardProps = {
     title: t("Standard"),
-    description: t("Everything you need to get started as a small business"),
+    description: t("What a small business needs to get started"),
     priceDisplay: renderPrice(standardPrices),
     buttonText: standardPrices.custom ? t("Contact us") : t("Start for $0"),
     buttonHref: standardPrices.custom ? "https://www.rybbit.com/contact" : "https://app.rybbit.io/signup",
@@ -241,7 +241,7 @@ export function PricingSection({
           </div>
           <div className="relative flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
             <p className="max-w-md text-lg leading-8 text-neutral-600 dark:text-neutral-400 text-pretty">
-              {t("Start your 7-day free trial — no credit card charges until the trial ends.")}
+              {t("Start your 7-day free trial. No credit card charges until the trial ends.")}
             </p>
           </div>
         </div>

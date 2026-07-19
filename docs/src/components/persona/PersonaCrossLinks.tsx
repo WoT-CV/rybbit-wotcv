@@ -28,7 +28,7 @@ const personas: { slug: PersonaSlug; title: string; description: string }[] = [
   {
     slug: "white-label",
     title: "White label",
-    description: "Embed dashboards, build on the API, or self-host — analytics under your own brand.",
+    description: "Embed dashboards, build on the API, or self-host: analytics under your own brand.",
   },
   {
     slug: "for-startups",

@@ -10,7 +10,7 @@ import Link from "next/link";
 
 const pageTitle = "White Label Web Analytics | Rybbit";
 const pageDescription =
-  "Put analytics in front of your clients under your own brand. Embed read-only dashboards, build on the API, or self-host the open-source product — with full rebranding, custom domains, and dedicated instances on Enterprise.";
+  "Put analytics in front of your clients under your own brand. Embed read-only dashboards, build on the API, or self-host the open-source product, with full rebranding, custom domains, and dedicated instances on Enterprise.";
 
 export const metadata = createMetadata({
   title: pageTitle,
@@ -25,7 +25,7 @@ export const metadata = createMetadata({
     images: [
       createOGImageUrl(
         "White label web analytics",
-        "Embed dashboards, build on the API, or self-host — analytics under your own brand.",
+        "Embed dashboards, build on the API, or self-host: analytics under your own brand.",
         "Solutions"
       ),
     ],
@@ -34,7 +34,7 @@ export const metadata = createMetadata({
     images: [
       createOGImageUrl(
         "White label web analytics",
-        "Embed dashboards, build on the API, or self-host — analytics under your own brand.",
+        "Embed dashboards, build on the API, or self-host: analytics under your own brand.",
         "Solutions"
       ),
     ],
@@ -52,7 +52,7 @@ const faqItems = [
   {
     question: "Can clients see analytics without a Rybbit account?",
     answer:
-      "Yes. Embed a read-only dashboard with a private-link iframe, or share a dashboard with a secret or public link. Anyone with the link sees that one site's numbers and nothing else — no login required.",
+      "Yes. Embed a read-only dashboard with a private-link iframe, or share a dashboard with a secret or public link. Anyone with the link sees that one site's numbers and nothing else. No login required.",
   },
   {
     question: "Can I control what the embed looks like?",
@@ -62,7 +62,7 @@ const faqItems = [
   {
     question: "Is the embedded dashboard live?",
     answer:
-      "Yes. The embed is the real read-only analytics dashboard served through a private link, so it shows the same up-to-date numbers your team sees — it isn't a static export or a cached report.",
+      "Yes. The embed is the real read-only analytics dashboard served through a private link, so it shows the same up-to-date numbers your team sees. It isn't a static export or a cached report.",
   },
   {
     question: "What's the difference between the embed and the API?",
@@ -72,22 +72,22 @@ const faqItems = [
   {
     question: "Can I build my own reporting UI instead of embedding?",
     answer:
-      "Yes. Every plan includes API access and a Stats API, so you can pull the same data Rybbit renders into your own portal or client interface and style it however you like.",
+      "Yes. Every plan includes API access and a Stats API. Pull the same data Rybbit renders into your own portal or client interface and style it however you like.",
   },
   {
     question: "Can I run Rybbit entirely under my own domain?",
     answer:
-      "Yes. Rybbit is open source under AGPL v3, so you can self-host the full product on your own infrastructure and domain. If you'd rather not run it yourself, Enterprise offers managed dedicated instances.",
+      "Yes. Rybbit is open source under AGPL v3. Self-host the full product on your own infrastructure and domain. If you'd rather not run it yourself, Enterprise offers managed dedicated instances.",
   },
   {
     question: "Is there a per-client or per-site fee?",
     answer:
-      "No. The Pro plan includes unlimited websites under a single subscription, priced by traffic — so adding another client site doesn't add another bill.",
+      "No. The Pro plan includes unlimited websites under a single subscription, priced by traffic, so adding another client site doesn't add another bill.",
   },
   {
     question: "Can I charge my clients for analytics?",
     answer:
-      "That's the model. Analytics you resell under your brand is your product at your price — Rybbit charges you by traffic, not per client, so the margin math stays yours as the roster grows.",
+      "That's the model. Analytics you resell under your brand is your product at your price. Rybbit charges you by traffic, not per client, so the margin math stays yours as the roster grows.",
   },
   {
     question: "What does full white-label on Enterprise include?",
@@ -117,7 +117,7 @@ const workflowSteps = [
   {
     step: "02",
     title: "Generate private links",
-    body: "Each site gets its own private-link key — a read-only, scoped route that shows that site's dashboard and nothing else.",
+    body: "Each site gets its own private-link key: a read-only, scoped route that shows that site's dashboard and nothing else.",
   },
   {
     step: "03",
@@ -127,7 +127,7 @@ const workflowSteps = [
   {
     step: "04",
     title: "Or skip the iframe",
-    body: "Pull the same numbers from the Stats API and render them in your own UI — your charts, your components, your brand throughout.",
+    body: "Pull the same numbers from the Stats API and render them in your own UI: your charts, your components, your brand throughout.",
   },
 ];
 
@@ -164,7 +164,7 @@ export default function WhiteLabelPage() {
       <InteriorPageHero
         eyebrow="Rybbit white label"
         title="Your analytics. Your brand. Not ours."
-        description="Put analytics in front of clients without sending them to a third-party login. Embed a read-only dashboard in your own portal, build on the API, or self-host the whole thing — and rebrand it end to end on Enterprise."
+        description="Put analytics in front of clients without sending them to a third-party login. Embed a read-only dashboard in your own portal, build on the API, or self-host the whole thing. Rebrand it end to end on Enterprise."
         eventLocation="white_label_hero"
       />
 
@@ -207,7 +207,7 @@ export default function WhiteLabelPage() {
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
                 When the analytics you resell carries someone else&apos;s brand, every client dashboard is an ad for a
-                tool they could go buy directly. Rybbit is built to disappear behind your product — as an embed, an
+                tool they could go buy directly. Rybbit is built to disappear behind your product: as an embed, an
                 API, or a copy you host yourself.
               </p>
             </div>
@@ -216,7 +216,7 @@ export default function WhiteLabelPage() {
             <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
               <p className="max-w-lg text-base leading-7 text-neutral-600 dark:text-neutral-400">
                 The build-versus-buy math on client analytics is ugly on both ends. Building it in-house is months of
-                chart plumbing that isn&apos;t your product. Reselling a branded third-party tool works — until every
+                chart plumbing that isn&apos;t your product. Reselling a branded third-party tool works until every
                 dashboard you deliver teaches the client which vendor to cut you out for. The missing option is an
                 analytics layer that does the work and stays invisible.
               </p>
@@ -230,7 +230,7 @@ export default function WhiteLabelPage() {
                 >
                   agencies page
                 </Link>{" "}
-                covers that workflow — and{" "}
+                covers that workflow, and{" "}
                 <Link
                   href="/features/dashboard-sharing"
                   className="font-medium text-emerald-700 transition-colors duration-200 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
@@ -265,7 +265,7 @@ export default function WhiteLabelPage() {
             </div>
             <div className="flex items-end px-5 py-10 sm:px-8 md:py-20 lg:col-span-5 lg:px-10">
               <p className="max-w-md text-lg leading-8 text-neutral-600 text-pretty dark:text-neutral-400">
-                No SDK integration project, no data pipeline. The embed path is an iframe and a private link — the API
+                No SDK integration project, no data pipeline. The embed path is an iframe and a private link. The API
                 path is one bearer key more.
               </p>
             </div>
@@ -319,7 +319,7 @@ export default function WhiteLabelPage() {
               </h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Drop a read-only dashboard into your own app with a private-link iframe. Pick a theme, hide the sidebar,
-                and the Rybbit footer is removed automatically in embed mode — so it reads as part of your product.
+                and the Rybbit footer is removed automatically in embed mode, so it reads as part of your product.
               </p>
               <pre className="mt-6 overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-4 text-xs leading-5 text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
                 <code>{embedSnippet}</code>
@@ -364,7 +364,7 @@ export default function WhiteLabelPage() {
               </h3>
               <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                 Rybbit is 100% open source under AGPL v3. Self-host the exact same product on your own infrastructure
-                and domain for a fully owned stack — or let us run a managed, dedicated instance for you on Enterprise.
+                and domain for a fully owned stack, or let us run a managed, dedicated instance for you on Enterprise.
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
                 <Link
@@ -465,7 +465,7 @@ export default function WhiteLabelPage() {
             </h2>
             <p className="mt-6 max-w-xl text-base leading-7 text-neutral-600 dark:text-neutral-400">
               Because Rybbit is open source with full API access and data export on every plan, a white-label built on
-              it is never a black box you&apos;re renting. You can inspect it, extend it, and — if it ever matters —
+              it is never a black box you&apos;re renting. You can inspect it, extend it, and, if it ever matters,
               take the entire deployment in-house without losing a single client dashboard.
             </p>
           </div>
@@ -503,7 +503,7 @@ export default function WhiteLabelPage() {
 
       <CTASection
         title="Ship analytics that looks like yours."
-        description="Embed a dashboard, build on the API, or self-host the open-source product — and rebrand it end to end on Enterprise."
+        description="Embed a dashboard, build on the API, or self-host the open-source product. Rebrand it end to end on Enterprise."
         eventLocation="white_label_bottom_cta"
       />
     </div>

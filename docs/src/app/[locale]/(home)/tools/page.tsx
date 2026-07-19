@@ -463,7 +463,7 @@ export default function ToolsPage() {
     <div className="overflow-x-clip">
       <InteriorPageHero
         title={`${totalToolCount} free marketing tools`}
-        description="Calculators, generators, and utilities to help you make data-driven marketing decisions. Every tool is free — no account required."
+        description="Calculators, generators, and utilities for data-driven marketing decisions. Every tool is free, no account required."
         eventLocation="tools_hero"
         primaryAction={null}
         secondaryAction={null}
@@ -490,7 +490,7 @@ export default function ToolsPage() {
       <ToolSection
         id="calculators-title"
         title="Calculators"
-        description="Work through funnel and business math — engagement, ROAS, CAC, retention, recurring revenue, and more."
+        description="Work through funnel and business math: engagement, ROAS, CAC, retention, recurring revenue, and more."
         tools={calculators}
       />
 

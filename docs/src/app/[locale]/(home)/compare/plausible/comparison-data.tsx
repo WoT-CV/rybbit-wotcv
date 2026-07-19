@@ -52,7 +52,7 @@ export const plausibleExtendedData = {
   introHeading: "Why consider Rybbit over Plausible?",
   introParagraphs: [
     "Plausible is a well-respected privacy-first analytics tool known for its clean dashboard and lightweight script. It's a great choice for websites that want simple traffic metrics without cookies or consent banners. But Plausible is intentionally limited to basic web analytics: no session replay, no funnel analysis, no user journey visualization, and no error tracking.",
-    "Rybbit shares Plausible's commitment to privacy and simplicity but goes significantly further. You get advanced analytics features including session replay, funnel analysis, user journey visualization with Sankey diagrams, Web Vitals monitoring, and error tracking. This means you can understand not just how many visitors you get, but how they navigate your site, where they drop off, and what errors they encounter.",
+    "Rybbit shares Plausible's commitment to privacy and simplicity but goes significantly further. You get advanced analytics features including session replay, funnel analysis, user journey visualization with Sankey diagrams, Web Vitals monitoring, and error tracking. Beyond visit counts, you can see how people navigate your site, where they drop off, and what errors they encounter.",
     "Both platforms are open source and self-hostable, and both run on ClickHouse; Rybbit's stack is TypeScript, Plausible's is Elixir. Rybbit uses events-based pricing that includes all interaction types, while Plausible charges by pageviews only. If you like Plausible's privacy-first approach but need deeper analytics to grow your product, Rybbit gives you that depth without giving up simplicity.",
   ],
 
@@ -106,13 +106,13 @@ export const plausibleExtendedData = {
           <>
             Plausible deserves real credit here: it pioneered the modern privacy-first analytics category and proved
             that teams would pay for cookieless traffic stats instead of tolerating Google Analytics. Its scope is
-            deliberately minimal &mdash; a clean dashboard of pageviews, sources, and goals, with no session replay, no
+            deliberately minimal: a clean dashboard of pageviews, sources, and goals, with no session replay, no
             error tracking, and no user profiles. That restraint is a feature, not an oversight; Plausible has never
             pretended to be a product-analytics tool.
           </>,
           <>
-            Rybbit starts from the same privacy foundation &mdash; cookieless tracking with a daily-rotating salt, open
-            source, free to <Link href="/docs/self-hosting">self-host</Link> &mdash; but takes the opposite position on
+            Rybbit starts from the same privacy foundation (cookieless tracking with a daily-rotating salt, open
+            source, free to <Link href="/docs/self-hosting">self-host</Link>) but takes the opposite position on
             scope. It ships <Link href="/features/session-replay">session replay</Link>,{" "}
             <Link href="/features/funnels">funnels</Link>,{" "}
             <Link href="/features/user-journeys">user journeys</Link>, error tracking, Web Vitals, and user profiles as
@@ -132,9 +132,9 @@ export const plausibleExtendedData = {
             past a site or seat cap means a plan change even if your traffic hasn&apos;t moved.
           </>,
           <>
-            Rybbit prices by events &mdash; from $19/month for 100k events &mdash; and every plan includes every
-            feature, with session replay available on Pro. There are no per-site or per-seat tiers to outgrow; you pay
-            for volume, not for unlocks. At low traffic Plausible is the cheaper bill; once you&apos;d otherwise be
+            Rybbit prices by events (from $19/month for 100k events), and every plan includes every
+            feature, with session replay available on Pro. There are no per-site or per-seat tiers to outgrow; paying
+            more buys volume, not features. At low traffic Plausible is the cheaper bill; once you&apos;d otherwise be
             paying for replay, funnels, and error tracking as separate tools, the math flips. Full details are on the{" "}
             <Link href="/pricing">pricing page</Link>. And both products keep an honest exit: Plausible&apos;s
             Community Edition and Rybbit&apos;s open-source version are each free to self-host.
@@ -150,7 +150,7 @@ export const plausibleExtendedData = {
           </>,
           <ol>
             <li>
-              Add the Rybbit tracking script alongside Plausible&apos;s &mdash; both are lightweight, and running them
+              Add the Rybbit tracking script alongside Plausible&apos;s. Both are lightweight, and running them
               in parallel for a while costs nothing but a few kilobytes.
             </li>
             <li>
@@ -159,8 +159,8 @@ export const plausibleExtendedData = {
             </li>
             <li>Recreate your goals as Rybbit goals and custom events; the setup is similarly simple.</li>
             <li>
-              Compare a few weeks of live numbers &mdash; they should track closely, since both tools are cookieless
-              &mdash; then remove the Plausible script.
+              Compare a few weeks of live numbers; they should track closely, since both tools are cookieless.
+              Then remove the Plausible script.
             </li>
           </ol>,
         ],
@@ -169,11 +169,11 @@ export const plausibleExtendedData = {
         heading: "When Plausible is the better choice",
         paragraphs: [
           <>
-            If a traffic dashboard is genuinely all you want, Plausible is an excellent one &mdash; arguably the best
+            If a traffic dashboard is genuinely all you want, Plausible is an excellent one, arguably the best
             at being exactly that. It has the longest track record in the category, an EU-owned and EU-hosted cloud, a
             famously tiny script (Plausible advertises it as 54&times; smaller than Google Analytics; Rybbit&apos;s is
             around 18KB), and a 30-day trial with no card required versus Rybbit&apos;s 7 days. Choosing it means
-            deliberately not having session replay, funnels, or error tracking &mdash; and for plenty of content sites
+            deliberately not having session replay, funnels, or error tracking, and for plenty of content sites
             and blogs, that&apos;s the right call. If you&apos;re weighing more options than these two, our roundup of
             the <Link href="/blog/best-google-analytics-alternatives">best Google Analytics alternatives</Link> covers
             the wider field.
@@ -215,7 +215,7 @@ export const plausibleExtendedData = {
     {
       title: "Rybbit vs PostHog",
       href: "/compare/posthog",
-      description: "Focused analytics vs all-in-one product suite",
+      description: "Focused analytics vs a full product suite",
     },
     {
       title: "Rybbit vs Fathom",

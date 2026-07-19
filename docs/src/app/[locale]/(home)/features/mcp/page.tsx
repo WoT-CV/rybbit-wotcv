@@ -12,11 +12,11 @@ import {
 export const metadata: Metadata = {
   title: "MCP Server - Rybbit | Analytics for AI Assistants",
   description:
-    "Connect Claude, Cursor, Codex, and any MCP client to your analytics. 39 tools for querying traffic, managing goals and funnels, and running read-only SQL — with dashboard-grade permissions.",
+    "Connect Claude, Cursor, Codex, and any MCP client to your analytics. 39 tools for querying traffic, managing goals and funnels, and running read-only SQL, with dashboard-grade permissions.",
   openGraph: {
     title: "MCP Server - Rybbit",
     description:
-      "Analytics for AI assistants. Query traffic, manage goals, run read-only SQL — from Claude, Cursor, Codex, and any MCP client.",
+      "Analytics for AI assistants. Query traffic, manage goals, and run read-only SQL from Claude, Cursor, Codex, and any MCP client.",
     type: "website",
     url: "https://rybbit.com/features/mcp",
     images: [
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MCP Server - Rybbit",
     description:
-      "Analytics for AI assistants. Query traffic, manage goals, run read-only SQL — from Claude, Cursor, Codex, and any MCP client.",
+      "Analytics for AI assistants. Query traffic, manage goals, and run read-only SQL from Claude, Cursor, Codex, and any MCP client.",
     images: [
       createOGImageUrl(
         "MCP Server",
@@ -85,13 +85,13 @@ export default function McpPage() {
       <FeaturePage
         featureName="mcp"
         headline="Ask your analytics anything"
-        subtitle="Rybbit's hosted MCP server connects Claude, Cursor, Codex, and any MCP client to your analytics — query traffic, manage goals and funnels, even run read-only SQL, with the same permissions as your dashboard."
+        subtitle="Rybbit's hosted MCP server connects Claude, Cursor, Codex, and any MCP client to your analytics: query traffic, manage goals and funnels, even run read-only SQL, with the same permissions as your dashboard."
         badgeText="MCP Server"
         introParagraphs={[
           <>
             Dashboards answer the questions someone thought to build. The Rybbit{" "}
             <strong className="text-neutral-900 dark:text-white">Model Context Protocol server</strong>{" "}
-            answers the ones you ask: connect an AI assistant and it can explore your traffic, behavior, errors, and performance data through the same API the dashboard uses — in plain language, from wherever you already work.
+            answers the ones you ask: connect an AI assistant and it can explore your traffic, behavior, errors, and performance data through the same API the dashboard uses, in plain language, from wherever you already work.
           </>,
           <>
             This isn&apos;t a read-only feed. <strong className="text-neutral-900 dark:text-white">39 tools</strong>{" "}
@@ -99,7 +99,7 @@ export default function McpPage() {
           </>,
           <>
             Access is as controlled as the dashboard itself: connect with{" "}
-            <strong className="text-neutral-900 dark:text-white">OAuth or scoped, revocable API keys</strong>, and every tool call is authorized against your role, site access, and rate limits. Rybbit runs no AI model of its own — your data goes only to the client you configure, on cloud or self-hosted.
+            <strong className="text-neutral-900 dark:text-white">OAuth or scoped, revocable API keys</strong>, and every tool call is authorized against your role, site access, and rate limits. Rybbit runs no AI model of its own. Your data goes only to the client you configure, on cloud or self-hosted.
           </>,
         ]}
         capabilities={capabilities}

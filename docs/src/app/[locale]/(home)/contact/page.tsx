@@ -46,9 +46,7 @@ export default function Contact() {
     <div className="overflow-x-clip">
       <InteriorPageHero
         title={t("Contact Us")}
-        description={t(
-          "Have questions about Rybbit? We're here to help! Reach out to us through any of these channels:"
-        )}
+        description={t("Have questions about Rybbit? Reach out through any of these channels:")}
         eventLocation="contact_hero"
         primaryAction={null}
         secondaryAction={null}

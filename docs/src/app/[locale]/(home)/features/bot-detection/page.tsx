@@ -12,11 +12,11 @@ import {
 export const metadata: Metadata = {
   title: "Bot Detection - Rybbit | Block & Inspect Bot Traffic",
   description:
-    "Five-layer bot detection filters crawlers, scrapers, headless browsers, and AI agents from your analytics — and shows you everything it blocked in a dedicated report. Bots are never billed.",
+    "Five-layer bot detection filters crawlers, scrapers, headless browsers, and AI agents from your analytics, and shows you everything it blocked in a dedicated report. Bots are never billed.",
   openGraph: {
     title: "Bot Detection - Rybbit",
     description:
-      "Five-layer bot detection with a dedicated report. Filter crawlers, scrapers, and AI agents — and see exactly what was blocked.",
+      "Five-layer bot detection with a dedicated report. Filter crawlers, scrapers, and AI agents. See exactly what was blocked.",
     type: "website",
     url: "https://rybbit.com/features/bot-detection",
     images: [
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Bot Detection - Rybbit",
     description:
-      "Five-layer bot detection with a dedicated report. Filter crawlers, scrapers, and AI agents — and see exactly what was blocked.",
+      "Five-layer bot detection with a dedicated report. Filter crawlers, scrapers, and AI agents. See exactly what was blocked.",
     images: [
       createOGImageUrl(
         "Bot Detection",
@@ -87,19 +87,19 @@ export default function BotDetectionPage() {
         subtitle="Five detection layers filter crawlers, scrapers, headless browsers, and AI agents before they pollute your data. And unlike silent filters, Rybbit shows you everything it blocked."
         badgeText="Bot Detection"
         demoUrl="https://demo.rybbit.com/81/bots"
-        demoCaption="Live bot report — real bot traffic detected and filtered on this site"
+        demoCaption="Live bot report: real bot traffic detected and filtered on this site"
         introParagraphs={[
           <>
-            A meaningful share of your traffic isn&apos;t human — search crawlers, uptime monitors, scrapers, link previewers, and a fast-growing wave of AI agents. Left in your data, they inflate visitor counts, distort bounce rates, and quietly wreck conversion metrics. Rybbit checks{" "}
+            A meaningful share of your traffic isn&apos;t human: search crawlers, uptime monitors, scrapers, link previewers, and a fast-growing wave of AI agents. Left in your data, they inflate visitor counts, distort bounce rates, and quietly wreck conversion metrics. Rybbit checks{" "}
             <strong className="text-neutral-900 dark:text-white">every tracking request against five detection layers</strong>{" "}
             before it ever reaches your analytics.
           </>,
           <>
-            Most analytics tools filter bots silently against a user-agent list, so you never know what was removed — or what slipped through. Rybbit stores a compact record of every filtered request and gives you a{" "}
+            Most analytics tools filter bots silently against a user-agent list, so you never know what was removed, or what slipped through. Rybbit stores a compact record of every filtered request and gives you a{" "}
             <strong className="text-neutral-900 dark:text-white">dedicated Bots report</strong>: total blocked requests, bot share of traffic, which detection layers matched, and breakdowns by page, referrer, country, device, and user-agent.
           </>,
           <>
-            Filtered bots are excluded from dashboards, funnels, journeys, and session lists — and they{" "}
+            Filtered bots are excluded from dashboards, funnels, journeys, and session lists, and they{" "}
             <strong className="text-neutral-900 dark:text-white">never count toward your bill</strong>. One toggle per site, no changes to your tracking script.
           </>,
         ]}

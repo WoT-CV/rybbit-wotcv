@@ -53,7 +53,7 @@ const faqData = [
   {
     question: "Can Rybbit measure engagement after a social click?",
     answer:
-      "Yes. Rybbit can track the website sessions, goals, events, and conversions that follow a social visit, helping you connect platform engagement with meaningful on-site behavior.",
+      "Yes. Rybbit can track the website sessions, goals, events, and conversions that follow a social visit. That ties platform engagement to real on-site behavior.",
   },
 ];
 

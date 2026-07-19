@@ -59,7 +59,7 @@ export default function AffiliatePage() {
     {
       step: "2",
       title: t("Share"),
-      description: t("Share your link with your audience — blog posts, social media, newsletters, etc."),
+      description: t("Share your link with your audience: blog posts, social media, newsletters, etc."),
     },
     {
       step: "3",

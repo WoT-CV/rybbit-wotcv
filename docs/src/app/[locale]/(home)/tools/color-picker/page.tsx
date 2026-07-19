@@ -99,8 +99,8 @@ const educationalContent = (
     <h2>Color should not carry meaning alone</h2>
     <p>
       Pair status colors with labels, icons, patterns, or position so the message remains clear for people with color
-      vision differences. Test hover, focus, active, disabled, error, and success states in both light and dark themes,
-      not just the resting component.
+      vision differences. Test hover, focus, active, disabled, error, and success states in both light and dark themes;
+      the resting component alone is not enough.
     </p>
   </>
 );

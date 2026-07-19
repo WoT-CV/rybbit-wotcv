@@ -6,7 +6,7 @@ import { createOGImageUrl } from "@/lib/metadata";
 export const metadata: Metadata = {
   title: "Rybbit vs PostHog: The Lightweight PostHog Alternative",
   description:
-    "Looking for a lighter PostHog alternative? Rybbit focuses on web analytics done well — simple setup, session replay, funnels, no product-suite bloat.",
+    "Looking for a lighter PostHog alternative? Rybbit focuses on web analytics done well: simple setup, session replay, funnels, no product-suite bloat.",
   openGraph: {
     title: "Rybbit vs PostHog: Focused Analytics vs Feature Bloat",
     description: "PostHog does everything. Rybbit focuses on web analytics. Compare the approaches.",
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Rybbit vs PostHog Comparison",
-    description: "Focused web analytics vs all-in-one platform. Which approach fits your needs?",
-    images: [createOGImageUrl("Rybbit vs PostHog Comparison", "Focused web analytics vs all-in-one platform. Which approach fits your needs?", "Compare")],
+    description: "Focused web analytics vs a full product suite. Which approach fits your needs?",
+    images: [createOGImageUrl("Rybbit vs PostHog Comparison", "Focused web analytics vs a full product suite. Which approach fits your needs?", "Compare")],
   },
   alternates: {
     canonical: "https://rybbit.com/compare/posthog",
@@ -48,7 +48,7 @@ const structuredData = {
           name: "How is Rybbit different from PostHog?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Rybbit focuses exclusively on web analytics with a clean, simple interface. PostHog is an all-in-one product suite with analytics, feature flags, A/B testing, surveys, and more. If you primarily need web analytics, Rybbit delivers a faster, simpler experience.",
+            text: "Rybbit focuses exclusively on web analytics with a clean, simple interface. PostHog is a full product suite with analytics, feature flags, A/B testing, surveys, and more. If you primarily need web analytics, Rybbit delivers a faster, simpler experience.",
           },
         },
         {
