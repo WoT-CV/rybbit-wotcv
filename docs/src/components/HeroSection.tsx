@@ -157,7 +157,7 @@ export function HeroSection({ title, subtitle, showEUFlag = true, showGitHubStar
                 shows its full desktop layout at preview size. Keep 1:1 on
                 mobile — a scaled viewport would land between the demo's
                 responsive breakpoints. The two values must stay reciprocal. */}
-            <div className="h-[600px] min-w-0 max-w-full overflow-hidden md:h-[700px] lg:h-[750px]">
+            <div className="h-[500px] min-w-0 max-w-full overflow-hidden md:h-[600px] lg:h-[650px]">
               <iframe
                 src="https://demo.rybbit.com/81/main"
                 className="block h-full w-full border-none md:h-[117.6%] md:w-[117.6%] md:origin-top-left md:scale-[0.85]"
