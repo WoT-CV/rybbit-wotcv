@@ -134,6 +134,12 @@ export function registerSiteTools(server: McpServer, api: RybbitApiClient, guard
         domain: z.string().optional(),
         type: z.enum(["web", "mobile"]).optional(),
         embedEnabled: z.boolean().optional().describe("Allow embedding the stats widget"),
+        firstPartyProxy: z
+          .boolean()
+          .optional()
+          .describe(
+            "Site is fronted by a first-party proxy (Cloudflare Worker, CloudFront, nginx); visitor IPs are read from forwarded headers"
+          ),
         excludedIPs: z.array(z.string()).optional().describe("Replaces the exclusion list wholesale"),
         excludedCountries: z.array(z.string()).optional(),
         excludedPaths: z.array(z.string()).optional(),

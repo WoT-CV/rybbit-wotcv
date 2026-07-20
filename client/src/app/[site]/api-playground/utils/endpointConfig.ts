@@ -134,7 +134,7 @@ export const endpointCategories: EndpointCategory[] = [
         path: "/organizations",
         name: "Pobierz moje organizacje",
         description:
-          "Zwraca wszystkie organizacje, których członkiem jest zalogowany użytkownik, wraz z członkami każdej organizacji",
+          "Zwraca wszystkie organizacje, których członkiem jest zalogowany użytkownik. Lista członków jest zwracana tylko dla żądań z cookie sesji; wywołania Bearer/API-key otrzymują pustą listę i powinny użyć endpointu pobierania członków organizacji.",
         hasCommonParams: false,
       },
       {
@@ -332,6 +332,39 @@ export const endpointCategories: EndpointCategory[] = [
         hasCommonParams: true,
         specificParams: ["event_name"],
         requiredParams: ["event_name"],
+      },
+      {
+        method: "GET",
+        path: "/sites/:site/events/autocapture",
+        name: "Pobierz automatycznie przechwycone zdarzenia",
+        description:
+          "Zwraca automatycznie przechwycone zdarzenia wybranego typu, pogrupowane według wartości wraz z licznikami",
+        hasCommonParams: true,
+        requiredParams: ["type"],
+        specificParams: ["type"],
+        parameterMetadata: {
+          type: {
+            label: "Typ",
+            type: "select",
+            options: ["outbound", "button_click", "form_submit", "copy"],
+          },
+        },
+      },
+      {
+        method: "GET",
+        path: "/sites/:site/events/autocapture-values",
+        name: "Pobierz wartości automatycznie przechwyconych zdarzeń",
+        description: "Zwraca najczęstsze wartości właściwości wybranego typu na potrzeby podpowiedzi celów i lejków",
+        hasCommonParams: true,
+        requiredParams: ["type"],
+        specificParams: ["type"],
+        parameterMetadata: {
+          type: {
+            label: "Typ",
+            type: "select",
+            options: ["outbound", "button_click", "form_submit", "copy"],
+          },
+        },
       },
       {
         method: "GET",
@@ -649,7 +682,16 @@ export const endpointCategories: EndpointCategory[] = [
         name: "Pobierz sesje",
         description: "Zwraca paginowaną listę sesji",
         hasCommonParams: true,
-        specificParams: ["page", "limit", "user_id", "identified_only", "min_pageviews", "min_events", "min_duration"],
+        specificParams: [
+          "page",
+          "limit",
+          "user_id",
+          "session_id",
+          "identified_only",
+          "min_pageviews",
+          "min_events",
+          "min_duration",
+        ],
       },
       {
         method: "GET",
@@ -895,11 +937,16 @@ export const parameterMetadata: Record<string, ParameterMetadata> = {
   start_date: { label: "Data początkowa", type: "text", placeholder: "RRRR-MM-DD" },
   end_date: { label: "Data końcowa", type: "text", placeholder: "RRRR-MM-DD" },
   since_timestamp: { label: "Od znacznika czasu", type: "text", placeholder: "ISO 8601, np. 2024-01-31T14:00:00.000Z" },
-  before_timestamp: { label: "Przed znacznikiem czasu", type: "text", placeholder: "ISO 8601, np. 2024-01-31T14:00:00.000Z" },
+  before_timestamp: {
+    label: "Przed znacznikiem czasu",
+    type: "text",
+    placeholder: "ISO 8601, np. 2024-01-31T14:00:00.000Z",
+  },
   event_name: { label: "Nazwa zdarzenia", type: "text", placeholder: "np. purchase" },
   errorMessage: { label: "Komunikat błędu", type: "text", placeholder: "Komunikat błędu do filtrowania" },
   user_id: { label: "ID użytkownika", type: "text", placeholder: "ID użytkownika" },
   userId: { label: "ID użytkownika", type: "text", placeholder: "ID użytkownika" },
+  session_id: { label: "ID sesji", type: "text", placeholder: "ID sesji" },
   key: { label: "Klucz", type: "text", placeholder: "Klucz cechy" },
   value: { label: "Wartość", type: "text", placeholder: "Wartość cechy" },
   search: { label: "Szukaj", type: "text", placeholder: "Szukaj użytkowników" },

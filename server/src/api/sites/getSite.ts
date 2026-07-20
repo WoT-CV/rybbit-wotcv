@@ -57,7 +57,7 @@ export async function getSite(request: FastifyRequest<GetSiteParams>, reply: Fas
       trackFormInteractions: site.trackFormInteractions,
     });
   } catch (error) {
-    console.error("Error retrieving site:", error);
+    request.log.error({ err: error }, "Error retrieving site");
     return reply.status(500).send({ error: "Internal server error" });
   }
 }

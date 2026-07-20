@@ -124,7 +124,7 @@ class PageviewQueue {
         format: "JSONEachRow",
       });
     } catch (error) {
-      this.logger.error(error, "Error processing pageview queue");
+      this.logger.error({ err: error }, "Error processing pageview queue");
     } finally {
       this.processing = false;
     }

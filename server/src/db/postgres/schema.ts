@@ -75,6 +75,10 @@ export const sites = pgTable(
     embedEnabled: boolean("embed_enabled").default(false),
     saltUserIds: boolean().default(false),
     blockBots: boolean().default(true).notNull(),
+    // Site owner declares a first-party proxy (Cloudflare Worker, CloudFront,
+    // nginx, ...) fronts their tracking traffic, so forwarded headers carry the
+    // real visitor IP and must win over the connecting edge IP.
+    firstPartyProxy: boolean("first_party_proxy").default(false),
     excludedIPs: jsonb("excluded_ips").default([]), // Array of IP addresses/ranges to exclude
     excludedCountries: jsonb("excluded_countries").default([]), // Array of ISO country codes to exclude (e.g., ["US", "GB"])
     excludedPaths: jsonb("excluded_paths").default([]).$type<string[]>(), // Array of pathname glob patterns to exclude (e.g., ["/admin/*", "/preview"])
@@ -303,9 +307,10 @@ export const apiKey = pgTable("apikey", {
   start: text(),
   prefix: text(),
   key: text().notNull(),
-  referenceId: text()
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+  // A user id (configId NULL/"default") or an organization id (configId
+  // "org") — polymorphic, so no FK. Cleanup happens in auth.ts's
+  // deleteUser.afterDelete and afterDeleteOrganization hooks.
+  referenceId: text().notNull(),
   refillInterval: integer(),
   refillAmount: integer(),
   lastRefillAt: timestamp({ mode: "string" }),

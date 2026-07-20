@@ -58,7 +58,7 @@ export async function deleteUser(req: FastifyRequest<DeleteUserRequest>, res: Fa
         const r2Keys = await processResults<{ event_data_key: string }>(r2KeysResult);
         await Promise.all(r2Keys.map(row => r2Storage.deleteBatch(row.event_data_key)));
       } catch (error) {
-        console.error(`Failed to delete R2 replay data for user ${userId}:`, error);
+        req.log.error({ err: error }, `Failed to delete R2 replay data for user ${userId}:`);
       }
     }
 
@@ -82,7 +82,7 @@ export async function deleteUser(req: FastifyRequest<DeleteUserRequest>, res: Fa
 
     return res.send({ success: true });
   } catch (error) {
-    console.error("Error deleting user:", error);
+    req.log.error({ err: error }, "Error deleting user");
     return res.status(500).send({ error: "Failed to delete user" });
   }
 }

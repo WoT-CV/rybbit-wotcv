@@ -72,7 +72,7 @@ export async function identifyUser(req: FastifyRequest<IdentifyUserRequest>, res
 
     return res.send({ success: true });
   } catch (error) {
-    console.error("Error identifying user:", error);
+    req.log.error({ err: error }, "Error identifying user");
     return res.status(500).send({ error: "Failed to identify user" });
   }
 }

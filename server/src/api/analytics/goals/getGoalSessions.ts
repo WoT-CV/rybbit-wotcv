@@ -1,11 +1,11 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
 import { db } from "../../../db/postgres/postgres.js";
 import { goals } from "../../../db/postgres/schema.js";
 import { eq } from "drizzle-orm";
-import { getTimeStatement, processResults } from "../utils/utils.js";
+import { getTimeStatement } from "../utils/utils.js";
 import { FilterParams } from "@rybbit/shared";
 import { GetSessionsResponse } from "../sessions/getSessions.js";
+import { analyticsRoute, runAnalyticsQuery } from "../utils/analyticsQuery.js";
 import { buildGoalCondition } from "./goalConditions.js";
 
 export interface GetGoalSessionsRequest {
@@ -19,40 +19,16 @@ export interface GetGoalSessionsRequest {
   }>;
 }
 
-export async function getGoalSessions(req: FastifyRequest<GetGoalSessionsRequest>, res: FastifyReply) {
-  const { goalId, siteId } = req.params;
-  const { page, limit } = req.query;
+export const buildGoalSessionsQuery = (
+  query: GetGoalSessionsRequest["Querystring"],
+  siteId: number,
+  goalCondition: string
+) => {
+  const timeStatement = getTimeStatement(query);
 
-  try {
-    // Fetch the goal from PostgreSQL
-    const goal = await db
-      .select()
-      .from(goals)
-      .where(eq(goals.goalId, Number(goalId)))
-      .limit(1);
-
-    if (!goal || goal.length === 0) {
-      return res.status(404).send({ error: "Goal not found" });
-    }
-
-    const goalData = goal[0];
-
-    // Verify the goal belongs to the site
-    if (goalData.siteId !== Number(siteId)) {
-      return res.status(403).send({ error: "Goal does not belong to this site" });
-    }
-
-    const timeStatement = getTimeStatement(req.query);
-
-    // Build the goal matching condition
-    const goalCondition = buildGoalCondition(goalData);
-    if (!goalCondition) {
-      return res.status(400).send({ error: "Invalid goal configuration" });
-    }
-
-    // Build query to find sessions that match the goal
-    // First, find all session_ids that have at least one event matching the goal
-    const query = `
+  // Build query to find sessions that match the goal
+  // First, find all session_ids that have at least one event matching the goal
+  return `
     WITH GoalSessions AS (
       SELECT DISTINCT session_id
       FROM events
@@ -113,21 +89,47 @@ export async function getGoalSessions(req: FastifyRequest<GetGoalSessionsRequest
     FROM AggregatedSessions
     LIMIT {limit:Int32} OFFSET {offset:Int32}
     `;
+};
 
-    const result = await clickhouse.query({
-      query,
-      format: "JSONEachRow",
-      query_params: {
+export const getGoalSessions = analyticsRoute<GetGoalSessionsRequest>(
+  "goal sessions",
+  async (req: FastifyRequest<GetGoalSessionsRequest>, res: FastifyReply) => {
+    const { goalId, siteId } = req.params;
+    const { page, limit } = req.query;
+
+    // Fetch the goal from PostgreSQL
+    const goal = await db
+      .select()
+      .from(goals)
+      .where(eq(goals.goalId, Number(goalId)))
+      .limit(1);
+
+    if (!goal || goal.length === 0) {
+      return res.status(404).send({ error: "Goal not found" });
+    }
+
+    const goalData = goal[0];
+
+    // Verify the goal belongs to the site
+    if (goalData.siteId !== Number(siteId)) {
+      return res.status(403).send({ error: "Goal does not belong to this site" });
+    }
+
+    // Build the goal matching condition
+    const goalCondition = buildGoalCondition(goalData);
+    if (!goalCondition) {
+      return res.status(400).send({ error: "Invalid goal configuration" });
+    }
+
+    const data = await runAnalyticsQuery<GetSessionsResponse[number]>({
+      query: buildGoalSessionsQuery(req.query, Number(siteId), goalCondition),
+      params: {
         siteId: Number(siteId),
         limit: limit || 25,
         offset: ((page || 1) - 1) * (limit || 25),
       },
     });
 
-    const data = await processResults<GetSessionsResponse[number]>(result);
     return res.send({ data });
-  } catch (error) {
-    console.error("Error fetching goal sessions:", error);
-    return res.status(500).send({ error: "Failed to fetch goal sessions" });
   }
-}
+);

@@ -139,7 +139,7 @@ export async function getSitesFromOrg(
       },
     });
   } catch (err) {
-    console.error("Error in getSitesFromOrg:", err);
+    req.log.error({ err: err }, "Error in getSitesFromOrg");
     return res.status(500).send({ error: String(err) });
   }
 }

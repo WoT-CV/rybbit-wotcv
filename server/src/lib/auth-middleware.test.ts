@@ -45,6 +45,7 @@ describe("auth middleware scope enforcement", () => {
     mocks.getUserHasAdminAccessToSite.mockResolvedValue(false);
     mocks.getUserHasAccessToSitePublic.mockResolvedValue(false);
     mocks.getUserIsInOrg.mockResolvedValue(false);
+    mocks.getIsUserAdmin.mockResolvedValue(false);
     mocks.checkApiKey.mockResolvedValue(invalidResult);
 
     app = Fastify();
@@ -114,6 +115,16 @@ describe("auth middleware scope enforcement", () => {
     const response = await app.inject({ method: "POST", url: "/sites/5/goals" });
 
     expect(response.statusCode).toBe(200);
+  });
+
+  it("allows Better Auth system admins on site-admin routes without organization-admin access", async () => {
+    mocks.getIsUserAdmin.mockResolvedValue(true);
+    mocks.getSessionFromReq.mockResolvedValue({ user: { id: "system_admin", role: "admin" } });
+
+    const response = await app.inject({ method: "DELETE", url: "/sites/5" });
+
+    expect(response.statusCode).toBe(200);
+    expect(mocks.getUserHasAdminAccessToSite).not.toHaveBeenCalled();
   });
 
   it("falls through to session access when the bearer scope is insufficient", async () => {

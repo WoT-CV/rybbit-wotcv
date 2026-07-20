@@ -60,7 +60,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
 
     const siteId = siteConfiguration.siteId;
 
-    const requestIp = ip_address || resolveClientIp(request);
+    const requestIp = ip_address || resolveClientIp(request, { firstPartyProxy: siteConfiguration.firstPartyProxy });
     const requestUserAgent = user_agent || request.headers["user-agent"] || "";
     const anonymousId = anonymous_id
       ? await userIdService.generateUserIdFromClientId(anonymous_id, siteId)
@@ -104,7 +104,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
       try {
         await db.insert(userProfiles).values({ siteId, userId: user_id }).onConflictDoNothing();
       } catch (error) {
-        logger.error({ siteId, userId: user_id, error }, "Error creating user profile shell");
+        logger.error({ siteId, userId: user_id, err: error }, "Error creating user profile shell");
       }
     }
 
@@ -134,7 +134,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
             },
           });
       } catch (error) {
-        logger.error({ siteId, userId: user_id, error }, "Error updating user profile");
+        logger.error({ siteId, userId: user_id, err: error }, "Error updating user profile");
       }
     }
 
@@ -142,7 +142,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
       success: true,
     });
   } catch (error) {
-    logger.error(error, "Error handling identify");
+    logger.error({ err: error }, "Error handling identify");
     return reply.status(500).send({
       success: false,
       error: "Failed to process identify",

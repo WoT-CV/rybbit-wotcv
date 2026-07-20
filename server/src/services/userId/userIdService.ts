@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { SECRET } from "../../lib/const.js";
 import { siteConfig } from "../../lib/siteConfig.js";
+import { bucketIpForIdentity } from "./identityIpBucket.js";
 
 class UserIdService {
   private cachedSalt: string | null = null;
@@ -48,13 +49,17 @@ class UserIdService {
    * @returns A truncated sha256 hash (12 chars) to identify the user
    */
   async generateUserId(ip: string, userAgent: string, siteId: number): Promise<string> {
+    // Datacenter egress (corporate proxies, WARP, Private Relay) rotates IPs
+    // between requests; hash a coarse bucket so one visitor stays one user.
+    const identityIp = bucketIpForIdentity(ip);
+
     // Only apply salt if the site has salting enabled
     const config = await siteConfig.getConfig(siteId);
     if (config && config.saltUserIds) {
       const dailySalt = this.getDailySalt(); // Get the salt for the current day
       return crypto
         .createHash("sha256")
-        .update(ip + userAgent + dailySalt)
+        .update(identityIp + userAgent + dailySalt)
         .digest("hex")
         .substring(0, 12);
     }
@@ -62,7 +67,7 @@ class UserIdService {
     // Otherwise, just hash IP and user agent
     return crypto
       .createHash("sha256")
-      .update(ip + userAgent)
+      .update(identityIp + userAgent)
       .digest("hex")
       .substring(0, 12);
   }

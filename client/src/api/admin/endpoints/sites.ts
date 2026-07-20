@@ -16,6 +16,7 @@ export type SiteResponse = {
   embedEnabled?: boolean;
   saltUserIds: boolean;
   blockBots: boolean;
+  firstPartyProxy?: boolean;
   isOwner: boolean;
   // Analytics features
   sessionReplay?: boolean;
@@ -149,6 +150,7 @@ export function updateSiteConfig(
     embedEnabled?: boolean;
     saltUserIds?: boolean;
     blockBots?: boolean;
+    firstPartyProxy?: boolean;
     excludedIPs?: string[];
     excludedCountries?: string[];
     excludedPaths?: string[];

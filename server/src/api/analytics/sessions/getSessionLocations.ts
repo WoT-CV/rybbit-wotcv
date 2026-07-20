@@ -1,27 +1,23 @@
 import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
-import { enrichWithTraits, getTimeStatement, processResults } from "../utils/utils.js";
-import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
+import { enrichWithTraits, getTimeStatement } from "../utils/utils.js";
+import { getFilterStatement } from "../utils/getFilterStatement.js";
+import { analyticsRoute, runAnalyticsQuery } from "../utils/analyticsQuery.js";
 
-export async function getSessionLocations(
-  req: FastifyRequest<{
-    Params: {
-      siteId: string;
-    };
-    Querystring: FilterParams<{}>;
-  }>,
-  res: FastifyReply
-) {
-  const { siteId } = req.params;
+export interface GetSessionLocationsRequest {
+  Params: {
+    siteId: string;
+  };
+  Querystring: FilterParams<{}>;
+}
 
-  const timeStatement = getTimeStatement(req.query);
-  const filterStatement = getFilterStatement(req.query.filters, Number(siteId), timeStatement);
+export const buildSessionLocationsQuery = (query: GetSessionLocationsRequest["Querystring"], siteId: number) => {
+  const timeStatement = getTimeStatement(query);
+  const filterStatement = getFilterStatement(query.filters, siteId, timeStatement);
   const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
 
-  const result = await clickhouse.query({
-    query: `
+  return `
 WITH stuff AS (
     SELECT
         session_id,
@@ -57,37 +53,44 @@ GROUP BY
     lat,
     lon,
     city,
-    country`,
-    query_params: {
-      site: siteId,
-    },
-    format: "JSONEachRow",
-  });
+    country`;
+};
 
-  const rows = await processResults<{
-    lat: number;
-    lon: number;
-    count: number;
-    city: string;
-    country: string;
-    sample_session_id: string;
-    sample_user_id: string;
-    sample_identified_user_id: string;
-    sample_session_start: string;
-  }>(result);
+export const getSessionLocations = analyticsRoute<GetSessionLocationsRequest>(
+  "session locations",
+  async (req: FastifyRequest<GetSessionLocationsRequest>, res: FastifyReply) => {
+    const { siteId } = req.params;
 
-  const dataWithTraits = await enrichWithTraits(
-    rows.map(row => ({
+    const rows = await runAnalyticsQuery<{
+      lat: number;
+      lon: number;
+      count: number;
+      city: string;
+      country: string;
+      sample_session_id: string;
+      sample_user_id: string;
+      sample_identified_user_id: string;
+      sample_session_start: string;
+    }>({
+      query: buildSessionLocationsQuery(req.query, Number(siteId)),
+      params: {
+        site: siteId,
+      },
+    });
+
+    const dataWithTraits = await enrichWithTraits(
+      rows.map(row => ({
+        ...row,
+        identified_user_id: row.sample_identified_user_id,
+      })),
+      Number(siteId)
+    );
+
+    const data = dataWithTraits.map(({ identified_user_id, traits, ...row }) => ({
       ...row,
-      identified_user_id: row.sample_identified_user_id,
-    })),
-    Number(siteId)
-  );
+      sample_traits: traits,
+    }));
 
-  const data = dataWithTraits.map(({ identified_user_id, traits, ...row }) => ({
-    ...row,
-    sample_traits: traits,
-  }));
-
-  return res.status(200).send({ data });
-}
+    return res.status(200).send({ data });
+  }
+);

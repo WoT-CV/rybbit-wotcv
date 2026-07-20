@@ -1,10 +1,10 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { FilterParameter } from "./types.js";
-import { getTimeStatement, processResults } from "./utils/utils.js";
+import { getTimeStatement } from "./utils/utils.js";
 import { getFilterStatement, getSqlParam } from "./utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG } from "./utils/sessionAttribution.js";
 import { FilterParams } from "@rybbit/shared";
+import { analyticsRoute, getPaginationStatements, runPaginatedQuery } from "./utils/analyticsQuery.js";
 
 interface GetMetricRequest {
   Params: {
@@ -53,32 +53,18 @@ type GetMetricPaginatedResponse = {
   totalCount: number;
 };
 
-const getQuery = (request: FastifyRequest<GetMetricRequest>, isCountQuery: boolean = false) => {
-  const { filters, parameter, limit, page } = request.query;
-  const site = request.params.siteId;
+export const buildMetricQuery = (
+  query: GetMetricRequest["Querystring"],
+  siteId: number,
+  isCountQuery: boolean = false
+) => {
+  const { filters, parameter } = query;
 
-  const timeStatement = getTimeStatement(request.query);
+  const timeStatement = getTimeStatement(query);
 
-  const filterStatement = getFilterStatement(filters, Number(site), timeStatement);
+  const filterStatement = getFilterStatement(filters, siteId, timeStatement);
 
-  let validatedLimit: number | null = null;
-  if (!isCountQuery && limit !== undefined) {
-    const parsedLimit = parseInt(String(limit), 10);
-    if (!isNaN(parsedLimit) && parsedLimit > 0) {
-      validatedLimit = parsedLimit;
-    }
-  }
-  const limitStatement = !isCountQuery && validatedLimit ? `LIMIT ${validatedLimit}` : isCountQuery ? "" : "LIMIT 100";
-
-  let validatedOffset: number | null = null;
-  if (!isCountQuery && page !== undefined) {
-    const parsedPage = parseInt(String(page), 10);
-    if (!isNaN(parsedPage) && parsedPage >= 1) {
-      const pageOffset = (parsedPage - 1) * (validatedLimit || 100);
-      validatedOffset = pageOffset;
-    }
-  }
-  const offsetStatement = !isCountQuery && validatedOffset ? `OFFSET ${validatedOffset}` : "";
+  const { limitStatement, offsetStatement } = getPaginationStatements(query, 100, isCountQuery);
 
   if (parameter === "event_name") {
     if (isCountQuery) {
@@ -418,45 +404,17 @@ const getQuery = (request: FastifyRequest<GetMetricRequest>, isCountQuery: boole
   `;
 };
 
-export async function getMetric(req: FastifyRequest<GetMetricRequest>, res: FastifyReply) {
-  const { parameter, page } = req.query;
-  const site = req.params.siteId;
+export const getMetric = analyticsRoute<GetMetricRequest>(
+  req => req.query.parameter,
+  async (req: FastifyRequest<GetMetricRequest>, res: FastifyReply) => {
+    const siteId = Number(req.params.siteId);
+    const params = { siteId };
 
-  const isPaginatedRequest = page !== undefined;
+    const result = await runPaginatedQuery<MetricItem>(
+      { query: buildMetricQuery(req.query, siteId, false), params },
+      { query: buildMetricQuery(req.query, siteId, true), params }
+    );
 
-  const dataQuery = getQuery(req, false);
-  const countQuery = getQuery(req, true);
-
-  try {
-    // Run both queries in parallel
-    const [dataResult, countResult] = await Promise.all([
-      clickhouse.query({
-        query: dataQuery,
-        format: "JSONEachRow",
-        query_params: {
-          siteId: Number(site),
-        },
-      }),
-      clickhouse.query({
-        query: countQuery,
-        format: "JSONEachRow",
-        query_params: {
-          siteId: Number(site),
-        },
-      }),
-    ]);
-
-    const items = await processResults<MetricItem>(dataResult);
-    const countData = await processResults<{ totalCount: number }>(countResult);
-    const totalCount = countData.length > 0 ? countData[0].totalCount : 0;
-
-    return res.send({ data: { data: items, totalCount } });
-  } catch (error) {
-    console.error(`Error fetching ${parameter}:`, error);
-    console.error("Failed dataQuery:", dataQuery);
-    if (isPaginatedRequest) {
-      console.error("Failed countQuery:", countQuery);
-    }
-    return res.status(500).send({ error: `Failed to fetch ${parameter}` });
+    return res.send({ data: result });
   }
-}
+);

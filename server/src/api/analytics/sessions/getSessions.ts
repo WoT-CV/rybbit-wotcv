@@ -1,13 +1,13 @@
 import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
-import { enrichWithTraits, getTimeStatement, processResults } from "../utils/utils.js";
+import { enrichWithTraits, getTimeStatement } from "../utils/utils.js";
 import {
   clickhouseResolvedIdentifiedUserId,
   resolveUserIdentity,
 } from "../../../services/userIdentity/userIdentityService.js";
+import { analyticsRoute, runAnalyticsQuery, QuerySpec } from "../utils/analyticsQuery.js";
 
 export type GetSessionsResponse = {
   session_id: string;
@@ -79,7 +79,10 @@ const SESSION_FIELD_MAPPINGS = {
   "url_parameters['utm_content']": "utm_content",
 };
 
-export async function getSessions(req: FastifyRequest<GetSessionsRequest>, res: FastifyReply) {
+export const buildSessionsQuery = async (
+  query: GetSessionsRequest["Querystring"],
+  siteId: number
+): Promise<QuerySpec> => {
   const {
     filters,
     page = 1,
@@ -90,29 +93,28 @@ export async function getSessions(req: FastifyRequest<GetSessionsRequest>, res: 
     min_pageviews: minPageviewsStr,
     min_events: minEventsStr,
     min_duration: minDurationStr,
-  } = req.query;
-  const site = req.params.siteId;
+  } = query;
   const filterIdentified = identifiedOnly === "true";
   const minPageviews = minPageviewsStr ? parseInt(minPageviewsStr, 10) : undefined;
   const minEvents = minEventsStr ? parseInt(minEventsStr, 10) : undefined;
   const minDuration = minDurationStr ? parseInt(minDurationStr, 10) : undefined;
 
-  const timeStatement = getTimeStatement(req.query);
+  const timeStatement = getTimeStatement(query);
 
   // Use composable filter options:
   // - sessionLevelParams: per-event fields filter at session level (finds sessions
   //   containing a matching event) — required for any parameter the aggregated CTE
   //   below doesn't project, otherwise the outer WHERE hits an unknown identifier
   // - fieldMappings: CTE extracts UTM params as separate columns, so we need to map the field names
-  const filterStatement = getFilterStatement(filters, Number(site), timeStatement, {
+  const filterStatement = getFilterStatement(filters, siteId, timeStatement, {
     sessionLevelParams: ["event_name", "pathname", "page_title", "querystring", "channel"],
     fieldMappings: SESSION_FIELD_MAPPINGS,
     userIdExpression: "if(identified_user_id != '', identified_user_id, user_id)",
   });
-  const requestedIdentity = userId ? await resolveUserIdentity(Number(site), userId) : null;
+  const requestedIdentity = userId ? await resolveUserIdentity(siteId, userId) : null;
   const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
 
-  const query = `
+  const querySQL = `
   WITH AggregatedSessions AS (
       SELECT
           session_id,
@@ -185,31 +187,32 @@ export async function getSessions(req: FastifyRequest<GetSessionsRequest>, res: 
   LIMIT {limit:Int32} OFFSET {offset:Int32}
   `;
 
-  try {
-    const result = await clickhouse.query({
-      query,
-      format: "JSONEachRow",
-      query_params: {
-        siteId: Number(site),
-        user_id: requestedIdentity?.canonicalUserId,
-        session_id: sessionId,
-        limit: limit || 100,
-        offset: (page - 1) * (limit || 100),
-        minPageviews: minPageviews ?? 0,
-        minEvents: minEvents ?? 0,
-        minDuration: minDuration ?? 0,
-      },
-    });
+  return {
+    query: querySQL,
+    params: {
+      siteId,
+      user_id: requestedIdentity?.canonicalUserId,
+      session_id: sessionId,
+      limit: limit || 100,
+      offset: (page - 1) * (limit || 100),
+      minPageviews: minPageviews ?? 0,
+      minEvents: minEvents ?? 0,
+      minDuration: minDuration ?? 0,
+    },
+  };
+};
 
-    const data = await processResults<Omit<GetSessionsResponse[number], "traits">>(result);
+export const getSessions = analyticsRoute<GetSessionsRequest>(
+  "sessions",
+  async (req: FastifyRequest<GetSessionsRequest>, res: FastifyReply) => {
+    const site = req.params.siteId;
+
+    const querySpec = await buildSessionsQuery(req.query, Number(site));
+    const data = await runAnalyticsQuery<Omit<GetSessionsResponse[number], "traits">>(querySpec);
 
     // Enrich with traits from Postgres
     const dataWithTraits = await enrichWithTraits(data, Number(site));
 
     return res.send({ data: dataWithTraits });
-  } catch (error) {
-    console.error("Generated Query:", query);
-    console.error("Error fetching sessions:", error);
-    return res.status(500).send({ error: "Failed to fetch sessions" });
   }
-}
+);

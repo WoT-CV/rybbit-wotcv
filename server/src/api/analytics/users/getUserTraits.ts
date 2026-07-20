@@ -1,19 +1,28 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { sql } from "drizzle-orm";
 import { db } from "../../../db/postgres/postgres.js";
-import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
-import { processResults } from "../utils/utils.js";
 import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
+import { analyticsRoute, runAnalyticsQuery } from "../utils/analyticsQuery.js";
 
-export async function getUserTraitKeys(
-  req: FastifyRequest<{
-    Params: { siteId: string };
-  }>,
-  res: FastifyReply
-) {
-  const siteId = Number(req.params.siteId);
+export interface GetUserTraitKeysRequest {
+  Params: { siteId: string };
+}
 
-  try {
+export interface GetUserTraitValuesRequest {
+  Params: { siteId: string };
+  Querystring: { key: string; limit?: string; offset?: string };
+}
+
+export interface GetUserTraitValueUsersRequest {
+  Params: { siteId: string };
+  Querystring: { key: string; value: string; limit?: string; offset?: string };
+}
+
+export const getUserTraitKeys = analyticsRoute<GetUserTraitKeysRequest>(
+  "user trait keys",
+  async (req: FastifyRequest<GetUserTraitKeysRequest>, res: FastifyReply) => {
+    const siteId = Number(req.params.siteId);
+
     const result = await db.execute<{ key: string; user_count: number }>(sql`
       SELECT key, COUNT(*)::int AS user_count
       FROM user_profiles,
@@ -29,30 +38,22 @@ export async function getUserTraitKeys(
         userCount: row.user_count,
       })),
     });
-  } catch (error) {
-    console.error("Error fetching user trait keys:", error);
-    return res.status(500).send({ error: "Failed to fetch user trait keys" });
   }
-}
+);
 
-export async function getUserTraitValues(
-  req: FastifyRequest<{
-    Params: { siteId: string };
-    Querystring: { key: string; limit?: string; offset?: string };
-  }>,
-  res: FastifyReply
-) {
-  const siteId = Number(req.params.siteId);
-  const { key, limit: limitStr = "1000", offset: offsetStr = "0" } = req.query;
+export const getUserTraitValues = analyticsRoute<GetUserTraitValuesRequest>(
+  "user trait values",
+  async (req: FastifyRequest<GetUserTraitValuesRequest>, res: FastifyReply) => {
+    const siteId = Number(req.params.siteId);
+    const { key, limit: limitStr = "1000", offset: offsetStr = "0" } = req.query;
 
-  if (!key) {
-    return res.status(400).send({ error: "key query parameter is required" });
-  }
+    if (!key) {
+      return res.status(400).send({ error: "key query parameter is required" });
+    }
 
-  const limit = parseInt(limitStr, 10);
-  const offset = parseInt(offsetStr, 10);
+    const limit = parseInt(limitStr, 10);
+    const offset = parseInt(offsetStr, 10);
 
-  try {
     const [valuesResult, countResult] = await Promise.all([
       db.execute<{ value: string; user_count: number }>(sql`
         SELECT traits->>${key} AS value, COUNT(*)::int AS user_count
@@ -79,30 +80,45 @@ export async function getUserTraitValues(
       total,
       hasMore: offset + limit < total,
     });
-  } catch (error) {
-    console.error("Error fetching user trait values:", error);
-    return res.status(500).send({ error: "Failed to fetch user trait values" });
   }
-}
+);
 
-export async function getUserTraitValueUsers(
-  req: FastifyRequest<{
-    Params: { siteId: string };
-    Querystring: { key: string; value: string; limit?: string; offset?: string };
-  }>,
-  res: FastifyReply
-) {
-  const siteId = Number(req.params.siteId);
-  const { key, value, limit: limitStr = "50", offset: offsetStr = "0" } = req.query;
+// Session counts + metadata from ClickHouse for a set of identified users.
+export const buildTraitValueUsersQuery = () => {
+  const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
 
-  if (!key || value === undefined) {
-    return res.status(400).send({ error: "key and value query parameters are required" });
-  }
+  return `
+      SELECT
+        COALESCE(NULLIF(${resolvedIdentifiedUserId}, ''), events.user_id) AS effective_user_id,
+        argMax(events.user_id, timestamp) AS user_id,
+        argMax(${resolvedIdentifiedUserId}, timestamp) AS identified_user_id,
+        argMax(country, timestamp) AS country,
+        argMax(region, timestamp) AS region,
+        argMax(city, timestamp) AS city,
+        argMax(browser, timestamp) AS browser,
+        argMax(operating_system, timestamp) AS operating_system,
+        argMax(device_type, timestamp) AS device_type,
+        count(DISTINCT session_id) AS sessions
+      FROM events
+      WHERE site_id = {siteId:Int32}
+        AND ${resolvedIdentifiedUserId} IN ({userIds:Array(String)})
+      GROUP BY effective_user_id
+    `;
+};
 
-  const limit = parseInt(limitStr, 10);
-  const offset = parseInt(offsetStr, 10);
+export const getUserTraitValueUsers = analyticsRoute<GetUserTraitValueUsersRequest>(
+  "trait value users",
+  async (req: FastifyRequest<GetUserTraitValueUsersRequest>, res: FastifyReply) => {
+    const siteId = Number(req.params.siteId);
+    const { key, value, limit: limitStr = "50", offset: offsetStr = "0" } = req.query;
 
-  try {
+    if (!key || value === undefined) {
+      return res.status(400).send({ error: "key and value query parameters are required" });
+    }
+
+    const limit = parseInt(limitStr, 10);
+    const offset = parseInt(offsetStr, 10);
+
     // Step 1: Find matching user IDs and their traits from Postgres
     const [profilesResult, countResult] = await Promise.all([
       db.execute<{ user_id: string; traits: Record<string, unknown> | null }>(sql`
@@ -127,38 +143,8 @@ export async function getUserTraitValueUsers(
     }
 
     const userIds = profiles.map((p: any) => p.user_id);
-    const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
-
     // Step 2: Get session counts + metadata from ClickHouse
-    // Use events.identified_user_id to avoid conflict with the argMax alias
-    const chQuery = `
-      SELECT
-        COALESCE(NULLIF(${resolvedIdentifiedUserId}, ''), events.user_id) AS effective_user_id,
-        argMax(events.user_id, timestamp) AS user_id,
-        argMax(${resolvedIdentifiedUserId}, timestamp) AS identified_user_id,
-        argMax(country, timestamp) AS country,
-        argMax(region, timestamp) AS region,
-        argMax(city, timestamp) AS city,
-        argMax(browser, timestamp) AS browser,
-        argMax(operating_system, timestamp) AS operating_system,
-        argMax(device_type, timestamp) AS device_type,
-        count(DISTINCT session_id) AS sessions
-      FROM events
-      WHERE site_id = {siteId:Int32}
-        AND ${resolvedIdentifiedUserId} IN ({userIds:Array(String)})
-      GROUP BY effective_user_id
-    `;
-
-    const chResult = await clickhouse.query({
-      query: chQuery,
-      format: "JSONEachRow",
-      query_params: {
-        siteId,
-        userIds,
-      },
-    });
-
-    const chData = await processResults<{
+    const chData = await runAnalyticsQuery<{
       effective_user_id: string;
       user_id: string;
       identified_user_id: string;
@@ -169,7 +155,13 @@ export async function getUserTraitValueUsers(
       operating_system: string;
       device_type: string;
       sessions: number;
-    }>(chResult);
+    }>({
+      query: buildTraitValueUsersQuery(),
+      params: {
+        siteId,
+        userIds,
+      },
+    });
 
     // Step 3: Build lookup from ClickHouse data keyed by identified_user_id,
     // then iterate Postgres profiles so every profile is returned even if
@@ -197,8 +189,5 @@ export async function getUserTraitValueUsers(
       total,
       hasMore: offset + limit < total,
     });
-  } catch (error) {
-    console.error("Error fetching trait value users:", error);
-    return res.status(500).send({ error: "Failed to fetch trait value users" });
   }
-}
+);

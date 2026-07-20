@@ -83,8 +83,9 @@
     "../../../shared/dist/scopes.js"(exports) {
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
-      exports.ALL_SCOPE_STRINGS = exports.SCOPE_RESOURCES = exports.OIDC_STANDARD_SCOPES = exports.SCOPE_MATRIX = void 0;
+      exports.ALL_SCOPE_STRINGS = exports.SCOPE_RESOURCES = exports.OIDC_STANDARD_SCOPES = exports.SCOPE_MATRIX = exports.ORG_API_KEY_CONFIG_ID = void 0;
       exports.isValidScopePair = isValidScopePair;
+      exports.ORG_API_KEY_CONFIG_ID = "org";
       exports.SCOPE_MATRIX = {
         analytics: ["read"],
         sessions: ["read"],
@@ -3232,8 +3233,10 @@
   };
 
   // clickTracking.ts
+  var CLICK_THROTTLE_MS = 1e3;
   var ClickTrackingManager = class {
     constructor(tracker, config) {
+      this.lastClickAt = /* @__PURE__ */ new WeakMap();
       this.tracker = tracker;
       this.config = config;
     }
@@ -3267,6 +3270,10 @@
       const buttonElement = this.findButton(element);
       if (!buttonElement) return;
       if (buttonElement.hasAttribute("data-rybbit-event")) return;
+      const now = Date.now();
+      const lastAt = this.lastClickAt.get(buttonElement);
+      if (lastAt !== void 0 && now - lastAt < CLICK_THROTTLE_MS) return;
+      this.lastClickAt.set(buttonElement, now);
       const properties = {
         text: this.getElementText(buttonElement),
         ...this.extractDataAttributes(buttonElement)

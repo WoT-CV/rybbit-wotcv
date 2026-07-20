@@ -77,6 +77,7 @@ export function GeneralTab({ siteMetadata, disabled = false, onClose, onPublicCh
     public: siteMetadata.public || false,
     saltUserIds: siteMetadata.saltUserIds || false,
     blockBots: siteMetadata.blockBots || false,
+    firstPartyProxy: siteMetadata.firstPartyProxy || false,
     trackIp: siteMetadata.trackIp ?? false,
   });
 
@@ -219,6 +220,17 @@ export function GeneralTab({ siteMetadata, disabled = false, onClose, onPublicCh
       key: "blockBots",
       enabledMessage: t("Bot blocking enabled"),
       disabledMessage: t("Bot blocking disabled"),
+    },
+    {
+      id: "firstPartyProxy",
+      label: t("First-Party Proxy"),
+      description: t(
+        "Enable if tracking requests reach Rybbit through your own proxy or CDN (Cloudflare Worker, CloudFront, nginx). Visitor IPs will be read from forwarded headers instead of the connecting IP."
+      ),
+      value: toggleStates.firstPartyProxy,
+      key: "firstPartyProxy",
+      enabledMessage: t("First-party proxy mode enabled"),
+      disabledMessage: t("First-party proxy mode disabled"),
     },
     {
       id: "trackIp",
