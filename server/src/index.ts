@@ -144,6 +144,7 @@ import {
 } from "./api/stripe/index.js";
 import {
   addUserToOrganization,
+  createOrgApiKey,
   createUserApiKey,
   createUserInOrganization,
   getMyOrganizations,
@@ -173,6 +174,8 @@ import { mcpRoutes } from "./mcp/index.js";
 import { oauthWellKnownRoutes } from "./mcp/wellKnown.js";
 import { createCorsOptionsDelegate, createRejectUntrustedOriginHook } from "./lib/cors.js";
 import { IS_CLOUD } from "./lib/const.js";
+import { logger } from "./lib/logger/logger.js";
+import { registerRequestLogging } from "./lib/logger/requestLogging.js";
 import { reengagementService } from "./services/reengagement/reengagementService.js";
 import { telemetryService } from "./services/telemetryService.js";
 import { handleIdentify } from "./services/tracker/identifyService.js";
@@ -254,45 +257,20 @@ const authOrgWrite = authOnlyScoped("org", "write");
 // on surfaces with no taxonomy resource (account settings, billing).
 const adminOnly = { preHandler: [requireAdmin] as any };
 const authOnlyNoScopedKeys = { preHandler: [requireAuth("deny-scoped")] as any };
+const orgAdminNoScopedKeys = { preHandler: [requireOrgAdminFromParams("deny-scoped")] as any };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const server = Fastify({
   disableRequestLogging: true,
-  logger: {
-    level: "debug",
-    transport: {
-      target: "pino-pretty",
-      level: process.env.LOG_LEVEL || "debug",
-      options: {
-        colorize: true,
-        singleLine: true,
-        translateTime: "HH:MM:ss",
-        ignore: "pid,hostname,name",
-        destination: 1, // stdout
-      },
-    },
-    serializers: {
-      req(request) {
-        return {
-          method: request.method,
-          url: request.url,
-          path: request.url,
-          parameters: request.params,
-        };
-      },
-      res(reply) {
-        return {
-          statusCode: reply.statusCode,
-        };
-      },
-    },
-  },
+  loggerInstance: logger,
   maxParamLength: 1500,
   trustProxy: true,
   bodyLimit: 10 * 1024 * 1024, // 10MB limit for session replay data
 });
+
+registerRequestLogging(server);
 
 server.register(cors, {
   delegator: createCorsOptionsDelegate(),
@@ -506,6 +484,7 @@ async function userRoutes(fastify: FastifyInstance) {
   fastify.get("/user/unsubscribe-marketing-oneclick", oneClickUnsubscribeMarketing); // Public - for link clicks
   fastify.post("/user/unsubscribe-marketing-oneclick", oneClickUnsubscribeMarketing); // Public - for List-Unsubscribe header
   fastify.post("/user/api-keys", authOnlyNoScopedKeys, createUserApiKey);
+  fastify.post("/organizations/:organizationId/api-keys", orgAdminNoScopedKeys, createOrgApiKey);
 }
 
 async function gscRoutes(fastify: FastifyInstance) {
@@ -666,5 +645,7 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 declare module "fastify" {
   interface FastifyRequest {
     user?: any; // Or define a more specific user type
+    /** Set by the auth guards when the bearer credential is an org-owned API key. */
+    apiKeyOrganizationId?: string;
   }
 }

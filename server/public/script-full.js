@@ -1311,8 +1311,10 @@
   };
 
   // clickTracking.ts
+  var CLICK_THROTTLE_MS = 1e3;
   var ClickTrackingManager = class {
     constructor(tracker, config) {
+      this.lastClickAt = /* @__PURE__ */ new WeakMap();
       this.tracker = tracker;
       this.config = config;
     }
@@ -1346,6 +1348,10 @@
       const buttonElement = this.findButton(element);
       if (!buttonElement) return;
       if (buttonElement.hasAttribute("data-rybbit-event")) return;
+      const now = Date.now();
+      const lastAt = this.lastClickAt.get(buttonElement);
+      if (lastAt !== void 0 && now - lastAt < CLICK_THROTTLE_MS) return;
+      this.lastClickAt.set(buttonElement, now);
       const properties = {
         text: this.getElementText(buttonElement),
         ...this.extractDataAttributes(buttonElement)

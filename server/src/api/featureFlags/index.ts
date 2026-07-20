@@ -298,7 +298,7 @@ async function evaluateFeatureFlagsForRuntime(
       return reply.status(404).send({ error: "Site not found" });
     }
 
-    const ipAddress = resolveClientIp(request);
+    const ipAddress = resolveClientIp(request, { firstPartyProxy: site.firstPartyProxy });
     const [locationByIp, profile] = await Promise.all([
       getLocation([ipAddress]).catch(() => ({}) as Awaited<ReturnType<typeof getLocation>>),
       body.identifiedUserId

@@ -85,7 +85,7 @@ class BotEventQueue {
         format: "JSONEachRow",
       });
     } catch (error) {
-      this.logger.error(error, "Error processing bot event queue");
+      this.logger.error({ err: error }, "Error processing bot event queue");
     } finally {
       this.processing = false;
     }

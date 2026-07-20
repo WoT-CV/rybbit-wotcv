@@ -1,9 +1,9 @@
 import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
 import SqlString from "sqlstring";
-import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
-import { getTimeStatement, processResults } from "../utils/utils.js";
+import { getTimeStatement } from "../utils/utils.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
+import { AnalyticsQueryError, runAnalyticsQuery } from "../utils/analyticsQuery.js";
 import { buildFunnelStepCondition, FunnelStep } from "./funnelSteps.js";
 
 type Funnel = {
@@ -18,33 +18,15 @@ type FunnelResponse = {
   dropoff_rate: number;
 };
 
-export async function getFunnel(
-  request: FastifyRequest<{
-    Body: Funnel;
-    Params: {
-      siteId: string;
-    };
-    Querystring: FilterParams<{}>;
-  }>,
-  reply: FastifyReply
-) {
-  const { steps } = request.body;
-  const { siteId } = request.params;
+export const buildFunnelQuery = (query: FilterParams<{}>, siteId: number, steps: FunnelStep[]) => {
+  const timeStatement = getTimeStatement(query);
+  const filterStatement = getFilterStatement(query.filters, siteId, timeStatement);
 
-  // Validate request
-  if (!steps || steps.length < 2) {
-    return reply.status(400).send({ error: "At least 2 steps are required for a funnel" });
-  }
+  // Build conditional statements for each step
+  const stepConditions = steps.map(step => buildFunnelStepCondition(step));
 
-  try {
-    const timeStatement = getTimeStatement(request.query);
-    const filterStatement = getFilterStatement(request.query.filters, Number(siteId), timeStatement);
-
-    // Build conditional statements for each step
-    const stepConditions = steps.map(step => buildFunnelStepCondition(step));
-
-    // Build the funnel query - session-based tracking
-    const query = `
+  // Build the funnel query - session-based tracking
+  return `
     WITH
     -- Get all session actions in the time period
     SessionActions AS (
@@ -107,14 +89,14 @@ export async function getFunnel(
         )
         .join("\nUNION ALL\n")}
     )
-    
+
     -- Final results with calculated conversion and dropoff rates
     SELECT
       s1.step_number,
       s1.step_name,
       s1.visitors as visitors,
       round(s1.visitors * 100.0 / first_step.visitors, 2) as conversion_rate,
-      CASE 
+      CASE
         WHEN s1.step_number = 1 THEN 0
         ELSE round((1 - (s1.visitors / prev_step.visitors)) * 100.0, 2)
       END as dropoff_rate
@@ -127,22 +109,45 @@ export async function getFunnel(
     ) as prev_step ON s1.step_number = prev_step.next_step_number
     ORDER BY s1.step_number
     `;
+};
 
-    // Execute the query
-    const result = await clickhouse.query({
-      query,
-      format: "JSONEachRow",
-      query_params: {
+export async function getFunnel(
+  request: FastifyRequest<{
+    Body: Funnel;
+    Params: {
+      siteId: string;
+    };
+    Querystring: FilterParams<{}>;
+  }>,
+  reply: FastifyReply
+) {
+  const { steps } = request.body;
+  const { siteId } = request.params;
+
+  // Validate request
+  if (!steps || steps.length < 2) {
+    return reply.status(400).send({ error: "At least 2 steps are required for a funnel" });
+  }
+
+  try {
+    const data = await runAnalyticsQuery<FunnelResponse>({
+      query: buildFunnelQuery(request.query, Number(siteId), steps),
+      params: {
         siteId: Number(siteId),
         stepNumber: steps.length,
       },
     });
 
-    // Process the results
-    const data = await processResults<FunnelResponse>(result);
     return reply.send({ data });
   } catch (error) {
-    console.error("Error executing funnel query:", error);
+    if (error instanceof AnalyticsQueryError) {
+      request.log.error({ err: error.original }, "Error executing funnel query");
+      for (const query of error.queries) {
+        request.log.debug({ query }, "Failed funnel query");
+      }
+    } else {
+      request.log.error({ err: error }, "Error executing funnel query");
+    }
     return reply.status(500).send({ error: "Failed to execute funnel analysis" });
   }
 }

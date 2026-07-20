@@ -11,6 +11,8 @@ import { filterSitesByMemberAccess } from "../../lib/siteAccess.js";
 import { IS_CLOUD } from "../../lib/const.js";
 import type { OverviewData, MetricData, SiteReport, OrganizationReport } from "./weeklyReportTypes.js";
 
+const MAX_SITE_REPORTS_PER_ORG = 10;
+
 class WeeklyReportService {
   private cronTask: cron.ScheduledTask | null = null;
   private logger = createServiceLogger("weekly-report");
@@ -77,7 +79,7 @@ class WeeklyReportService {
       const data = await processResults<OverviewData>(result);
       return data[0] || null;
     } catch (error) {
-      this.logger.error({ error, siteId }, "Error fetching overview data");
+      this.logger.error({ err: error, siteId }, "Error fetching overview data");
       return null;
     }
   }
@@ -215,7 +217,7 @@ class WeeklyReportService {
 
       return await processResults<MetricData>(result);
     } catch (error) {
-      this.logger.error({ error, siteId, parameter }, "Error fetching top N data");
+      this.logger.error({ err: error, siteId, parameter }, "Error fetching top N data");
       return [];
     }
   }
@@ -273,7 +275,7 @@ class WeeklyReportService {
         deviceBreakdown,
       };
     } catch (error) {
-      this.logger.error({ error, siteId }, "Error generating site report");
+      this.logger.error({ err: error, siteId }, "Error generating site report");
       return null;
     }
   }
@@ -297,6 +299,14 @@ class WeeklyReportService {
       const siteReports: SiteReport[] = [];
 
       for (const site of orgSites) {
+        if (siteReports.length >= MAX_SITE_REPORTS_PER_ORG) {
+          this.logger.info(
+            { organizationId, totalSites: orgSites.length, limit: MAX_SITE_REPORTS_PER_ORG },
+            "Reached site report limit for organization, skipping remaining sites"
+          );
+          break;
+        }
+
         const report = await this.generateSiteReport(site.siteId, site.name, site.domain);
         if (report) {
           siteReports.push(report);
@@ -313,7 +323,7 @@ class WeeklyReportService {
         sites: siteReports,
       };
     } catch (error) {
-      this.logger.error({ error, organizationId }, "Error generating organization report");
+      this.logger.error({ err: error, organizationId }, "Error generating organization report");
       return null;
     }
   }
@@ -360,28 +370,25 @@ class WeeklyReportService {
         }
 
         for (const site of allowedSites) {
-
           try {
             await sendWeeklyReportEmail(memberData.email, memberData.name, report.organizationName, site);
             this.logger.info(
               {
-                email: memberData.email,
                 organizationId: report.organizationId,
                 siteId: site.siteId,
-                siteName: site.siteName,
               },
               "Sent weekly report email for site"
             );
           } catch (error) {
             this.logger.error(
-              { error, email: memberData.email, organizationId: report.organizationId, siteId: site.siteId },
+              { err: error, organizationId: report.organizationId, siteId: site.siteId },
               "Failed to send email to member for site"
             );
           }
         }
       }
     } catch (error) {
-      this.logger.error({ error, organizationId: report.organizationId }, "Error sending reports to organization");
+      this.logger.error({ err: error, organizationId: report.organizationId }, "Error sending reports to organization");
     }
   }
 
@@ -431,7 +438,7 @@ class WeeklyReportService {
         "Completed weekly report generation and sending"
       );
     } catch (error) {
-      this.logger.error({ error }, "Error in weekly report generation");
+      this.logger.error({ err: error }, "Error in weekly report generation");
     }
   }
 
@@ -450,7 +457,7 @@ class WeeklyReportService {
         try {
           await this.generateAndSendReports();
         } catch (error) {
-          this.logger.error(error as Error, "Error during weekly report generation");
+          this.logger.error({ err: error }, "Error during weekly report generation");
         }
       },
       { timezone: "UTC" }

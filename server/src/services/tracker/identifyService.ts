@@ -67,7 +67,7 @@ export async function backfillIdentifiedUserId(
     }
     logger.info({ siteId, anonymousId, userId }, "Backfilled identified_user_id in ClickHouse");
   } catch (error) {
-    logger.error({ siteId, anonymousId, userId, error }, "Error backfilling identified_user_id");
+    logger.error({ siteId, anonymousId, userId, err: error }, "Error backfilling identified_user_id");
   }
 }
 
@@ -99,7 +99,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
     const anonymousId = anonymous_id
       ? await userIdService.generateUserIdFromClientId(anonymous_id, siteId)
       : await userIdService.generateUserId(
-          ip_address || resolveClientIp(request),
+          ip_address || resolveClientIp(request, { firstPartyProxy: siteConfiguration.firstPartyProxy }),
           user_agent || request.headers["user-agent"] || "",
           siteId
         );
@@ -112,7 +112,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
       try {
         await db.insert(userProfiles).values({ siteId, userId: user_id }).onConflictDoNothing();
       } catch (error) {
-        logger.error({ siteId, userId: user_id, error }, "Error creating user profile shell");
+        logger.error({ siteId, userId: user_id, err: error }, "Error creating user profile shell");
       }
 
       try {
@@ -141,7 +141,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
         }
       } catch (error) {
         // Handle unique constraint violation gracefully (race condition)
-        logger.debug({ siteId, anonymousId, userId: user_id, error }, "Alias may already exist");
+        logger.debug({ siteId, anonymousId, userId: user_id, err: error }, "Alias may already exist");
       }
     }
 
@@ -171,7 +171,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
             },
           });
       } catch (error) {
-        logger.error({ siteId, userId: user_id, error }, "Error updating user profile");
+        logger.error({ siteId, userId: user_id, err: error }, "Error updating user profile");
       }
     }
 
@@ -179,7 +179,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
       success: true,
     });
   } catch (error) {
-    logger.error(error, "Error handling identify");
+    logger.error({ err: error }, "Error handling identify");
     return reply.status(500).send({
       success: false,
       error: "Failed to process identify",
