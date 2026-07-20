@@ -57,6 +57,24 @@ describe("decideSiteExclusion", () => {
     });
   });
 
+  it("matches an excluded IP among the candidates when resolution picked a different one", async () => {
+    // The visitor-splitting regression: the resolver lands on a proxy egress
+    // IP, but the owner's real IP is still present among forwarded candidates.
+    const rules = configuration({ excludedIPs: ["203.0.113.7"] });
+
+    await expect(
+      decideSiteExclusion(rules, {
+        ...request,
+        ipAddress: "172.68.34.28",
+        candidateIps: ["172.68.34.28", "203.0.113.7"],
+      })
+    ).resolves.toMatchObject({ excluded: true, reason: "ip", value: "203.0.113.7" });
+
+    await expect(
+      decideSiteExclusion(rules, { ...request, ipAddress: "172.68.34.28", candidateIps: ["198.51.100.1"] })
+    ).resolves.toEqual({ excluded: false });
+  });
+
   it("resolves geolocation only when country rules exist", async () => {
     mocks.getLocation.mockResolvedValue({
       "198.51.100.10": { countryIso: "us" },

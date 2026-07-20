@@ -89,6 +89,7 @@ CREATE TABLE "sites" (
   "embed_enabled" boolean DEFAULT false,
   "saltUserIds" boolean DEFAULT false,
   "blockBots" boolean DEFAULT true NOT NULL,
+  "first_party_proxy" boolean DEFAULT false,
   "excluded_ips" jsonb DEFAULT '[]',
   "excluded_countries" jsonb DEFAULT '[]',
   "excluded_paths" jsonb DEFAULT '[]',

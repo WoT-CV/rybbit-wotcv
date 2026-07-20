@@ -10,6 +10,14 @@ type SiteExclusionConfiguration = Pick<
 
 export type SiteExclusionRequest = {
   ipAddress: string;
+  /**
+   * Every plausible client IP for the request (edge, forwarded hops, socket).
+   * IP exclusions match against ALL of them, not just the resolved `ipAddress`:
+   * exclusion is the one place where over-matching is the safe failure mode, and
+   * it keeps "exclude my own IP" working even when IP resolution picks a proxy
+   * egress instead of the visitor.
+   */
+  candidateIps?: string[];
   pathname?: string;
   hostname?: string;
   userAgent?: string;
@@ -104,8 +112,10 @@ export async function decideSiteExclusion(
   configuration: SiteExclusionConfiguration,
   request: SiteExclusionRequest
 ): Promise<SiteExclusionDecision> {
-  if (configuration.excludedIPs.some(pattern => matchesIPPattern(request.ipAddress, pattern))) {
-    return excluded("ip", "IP", request.ipAddress);
+  const ipsToCheck = [...new Set([request.ipAddress, ...(request.candidateIps ?? [])])];
+  const matchedIp = ipsToCheck.find(ip => configuration.excludedIPs.some(pattern => matchesIPPattern(ip, pattern)));
+  if (matchedIp) {
+    return excluded("ip", "IP", matchedIp);
   }
 
   if (configuration.excludedCountries.length > 0) {

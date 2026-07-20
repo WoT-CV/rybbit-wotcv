@@ -149,6 +149,7 @@ describe("trackEvent session identity", () => {
 
     expect(mocks.decideSiteExclusion).toHaveBeenCalledWith(siteConfiguration, {
       ipAddress: "198.51.100.10",
+      candidateIps: ["198.51.100.10"],
       pathname: "/admin/users",
       hostname: "example.com",
       userAgent: "Mozilla/5.0",

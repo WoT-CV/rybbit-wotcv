@@ -44,6 +44,7 @@ export type UpdateSiteConfigurationInput = {
   embedEnabled?: boolean;
   saltUserIds?: boolean;
   blockBots?: boolean;
+  firstPartyProxy?: boolean;
   domain?: string;
   excludedIPs?: string[];
   excludedCountries?: string[];
@@ -105,6 +106,7 @@ const DIRECT_UPDATE_FIELDS = [
   "embedEnabled",
   "saltUserIds",
   "blockBots",
+  "firstPartyProxy",
   "excludedIPs",
   "excludedCountries",
   "excludedPaths",

@@ -13,6 +13,7 @@ export interface SiteConfigData {
   saltUserIds: boolean;
   domain: string;
   blockBots: boolean;
+  firstPartyProxy: boolean;
   excludedIPs: string[];
   excludedCountries: string[];
   excludedPaths: string[];
@@ -100,6 +101,7 @@ class SiteConfig {
         saltUserIds: site.saltUserIds || false,
         domain: site.domain || "",
         blockBots: site.blockBots === undefined ? true : site.blockBots,
+        firstPartyProxy: site.firstPartyProxy || false,
         excludedIPs: Array.isArray(site.excludedIPs) ? site.excludedIPs : [],
         excludedCountries: Array.isArray(site.excludedCountries) ? site.excludedCountries : [],
         excludedPaths: Array.isArray(site.excludedPaths) ? site.excludedPaths : [],

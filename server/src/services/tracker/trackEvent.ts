@@ -289,7 +289,12 @@ export async function trackEvent(request: FastifyRequest, reply: FastifyReply) {
     }
 
     const trustedServerSideIngestion = await isTrustedServerSideIngestion(request, siteConfiguration.siteId);
-    const trackingIdentity = resolveTrackingIdentity(request, validatedPayload, trustedServerSideIngestion);
+    const trackingIdentity = resolveTrackingIdentity(
+      request,
+      validatedPayload,
+      trustedServerSideIngestion,
+      siteConfiguration.firstPartyProxy
+    );
     const requestIP = trackingIdentity.ipAddress;
 
     const botDetectionResult = await checkBotBlocking({
@@ -319,6 +324,7 @@ export async function trackEvent(request: FastifyRequest, reply: FastifyReply) {
 
     const exclusionDecision = await decideSiteExclusion(siteConfiguration, {
       ipAddress: requestIP,
+      candidateIps: trackingIdentity.candidateIps,
       pathname: validatedPayload.pathname,
       hostname: validatedPayload.hostname,
       userAgent: trackingIdentity.userAgent,

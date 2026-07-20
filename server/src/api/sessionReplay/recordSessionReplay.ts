@@ -4,7 +4,7 @@ import { siteConfig } from "../../lib/siteConfig.js";
 import { SessionReplayIngestService } from "../../services/replay/sessionReplayIngestService.js";
 import { usageService } from "../../services/usageService.js";
 import { RecordSessionReplayRequest } from "../../types/sessionReplay.js";
-import { resolveClientIp } from "../../services/tracker/resolveClientIp.js";
+import { collectCandidateClientIps, resolveClientIp } from "../../services/tracker/resolveClientIp.js";
 import { decideSiteExclusion } from "../../services/sites/siteExclusionDecision.js";
 
 const recordSessionReplaySchema = z.object({
@@ -88,12 +88,13 @@ export async function recordSessionReplay(
 
     const body = recordSessionReplaySchema.parse(request.body) as RecordSessionReplayRequest;
 
-    const requestIP = resolveClientIp(request);
+    const requestIP = resolveClientIp(request, { firstPartyProxy: siteConfiguration.firstPartyProxy });
     const { hostname, pathname } = parseReplayPageUrl(body.metadata?.pageUrl);
     const userAgent = request.headers["user-agent"] || "";
 
     const exclusionDecision = await decideSiteExclusion(siteConfiguration, {
       ipAddress: requestIP,
+      candidateIps: collectCandidateClientIps(request, [requestIP]),
       pathname,
       hostname,
       userAgent: String(userAgent),

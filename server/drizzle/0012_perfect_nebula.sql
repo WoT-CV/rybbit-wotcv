@@ -1,0 +1,1 @@
+ALTER TABLE "sites" ADD COLUMN "first_party_proxy" boolean DEFAULT false;

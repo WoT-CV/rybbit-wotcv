@@ -99,7 +99,7 @@ export async function handleIdentify(request: FastifyRequest, reply: FastifyRepl
     const anonymousId = anonymous_id
       ? await userIdService.generateUserIdFromClientId(anonymous_id, siteId)
       : await userIdService.generateUserId(
-          ip_address || resolveClientIp(request),
+          ip_address || resolveClientIp(request, { firstPartyProxy: siteConfiguration.firstPartyProxy }),
           user_agent || request.headers["user-agent"] || "",
           siteId
         );

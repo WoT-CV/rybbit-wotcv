@@ -9,6 +9,7 @@ const updateSiteConfigSchema = z.object({
   embedEnabled: z.boolean().optional(),
   saltUserIds: z.boolean().optional(),
   blockBots: z.boolean().optional(),
+  firstPartyProxy: z.boolean().optional(),
   domain: z.string().min(1).max(253).optional(),
   excludedIPs: z.array(z.string().trim().min(1)).max(100).optional(),
   excludedCountries: z

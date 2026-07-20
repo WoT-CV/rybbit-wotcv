@@ -154,6 +154,7 @@ describe("recordSessionReplay exclusions", () => {
       expect.objectContaining({ siteId: 42, excludedIPs: ["198.51.100.0/24"] }),
       {
         ipAddress: "198.51.100.10",
+        candidateIps: ["198.51.100.10", "203.0.113.10"],
         pathname: "/admin/users",
         hostname: "example.com",
         userAgent: "Mozilla/5.0 HeadlessChrome/120",
