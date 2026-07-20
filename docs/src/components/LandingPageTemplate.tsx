@@ -185,41 +185,42 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <ConsoleGreeting />
       <div className="overflow-clip">
-        <HeroSection title={title} subtitle={subtitle} showEUFlag={showEUFlag} />
+        <HeroSection
+          title={title}
+          subtitle={subtitle}
+          showEUFlag={showEUFlag}
+          logoBand={
+            <div className="relative grid grid-cols-2 gap-px border-t border-neutral-200 bg-neutral-200 dark:border-neutral-800 dark:bg-neutral-800 sm:grid-cols-4 lg:grid-cols-8">
+              <GridCrosses />
+              {customerLogos.map(logo => {
+                const image = (
+                  <Image
+                    src={logo.src}
+                    alt={logo.alt}
+                    width={logo.width}
+                    height={40}
+                    className={`max-h-7 w-auto max-w-[112px] transition-opacity duration-200 ${logo.className}`}
+                  />
+                );
 
-        <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby="customer-proof">
-          <div className="relative mx-auto grid max-w-[1200px] grid-cols-2 gap-px border-x border-neutral-200 bg-neutral-200 dark:border-neutral-800 dark:bg-neutral-800 sm:grid-cols-4 lg:grid-cols-8">
-            <GridCrosses />
-            {/* <div className="col-span-full flex min-h-14 items-center bg-white px-5 dark:bg-neutral-950 sm:px-8">
-              <p id="customer-proof" className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                {t("Trusted by 10,000+ organizations")}
-              </p>
-            </div> */}
-            {customerLogos.map(logo => {
-              const image = (
-                <Image
-                  src={logo.src}
-                  alt={logo.alt}
-                  width={logo.width}
-                  height={40}
-                  className={`max-h-7 w-auto max-w-[112px] transition-opacity duration-200 ${logo.className}`}
-                />
-              );
-
-              return (
-                <div key={logo.alt} className="flex min-h-24 items-center justify-center bg-white dark:bg-neutral-950">
-                  {logo.href ? (
-                    <Link href={logo.href} target="_blank" rel="noopener noreferrer" aria-label={logo.alt}>
-                      {image}
-                    </Link>
-                  ) : (
-                    image
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                return (
+                  <div
+                    key={logo.alt}
+                    className="flex min-h-24 items-center justify-center bg-white dark:bg-neutral-950"
+                  >
+                    {logo.href ? (
+                      <Link href={logo.href} target="_blank" rel="noopener noreferrer" aria-label={logo.alt}>
+                        {image}
+                      </Link>
+                    ) : (
+                      image
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          }
+        />
 
         <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby="product-title">
           <div className="relative mx-auto max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800">

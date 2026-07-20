@@ -29,9 +29,11 @@ interface HeroSectionProps {
   subtitle: React.ReactNode;
   showEUFlag?: boolean;
   showGitHubStar?: boolean;
+  /* Rendered between the hero copy and the demo window (e.g. customer logo band). */
+  logoBand?: React.ReactNode;
 }
 
-export function HeroSection({ title, subtitle, showEUFlag = true, showGitHubStar = true }: HeroSectionProps) {
+export function HeroSection({ title, subtitle, showEUFlag = true, showGitHubStar = true, logoBand }: HeroSectionProps) {
   const t = useExtracted();
 
   return (
@@ -94,6 +96,8 @@ export function HeroSection({ title, subtitle, showEUFlag = true, showGitHubStar
             </p>
           </div>
         </div>
+
+        {logoBand}
 
         <div className="relative min-w-0 border-t border-neutral-200 bg-neutral-100 p-2 [background-image:radial-gradient(circle,rgba(0,0,0,0.08)_1px,transparent_1px)] [background-size:14px_14px] dark:border-neutral-800 dark:bg-neutral-900 dark:[background-image:radial-gradient(circle,rgba(255,255,255,0.07)_1px,transparent_1px)] sm:p-3">
           <GridCrosses />
