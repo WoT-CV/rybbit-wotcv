@@ -184,6 +184,15 @@ export function requireSiteAdminAccess(scope?: RouteScope): AuthMiddleware {
       scopeDenied = true;
     }
 
+    // Better Auth system admins have account-wide authority and do not need
+    // an admin/owner membership in the organization that owns the site.
+    const isSystemAdmin = await getIsUserAdmin(request);
+    if (isSystemAdmin) {
+      const session = await getSessionFromReq(request);
+      if (session?.user) request.user = session.user;
+      return;
+    }
+
     // Check session-based admin access
     const hasAdminAccess = await getUserHasAdminAccessToSite(request, siteId);
     if (hasAdminAccess) {
