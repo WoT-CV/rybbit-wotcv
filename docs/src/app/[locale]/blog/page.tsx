@@ -69,7 +69,7 @@ export default function BlogPage() {
                   >
                     <div
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                      className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
                     />
                     <article className="relative grid gap-6 lg:grid-cols-12 lg:gap-8">
                       <div className="flex flex-col justify-between gap-4 text-sm text-neutral-500 dark:text-neutral-400 lg:col-span-3">

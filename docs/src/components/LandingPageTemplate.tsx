@@ -188,7 +188,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
         <HeroSection title={title} subtitle={subtitle} showEUFlag={showEUFlag} />
 
         <section className="border-b border-neutral-200 dark:border-neutral-800" aria-labelledby="customer-proof">
-          <div className="relative mx-auto grid max-w-[1200px] grid-cols-2 gap-px border-x border-neutral-200 bg-neutral-200 p-px dark:border-neutral-800 dark:bg-neutral-800 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="relative mx-auto grid max-w-[1200px] grid-cols-2 gap-px border-x border-neutral-200 bg-neutral-200 dark:border-neutral-800 dark:bg-neutral-800 sm:grid-cols-4 lg:grid-cols-8">
             <GridCrosses />
             {/* <div className="col-span-full flex min-h-14 items-center bg-white px-5 dark:bg-neutral-950 sm:px-8">
               <p id="customer-proof" className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
@@ -228,7 +228,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
               <div className="relative border-b border-neutral-200 bg-plate-accent px-5 py-14 dark:border-neutral-800 sm:px-8 md:py-20 lg:col-span-7 lg:border-b-0 lg:border-r lg:px-10">
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
                 />
                 <div className="relative">
                   <SectionKicker>{t("One connected workspace")}</SectionKicker>
@@ -249,7 +249,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-px bg-neutral-200 p-px dark:bg-neutral-800 lg:grid-cols-12">
+            <div className="grid grid-cols-1 gap-px bg-neutral-200 dark:bg-neutral-800 lg:grid-cols-12">
               <div className="bg-white dark:bg-neutral-950 lg:col-span-7 [&>div]:h-full">
                 <Autocapture />
               </div>
@@ -290,7 +290,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
             </div>
             <nav
               aria-label={t("Feature index")}
-              className="grid grid-cols-1 gap-px bg-neutral-200 p-px dark:bg-neutral-800 sm:grid-cols-2 lg:grid-cols-4"
+              className="grid grid-cols-1 gap-px bg-neutral-200 dark:bg-neutral-800 sm:grid-cols-2 lg:grid-cols-4"
             >
               {capabilityIndex.map(group => (
                 <div key={group.title} className="bg-white px-5 py-6 dark:bg-neutral-950 sm:px-8 lg:px-6 xl:px-8">
@@ -417,7 +417,7 @@ export function LandingPageTemplate({ title, subtitle, showEUFlag = true }: Land
               <div className="relative border-b border-neutral-200 bg-plate-accent px-5 py-14 dark:border-neutral-800 sm:px-8 md:col-span-2 md:border-b-0 md:border-r md:py-20 lg:px-10">
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
                 />
                 <div className="relative">
                   <SectionKicker>{t("From the community")}</SectionKicker>

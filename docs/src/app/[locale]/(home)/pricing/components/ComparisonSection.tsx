@@ -242,7 +242,7 @@ export function ComparisonSection({ isAnnual }: { isAnnual: boolean }) {
         <div className="relative border-b border-neutral-200 bg-plate-accent px-5 py-14 dark:border-neutral-800 sm:px-8 md:py-20 lg:px-10">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+            className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
           />
           <div className="relative">
             <SectionKicker>{t("Plan details")}</SectionKicker>

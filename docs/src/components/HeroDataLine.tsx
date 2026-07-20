@@ -32,7 +32,7 @@ export function HeroDataLine({ id, className }: HeroDataLineProps) {
       {/* Faint graph paper under the plotted line, fading upward so the
           grid reads as the chart's base without touching the headline. */}
       <div
-        className="absolute inset-0 [background-image:linear-gradient(to_right,rgba(0,0,0,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.05)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:linear-gradient(to_top,black_25%,transparent_92%)] dark:[background-image:linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)]"
+        className="absolute inset-0 [background-image:linear-gradient(to_right,rgba(0,0,0,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.05)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:linear-gradient(to_top,black_25%,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect] dark:[background-image:linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)]"
       />
       <svg
         className="size-full"

@@ -74,7 +74,7 @@ export default async function OSSFriendsPage() {
               No OSS friends found. Check back later.
             </p>
           ) : (
-            <div className="grid gap-px bg-neutral-200 p-px dark:bg-neutral-800 sm:grid-cols-2">
+            <div className="grid gap-px bg-neutral-200 dark:bg-neutral-800 sm:grid-cols-2">
               {friends.map(friend => (
                 <Link
                   key={friend.href}

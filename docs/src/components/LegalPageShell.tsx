@@ -23,7 +23,7 @@ export function LegalPageShell({ title, lastUpdated, intro, children }: LegalPag
           <div className="relative overflow-hidden border-b border-neutral-200 bg-plate-accent px-5 py-12 dark:border-neutral-800 sm:px-8 md:py-16 lg:col-span-8 lg:border-b-0 lg:border-r lg:px-10">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+              className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
             />
             <h1 className="relative max-w-2xl text-4xl font-semibold leading-[1.04] tracking-[-0.035em] text-neutral-950 text-balance dark:text-neutral-50 md:text-5xl">
               {title}

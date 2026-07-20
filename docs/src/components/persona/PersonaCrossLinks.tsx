@@ -83,7 +83,7 @@ export function PersonaCrossLinks({ current }: { current: PersonaSlug }) {
             More ways teams use Rybbit.
           </h2>
         </div>
-        <div className="grid grid-cols-1 gap-px bg-neutral-200 p-px dark:bg-neutral-800 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-px bg-neutral-200 dark:bg-neutral-800 sm:grid-cols-2">
           {siblings.map(persona => (
             <Link
               key={persona.slug}

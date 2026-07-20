@@ -223,7 +223,7 @@ export function PricingSection({
             {!standalone && (
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
               />
             )}
             <div className="relative">
@@ -353,7 +353,7 @@ export function PricingSection({
           </div>
         </div>
 
-        <div className="hidden gap-px bg-neutral-200 p-px dark:bg-neutral-800 min-[700px]:grid min-[700px]:grid-cols-2 min-[1100px]:grid-cols-3">
+        <div className="hidden gap-px bg-neutral-200 dark:bg-neutral-800 min-[700px]:grid min-[700px]:grid-cols-2 min-[1100px]:grid-cols-3">
           <PricingCard {...standardProps} />
           <PricingCard {...proProps} />
           <PricingCard {...enterpriseProps} className="min-[700px]:col-span-2 min-[1100px]:col-span-1" />

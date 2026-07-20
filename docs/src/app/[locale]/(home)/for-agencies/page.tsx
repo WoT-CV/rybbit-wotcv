@@ -207,7 +207,7 @@ export default function ForAgenciesPage() {
               <div className="relative border-b border-neutral-200 bg-plate-accent px-5 py-14 dark:border-neutral-800 sm:px-8 lg:col-span-7 lg:border-b-0 lg:border-r lg:px-10 md:py-20">
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
                 />
                 <div className="relative">
                   <SectionKicker>The client problem</SectionKicker>
@@ -262,7 +262,7 @@ export default function ForAgenciesPage() {
               <div className="relative border-b border-neutral-200 bg-plate-accent px-5 py-14 dark:border-neutral-800 sm:px-8 lg:col-span-7 lg:border-b-0 lg:border-r lg:px-10 md:py-20">
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
                 />
                 <div className="relative">
                   <SectionKicker>The first afternoon</SectionKicker>
@@ -281,7 +281,7 @@ export default function ForAgenciesPage() {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-px border-t border-neutral-200 bg-neutral-200 p-px dark:border-neutral-800 dark:bg-neutral-800 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-px border-t border-neutral-200 bg-neutral-200 dark:border-neutral-800 dark:bg-neutral-800 sm:grid-cols-2 lg:grid-cols-4">
               {onboardingSteps.map(item => (
                 <article key={item.step} className="bg-white px-5 py-8 dark:bg-neutral-950 sm:px-6">
                   <span className="font-mono text-xs text-neutral-400 dark:text-neutral-500">{item.step}</span>
@@ -300,7 +300,7 @@ export default function ForAgenciesPage() {
         >
           <div className="relative mx-auto max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800">
             <GridCrosses />
-            <div className="grid grid-cols-1 gap-px bg-neutral-200 p-px dark:bg-neutral-800 lg:grid-cols-12">
+            <div className="grid grid-cols-1 gap-px bg-neutral-200 dark:bg-neutral-800 lg:grid-cols-12">
               <article className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:col-span-7 lg:px-10">
                 <h3 className="text-lg font-semibold tracking-tight">Every client in one workspace</h3>
                 <p className="mt-2 max-w-lg text-sm leading-6 text-neutral-600 dark:text-neutral-400">
@@ -441,7 +441,7 @@ export default function ForAgenciesPage() {
               <div className="relative border-b border-neutral-200 bg-plate-accent px-5 py-14 dark:border-neutral-800 sm:px-8 lg:col-span-7 lg:border-b-0 lg:border-r lg:px-10 md:py-20">
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
                 />
                 <div className="relative">
                   <SectionKicker>Switching a roster</SectionKicker>
@@ -515,7 +515,7 @@ export default function ForAgenciesPage() {
               <div className="relative border-b border-neutral-200 bg-plate-accent px-5 py-14 dark:border-neutral-800 sm:px-8 lg:col-span-7 lg:border-b-0 lg:border-r lg:px-10 md:py-20">
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
                 />
                 <div className="relative">
                   <SectionKicker>Beyond pageviews</SectionKicker>
@@ -562,7 +562,7 @@ export default function ForAgenciesPage() {
               <div className="relative border-b border-neutral-200 bg-plate-accent px-5 py-14 dark:border-neutral-800 sm:px-8 lg:col-span-7 lg:border-b-0 lg:border-r lg:px-10 md:py-20">
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%)]"
+                  className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
                 />
                 <div className="relative">
                   <SectionKicker>Pricing for a roster</SectionKicker>

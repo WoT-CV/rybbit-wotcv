@@ -103,7 +103,7 @@ const PlatformLogo = ({ name, icon: Icon, path, color, darkColor }: Platform) =>
 
 export function IntegrationsGrid() {
   return (
-    <div className="grid min-h-full grid-cols-2 gap-px bg-neutral-200 p-px dark:bg-neutral-800 sm:grid-cols-3 xl:grid-cols-4">
+    <div className="grid min-h-full grid-cols-2 gap-px bg-neutral-200 dark:bg-neutral-800 sm:grid-cols-3 xl:grid-cols-4">
       {platforms.map((platform) => (
         <PlatformLogo key={platform.name} {...platform} />
       ))}

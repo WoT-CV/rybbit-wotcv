@@ -56,7 +56,7 @@ export default function Contact() {
       <section className="border-b border-neutral-200 dark:border-neutral-800" aria-label={t("Contact Us")}>
         <div className="relative mx-auto max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800">
           <GridCrosses />
-          <div className="grid gap-px bg-neutral-200 p-px dark:bg-neutral-800 sm:grid-cols-3">
+          <div className="grid gap-px bg-neutral-200 dark:bg-neutral-800 sm:grid-cols-3">
             {channels.map(channel => (
               <a
                 key={channel.label}
@@ -82,7 +82,7 @@ export default function Contact() {
       <section className="border-b border-neutral-200 dark:border-neutral-800">
         <div className="relative mx-auto max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800">
           <GridCrosses />
-          <div className="grid gap-px bg-neutral-200 p-px dark:bg-neutral-800 md:grid-cols-2">
+          <div className="grid gap-px bg-neutral-200 dark:bg-neutral-800 md:grid-cols-2">
             <div className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:px-10">
               <h2 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
                 {t("Customer Support")}

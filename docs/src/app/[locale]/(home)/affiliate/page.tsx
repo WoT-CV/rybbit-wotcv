@@ -87,7 +87,7 @@ export default function AffiliatePage() {
       <section className="border-b border-neutral-200 dark:border-neutral-800" aria-label={t("50% Affiliate Program")}>
         <div className="relative mx-auto max-w-[1200px] border-x border-neutral-200 dark:border-neutral-800">
           <GridCrosses />
-          <div className="grid gap-px bg-neutral-200 p-px dark:bg-neutral-800 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-px bg-neutral-200 dark:bg-neutral-800 sm:grid-cols-2 lg:grid-cols-4">
             {perks.map(perk => (
               <div key={perk.title} className="bg-white px-5 py-9 dark:bg-neutral-950 sm:px-8 lg:px-6 xl:px-8">
                 <CheckCircle className="size-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
@@ -109,7 +109,7 @@ export default function AffiliatePage() {
               {t("How It Works")}
             </h2>
           </div>
-          <div className="grid gap-px bg-neutral-200 p-px dark:bg-neutral-800 md:grid-cols-3">
+          <div className="grid gap-px bg-neutral-200 dark:bg-neutral-800 md:grid-cols-3">
             {steps.map(item => (
               <div key={item.step} className="bg-white px-5 py-10 dark:bg-neutral-950 sm:px-8 lg:px-10">
                 <span

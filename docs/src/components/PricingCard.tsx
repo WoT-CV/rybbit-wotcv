@@ -75,7 +75,7 @@ export function PricingCard({
       {recommended && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_70%)]"
+          className="pointer-events-none absolute inset-0 bg-graph-accent [mask-image:linear-gradient(to_bottom,black,transparent_92%),linear-gradient(to_left,transparent,black_40px)] [mask-composite:intersect]"
         />
       )}
       <div className="relative p-6">

@@ -28,8 +28,10 @@ export function GridCrosses({ className }: { className?: string }) {
         className
       )}
     >
-      <Cross className="left-0 top-0 -translate-x-1/2 -translate-y-1/2" />
-      <Cross className="right-0 top-0 translate-x-1/2 -translate-y-1/2" />
+      {/* The hairlines are 1px borders drawn just outside this padding box, so
+          their centerlines sit at -0.5px — offset the anchors to match. */}
+      <Cross className="left-[-0.5px] top-[-0.5px] -translate-x-1/2 -translate-y-1/2" />
+      <Cross className="right-[-0.5px] top-[-0.5px] translate-x-1/2 -translate-y-1/2" />
     </div>
   );
 }
