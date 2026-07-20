@@ -33,7 +33,7 @@ import { Switch } from "../../../../components/ui/switch";
 import { TableSortIndicator } from "../../../../components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../components/ui/tooltip";
 import { FilterParameter } from "@rybbit/shared";
-import { getUserAvatarUrl, getUserDisplayName } from "../../../../lib/userIdentity";
+import { getCanonicalUserId, getUserAvatarUrl, getUserDisplayName } from "../../../../lib/userIdentity";
 import { getCountryName } from "../../../../lib/utils";
 import { Browser } from "../../components/shared/icons/Browser";
 import { CountryFlag } from "../../components/shared/icons/CountryFlag";
@@ -138,7 +138,7 @@ export function UsersTable() {
       cell: info => {
         const identifiedUserId = info.row.original.identified_user_id;
         const isIdentified = !!info.row.original.identified_user_id;
-        const linkId = isIdentified ? identifiedUserId : info.getValue();
+        const linkId = getCanonicalUserId(info.row.original);
         const encodedLinkId = encodeURIComponent(linkId);
         const displayName = getUserDisplayName(info.row.original);
         const lastSeen = DateTime.fromSQL(info.row.original.last_seen, { zone: "utc" });
@@ -147,7 +147,7 @@ export function UsersTable() {
           <Link href={`/${site}/user/${encodedLinkId}`} className="flex items-center gap-2">
             <Avatar
               size={20}
-              id={linkId as string}
+              id={linkId}
               imageUrl={getUserAvatarUrl(info.row.original)}
               alt={displayName}
               lastActiveTime={lastSeen}

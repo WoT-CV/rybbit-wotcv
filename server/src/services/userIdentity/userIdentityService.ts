@@ -4,6 +4,7 @@ import { userAliases } from "../../db/postgres/schema.js";
 export {
   clickhouseEffectiveUserId,
   clickhouseResolvedIdentifiedUserId,
+  clickhouseResolvedUserCondition,
 } from "../../db/clickhouse/identityDictionary.js";
 
 export interface ResolvedUserIdentity {

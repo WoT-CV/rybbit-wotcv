@@ -35,7 +35,7 @@ function JourneysSkeleton() {
   );
 }
 
-export function UserJourneys({ userId }: { userId: string }) {
+export function UserJourneys({ userIds }: { userIds: string[] }) {
   const t = useExtracted();
   const [steps, setSteps] = useState<number>(3);
 
@@ -47,7 +47,7 @@ export function UserJourneys({ userId }: { userId: string }) {
     steps,
     time,
     limit: MAX_JOURNEYS,
-    additionalFilters: [{ parameter: "user_id", value: [userId], type: "equals" }],
+    additionalFilters: [{ parameter: "user_id", value: userIds, type: "equals" }],
   });
 
   const journeys = data?.journeys ?? [];

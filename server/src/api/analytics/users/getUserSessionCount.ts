@@ -2,7 +2,10 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { analyticsRoute, runAnalyticsQuery } from "../utils/analyticsQuery.js";
 import SqlString from "sqlstring";
-import { resolveUserIdentity } from "../../../services/userIdentity/userIdentityService.js";
+import {
+  clickhouseResolvedUserCondition,
+  resolveUserIdentity,
+} from "../../../services/userIdentity/userIdentityService.js";
 
 export interface GetUserSessionCountRequest {
   Params: {
@@ -26,6 +29,7 @@ export const buildUserSessionCountQuery = (query: GetUserSessionCountRequest["Qu
   // The calendar spans the user's full history, so dimension filters apply
   // but no time range does.
   const filterStatement = getFilterStatement(filters ?? "", siteId);
+  const identityCondition = clickhouseResolvedUserCondition();
 
   return `
     SELECT
@@ -34,13 +38,7 @@ export const buildUserSessionCountQuery = (query: GetUserSessionCountRequest["Qu
     FROM events
     WHERE
       site_id = {siteId:Int32}
-      AND (
-        identified_user_id = {canonicalUserId:String}
-        OR (
-          identified_user_id = ''
-          AND (user_id = {canonicalUserId:String} OR user_id IN ({anonymousIds:Array(String)}))
-        )
-      )
+      AND ${identityCondition}
       ${filterStatement}
     GROUP BY date
     ORDER BY date ASC

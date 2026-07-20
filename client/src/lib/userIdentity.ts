@@ -4,6 +4,7 @@ export type UserIdentityLike = {
   user_id?: string | null;
   identified_user_id?: string | null;
   traits?: Record<string, unknown> | null;
+  linked_devices?: Array<{ anonymous_id?: string | null }>;
 };
 
 export interface ResolvedUserIdentity {
@@ -40,6 +41,16 @@ export function getUserAvatarUrl(data: UserIdentityLike | null | undefined) {
   return undefined;
 }
 
+export function getCanonicalUserId(data: UserIdentityLike | null | undefined) {
+  return data?.identified_user_id || data?.user_id || "";
+}
+
+export function getUserIdentityIds(data: UserIdentityLike | null | undefined) {
+  return [getCanonicalUserId(data), ...(data?.linked_devices?.map(device => device.anonymous_id) ?? [])].filter(
+    (id, index, ids): id is string => !!id && ids.indexOf(id) === index
+  );
+}
+
 export function getUserDisplayName(data: UserIdentityLike | null | undefined) {
   for (const key of DISPLAY_NAME_TRAIT_KEYS) {
     const value = getTraitString(data?.traits, key);
@@ -51,7 +62,7 @@ export function getUserDisplayName(data: UserIdentityLike | null | undefined) {
 }
 
 export function getUserAvatarId(data: UserIdentityLike | null | undefined) {
-  return data?.identified_user_id || data?.user_id || "";
+  return getCanonicalUserId(data);
 }
 
 export function resolveUserIdentity(data: UserIdentityLike | null | undefined): ResolvedUserIdentity {

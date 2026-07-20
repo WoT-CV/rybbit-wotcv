@@ -15,6 +15,9 @@ export function useUserInfo(siteId: number, userId: string) {
     useFilters: filteredFilters.length > 0,
     customFilters: filteredFilters,
     enabled: !!siteId && !!userId,
+    // A previous user's profile must never become placeholder data for a new
+    // route. The canonical ID from this response scopes all child queries.
+    placeholder: false,
     fetch: (site, params) => fetchUserInfo(site, userId, params),
   });
 }

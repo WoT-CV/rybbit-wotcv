@@ -6,7 +6,10 @@ import { userProfiles, userAliases } from "../../../db/postgres/schema.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
 import { getTimeStatement } from "../utils/utils.js";
-import { resolveUserIdentity } from "../../../services/userIdentity/userIdentityService.js";
+import {
+  clickhouseResolvedUserCondition,
+  resolveUserIdentity,
+} from "../../../services/userIdentity/userIdentityService.js";
 import { runAnalyticsQuery } from "../utils/analyticsQuery.js";
 
 interface UserPageviewData {
@@ -40,6 +43,10 @@ interface UserPageviewData {
   last_channel: string;
   timezone: string;
 }
+
+type UserPageviewAggregate = UserPageviewData & {
+  event_rows: number;
+};
 
 interface UserVitalsData {
   lcp_p75: number | null;
@@ -90,6 +97,7 @@ export const buildUserInfoQueries = (query: FilterParams, siteId: number) => {
   // all-time with no filters, which keeps the original full-history behavior.
   const timeStatement = getTimeStatement(query);
   const filterStatement = getFilterStatement(query.filters, siteId, timeStatement);
+  const identityCondition = clickhouseResolvedUserCondition("events");
 
   // Filters run in a subquery below each aggregation: the aggregate SELECTs
   // alias argMax(...) to the same names as raw columns (browser_version, …),
@@ -99,16 +107,7 @@ export const buildUserInfoQueries = (query: FilterParams, siteId: number) => {
         SELECT *
         FROM events
         WHERE
-            (
-                events.identified_user_id = {canonicalUserId:String}
-                OR (
-                    events.identified_user_id = ''
-                    AND (
-                        events.user_id = {canonicalUserId:String}
-                        OR events.user_id IN ({anonymousIds:Array(String)})
-                    )
-                )
-            )
+            ${identityCondition}
             AND site_id = {site:Int32}
             ${timeStatement}
             ${filterStatement}
@@ -139,6 +138,7 @@ export const buildUserInfoQueries = (query: FilterParams, siteId: number) => {
             argMaxIf(timezone, timestamp, timezone != '') AS user_timezone,
             MAX(timestamp) AS session_end,
             MIN(timestamp) AS session_start,
+            count() AS event_rows,
             dateDiff('second', MIN(timestamp), MAX(timestamp)) AS session_duration,
             argMinIf(pathname, timestamp, type = 'pageview') AS entry_page,
             argMaxIf(pathname, timestamp, type = 'pageview') AS exit_page,
@@ -152,6 +152,7 @@ export const buildUserInfoQueries = (query: FilterParams, siteId: number) => {
             session_end DESC
     )
     SELECT
+        SUM(event_rows) AS event_rows,
         COUNT(DISTINCT session_id) AS sessions,
         ROUND(avg(session_duration)) AS duration,
         any(user_id) AS user_id,
@@ -269,7 +270,7 @@ export async function getUserInfo(
 
   try {
     const [data, vitalsData, locations, devices, profileResult, aliasesResult] = await Promise.all([
-      runAnalyticsQuery<UserPageviewData>({ query: sessionsQuery, params: chParams }),
+      runAnalyticsQuery<UserPageviewAggregate>({ query: sessionsQuery, params: chParams }),
       runAnalyticsQuery<UserVitalsData>({ query: vitalsQuery, params: chParams }),
       runAnalyticsQuery<UserLocationBreakdown>({ query: locationsQuery, params: chParams }),
       runAnalyticsQuery<UserDeviceBreakdown>({ query: devicesQuery, params: chParams }),
@@ -289,15 +290,20 @@ export async function getUserInfo(
         .where(and(eq(userAliases.siteId, numericSiteId), eq(userAliases.userId, identity.canonicalUserId))),
     ]);
 
-    // If no data found for user
-    if (data.length === 0) {
+    const aggregate = data[0];
+    const hasAnalyticsData = Number(aggregate?.event_rows ?? 0) > 0;
+    const hasCanonicalIdentity = profileResult.length > 0 || aliasesResult.length > 0;
+
+    // ClickHouse aggregate queries without GROUP BY always return one row,
+    // even for an empty input. Check the explicit source-row count instead so
+    // unknown IDs do not turn into fabricated epoch-zero users.
+    if (!hasAnalyticsData && !hasCanonicalIdentity) {
       return res.status(404).send({
         error: "User not found",
       });
     }
 
-    const hasCanonicalIdentity = profileResult.length > 0 || aliasesResult.length > 0;
-    const identifiedUserId = data[0].identified_user_id || (hasCanonicalIdentity ? identity.canonicalUserId : "");
+    const identifiedUserId = aggregate?.identified_user_id || (hasCanonicalIdentity ? identity.canonicalUserId : "");
     const traits = profileResult[0]?.traits || null;
 
     const linked_devices = aliasesResult.map(alias => ({
@@ -306,10 +312,18 @@ export async function getUserInfo(
     }));
 
     const vitals = vitalsData[0]?.performance_events > 0 ? vitalsData[0] : null;
+    const { event_rows: _eventRows, ...analyticsData } = aggregate ?? ({} as UserPageviewAggregate);
 
     return res.send({
       data: {
-        ...data[0],
+        ...analyticsData,
+        user_id: analyticsData.user_id || aliasesResult[0]?.anonymous_id || identity.canonicalUserId,
+        duration: Number(analyticsData.duration ?? 0),
+        sessions: Number(analyticsData.sessions ?? 0),
+        pageviews: Number(analyticsData.pageviews ?? 0),
+        events: Number(analyticsData.events ?? 0),
+        first_seen: hasAnalyticsData ? analyticsData.first_seen : "",
+        last_seen: hasAnalyticsData ? analyticsData.last_seen : "",
         identified_user_id: identifiedUserId,
         traits,
         linked_devices,

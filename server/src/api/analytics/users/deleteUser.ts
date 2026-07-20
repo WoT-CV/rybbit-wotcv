@@ -1,9 +1,13 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { clickhouse } from "../../../db/clickhouse/clickhouse.js";
 import { db } from "../../../db/postgres/postgres.js";
 import { userAliases, userProfiles } from "../../../db/postgres/schema.js";
 import { r2Storage } from "../../../services/storage/r2StorageService.js";
+import {
+  clickhouseResolvedUserCondition,
+  resolveUserIdentity,
+} from "../../../services/userIdentity/userIdentityService.js";
 import { processResults } from "../utils/utils.js";
 
 export interface DeleteUserRequest {
@@ -27,19 +31,13 @@ export async function deleteUser(req: FastifyRequest<DeleteUserRequest>, res: Fa
   const siteId = Number(req.params.siteId);
 
   try {
-    // Devices linked to this user via identify() calls
-    const aliases = await db
-      .select({ anonymousId: userAliases.anonymousId })
-      .from(userAliases)
-      .where(and(eq(userAliases.siteId, siteId), eq(userAliases.userId, userId)));
-    const deviceIds = [userId, ...aliases.map(a => a.anonymousId)];
+    const identity = await resolveUserIdentity(siteId, userId);
+    const canonicalUserId = identity.canonicalUserId;
+    const anonymousIds = [...new Set([userId, ...identity.anonymousIds])];
 
     const userCondition = `site_id = {siteId:UInt16}
-      AND (
-        identified_user_id = {userId:String}
-        OR (user_id IN ({deviceIds:Array(String)}) AND identified_user_id = '')
-      )`;
-    const queryParams = { siteId, userId, deviceIds };
+      AND ${clickhouseResolvedUserCondition(undefined, "canonicalUserId", "anonymousIds")}`;
+    const queryParams = { siteId, canonicalUserId, anonymousIds };
 
     // Delete R2-stored replay payloads first (cloud deployments); best-effort —
     // proceed with ClickHouse deletion even if R2 cleanup fails.
@@ -58,7 +56,7 @@ export async function deleteUser(req: FastifyRequest<DeleteUserRequest>, res: Fa
         const r2Keys = await processResults<{ event_data_key: string }>(r2KeysResult);
         await Promise.all(r2Keys.map(row => r2Storage.deleteBatch(row.event_data_key)));
       } catch (error) {
-        req.log.error({ err: error }, `Failed to delete R2 replay data for user ${userId}:`);
+        req.log.error({ err: error, canonicalUserId }, "Failed to delete R2 replay data for user");
       }
     }
 
@@ -72,12 +70,8 @@ export async function deleteUser(req: FastifyRequest<DeleteUserRequest>, res: Fa
     );
 
     await Promise.all([
-      db.delete(userProfiles).where(and(eq(userProfiles.siteId, siteId), eq(userProfiles.userId, userId))),
-      db
-        .delete(userAliases)
-        .where(
-          and(eq(userAliases.siteId, siteId), or(eq(userAliases.userId, userId), eq(userAliases.anonymousId, userId)))
-        ),
+      db.delete(userProfiles).where(and(eq(userProfiles.siteId, siteId), eq(userProfiles.userId, canonicalUserId))),
+      db.delete(userAliases).where(and(eq(userAliases.siteId, siteId), eq(userAliases.userId, canonicalUserId))),
     ]);
 
     return res.send({ success: true });

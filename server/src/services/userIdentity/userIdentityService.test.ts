@@ -19,6 +19,7 @@ import {
   claimTrackerAlias,
   clickhouseEffectiveUserId,
   clickhouseResolvedIdentifiedUserId,
+  clickhouseResolvedUserCondition,
 } from "./userIdentityService.js";
 
 describe("userIdentityService", () => {
@@ -46,6 +47,14 @@ describe("userIdentityService", () => {
     const expression = clickhouseEffectiveUserId("events");
     expect(expression).toContain("events.user_id");
     expect(expression).toContain("dictGetOrDefault('user_identity_dict'");
+  });
+
+  it("matches a resolved account without stealing explicitly attributed events", () => {
+    const condition = clickhouseResolvedUserCondition("events");
+
+    expect(condition).toContain("events.identified_user_id = {canonicalUserId:String}");
+    expect(condition).toContain("events.identified_user_id = ''");
+    expect(condition).toContain("events.user_id IN ({anonymousIds:Array(String)})");
   });
 
   it("creates an unowned tracker alias", async () => {

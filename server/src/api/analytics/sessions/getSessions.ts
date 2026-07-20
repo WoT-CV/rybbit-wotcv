@@ -5,6 +5,7 @@ import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttri
 import { enrichWithTraits, getTimeStatement } from "../utils/utils.js";
 import {
   clickhouseResolvedIdentifiedUserId,
+  clickhouseResolvedUserCondition,
   resolveUserIdentity,
 } from "../../../services/userIdentity/userIdentityService.js";
 import { analyticsRoute, runAnalyticsQuery, QuerySpec } from "../utils/analyticsQuery.js";
@@ -113,13 +114,15 @@ export const buildSessionsQuery = async (
   });
   const requestedIdentity = userId ? await resolveUserIdentity(siteId, userId) : null;
   const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
+  const requestedIdentityCondition = clickhouseResolvedUserCondition("events");
+  const selectedIdentifiedUserId = requestedIdentity ? "{canonicalUserId:String}" : resolvedIdentifiedUserId;
 
   const querySQL = `
   WITH AggregatedSessions AS (
       SELECT
           session_id,
           argMax(user_id, timestamp) AS user_id,
-          argMax(${resolvedIdentifiedUserId}, timestamp) AS identified_user_id,
+          argMax(${selectedIdentifiedUserId}, timestamp) AS identified_user_id,
           argMax(country, timestamp) AS country,
           argMax(region, timestamp) AS region,
           argMax(city, timestamp) AS city,
@@ -160,7 +163,7 @@ export const buildSessionsQuery = async (
       FROM events
       WHERE
           site_id = {siteId:Int32}
-          ${userId ? ` AND COALESCE(NULLIF(${resolvedIdentifiedUserId}, ''), events.user_id) = {user_id:String}` : ""}
+          ${userId ? ` AND ${requestedIdentityCondition}` : ""}
           ${sessionId ? ` AND events.session_id = {session_id:String}` : ""}
           ${timeStatement}
       GROUP BY
@@ -191,8 +194,13 @@ export const buildSessionsQuery = async (
     query: querySQL,
     params: {
       siteId,
-      user_id: requestedIdentity?.canonicalUserId,
-      session_id: sessionId,
+      ...(requestedIdentity
+        ? {
+            canonicalUserId: requestedIdentity.canonicalUserId,
+            anonymousIds: requestedIdentity.anonymousIds,
+          }
+        : {}),
+      ...(sessionId ? { session_id: sessionId } : {}),
       limit: limit || 100,
       offset: (page - 1) * (limit || 100),
       minPageviews: minPageviews ?? 0,

@@ -9,7 +9,7 @@ import { StandardSection } from "../../../components/shared/StandardSection/Stan
 
 type Tab = "pages" | "events";
 
-export function UserTopPages({ userId }: { userId: string }) {
+export function UserTopPages({ userIds }: { userIds: string[] }) {
   const t = useExtracted();
   const [tab, setTab] = useState<Tab>("pages");
 
@@ -36,7 +36,7 @@ export function UserTopPages({ userId }: { userId: string }) {
                 const host = e.hostname || siteMetadata?.domain;
                 return host ? `https://${host}${e.value}` : "#";
               }}
-              additionalFilters={[{ parameter: "user_id", value: [userId], type: "equals" }]}
+              additionalFilters={[{ parameter: "user_id", value: userIds, type: "equals" }]}
             />
           </TabsContent>
           <TabsContent value="events">
@@ -47,7 +47,7 @@ export function UserTopPages({ userId }: { userId: string }) {
               getValue={e => e.value}
               getKey={e => e.value}
               getLabel={e => truncateString(e.value, 50) || "Other"}
-              additionalFilters={[{ parameter: "user_id", value: [userId], type: "equals" }]}
+              additionalFilters={[{ parameter: "user_id", value: userIds, type: "equals" }]}
             />
           </TabsContent>
         </Tabs>

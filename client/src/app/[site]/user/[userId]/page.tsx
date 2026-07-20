@@ -31,8 +31,9 @@ import { UserStatBand } from "./components/UserStatBand";
 import { Badge } from "../../../../components/ui/badge";
 import { Pagination } from "../../../../components/pagination";
 import { Skeleton } from "../../../../components/ui/skeleton";
-import { getUserDisplayName } from "../../../../lib/userIdentity";
+import { getCanonicalUserId, getUserDisplayName, getUserIdentityIds } from "../../../../lib/userIdentity";
 import { formatter } from "../../../../lib/utils";
+import { ErrorState } from "../../../../components/ErrorState";
 import { UserJourneys } from "./components/UserJourneys";
 import { UserTopPages } from "./components/UserTopPages";
 
@@ -55,10 +56,12 @@ export default function UserPage() {
   const [page, setPage] = useState(1);
   const sessionsRef = useRef<HTMLDivElement>(null);
 
-  const { data, isLoading } = useUserInfo(Number(site), userId);
-  const { data: sessionCount, isLoading: isLoadingCalendar } = useGetUserSessionCount(userId);
+  const { data, isLoading, isError, error, refetch } = useUserInfo(Number(site), userId);
+  const canonicalUserId = getCanonicalUserId(data ?? { user_id: userId });
+  const resolvedUserIds = getUserIdentityIds(data ?? { user_id: userId });
+  const { data: sessionCount, isLoading: isLoadingCalendar } = useGetUserSessionCount(canonicalUserId);
   const { data: sessionsData, isLoading: isLoadingSessions } = useGetSessions({
-    userId,
+    userId: canonicalUserId,
     page: page,
     limit: LIMIT + 1,
   });
@@ -81,6 +84,14 @@ export default function UserPage() {
     setPage(nextPage);
     sessionsRef.current?.scrollIntoView({ block: "start" });
   };
+
+  if (isError) {
+    return (
+      <div className="flex min-h-[50vh] p-4">
+        <ErrorState title={t("Failed to load data")} message={error.message} refetch={() => void refetch()} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-2 md:p-4 max-w-[1200px] mx-auto">
@@ -135,7 +146,7 @@ export default function UserPage() {
       </div>
       <Filters availableFilters={USER_DETAIL_PAGE_FILTERS} />
 
-      <UserHeader userId={userId} displayName={displayName} data={data} isLoading={isLoading} />
+      <UserHeader userId={canonicalUserId} displayName={displayName} data={data} isLoading={isLoading} />
 
       <UserStatBand data={data} isLoading={isLoading} />
 
@@ -143,8 +154,8 @@ export default function UserPage() {
           row-reverse puts the profile rail back on the left on desktop */}
       <div className="flex flex-col gap-4 lg:flex-row-reverse">
         <div className="flex-1 min-w-0 space-y-4">
-          <UserTopPages userId={userId} />
-          <UserJourneys userId={userId} />
+          <UserTopPages userIds={resolvedUserIds} />
+          <UserJourneys userIds={resolvedUserIds} />
           <div ref={sessionsRef} className="scroll-mt-4 space-y-3">
             <SessionsList
               sessions={sessions}
@@ -153,7 +164,7 @@ export default function UserPage() {
               onPageChange={setPage}
               hasNextPage={hasNextPage}
               hasPrevPage={hasPrevPage}
-              userId={userId}
+              userId={canonicalUserId}
               headerElement={
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-200">{t("Sessions")}</h2>

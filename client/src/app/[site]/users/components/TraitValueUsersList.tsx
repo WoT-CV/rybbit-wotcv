@@ -16,7 +16,7 @@ import {
   OperatingSystemTooltipIcon,
   DeviceTypeTooltipIcon,
 } from "../../../../components/TooltipIcons/TooltipIcons";
-import { getUserAvatarUrl, getUserDisplayName } from "../../../../lib/userIdentity";
+import { getCanonicalUserId, getUserAvatarUrl, getUserDisplayName } from "../../../../lib/userIdentity";
 
 export function TraitValueUsersList({
   traitKey,
@@ -105,7 +105,7 @@ export function TraitValueUsersList({
       )}
       {filteredUsers.map((user, index) => {
         const isIdentified = !!user.identified_user_id;
-        const linkId = isIdentified ? user.identified_user_id : user.user_id;
+        const linkId = getCanonicalUserId(user);
         const encodedLinkId = encodeURIComponent(linkId);
         const displayName = getUserDisplayName(user);
 

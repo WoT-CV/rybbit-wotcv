@@ -21,6 +21,7 @@ export function UserActions({ userId, data }: UserActionsProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const isIdentified = !!data.identified_user_id;
+  const canonicalUserId = data.identified_user_id || userId;
 
   return (
     <div className="flex items-center gap-1">
@@ -46,7 +47,7 @@ export function UserActions({ userId, data }: UserActionsProps) {
       </Tooltip>
 
       <IdentifyUserDialog anonymousId={data.user_id || userId} open={identifyOpen} onOpenChange={setIdentifyOpen} />
-      <DeleteUserDialog userId={userId} open={deleteOpen} onOpenChange={setDeleteOpen} />
+      <DeleteUserDialog userId={canonicalUserId} open={deleteOpen} onOpenChange={setDeleteOpen} />
     </div>
   );
 }

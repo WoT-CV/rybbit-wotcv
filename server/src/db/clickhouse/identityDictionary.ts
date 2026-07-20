@@ -29,3 +29,32 @@ export function clickhouseEffectiveUserId(tableAlias?: string): string {
   const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId(tableAlias);
   return `if(${resolvedIdentifiedUserId} != '', ${resolvedIdentifiedUserId}, ${anonymousId})`;
 }
+
+/**
+ * Match the concrete identity already resolved from PostgreSQL. This form is
+ * used by single-user reads and erasure, where waiting for the external
+ * dictionary refresh would make a freshly claimed alias temporarily disappear.
+ *
+ * Explicit event-time identity still wins: an event attributed to a different
+ * account is never pulled in merely because the browser ID was later linked or
+ * administratively reassigned.
+ */
+export function clickhouseResolvedUserCondition(
+  tableAlias?: string,
+  canonicalUserIdParam = "canonicalUserId",
+  anonymousIdsParam = "anonymousIds"
+): string {
+  const identifiedUserId = column(tableAlias, "identified_user_id");
+  const anonymousId = column(tableAlias, "user_id");
+
+  return `(
+    ${identifiedUserId} = {${canonicalUserIdParam}:String}
+    OR (
+      ${identifiedUserId} = ''
+      AND (
+        ${anonymousId} = {${canonicalUserIdParam}:String}
+        OR ${anonymousId} IN ({${anonymousIdsParam}:Array(String)})
+      )
+    )
+  )`;
+}
