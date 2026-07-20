@@ -1,1 +1,1 @@
-ALTER TABLE "sites" ADD COLUMN "first_party_proxy" boolean DEFAULT false;
+ALTER TABLE "sites" ADD COLUMN IF NOT EXISTS "first_party_proxy" boolean DEFAULT false;
