@@ -13,6 +13,7 @@ import { createInitialExportRange, ReplayExportRangeSlider } from "../export/Rep
 import { parseNetworkEvents } from "../network/parseNetworkEvents";
 import type { ReplayEventLike } from "../network/types";
 import { useReplayStore } from "../replayStore";
+import { INACTIVITY_FAST_FORWARD_SPEEDS, isInactivityFastForwardSpeed } from "./hooks/inactivityFastForward";
 import { useReplaySeek } from "./hooks/useReplaySeek";
 import { formatTime, PLAYBACK_SPEEDS } from "./utils/replayUtils";
 
@@ -48,7 +49,9 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
     sessionId,
     setExportRange,
     setSkipInactivityEnabled,
+    setSkipInactivitySpeed,
     skipInactivityEnabled,
+    skipInactivitySpeed,
   } = useReplayStore(
     useShallow(s => ({
       activityPeriods: s.activityPeriods,
@@ -62,7 +65,9 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
       sessionId: s.sessionId,
       setExportRange: s.setExportRange,
       setSkipInactivityEnabled: s.setSkipInactivityEnabled,
+      setSkipInactivitySpeed: s.setSkipInactivitySpeed,
       skipInactivityEnabled: s.skipInactivityEnabled,
+      skipInactivitySpeed: s.skipInactivitySpeed,
     }))
   );
   const networkRequests = useMemo(() => parseNetworkEvents(events), [events]);
@@ -78,6 +83,14 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   const handleSkipInactivityToggle = useCallback(() => {
     setSkipInactivityEnabled(!skipInactivityEnabled);
   }, [setSkipInactivityEnabled, skipInactivityEnabled]);
+
+  const handleSkipInactivitySpeedChange = useCallback(
+    (speed: string) => {
+      const parsedSpeed = Number.parseInt(speed, 10);
+      if (isInactivityFastForwardSpeed(parsedSpeed)) setSkipInactivitySpeed(parsedSpeed);
+    },
+    [setSkipInactivitySpeed]
+  );
 
   const handleNetworkSeek = useCallback(
     (offset: number) => {
@@ -143,6 +156,23 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
             <SkipForward className="h-3 w-3" aria-hidden="true" />
             <span className="hidden xl:inline">{t("Skip inactivity")}</span>
           </Button>
+          <Select value={skipInactivitySpeed.toString()} onValueChange={handleSkipInactivitySpeedChange}>
+            <SelectTrigger
+              size="sm"
+              className="w-14 shrink-0"
+              aria-label={`${t("Skip inactivity")}: ${skipInactivitySpeed}x`}
+              title={`${t("Skip inactivity")}: ${skipInactivitySpeed}x`}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent size="sm">
+              {INACTIVITY_FAST_FORWARD_SPEEDS.map(speed => (
+                <SelectItem key={speed} value={speed.toString()} size="sm">
+                  {speed}x
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <Select value={playbackSpeed} onValueChange={onSpeedChange}>

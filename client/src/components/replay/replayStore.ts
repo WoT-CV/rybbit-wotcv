@@ -1,5 +1,9 @@
 import { create } from "zustand";
 
+import {
+  DEFAULT_INACTIVITY_FAST_FORWARD_SPEED,
+  type InactivityFastForwardSpeed,
+} from "./player/hooks/inactivityFastForward";
 import type { ActivityPeriod, ReplayCaptureProfile, ReplaySegment } from "./player/utils/replayUtils";
 import type { ReplayPlayerAdapter } from "./player/ReplayPlayerAdapter";
 
@@ -58,6 +62,9 @@ export const useReplayStore = create<{
 
   skipInactivityEnabled: boolean;
   setSkipInactivityEnabled: (enabled: boolean) => void;
+
+  skipInactivitySpeed: InactivityFastForwardSpeed;
+  setSkipInactivitySpeed: (speed: InactivityFastForwardSpeed) => void;
 
   exportRange: [number, number] | null;
   setExportRange: (range: [number, number] | null) => void;
@@ -155,6 +162,9 @@ export const useReplayStore = create<{
 
   skipInactivityEnabled: true,
   setSkipInactivityEnabled: skipInactivityEnabled => set({ skipInactivityEnabled }),
+
+  skipInactivitySpeed: DEFAULT_INACTIVITY_FAST_FORWARD_SPEED,
+  setSkipInactivitySpeed: skipInactivitySpeed => set({ skipInactivitySpeed }),
 
   exportRange: null,
   setExportRange: exportRange => set({ exportRange }),

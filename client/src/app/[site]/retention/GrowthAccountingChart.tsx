@@ -15,6 +15,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useNivoTheme } from "@/lib/nivo";
 import { cn } from "@/lib/utils";
 
+import { getGrowthTooltipValues, type GrowthTooltipValues } from "./growthAccountingChartUtils";
+
 interface GrowthAccountingChartProps {
   data: GrowthAccountingPoint[] | undefined;
   isError: boolean;
@@ -33,10 +35,8 @@ const SERIES = [
 type GrowthSeriesKey = (typeof SERIES)[number]["key"];
 
 interface GrowthTooltipState {
-  color: string;
   period: string;
-  seriesKey: GrowthSeriesKey;
-  value: number;
+  values: GrowthTooltipValues;
   x: number;
   y: number;
 }
@@ -106,8 +106,9 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode, classNam
   }
 
   const tooltipWidth = 240;
+  const tooltipHeight = 148;
   const tooltipLeft = tooltip ? Math.max(8, Math.min(tooltip.x + 12, window.innerWidth - tooltipWidth - 8)) : 0;
-  const tooltipTop = tooltip ? Math.max(8, Math.min(tooltip.y + 12, window.innerHeight - 96)) : 0;
+  const tooltipTop = tooltip ? Math.max(8, Math.min(tooltip.y + 12, window.innerHeight - tooltipHeight - 8)) : 0;
 
   return (
     <div
@@ -172,12 +173,17 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode, classNam
             format: value => Math.abs(Number(value)).toLocaleString(locale),
           }}
           onMouseEnter={(datum, event) => {
-            const seriesKey = String(datum.id) as GrowthSeriesKey;
+            const period = String(datum.indexValue);
+            const point = chartData.find(chartPoint => chartPoint.period === period);
+
+            if (!point) {
+              setTooltip(null);
+              return;
+            }
+
             setTooltip({
-              color: SERIES.find(series => series.key === seriesKey)?.color ?? "hsl(var(--neutral-500))",
-              period: String(datum.indexValue),
-              seriesKey,
-              value: Math.abs(Number(datum.value)),
+              period,
+              values: getGrowthTooltipValues(point),
               x: event.clientX,
               y: event.clientY,
             });
@@ -199,14 +205,18 @@ export function GrowthAccountingChart({ data, isError, isLoading, mode, classNam
               <div className="mb-2 font-medium text-neutral-700 dark:text-neutral-200">
                 {formatPeriod(tooltip.period)}
               </div>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex min-w-0 items-center gap-2 text-neutral-600 dark:text-neutral-300">
-                  <span className="h-3 w-1 shrink-0 rounded-sm" style={{ backgroundColor: tooltip.color }} />
-                  <span className="truncate">{labels[tooltip.seriesKey]}</span>
-                </div>
-                <span className="shrink-0 font-medium tabular-nums text-neutral-700 dark:text-neutral-200">
-                  {tooltip.value.toLocaleString(locale)}
-                </span>
+              <div className="space-y-1">
+                {SERIES.map(series => (
+                  <div key={series.key} className="flex items-center justify-between gap-4">
+                    <div className="flex min-w-0 items-center gap-2 text-neutral-600 dark:text-neutral-300">
+                      <span className="h-3 w-1 shrink-0 rounded-sm" style={{ backgroundColor: series.color }} />
+                      <span className="truncate">{labels[series.key]}</span>
+                    </div>
+                    <span className="shrink-0 font-medium tabular-nums text-neutral-700 dark:text-neutral-200">
+                      {tooltip.values[series.key].toLocaleString(locale)}
+                    </span>
+                  </div>
+                ))}
               </div>
             </ChartTooltip>
           </div>,

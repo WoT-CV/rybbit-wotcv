@@ -12,7 +12,15 @@ interface UseSkipInactivityProps {
 
 export function useSkipInactivity({ player }: UseSkipInactivityProps) {
   const appliedSpeedRef = useRef<{ player: ReplayPlayerAdapter; speed: number } | null>(null);
-  const { currentTime, duration, isPlaying, playbackSpeed, replaySegments, skipInactivityEnabled } = useReplayStore(
+  const {
+    currentTime,
+    duration,
+    isPlaying,
+    playbackSpeed,
+    replaySegments,
+    skipInactivityEnabled,
+    skipInactivitySpeed,
+  } = useReplayStore(
     useShallow(state => ({
       currentTime: state.currentTime,
       duration: state.duration,
@@ -20,6 +28,7 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
       playbackSpeed: state.playbackSpeed,
       replaySegments: state.replaySegments,
       skipInactivityEnabled: state.skipInactivityEnabled,
+      skipInactivitySpeed: state.skipInactivitySpeed,
     }))
   );
 
@@ -43,7 +52,11 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
     }
 
     if (shouldFastForward && currentSegment) {
-      const fastForwardSpeed = getInactivityFastForwardSpeed(currentSegment.duration, selectedSpeed);
+      const fastForwardSpeed = getInactivityFastForwardSpeed(
+        currentSegment.duration,
+        selectedSpeed,
+        skipInactivitySpeed
+      );
       applySpeed(player, fastForwardSpeed, appliedSpeedRef);
       syncPlaybackMode(true, "skipping-inactivity");
       return;
@@ -51,7 +64,16 @@ export function useSkipInactivity({ player }: UseSkipInactivityProps) {
 
     applySpeed(player, selectedSpeed, appliedSpeedRef);
     syncPlaybackMode(false, "playing");
-  }, [currentTime, duration, isPlaying, playbackSpeed, player, replaySegments, skipInactivityEnabled]);
+  }, [
+    currentTime,
+    duration,
+    isPlaying,
+    playbackSpeed,
+    player,
+    replaySegments,
+    skipInactivityEnabled,
+    skipInactivitySpeed,
+  ]);
 }
 
 function applySpeed(
