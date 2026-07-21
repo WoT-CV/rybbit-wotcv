@@ -32,7 +32,7 @@ import { DateTime, Duration } from "luxon";
 import Link from "next/link";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
-import { createElement, useCallback, useMemo, useRef, useState } from "react";
+import { createElement, type UIEvent, useCallback, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useGetSessionReplayEvents } from "@/api/analytics/hooks/sessionReplay/useGetSessionReplayEvents";
 import { Avatar } from "@/components/Avatar";
@@ -44,7 +44,10 @@ import { getTimezone } from "@/lib/store";
 import { getUserAvatarUrl, getUserDisplayName } from "@/lib/userIdentity";
 import { cn } from "@/lib/utils";
 import { NetworkTimeline } from "./network/NetworkTimeline";
-import { parseNetworkEvents } from "./network/parseNetworkEvents";
+import { NetworkRequestDetails } from "./network/NetworkRequestDetails";
+import { NetworkRequestRow } from "./network/NetworkRequestRow";
+import { parseNetworkReplayEvents } from "./network/parseNetworkEvents";
+import type { ParsedNetworkRequest } from "./network/types";
 import {
   getMeaningfulEvents,
   getTechnicalGroups,
@@ -55,6 +58,29 @@ import {
 } from "./replayEvents";
 import { useReplayStore } from "./replayStore";
 import { useReplaySeek } from "./player/hooks/useReplaySeek";
+import { CurrentTimeMarker, CurrentTimeMarkerRow } from "./timeline/CurrentTimeMarker";
+import {
+  buildAllTimelineRows,
+  buildMeaningfulTimelineRows,
+  compareTimelineRows,
+  insertCurrentTimeMarker,
+  type ReplayTimelineDataRow,
+} from "./timeline/replayTimeline";
+import { TimelineFollowButton } from "./timeline/TimelineFollowButton";
+import { useFollowTimelineMarker } from "./timeline/useFollowTimelineMarker";
+import { useReplayTimelineHighlights } from "./timeline/useReplayTimelineHighlights";
+
+type TimelineView = "key" | "network" | "all";
+
+interface SelectedNetworkRequest {
+  sessionId: string;
+  requestId: string;
+}
+
+interface TimelineScrollPositions {
+  resetKey: string;
+  values: Record<TimelineView, number>;
+}
 
 const SEVERITY_COLOR: Record<EventSeverity, string> = {
   default: "text-neutral-500 dark:text-neutral-400",
@@ -173,10 +199,13 @@ export function ReplayBreadcrumbs() {
   const t = useExtracted();
   const params = useParams();
   const siteId = Number(params.site);
-  const [timelineView, setTimelineView] = useState<"key" | "network" | "all">("network");
-  const { sessionId } = useReplayStore(
+  const [timelineView, setTimelineView] = useState<TimelineView>("network");
+  const [followCurrentTime, setFollowCurrentTime] = useState(true);
+  const [selectedNetworkRequest, setSelectedNetworkRequest] = useState<SelectedNetworkRequest | null>(null);
+  const { sessionId, selectionVersion } = useReplayStore(
     useShallow(s => ({
       sessionId: s.sessionId,
+      selectionVersion: s.selectionVersion,
     }))
   );
   const { seekTo } = useReplaySeek();
@@ -185,13 +214,71 @@ export function ReplayBreadcrumbs() {
 
   const meaningful = useMemo(() => getMeaningfulEvents(data?.events), [data?.events]);
   const technical = useMemo(() => getTechnicalGroups(data?.events), [data?.events]);
-  const networkRequests = useMemo(() => parseNetworkEvents(data?.events), [data?.events]);
+  const parsedNetworkEvents = useMemo(() => parseNetworkReplayEvents(data?.events), [data?.events]);
+  const networkRequests = parsedNetworkEvents.requests;
+  const meaningfulRows = useMemo(() => buildMeaningfulTimelineRows(meaningful), [meaningful]);
+  const allRows = useMemo(
+    () => buildAllTimelineRows(technical, networkRequests, parsedNetworkEvents.expandedEventIndexes),
+    [networkRequests, parsedNetworkEvents.expandedEventIndexes, technical]
+  );
+  const highlightRows = useMemo(() => {
+    const rowsByKey = new Map<string, ReplayTimelineDataRow>();
+    for (const row of [...meaningfulRows, ...allRows]) rowsByKey.set(row.key, row);
+    return [...rowsByKey.values()].sort(compareTimelineRows);
+  }, [allRows, meaningfulRows]);
+  const timelineResetKey = `${sessionId}:${selectionVersion}`;
+  const { currentTime, highlightedKeys } = useReplayTimelineHighlights(highlightRows, timelineResetKey);
+  const scrollPositionsRef = useRef<TimelineScrollPositions>({
+    resetKey: timelineResetKey,
+    values: { all: 0, key: 0, network: 0 },
+  });
 
   const handleSeek = useCallback(
     (offset: number) => {
       seekTo(offset);
     },
     [seekTo]
+  );
+  const handleFollowCurrentTimeToggle = useCallback(() => setFollowCurrentTime(value => !value), []);
+  const handleTimelineViewChange = useCallback((view: TimelineView) => {
+    setTimelineView(view);
+    setSelectedNetworkRequest(null);
+  }, []);
+  const handleNetworkRequestSelect = useCallback(
+    (request: ParsedNetworkRequest) => {
+      handleSeek(request.startOffset);
+      setSelectedNetworkRequest({ sessionId, requestId: request.requestId });
+    },
+    [handleSeek, sessionId]
+  );
+  const handleNetworkDetailsBack = useCallback(() => setSelectedNetworkRequest(null), []);
+  const selectedRequest = useMemo(
+    () =>
+      selectedNetworkRequest?.sessionId === sessionId
+        ? networkRequests.find(request => request.requestId === selectedNetworkRequest.requestId)
+        : undefined,
+    [networkRequests, selectedNetworkRequest, sessionId]
+  );
+  const getScrollOffset = useCallback(
+    (view: TimelineView) =>
+      scrollPositionsRef.current.resetKey === timelineResetKey ? scrollPositionsRef.current.values[view] : 0,
+    [timelineResetKey]
+  );
+  const saveScrollOffset = useCallback(
+    (view: TimelineView, offset: number) => {
+      if (scrollPositionsRef.current.resetKey !== timelineResetKey) {
+        scrollPositionsRef.current = {
+          resetKey: timelineResetKey,
+          values: { all: 0, key: 0, network: 0 },
+        };
+      }
+      scrollPositionsRef.current.values[view] = offset;
+    },
+    [timelineResetKey]
+  );
+  const handleNetworkScrollOffsetChange = useCallback(
+    (offset: number) => saveScrollOffset("network", offset),
+    [saveScrollOffset]
   );
 
   // Resolve labels here, where `t` is the real useExtracted() binding, so the
@@ -226,12 +313,47 @@ export function ReplayBreadcrumbs() {
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const rowCount = timelineView === "all" ? technical.length : timelineView === "key" ? meaningful.length : 0;
+  const visibleRows = useMemo<ReplayTimelineDataRow[]>(
+    () => (timelineView === "all" ? allRows : timelineView === "key" ? meaningfulRows : []),
+    [allRows, meaningfulRows, timelineView]
+  );
+  const timeline = useMemo(() => insertCurrentTimeMarker(visibleRows, currentTime), [currentTime, visibleRows]);
   const virtualizer = useVirtualizer({
-    count: rowCount,
+    count: timeline.rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 44,
+    getItemKey: index => timeline.rows[index]?.key ?? index,
+    estimateSize: index => {
+      const row = timeline.rows[index];
+      if (row?.kind === "current-time-marker") return 29;
+      if (row?.kind === "network") return 52;
+      return 44;
+    },
     overscan: 16,
+  });
+  const scrollToMarker = useCallback(
+    () => virtualizer.scrollToIndex(timeline.markerIndex, { align: "center" }),
+    [timeline.markerIndex, virtualizer]
+  );
+  const initialSimpleScrollOffset = getScrollOffset(timelineView);
+  const setSimpleScrollElement = useCallback(
+    (node: HTMLDivElement | null) => {
+      scrollRef.current = node;
+      if (node) node.scrollTop = initialSimpleScrollOffset;
+    },
+    [initialSimpleScrollOffset]
+  );
+  const handleSimpleScroll = useCallback(
+    (event: UIEvent<HTMLDivElement>) => saveScrollOffset(timelineView, event.currentTarget.scrollTop),
+    [saveScrollOffset, timelineView]
+  );
+  useFollowTimelineMarker({
+    enabled: followCurrentTime && timelineView !== "network" && !selectedRequest && visibleRows.length > 0,
+    markerIndex: timeline.markerIndex,
+    resetKey: `${timelineResetKey}:${timelineView}`,
+    scrollToMarker,
+  });
+  const currentTimeLabel = t("Current time {time}", {
+    time: Duration.fromMillis(currentTime).toFormat("mm:ss.SSS"),
   });
 
   if (error) {
@@ -268,7 +390,7 @@ export function ReplayBreadcrumbs() {
             {isLoading || !data
               ? t("Timeline")
               : timelineView === "all"
-                ? t("{count} groups", { count: String(technical.length) })
+                ? t("{count} events", { count: String(allRows.length) })
                 : timelineView === "network"
                   ? t("{count} network requests", { count: String(networkRequests.length) })
                   : t("{count} key events", { count: String(meaningful.length) })}
@@ -281,7 +403,7 @@ export function ReplayBreadcrumbs() {
             <button
               role="tab"
               aria-selected={timelineView === "network"}
-              onClick={() => setTimelineView("network")}
+              onClick={() => handleTimelineViewChange("network")}
               className={cn(
                 "rounded px-2 py-0.5 transition-colors",
                 timelineView === "network"
@@ -294,7 +416,7 @@ export function ReplayBreadcrumbs() {
             <button
               role="tab"
               aria-selected={timelineView === "key"}
-              onClick={() => setTimelineView("key")}
+              onClick={() => handleTimelineViewChange("key")}
               className={cn(
                 "rounded px-2 py-0.5 transition-colors",
                 timelineView === "key"
@@ -307,7 +429,7 @@ export function ReplayBreadcrumbs() {
             <button
               role="tab"
               aria-selected={timelineView === "all"}
-              onClick={() => setTimelineView("all")}
+              onClick={() => handleTimelineViewChange("all")}
               className={cn(
                 "rounded px-2 py-0.5 transition-colors",
                 timelineView === "all"
@@ -325,40 +447,95 @@ export function ReplayBreadcrumbs() {
             <ThreeDotLoader />
           </div>
         ) : timelineView === "network" ? (
-          <NetworkTimeline key={sessionId} requests={networkRequests} onSeek={handleSeek} />
-        ) : rowCount === 0 ? (
-          <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-neutral-500">
-            {timelineView === "all" ? t("No events recorded.") : t("No key interactions in this session.")}
-          </div>
+          <NetworkTimeline
+            key={sessionId}
+            requests={networkRequests}
+            currentTime={currentTime}
+            followCurrentTime={followCurrentTime}
+            highlightedKeys={highlightedKeys}
+            initialScrollOffset={getScrollOffset("network")}
+            resetKey={timelineResetKey}
+            selectedRequest={selectedRequest}
+            onDetailsBack={handleNetworkDetailsBack}
+            onFollowCurrentTimeToggle={handleFollowCurrentTimeToggle}
+            onRequestSelect={handleNetworkRequestSelect}
+            onScrollOffsetChange={handleNetworkScrollOffsetChange}
+          />
+        ) : selectedRequest ? (
+          <NetworkRequestDetails request={selectedRequest} onBack={handleNetworkDetailsBack} />
         ) : (
-          <div ref={scrollRef} className="flex-1 overflow-auto rounded-b-lg">
-            <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
-              {virtualizer.getVirtualItems().map(row => {
-                if (timelineView === "all") {
-                  const group = technical[row.index];
-                  return (
-                    <TechnicalRow
-                      key={row.key}
-                      group={group}
-                      virtualRow={row}
-                      measure={virtualizer.measureElement}
-                      onSeek={handleSeek}
-                    />
-                  );
-                }
-                const event = meaningful[row.index];
-                return (
-                  <MeaningfulRow
-                    key={row.key}
-                    event={event}
-                    label={labelFor(event)}
-                    virtualRow={row}
-                    measure={virtualizer.measureElement}
-                    onSeek={handleSeek}
-                  />
-                );
-              })}
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex shrink-0 justify-end border-b border-neutral-100 p-2 dark:border-neutral-800">
+              <TimelineFollowButton enabled={followCurrentTime} onToggle={handleFollowCurrentTimeToggle} />
             </div>
+            {visibleRows.length === 0 ? (
+              <div className="flex min-h-0 flex-1 flex-col">
+                <CurrentTimeMarker label={currentTimeLabel} />
+                <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-neutral-500">
+                  {timelineView === "all" ? t("No events recorded.") : t("No key interactions in this session.")}
+                </div>
+              </div>
+            ) : (
+              <div
+                ref={setSimpleScrollElement}
+                className="flex-1 overflow-auto rounded-b-lg"
+                onScroll={handleSimpleScroll}
+              >
+                <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+                  {virtualizer.getVirtualItems().map(virtualRow => {
+                    const row = timeline.rows[virtualRow.index];
+                    if (row.kind === "current-time-marker") {
+                      return (
+                        <CurrentTimeMarkerRow
+                          key={row.key}
+                          virtualRow={virtualRow}
+                          measure={virtualizer.measureElement}
+                          label={currentTimeLabel}
+                        />
+                      );
+                    }
+
+                    if (row.kind === "technical") {
+                      return (
+                        <TechnicalRow
+                          key={row.key}
+                          group={row.group}
+                          isHighlighted={highlightedKeys.has(row.key)}
+                          virtualRow={virtualRow}
+                          measure={virtualizer.measureElement}
+                          onSeek={handleSeek}
+                        />
+                      );
+                    }
+
+                    if (row.kind === "network") {
+                      return (
+                        <NetworkRequestRow
+                          key={row.key}
+                          request={row.request}
+                          isHighlighted={highlightedKeys.has(row.key)}
+                          virtualRow={virtualRow}
+                          measure={virtualizer.measureElement}
+                          onSelect={handleNetworkRequestSelect}
+                        />
+                      );
+                    }
+
+                    return (
+                      <MeaningfulRow
+                        key={row.key}
+                        event={row.event}
+                        label={labelFor(row.event)}
+                        isHighlighted={highlightedKeys.has(row.key)}
+                        virtualRow={virtualRow}
+                        measure={virtualizer.measureElement}
+                        onSeek={handleSeek}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -397,10 +574,12 @@ function UserHeader({ data, siteId }: { data: any; siteId: number }) {
   );
 }
 
-function rowClass(extra?: string) {
+function rowClass(isHighlighted: boolean, extra?: string) {
   return cn(
-    "absolute left-0 right-0 flex items-center gap-2.5 px-2.5 border-b border-neutral-100 dark:border-neutral-800",
-    "hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors cursor-pointer group",
+    "absolute left-0 right-0 flex w-full items-center gap-2.5 border-b border-neutral-100 px-2.5 text-left dark:border-neutral-800",
+    "cursor-pointer transition-colors hover:bg-neutral-50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-neutral-950 dark:hover:bg-neutral-800/60 dark:focus-visible:ring-neutral-300",
+    isHighlighted &&
+      "bg-accent-500/10 ring-1 ring-inset ring-accent-500/40 dark:bg-accent-500/10 dark:ring-accent-400/40",
     extra
   );
 }
@@ -408,12 +587,14 @@ function rowClass(extra?: string) {
 function MeaningfulRow({
   event,
   label,
+  isHighlighted,
   virtualRow,
   measure,
   onSeek,
 }: {
   event: MeaningfulEvent;
   label: string;
+  isHighlighted: boolean;
   virtualRow: VirtualItem;
   measure: (node: Element | null) => void;
   onSeek: (offset: number) => void;
@@ -422,12 +603,14 @@ function MeaningfulRow({
   const color = meaningfulColor(event);
 
   return (
-    <div
+    <button
+      type="button"
       data-index={virtualRow.index}
       ref={measure}
-      className={rowClass("py-2")}
+      className={rowClass(isHighlighted, "py-2")}
       style={{ top: `${virtualRow.start}px` }}
       onClick={() => onSeek(event.offset)}
+      aria-current={isHighlighted ? "time" : undefined}
     >
       <span className="w-9 shrink-0 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
         {Duration.fromMillis(event.offset).toFormat("mm:ss")}
@@ -446,17 +629,19 @@ function MeaningfulRow({
           <div className="truncate text-[11px] text-neutral-500 dark:text-neutral-400">{event.detail}</div>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 
 function TechnicalRow({
   group,
+  isHighlighted,
   virtualRow,
   measure,
   onSeek,
 }: {
   group: TechnicalGroup;
+  isHighlighted: boolean;
   virtualRow: VirtualItem;
   measure: (node: Element | null) => void;
   onSeek: (offset: number) => void;
@@ -466,12 +651,14 @@ function TechnicalRow({
   const durationMs = group.endOffset - group.offset;
 
   return (
-    <div
+    <button
+      type="button"
       data-index={virtualRow.index}
       ref={measure}
-      className={rowClass("py-2")}
+      className={rowClass(isHighlighted, "py-2")}
       style={{ top: `${virtualRow.start}px` }}
       onClick={() => onSeek(group.offset)}
+      aria-current={isHighlighted ? "time" : undefined}
     >
       <span className="w-9 shrink-0 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
         {Duration.fromMillis(group.offset).toFormat("mm:ss")}
@@ -490,6 +677,6 @@ function TechnicalRow({
           {group.count}
         </span>
       )}
-    </div>
+    </button>
   );
 }

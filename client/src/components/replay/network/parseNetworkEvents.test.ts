@@ -1,6 +1,6 @@
 import { NETWORK_REPLAY_SCHEMA_VERSION } from "@rybbit/shared";
 import { describe, expect, it } from "vitest";
-import { NETWORK_PLUGIN_NAME, parseNetworkEvents } from "./parseNetworkEvents";
+import { NETWORK_PLUGIN_NAME, parseNetworkEvents, parseNetworkReplayEvents } from "./parseNetworkEvents";
 
 describe("parseNetworkEvents", () => {
   it("normalizes valid requests and removes duplicate request IDs", () => {
@@ -51,5 +51,51 @@ describe("parseNetworkEvents", () => {
         },
       ])
     ).toEqual([]);
+  });
+
+  it("reports every valid network carrier as expanded, including duplicate batches", () => {
+    const request = {
+      schemaVersion: NETWORK_REPLAY_SCHEMA_VERSION,
+      requestId: "request-1",
+      currentUrl: "https://wot-cv.com",
+      url: "https://api.wot-cv.com/web/api/players",
+      method: "GET",
+      initiatorType: "fetch",
+      startedAt: 1_100,
+      completedAt: 1_200,
+    };
+    const pluginData = {
+      plugin: NETWORK_PLUGIN_NAME,
+      payload: { version: 1, requests: [request] },
+    };
+
+    const result = parseNetworkReplayEvents([
+      { timestamp: 1_000, type: 4 },
+      { timestamp: 1_200, type: 6, data: pluginData },
+      { timestamp: 1_300, type: 6, data: pluginData },
+    ]);
+
+    expect(result.requests).toHaveLength(1);
+    expect([...result.expandedEventIndexes]).toEqual([1, 2]);
+  });
+
+  it("keeps invalid network carriers unexpanded for diagnostic fallback", () => {
+    const result = parseNetworkReplayEvents([
+      { timestamp: 1_000, type: 4 },
+      {
+        timestamp: 1_100,
+        type: 6,
+        data: {
+          plugin: NETWORK_PLUGIN_NAME,
+          payload: {
+            version: 1,
+            requests: [{ schemaVersion: NETWORK_REPLAY_SCHEMA_VERSION + 1, startedAt: 1_050 }],
+          },
+        },
+      },
+    ]);
+
+    expect(result.requests).toEqual([]);
+    expect(result.expandedEventIndexes.size).toBe(0);
   });
 });

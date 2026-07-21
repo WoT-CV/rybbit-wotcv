@@ -40,17 +40,27 @@ const NETWORK_OUTCOMES = new Set<NetworkOutcome>([
 
 type NormalizedNetworkRequest = Omit<CapturedNetworkRequest, "durationMs"> & { durationMs: number };
 
+export interface ParsedNetworkReplayEvents {
+  requests: ParsedNetworkRequest[];
+  expandedEventIndexes: ReadonlySet<number>;
+}
+
 export function parseNetworkEvents(events: readonly ReplayEventLike[] | undefined): ParsedNetworkRequest[] {
+  return parseNetworkReplayEvents(events).requests;
+}
+
+export function parseNetworkReplayEvents(events: readonly ReplayEventLike[] | undefined): ParsedNetworkReplayEvents {
   if (!events?.length) {
-    return [];
+    return { requests: [], expandedEventIndexes: new Set() };
   }
 
   const replayStartTimestamp = events.find(event => Number.isFinite(event.timestamp))?.timestamp;
   if (replayStartTimestamp === undefined) {
-    return [];
+    return { requests: [], expandedEventIndexes: new Set() };
   }
 
   const requests: ParsedNetworkRequest[] = [];
+  const expandedEventIndexes = new Set<number>();
   const seenRequestIds = new Set<string>();
 
   events.forEach((event, eventIndex) => {
@@ -63,11 +73,15 @@ export function parseNetworkEvents(events: readonly ReplayEventLike[] | undefine
       return;
     }
 
+    let parsedPayload = payload.requests.length === 0;
     payload.requests.forEach((rawRequest, requestIndex) => {
       const request = parseRequest(rawRequest, event.timestamp, eventIndex, requestIndex);
-      if (!request || seenRequestIds.has(request.requestId)) {
+      if (!request) {
         return;
       }
+
+      parsedPayload = true;
+      if (seenRequestIds.has(request.requestId)) return;
 
       seenRequestIds.add(request.requestId);
       const startOffset = Math.max(0, request.startedAt - replayStartTimestamp);
@@ -83,11 +97,14 @@ export function parseNetworkEvents(events: readonly ReplayEventLike[] | undefine
         searchText: `${request.method} ${request.url} ${request.currentUrl} ${host}`.toLowerCase(),
       });
     });
+
+    if (parsedPayload) expandedEventIndexes.add(eventIndex);
   });
 
-  return requests.sort(
+  requests.sort(
     (first, second) => first.startedAt - second.startedAt || first.requestId.localeCompare(second.requestId)
   );
+  return { requests, expandedEventIndexes };
 }
 
 function parseRequest(

@@ -491,6 +491,10 @@ export interface TechnicalGroup {
   label: string;
   /** Underlying incremental source (for icon selection), if any. */
   source?: number;
+  /** rrweb plugin identifier for type 6 events, for example rrweb/network@1. */
+  pluginName?: string;
+  /** Raw event indexes represented by this group. */
+  sourceEventIndexes: number[];
   type: number;
   timestamp: number;
   offset: number;
@@ -508,22 +512,28 @@ export function getTechnicalGroups(events: RawEvent[] | undefined): TechnicalGro
     const ev = events[i];
     const type = Number(ev.type);
     const source = type === 3 ? ev.data?.source : undefined;
+    const pluginName = type === 6 && typeof ev.data?.plugin === "string" ? ev.data.plugin : undefined;
 
     const sameAsCurrent = current && current.type === type && current._src === source && type === 3;
 
     if (sameAsCurrent && current) {
       current.count += 1;
       current.endOffset = ev.timestamp - first;
+      current.sourceEventIndexes.push(i);
     } else {
       if (current) groups.push(current);
       const label: string =
         type === 3 && source !== undefined
           ? (INCREMENTAL_TYPES[source] ?? `Source ${source}`)
-          : (EVENT_TYPE_NAMES[type] ?? `Type ${type}`);
+          : type === 6 && pluginName
+            ? `Plugin: ${pluginName}`
+            : (EVENT_TYPE_NAMES[type] ?? `Type ${type}`);
       current = {
         key: `${ev.timestamp}-${i}`,
         label,
         source,
+        pluginName,
+        sourceEventIndexes: [i],
         _src: source,
         type,
         timestamp: ev.timestamp,

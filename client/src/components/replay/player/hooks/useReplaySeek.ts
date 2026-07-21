@@ -17,6 +17,7 @@ export function useReplaySeek() {
     state.setPlaybackState("seeking");
     player.seek(safeOffset);
     state.setCurrentTime(safeOffset);
+    state.markSeek();
 
     if (resumePlayback) {
       player.play();

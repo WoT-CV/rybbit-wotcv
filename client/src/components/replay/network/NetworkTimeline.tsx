@@ -1,13 +1,16 @@
-import { type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
-import { Clock, Network } from "lucide-react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Network } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, type UIEvent, useCallback, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { useReplayStore } from "../replayStore";
+import { CurrentTimeMarker, CurrentTimeMarkerRow } from "../timeline/CurrentTimeMarker";
+import { buildNetworkTimelineRows, insertCurrentTimeMarker } from "../timeline/replayTimeline";
+import { TimelineFollowButton } from "../timeline/TimelineFollowButton";
+import { useFollowTimelineMarker } from "../timeline/useFollowTimelineMarker";
 import {
   filterNetworkRequests,
   formatNetworkOffset,
@@ -21,7 +24,16 @@ import type { NetworkStatusGroup, ParsedNetworkRequest } from "./types";
 
 interface NetworkTimelineProps {
   requests: ParsedNetworkRequest[];
-  onSeek: (offset: number) => void;
+  currentTime: number;
+  followCurrentTime: boolean;
+  highlightedKeys: ReadonlySet<string>;
+  initialScrollOffset: number;
+  resetKey: string;
+  selectedRequest?: ParsedNetworkRequest;
+  onDetailsBack: () => void;
+  onFollowCurrentTimeToggle: () => void;
+  onRequestSelect: (request: ParsedNetworkRequest) => void;
+  onScrollOffsetChange: (offset: number) => void;
 }
 
 interface HostOption {
@@ -29,17 +41,19 @@ interface HostOption {
   count: number;
 }
 
-type NetworkTimelineRow =
-  | {
-      kind: "current-time-marker";
-      offset: number;
-    }
-  | {
-      kind: "request";
-      request: ParsedNetworkRequest;
-    };
-
-export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
+export function NetworkTimeline({
+  requests,
+  currentTime,
+  followCurrentTime,
+  highlightedKeys,
+  initialScrollOffset,
+  resetKey,
+  selectedRequest,
+  onDetailsBack,
+  onFollowCurrentTimeToggle,
+  onRequestSelect,
+  onScrollOffsetChange,
+}: NetworkTimelineProps) {
   const t = useExtracted();
   const [query, setQuery] = useState("");
   const [host, setHost] = useState(() => getDefaultNetworkHost(requests));
@@ -47,12 +61,8 @@ export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
   const [statusGroup, setStatusGroup] = useState<NetworkStatusGroup>("all");
   const [initiatorType, setInitiatorType] = useState("all");
   const [fetchXhrOnly, setFetchXhrOnly] = useState(true);
-  const [followCurrentTime, setFollowCurrentTime] = useState(true);
   const [minDurationMs, setMinDurationMs] = useState(0);
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const lastFollowedMarkerIndexRef = useRef<number | null>(null);
-  const currentTime = useReplayStore(state => state.currentTime);
 
   const methods = useMemo(() => [...new Set(requests.map(request => request.method))].sort(), [requests]);
   const initiatorTypes = useMemo(() => [...new Set(requests.map(request => request.initiatorType))].sort(), [requests]);
@@ -80,74 +90,52 @@ export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
       }),
     [fetchXhrOnly, host, initiatorType, method, minDurationMs, query, requests, statusGroup]
   );
-  const currentTimeMarkerIndex = useMemo(() => {
-    const nextRequestIndex = filteredRequests.findIndex(request => request.startOffset > currentTime);
-    return nextRequestIndex === -1 ? filteredRequests.length : nextRequestIndex;
-  }, [currentTime, filteredRequests]);
-  const timelineRows = useMemo<NetworkTimelineRow[]>(() => {
-    const rows: NetworkTimelineRow[] = [];
-
-    filteredRequests.forEach((request, index) => {
-      if (index === currentTimeMarkerIndex) {
-        rows.push({ kind: "current-time-marker", offset: currentTime });
-      }
-
-      rows.push({ kind: "request", request });
-    });
-
-    if (currentTimeMarkerIndex === filteredRequests.length) {
-      rows.push({ kind: "current-time-marker", offset: currentTime });
-    }
-
-    return rows;
-  }, [currentTime, currentTimeMarkerIndex, filteredRequests]);
-  const handleQueryChange = useCallback((event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value), []);
-  const handleRequestSelect = useCallback(
-    (request: ParsedNetworkRequest) => {
-      onSeek(request.startOffset);
-      setSelectedRequestId(request.requestId);
-    },
-    [onSeek]
-  );
-  const selectedRequest = useMemo(
-    () => requests.find(request => request.requestId === selectedRequestId),
-    [requests, selectedRequestId]
-  );
-  const handleDetailsBack = useCallback(() => setSelectedRequestId(null), []);
+  const requestRows = useMemo(() => buildNetworkTimelineRows(filteredRequests), [filteredRequests]);
+  const timeline = useMemo(() => insertCurrentTimeMarker(requestRows, currentTime), [currentTime, requestRows]);
   const virtualizer = useVirtualizer({
-    count: timelineRows.length,
+    count: timeline.rows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 52,
+    getItemKey: index => timeline.rows[index]?.key ?? index,
+    estimateSize: index => (timeline.rows[index]?.kind === "current-time-marker" ? 29 : 52),
     overscan: 16,
   });
-  const handleFollowCurrentTimeToggle = useCallback(() => {
-    setFollowCurrentTime(value => !value);
-  }, []);
+  const scrollToMarker = useCallback(
+    () => virtualizer.scrollToIndex(timeline.markerIndex, { align: "center" }),
+    [timeline.markerIndex, virtualizer]
+  );
+  const filterResetKey = `${resetKey}:${query}:${host}:${method}:${statusGroup}:${initiatorType}:${fetchXhrOnly}:${minDurationMs}`;
+  useFollowTimelineMarker({
+    enabled: followCurrentTime && !selectedRequest && filteredRequests.length > 0,
+    markerIndex: timeline.markerIndex,
+    resetKey: filterResetKey,
+    scrollToMarker,
+  });
 
-  useEffect(() => {
-    if (!followCurrentTime || filteredRequests.length === 0) {
-      lastFollowedMarkerIndexRef.current = null;
-      return;
-    }
+  const handleQueryChange = useCallback((event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value), []);
+  const setScrollElement = useCallback(
+    (node: HTMLDivElement | null) => {
+      scrollRef.current = node;
+      if (node) node.scrollTop = initialScrollOffset;
+    },
+    [initialScrollOffset]
+  );
+  const handleScroll = useCallback(
+    (event: UIEvent<HTMLDivElement>) => onScrollOffsetChange(event.currentTarget.scrollTop),
+    [onScrollOffsetChange]
+  );
+  const currentTimeLabel = t("Current time {time}", { time: formatNetworkOffset(currentTime) });
 
-    if (lastFollowedMarkerIndexRef.current === currentTimeMarkerIndex) {
-      return;
-    }
-
-    virtualizer.scrollToIndex(currentTimeMarkerIndex, { align: "center" });
-    lastFollowedMarkerIndexRef.current = currentTimeMarkerIndex;
-  }, [currentTimeMarkerIndex, filteredRequests.length, followCurrentTime, virtualizer]);
+  if (selectedRequest) return <NetworkRequestDetails request={selectedRequest} onBack={onDetailsBack} />;
 
   if (requests.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-neutral-500 dark:text-neutral-400">
-        {t("No network requests recorded.")}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <CurrentTimeMarker label={currentTimeLabel} />
+        <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-neutral-500 dark:text-neutral-400">
+          {t("No network requests recorded.")}
+        </div>
       </div>
     );
-  }
-
-  if (selectedRequest) {
-    return <NetworkRequestDetails request={selectedRequest} onBack={handleDetailsBack} />;
   }
 
   return (
@@ -266,16 +254,7 @@ export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
               <Network aria-hidden="true" />
               {t("Fetch/XHR only")}
             </Button>
-            <Button
-              type="button"
-              size="xs"
-              variant={followCurrentTime ? "secondary" : "outline"}
-              aria-pressed={followCurrentTime}
-              onClick={handleFollowCurrentTimeToggle}
-            >
-              <Clock aria-hidden="true" />
-              {t("Follow time")}
-            </Button>
+            <TimelineFollowButton enabled={followCurrentTime} onToggle={onFollowCurrentTimeToggle} />
           </div>
           <span className="text-[10px] tabular-nums text-neutral-500 dark:text-neutral-400">
             {t("{visible} of {total}", {
@@ -287,65 +266,43 @@ export function NetworkTimeline({ requests, onSeek }: NetworkTimelineProps) {
       </div>
 
       {filteredRequests.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-neutral-500 dark:text-neutral-400">
-          {t("No requests match these filters.")}
+        <div className="flex min-h-0 flex-1 flex-col">
+          <CurrentTimeMarker label={currentTimeLabel} />
+          <div className="flex flex-1 items-center justify-center p-4 text-center text-xs text-neutral-500 dark:text-neutral-400">
+            {t("No requests match these filters.")}
+          </div>
         </div>
       ) : (
-        <div ref={scrollRef} className="flex-1 overflow-auto rounded-b-lg">
+        <div ref={setScrollElement} className="flex-1 overflow-auto rounded-b-lg" onScroll={handleScroll}>
           <div className="relative" style={{ height: `${virtualizer.getTotalSize()}px` }}>
             {virtualizer.getVirtualItems().map(virtualRow => {
-              const row = timelineRows[virtualRow.index];
+              const row = timeline.rows[virtualRow.index];
 
               if (row.kind === "current-time-marker") {
                 return (
                   <CurrentTimeMarkerRow
-                    key="current-time-marker"
+                    key={row.key}
                     virtualRow={virtualRow}
                     measure={virtualizer.measureElement}
-                    label={t("Current time {time}", { time: formatNetworkOffset(row.offset) })}
+                    label={currentTimeLabel}
                   />
                 );
               }
 
-              const request = row.request;
               return (
                 <NetworkRequestRow
-                  key={request.requestId}
-                  request={request}
-                  isActive={currentTime >= request.startOffset && currentTime <= request.endOffset}
+                  key={row.key}
+                  request={row.request}
+                  isHighlighted={highlightedKeys.has(row.key)}
                   virtualRow={virtualRow}
                   measure={virtualizer.measureElement}
-                  onSelect={handleRequestSelect}
+                  onSelect={onRequestSelect}
                 />
               );
             })}
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-interface CurrentTimeMarkerRowProps {
-  virtualRow: VirtualItem;
-  measure: (node: Element | null) => void;
-  label: string;
-}
-
-function CurrentTimeMarkerRow({ virtualRow, measure, label }: CurrentTimeMarkerRowProps) {
-  return (
-    <div
-      data-index={virtualRow.index}
-      ref={measure}
-      className="pointer-events-none absolute left-0 right-0 z-10 flex items-center gap-2 px-2 py-1.5 text-[10px]"
-      style={{ top: `${virtualRow.start}px` }}
-      aria-hidden="true"
-    >
-      <span className="h-px flex-1 bg-amber-400/70 dark:bg-amber-300/70" />
-      <span className="rounded-full border border-amber-400/70 bg-amber-500/10 px-2 py-0.5 font-medium tabular-nums text-amber-700 shadow-sm dark:border-amber-300/70 dark:bg-amber-400/10 dark:text-amber-300">
-        {label}
-      </span>
-      <span className="h-px flex-1 bg-amber-400/70 dark:bg-amber-300/70" />
     </div>
   );
 }

@@ -35,6 +35,8 @@ export const useReplayStore = create<{
 
   currentTime: number;
   setCurrentTime: (currentTime: number) => void;
+  seekRevision: number;
+  markSeek: () => void;
 
   duration: number;
   setDuration: (duration: number) => void;
@@ -89,9 +91,11 @@ export const useReplayStore = create<{
           }
           state.player.play();
         }
+        const restartedFromEnd = autoplay && state.duration > 0 && state.currentTime >= state.duration;
         return {
           autoplayRequest: null,
-          currentTime: autoplay && state.duration > 0 && state.currentTime >= state.duration ? 0 : state.currentTime,
+          currentTime: restartedFromEnd ? 0 : state.currentTime,
+          seekRevision: restartedFromEnd ? state.seekRevision + 1 : state.seekRevision,
           isPlaying: autoplay ? true : state.isPlaying,
           playbackState: autoplay ? "playing" : state.playbackState,
         };
@@ -106,6 +110,7 @@ export const useReplayStore = create<{
         player: null,
         isPlaying: false,
         currentTime: 0,
+        seekRevision: state.seekRevision + 1,
         duration: 0,
         effectivePlaybackSpeed: 1,
         playbackState: "paused",
@@ -135,6 +140,8 @@ export const useReplayStore = create<{
 
   currentTime: 0,
   setCurrentTime: currentTime => set({ currentTime }),
+  seekRevision: 0,
+  markSeek: () => set(state => ({ seekRevision: state.seekRevision + 1 })),
 
   duration: 0,
   setDuration: duration => set({ duration }),
@@ -171,10 +178,11 @@ export const useReplayStore = create<{
 
   // Reset all player state when session changes
   resetPlayerState: () =>
-    set({
+    set(state => ({
       player: null,
       isPlaying: false,
       currentTime: 0,
+      seekRevision: state.seekRevision + 1,
       duration: 0,
       playbackSpeed: "1",
       effectivePlaybackSpeed: 1,
@@ -185,5 +193,5 @@ export const useReplayStore = create<{
       replayCaptureProfile: "legacy",
       autoplayRequest: null,
       exportRange: null,
-    }),
+    })),
 }));
