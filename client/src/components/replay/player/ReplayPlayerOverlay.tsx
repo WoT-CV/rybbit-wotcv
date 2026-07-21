@@ -1,4 +1,4 @@
-import { Pause, Play } from "lucide-react";
+import { FastForward, Pause, Play } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -13,9 +13,10 @@ interface ReplayPlayerOverlayProps {
 
 export function ReplayPlayerOverlay({ onPlayPause, isPlaying }: ReplayPlayerOverlayProps) {
   const t = useExtracted();
-  const { currentTime, isSkippingInactivity, replaySegments } = useReplayStore(
+  const { currentTime, effectivePlaybackSpeed, isSkippingInactivity, replaySegments } = useReplayStore(
     useShallow(state => ({
       currentTime: state.currentTime,
+      effectivePlaybackSpeed: state.effectivePlaybackSpeed,
       isSkippingInactivity: state.isSkippingInactivity,
       replaySegments: state.replaySegments,
     }))
@@ -25,6 +26,10 @@ export function ReplayPlayerOverlay({ onPlayPause, isPlaying }: ReplayPlayerOver
   const overlayTimeoutRef = useRef<number | undefined>(undefined);
   const currentSegment = findSegmentAtTime(replaySegments, currentTime);
   const remainingInactivity = currentSegment?.isActive ? 0 : Math.max(0, (currentSegment?.end ?? 0) - currentTime);
+  const showInactivityOverlay = Boolean(isSkippingInactivity && currentSegment && !currentSegment.isActive);
+  const displayedSpeed = Number.isInteger(effectivePlaybackSpeed)
+    ? effectivePlaybackSpeed.toString()
+    : effectivePlaybackSpeed.toFixed(1);
 
   // Cleanup overlay timeout on unmount
   useEffect(() => {
@@ -69,11 +74,18 @@ export function ReplayPlayerOverlay({ onPlayPause, isPlaying }: ReplayPlayerOver
           </div>
         </div>
       )}
-      {isSkippingInactivity && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35">
-          <div className="rounded-lg bg-black/70 px-6 py-4 text-center text-white shadow-2xl backdrop-blur-sm">
-            <div className="text-xl font-medium italic">{t("Skipping inactivity")}</div>
-            <div className="mt-1 text-sm tabular-nums text-neutral-300">{formatTime(remainingInactivity)}</div>
+      {showInactivityOverlay && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="rounded-lg border border-white/15 bg-black/85 px-5 py-3 text-center text-white">
+            <div className="flex items-center justify-center gap-2 text-base font-medium">
+              <FastForward className="h-4 w-4" aria-hidden="true" />
+              <span role="status" aria-live="polite" aria-atomic="true">
+                {t("Skipping inactivity")}
+              </span>
+            </div>
+            <div className="mt-1 text-sm tabular-nums text-neutral-300" aria-hidden="true">
+              {displayedSpeed}× · {formatTime(remainingInactivity)}
+            </div>
           </div>
         </div>
       )}
