@@ -80,6 +80,121 @@ export function sessionGetOrCreate(key: string, candidateId: string, ttlMs: numb
   return (sessionRedis as SessionRedis).sessionGetOrCreate(key, candidateId, ttlMs);
 }
 
+export type IdentifiedSessionResolutionStatus =
+  | "continued"
+  | "created"
+  | "created-conflict"
+  | "created-gap"
+  | "existing";
+
+export interface IdentifiedSessionResolution {
+  sessionId: string;
+  status: IdentifiedSessionResolutionStatus;
+  continuationGapMs: number | null;
+  ownerClaimed: boolean;
+}
+
+// Resolve an identified session without racing the anonymous traffic that
+// immediately precedes identify(). The owner key is scoped to the browser
+// fingerprint and prevents a second account on the same browser identity from
+// claiming the anonymous session. PTTL gives us the anonymous session's last
+// touch time without changing the existing Redis value format.
+sessionRedis.defineCommand("sessionResolveIdentified", {
+  numberOfKeys: 3,
+  lua: `
+    local identifiedSession = redis.call('GET', KEYS[1])
+    local owner = redis.call('GET', KEYS[3])
+
+    if identifiedSession then
+      redis.call('PEXPIRE', KEYS[1], ARGV[2])
+      if (not owner) or owner == ARGV[4] then
+        redis.call('SET', KEYS[3], ARGV[4], 'PX', ARGV[2])
+        return {identifiedSession, 'existing', -1, 1}
+      end
+      return {identifiedSession, 'existing', -1, 0}
+    end
+
+    local anonymousSession = redis.call('GET', KEYS[2])
+    local anonymousTtl = redis.call('PTTL', KEYS[2])
+    local continuationGap = -1
+
+    if anonymousSession and anonymousTtl >= 0 then
+      continuationGap = tonumber(ARGV[2]) - anonymousTtl
+      if continuationGap < 0 then
+        continuationGap = 0
+      end
+
+      if tonumber(ARGV[3]) > 0
+        and continuationGap <= tonumber(ARGV[3])
+        and ((not owner) or owner == ARGV[4]) then
+        redis.call('SET', KEYS[1], anonymousSession, 'PX', ARGV[2])
+        redis.call('SET', KEYS[3], ARGV[4], 'PX', ARGV[2])
+        redis.call('PEXPIRE', KEYS[2], ARGV[2])
+        return {anonymousSession, 'continued', continuationGap, 1}
+      end
+    end
+
+    local status = 'created'
+    if owner and owner ~= ARGV[4] then
+      status = 'created-conflict'
+    elseif anonymousSession then
+      status = 'created-gap'
+    end
+
+    redis.call('SET', KEYS[1], ARGV[1], 'PX', ARGV[2])
+    if (not owner) or owner == ARGV[4] then
+      redis.call('SET', KEYS[3], ARGV[4], 'PX', ARGV[2])
+      return {ARGV[1], status, continuationGap, 1}
+    end
+    return {ARGV[1], status, continuationGap, 0}
+  `,
+});
+
+interface IdentifiedSessionRedis extends Redis {
+  sessionResolveIdentified(
+    identifiedKey: string,
+    anonymousKey: string,
+    ownerKey: string,
+    candidateId: string,
+    ttlMs: number,
+    continuationGraceMs: number,
+    identityHash: string
+  ): Promise<[string, IdentifiedSessionResolutionStatus, number, 0 | 1]>;
+}
+
+/**
+ * Resolve the session for an identified visitor and, when safe, atomically bind
+ * it to the recently active anonymous session from the same browser identity.
+ */
+export async function sessionResolveIdentified(
+  identifiedKey: string,
+  anonymousKey: string,
+  ownerKey: string,
+  candidateId: string,
+  ttlMs: number,
+  continuationGraceMs: number,
+  identityHash: string
+): Promise<IdentifiedSessionResolution> {
+  const [sessionId, status, continuationGapMs, ownerClaimed] = await (
+    sessionRedis as IdentifiedSessionRedis
+  ).sessionResolveIdentified(
+    identifiedKey,
+    anonymousKey,
+    ownerKey,
+    candidateId,
+    ttlMs,
+    continuationGraceMs,
+    identityHash
+  );
+
+  return {
+    sessionId,
+    status,
+    continuationGapMs: continuationGapMs >= 0 ? continuationGapMs : null,
+    ownerClaimed: ownerClaimed === 1,
+  };
+}
+
 // Rolling-window counters for the bot anomaly scorer. Each counter is a sorted
 // set: member -> observation, score -> time (ms). For event-rate counters the
 // member is a unique per-event token (so cardinality == event count); for
