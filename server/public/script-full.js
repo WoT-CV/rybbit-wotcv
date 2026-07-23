@@ -151,7 +151,7 @@
       exports.getReplayActivityDuration = getReplayActivityDuration;
       exports.getReplayCaptureVersion = getReplayCaptureVersion;
       exports.isReplayActivityEvent = isReplayActivityEvent;
-      exports.REPLAY_ACTIVITY_PRE_ROLL_MS = 500;
+      exports.REPLAY_ACTIVITY_PRE_ROLL_MS = 1e3;
       exports.REPLAY_ACTIVITY_POST_ROLL_MS = 1e3;
       var FULL_SNAPSHOT_EVENT_TYPE = 2;
       var INCREMENTAL_EVENT_TYPE = 3;
