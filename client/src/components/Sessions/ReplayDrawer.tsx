@@ -85,7 +85,7 @@ export function ReplayDrawer({ sessionId, open, onOpenChange, preservePlaybackSt
           </div>
 
           {/* Timeline sidebar */}
-          <div className="hidden h-full min-h-0 w-[300px] lg:block">
+          <div className="hidden h-full min-h-0 w-[clamp(360px,22vw,460px)] shrink-0 lg:block">
             <ReplayBreadcrumbs />
           </div>
         </div>

@@ -38,7 +38,7 @@ export default function SessionReplayPage() {
 
   return (
     <DisabledOverlay message={t("Replay")} featurePath="replay" requiredPlan="pro">
-      <div className="flex flex-col h-dvh overflow-hidden p-2 md:p-4 gap-3 max-w-[2000px] mx-auto">
+      <div className="flex h-dvh w-full max-w-none flex-col gap-3 overflow-hidden p-2 md:p-4">
         <div className="shrink-0">
           <SubHeader availableFilters={SESSION_REPLAY_PAGE_FILTERS} />
         </div>
@@ -56,7 +56,7 @@ export default function SessionReplayPage() {
         ) : (
           <div className="flex gap-3 flex-1 min-h-0">
             {/* List */}
-            <div className="w-full md:w-[200px] lg:w-[210px] shrink-0 min-h-0">
+            <div className="min-h-0 w-full shrink-0 md:w-[clamp(240px,15vw,320px)]">
               <ReplayList onSelect={isCompact ? () => setMobileOpen(true) : undefined} />
             </div>
 
@@ -66,7 +66,7 @@ export default function SessionReplayPage() {
             </div>
 
             {/* Timeline */}
-            <div className="hidden xl:block w-[300px] shrink-0 min-h-0">
+            <div className="hidden min-h-0 w-[clamp(360px,21vw,460px)] shrink-0 xl:block">
               <ReplayBreadcrumbs />
             </div>
           </div>
