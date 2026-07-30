@@ -75,6 +75,8 @@ class BotEventQueue {
         detected_rate_anomaly: event.detectedRateAnomaly || false,
         matched_ua_pattern: event.matchedUaPattern || "",
         bot_category: event.botCategory || "",
+        client_bot_score: event.clientBotScore ?? null,
+        client_signal_mask: event.clientSignalMask ?? 0,
       };
     });
 

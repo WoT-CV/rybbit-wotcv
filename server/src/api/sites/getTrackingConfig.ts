@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { siteConfig } from "../../lib/siteConfig.js";
 import { normalizeNetworkReplayConfig } from "../../lib/networkReplayConfig.js";
+import { hasFeatureFlagsForRuntime } from "../../services/featureFlags/definitions.js";
 import { usageService } from "../../services/usageService.js";
 
 export async function getTrackingConfig(request: FastifyRequest<{ Params: { siteId: string } }>, reply: FastifyReply) {
@@ -20,13 +21,15 @@ export async function getTrackingConfig(request: FastifyRequest<{ Params: { site
         : (config.sessionReplay && !usageService.isSiteWithoutReplay(config.siteId)) || false;
     const networkReplay = normalizeNetworkReplayConfig({
       ...config.networkReplayConfig,
-      enabled: sessionReplay && config.networkReplayConfig.enabled,
+      enabled: sessionReplay && config.networkReplayConfig?.enabled,
     });
+    const featureFlagsEnabled = await hasFeatureFlagsForRuntime(config.siteId, "client");
 
     // Return tracking configuration
     // This endpoint is public since the analytics script needs to fetch it
     return reply.send({
       type: config.type,
+      featureFlagsEnabled,
       sessionReplay,
       networkReplay,
       webVitals: config.type === "mobile" ? false : config.webVitals || false,

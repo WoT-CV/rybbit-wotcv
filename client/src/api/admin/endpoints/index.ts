@@ -66,14 +66,22 @@ export {
   updateExcludedHostnames,
   fetchExcludedUserAgents,
   updateExcludedUserAgents,
+  fetchExcludedASNs,
+  updateExcludedASNs,
+  fetchExcludedQueryParams,
+  updateExcludedQueryParams,
 } from "./exclusions";
 export type {
   ExcludedPathsResponse,
   ExcludedHostnamesResponse,
   ExcludedUserAgentsResponse,
+  ExcludedASNsResponse,
+  ExcludedQueryParamsResponse,
   UpdateExcludedPathsRequest,
   UpdateExcludedHostnamesRequest,
   UpdateExcludedUserAgentsRequest,
+  UpdateExcludedASNsRequest,
+  UpdateExcludedQueryParamsRequest,
 } from "./exclusions";
 
 // Account Settings endpoints

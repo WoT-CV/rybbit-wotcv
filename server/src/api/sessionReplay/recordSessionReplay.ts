@@ -27,7 +27,11 @@ const recordSessionReplaySchema = z.object({
     .optional(),
 });
 
-function parseReplayPageUrl(pageUrl: string | undefined): { hostname?: string; pathname?: string } {
+function parseReplayPageUrl(pageUrl: string | undefined): {
+  hostname?: string;
+  pathname?: string;
+  querystring?: string;
+} {
   if (!pageUrl) {
     return {};
   }
@@ -37,11 +41,13 @@ function parseReplayPageUrl(pageUrl: string | undefined): { hostname?: string; p
     return {
       hostname: url.hostname,
       pathname: url.pathname,
+      querystring: url.search,
     };
   } catch {
     if (pageUrl.startsWith("/")) {
       return {
         pathname: pageUrl.split(/[?#]/, 1)[0],
+        querystring: pageUrl.split("#", 1)[0].split(/\?(.*)/s)[1],
       };
     }
 
@@ -90,13 +96,14 @@ export async function recordSessionReplay(
     const body = recordSessionReplaySchema.parse(request.body) as RecordSessionReplayRequest;
 
     const requestIP = resolveClientIp(request, { firstPartyProxy: siteConfiguration.firstPartyProxy });
-    const { hostname, pathname } = parseReplayPageUrl(body.metadata?.pageUrl);
+    const { hostname, pathname, querystring } = parseReplayPageUrl(body.metadata?.pageUrl);
     const userAgent = request.headers["user-agent"] || "";
 
     const exclusionDecision = await decideSiteExclusion(siteConfiguration, {
       ipAddress: requestIP,
       candidateIps: collectCandidateClientIps(request, [requestIP]),
       pathname,
+      querystring,
       hostname,
       userAgent: String(userAgent),
     });

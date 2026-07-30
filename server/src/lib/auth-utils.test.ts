@@ -95,6 +95,8 @@ CREATE TABLE "sites" (
   "excluded_paths" jsonb DEFAULT '[]',
   "excluded_hostnames" jsonb DEFAULT '[]',
   "excluded_user_agents" jsonb DEFAULT '[]',
+  "excluded_asns" jsonb DEFAULT '[]',
+  "excluded_query_params" jsonb DEFAULT '[]',
   "sessionReplay" boolean DEFAULT false,
   "network_replay_config" jsonb NOT NULL DEFAULT '{"enabled":false,"captureFetch":true,"captureXhr":true,"capturePerformanceResources":true,"captureInitialPerformanceResources":true,"captureRequestHeaders":true,"captureResponseHeaders":true,"captureRequestBody":true,"captureResponseBody":true,"maxBodySizeBytes":1000000,"bodyReadTimeoutMs":1000,"maxNetworkEventSizeBytes":2500000,"maxReplayBatchSizeBytes":7000000}',
   "webVitals" boolean DEFAULT false,

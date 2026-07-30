@@ -35,6 +35,7 @@ export interface ScriptConfig {
   trackCopy: boolean;
   trackFormInteractions: boolean;
   tag: string;
+  featureFlagsEnabled: boolean;
   featureFlags: Record<string, FeatureFlagAssignment>;
 }
 

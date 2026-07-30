@@ -19,6 +19,8 @@ const IDENTIFY_MAX_ATTEMPTS = 3;
 const IDENTIFY_RETRY_BASE_DELAY_MS = 250;
 const IDENTIFY_RETRY_MAX_DELAY_MS = 2_000;
 
+const FEATURE_FLAG_REQUEST_TIMEOUT_MS = 2000;
+
 export class Tracker {
   private config: ScriptConfig;
   private customUserId: string | null = null;
@@ -74,6 +76,11 @@ export class Tracker {
   }
 
   private async refreshFeatureFlags(): Promise<void> {
+    if (!this.config.featureFlagsEnabled) return;
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), FEATURE_FLAG_REQUEST_TIMEOUT_MS);
+
     try {
       const response = await fetch(`${this.config.analyticsHost}/site/${this.config.siteId}/feature-flags/evaluate`, {
         method: "POST",
@@ -88,13 +95,19 @@ export class Tracker {
         mode: "cors",
         credentials: "omit",
         keepalive: true,
+        signal: controller.signal,
       });
 
       if (!response.ok) return;
       const data = await response.json();
       this.config.featureFlags = data?.flags && typeof data.flags === "object" ? data.flags : {};
+      if (data?.featureFlagsEnabled === false) {
+        this.config.featureFlagsEnabled = false;
+      }
     } catch (e) {
       // Feature flag refresh is best-effort and should never affect analytics collection.
+    } finally {
+      window.clearTimeout(timeout);
     }
   }
 

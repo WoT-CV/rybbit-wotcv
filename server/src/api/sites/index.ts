@@ -20,6 +20,8 @@ export {
   getSiteExcludedPaths,
   getSiteExcludedHostnames,
   getSiteExcludedUserAgents,
+  getSiteExcludedASNs,
+  getSiteExcludedQueryParams,
 } from "./getSiteExclusions.js";
 
 // Site Imports

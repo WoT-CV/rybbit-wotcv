@@ -156,6 +156,8 @@ export function updateSiteConfig(
     excludedPaths?: string[];
     excludedHostnames?: string[];
     excludedUserAgents?: string[];
+    excludedASNs?: string[];
+    excludedQueryParams?: string[];
     sessionReplay?: boolean;
     networkReplayConfig?: Partial<NetworkReplayConfig>;
     webVitals?: boolean;

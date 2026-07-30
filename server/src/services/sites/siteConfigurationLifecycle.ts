@@ -56,6 +56,8 @@ export type UpdateSiteConfigurationInput = {
   excludedPaths?: string[];
   excludedHostnames?: string[];
   excludedUserAgents?: string[];
+  excludedASNs?: string[];
+  excludedQueryParams?: string[];
   tags?: string[];
   sessionReplay?: boolean;
   networkReplayConfig?: NetworkReplayConfigUpdate;
@@ -120,6 +122,8 @@ const DIRECT_UPDATE_FIELDS = [
   "excludedPaths",
   "excludedHostnames",
   "excludedUserAgents",
+  "excludedASNs",
+  "excludedQueryParams",
   "tags",
   "sessionReplay",
   "webVitals",
