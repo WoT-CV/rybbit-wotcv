@@ -107,13 +107,15 @@ ${dataAttributes.map(attr => `    ${formatAttr(attr)}`).join("\n")}
     defer
 ></script>`;
 
-  const jsSnippet = `(function () {
-  var el = document.createElement("script");
-  el.src = "${scriptUrl}";
-${dataAttributes.map(([key, value]) => `  el.setAttribute("${key}", ${JSON.stringify(value)});`).join("\n")}
-  el.defer = true;
-  document.head.appendChild(el);
-})();`;
+  const jsSnippet = `<script>
+  (function() {
+    var el = document.createElement("script");
+    el.src = "${scriptUrl}";
+    el.defer = true;
+${dataAttributes.map(([key, value]) => `    el.setAttribute("${key}", ${JSON.stringify(value)});`).join("\n")}
+    document.head.appendChild(el);
+  })();
+</script>`;
 
   const inlineScript = `<script src="${scriptUrl}" ${dataAttributes.map(formatAttr).join(" ")} defer></script>`;
 
@@ -174,9 +176,9 @@ await rybbit.event("signup_started", { plan: "pro" });`;
               {showJsFallback && (
                 <div className="mt-2 flex flex-col gap-2">
                   <p className="text-xs text-muted-foreground">
-                    {t("Run this in any JavaScript that loads on every page:")}
+                    {t("Paste this into the {headTag} of your website:", { headTag: "<head>" })}
                   </p>
-                  <CodeSnippet language="javascript" code={jsSnippet} />
+                  <CodeSnippet language="HTML" code={jsSnippet} />
                 </div>
               )}
             </div>

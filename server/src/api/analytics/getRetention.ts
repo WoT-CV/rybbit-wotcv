@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { analyticsRoute, runAnalyticsQuery } from "./utils/analyticsQuery.js";
+import { effectiveUserId } from "./utils/effectiveUserId.js";
 
 // Define the expected shape of a single data row from the query
 interface RetentionDataRow {
@@ -32,7 +33,7 @@ export const buildRetentionQuery = (retentionMode: "day" | "week") => {
 WITH UserFirstPeriod AS (
     SELECT
         -- Use effective user ID: identified_user_id for identified users, user_id for anonymous
-        COALESCE(NULLIF(identified_user_id, ''), user_id) AS effective_user_id,
+        ${effectiveUserId()} AS effective_user_id,
         ${periodFunction}(min(timestamp)${retentionMode === "week" ? ", 1" : ""}) AS cohort_period
     FROM events
     WHERE site_id = {siteId:UInt16}
@@ -42,7 +43,7 @@ WITH UserFirstPeriod AS (
 ),
 PeriodActivity AS (
     SELECT DISTINCT
-        COALESCE(NULLIF(identified_user_id, ''), user_id) AS effective_user_id,
+        ${effectiveUserId()} AS effective_user_id,
         ${periodFunction}(timestamp${retentionMode === "week" ? ", 1" : ""}) AS activity_period
     FROM events
     WHERE site_id = {siteId:UInt16}

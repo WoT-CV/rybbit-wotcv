@@ -2,11 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getLocation: vi.fn(),
+  lookupAsn: vi.fn(),
   loggerWarn: vi.fn(),
 }));
 
 vi.mock("../../db/geolocation/geolocation.js", () => ({
   getLocation: mocks.getLocation,
+}));
+
+vi.mock("../../db/geolocation/asn.js", () => ({
+  lookupAsn: mocks.lookupAsn,
 }));
 
 vi.mock("../../lib/logger/logger.js", () => ({
@@ -22,6 +27,8 @@ function configuration(overrides: Partial<Parameters<typeof decideSiteExclusion>
     excludedPaths: [],
     excludedHostnames: [],
     excludedUserAgents: [],
+    excludedASNs: [],
+    excludedQueryParams: [],
     ...overrides,
   };
 }
@@ -36,6 +43,7 @@ const request = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.getLocation.mockResolvedValue({});
+  mocks.lookupAsn.mockReturnValue(null);
 });
 
 describe("decideSiteExclusion", () => {
@@ -148,6 +156,64 @@ describe("decideSiteExclusion", () => {
     await expect(decideSiteExclusion(rules, { ...request, userAgent: "Mozilla/5.0 (real browser)" })).resolves.toEqual({
       excluded: false,
     });
+  });
+
+  it("matches an excluded ASN with or without the AS prefix, ignoring invalid rules", async () => {
+    mocks.lookupAsn.mockReturnValue({ asn: 13335, organization: "Cloudflare" });
+    const expected = { excluded: true, reason: "asn", label: "ASN", value: "AS13335" };
+
+    await expect(decideSiteExclusion(configuration({ excludedASNs: ["AS13335"] }), request)).resolves.toEqual(expected);
+    await expect(decideSiteExclusion(configuration({ excludedASNs: ["as13335"] }), request)).resolves.toEqual(expected);
+    await expect(decideSiteExclusion(configuration({ excludedASNs: ["13335"] }), request)).resolves.toEqual(expected);
+    await expect(decideSiteExclusion(configuration({ excludedASNs: ["bogus", "AS999"] }), request)).resolves.toEqual({
+      excluded: false,
+    });
+  });
+
+  it("matches an excluded ASN on any candidate IP and skips lookups when no ASN rules exist", async () => {
+    mocks.lookupAsn.mockImplementation((ip: string) =>
+      ip === "203.0.113.7" ? { asn: 16509, organization: "Amazon" } : null
+    );
+
+    await expect(
+      decideSiteExclusion(configuration({ excludedASNs: ["AS16509"] }), {
+        ...request,
+        candidateIps: ["203.0.113.7"],
+      })
+    ).resolves.toMatchObject({ excluded: true, reason: "asn", value: "AS16509" });
+
+    mocks.lookupAsn.mockClear();
+    await expect(decideSiteExclusion(configuration(), request)).resolves.toEqual({ excluded: false });
+    expect(mocks.lookupAsn).not.toHaveBeenCalled();
+  });
+
+  it("matches query params by presence and by value glob, case-insensitively", async () => {
+    const withQuery = { ...request, pathname: "/pricing", hostname: "example.com", userAgent: "Mozilla/5.0" };
+
+    await expect(
+      decideSiteExclusion(configuration({ excludedQueryParams: ["preview"] }), {
+        ...withQuery,
+        querystring: "?Preview=true&x=1",
+      })
+    ).resolves.toEqual({ excluded: true, reason: "query_param", label: "query param", value: "Preview=true" });
+
+    await expect(
+      decideSiteExclusion(configuration({ excludedQueryParams: ["utm_source=internal-*"] }), {
+        ...withQuery,
+        querystring: "utm_source=Internal-QA",
+      })
+    ).resolves.toMatchObject({ excluded: true, reason: "query_param", value: "utm_source=Internal-QA" });
+
+    await expect(
+      decideSiteExclusion(configuration({ excludedQueryParams: ["utm_source=internal", "preview"] }), {
+        ...withQuery,
+        querystring: "utm_source=external&other=preview",
+      })
+    ).resolves.toEqual({ excluded: false });
+
+    await expect(
+      decideSiteExclusion(configuration({ excludedQueryParams: ["preview"] }), withQuery)
+    ).resolves.toEqual({ excluded: false });
   });
 
   it("returns the first exclusion in the fixed ordering and short-circuits later work", async () => {

@@ -40,6 +40,7 @@ export async function getSite(request: FastifyRequest<GetSiteParams>, reply: Fas
       public: site.public,
       embedEnabled: site.embedEnabled,
       blockBots: site.blockBots,
+      firstPartyProxy: site.firstPartyProxy,
       trackIp: site.trackIp,
       isOwner: isOwner,
       // Analytics features

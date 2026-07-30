@@ -84,6 +84,8 @@ export const sites = pgTable(
     excludedPaths: jsonb("excluded_paths").default([]).$type<string[]>(), // Array of pathname glob patterns to exclude (e.g., ["/admin/*", "/preview"])
     excludedHostnames: jsonb("excluded_hostnames").default([]).$type<string[]>(), // Array of hostname glob patterns to exclude (e.g., ["localhost", "*.vercel.app"])
     excludedUserAgents: jsonb("excluded_user_agents").default([]).$type<string[]>(), // Array of case-insensitive user-agent substrings to exclude (e.g., ["HeadlessChrome"])
+    excludedASNs: jsonb("excluded_asns").default([]).$type<string[]>(), // Array of autonomous system numbers to exclude, with or without "AS" prefix (e.g., ["AS13335", "16509"])
+    excludedQueryParams: jsonb("excluded_query_params").default([]).$type<string[]>(), // Array of query param exclusions: "name" (param present) or "name=value" (value supports * glob), e.g. ["preview", "utm_source=internal-*"]
     sessionReplay: boolean().default(false),
     webVitals: boolean().default(false),
     trackErrors: boolean().default(false),

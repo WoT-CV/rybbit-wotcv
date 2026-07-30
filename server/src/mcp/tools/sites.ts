@@ -145,6 +145,14 @@ export function registerSiteTools(server: McpServer, api: RybbitApiClient, guard
         excludedPaths: z.array(z.string()).optional(),
         excludedHostnames: z.array(z.string()).optional(),
         excludedUserAgents: z.array(z.string()).optional(),
+        excludedASNs: z
+          .array(z.string())
+          .optional()
+          .describe("Autonomous system numbers to exclude, with or without AS prefix (e.g., AS13335)"),
+        excludedQueryParams: z
+          .array(z.string())
+          .optional()
+          .describe('Query param exclusions: "name" (param present) or "name=value" (value supports * glob)'),
         tags: z.array(z.string()).optional(),
         ...siteFeatureInputs,
       },

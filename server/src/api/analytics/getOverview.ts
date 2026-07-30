@@ -3,6 +3,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { getFilterStatement } from "./utils/getFilterStatement.js";
 import { getTimeStatement } from "./utils/utils.js";
 import { analyticsRoute, runAnalyticsQuery } from "./utils/analyticsQuery.js";
+import { EFFECTIVE_SESSION_USER_ID } from "./utils/effectiveUserId.js";
 
 type GetOverviewResponse = {
   sessions: number;
@@ -32,7 +33,9 @@ export const buildOverviewQuery = (params: FilterParams, siteId: number) => {
     FilteredSessionsWithStats AS (
         SELECT
             session_id,
-            anyLast(user_id) AS user_id,
+            -- Aliased away from \`user_id\` on purpose: an alias that shadows a column
+            -- referenced inside its own expression is a cyclic-alias error in ClickHouse.
+            ${EFFECTIVE_SESSION_USER_ID} AS effective_user_id,
             MIN(timestamp) AS start_time,
             MAX(timestamp) AS end_time,
             countIf(type = 'pageview') AS filtered_pageviews
@@ -49,7 +52,7 @@ export const buildOverviewQuery = (params: FilterParams, siteId: number) => {
         sumIf(1, asp.total_pageviews_in_session = 1) / COUNT() * 100 AS bounce_rate,
         AVG(f.end_time - f.start_time) AS session_duration,
         SUM(f.filtered_pageviews) AS pageviews,
-        COUNT(DISTINCT f.user_id) AS users
+        COUNT(DISTINCT f.effective_user_id) AS users
     FROM FilteredSessionsWithStats f
     LEFT JOIN AllSessionPageviews asp ON f.session_id = asp.session_id`;
 };

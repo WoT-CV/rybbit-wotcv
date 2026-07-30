@@ -6,6 +6,7 @@ import { db } from "../../db/postgres/postgres.js";
 import { sites } from "../../db/postgres/schema.js";
 import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { getTimeStatement, processResults } from "../../api/analytics/utils/utils.js";
+import { effectiveUserId } from "../../api/analytics/utils/effectiveUserId.js";
 import { getFilterStatement } from "../../api/analytics/utils/getFilterStatement.js";
 import { createServiceLogger } from "../../lib/logger/logger.js";
 import { PdfReportTemplate } from "./templates/PdfReportTemplate.js";
@@ -206,7 +207,7 @@ class PdfReportService {
           (
               SELECT
                   COUNT(*)                   AS pageviews,
-                  COUNT(DISTINCT user_id)    AS users
+                  COUNT(DISTINCT ${effectiveUserId()}) AS users
               FROM events
               WHERE
                   site_id = {siteId:Int32}

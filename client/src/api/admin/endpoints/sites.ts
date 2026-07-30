@@ -153,6 +153,8 @@ export function updateSiteConfig(
     excludedPaths?: string[];
     excludedHostnames?: string[];
     excludedUserAgents?: string[];
+    excludedASNs?: string[];
+    excludedQueryParams?: string[];
     sessionReplay?: boolean;
     webVitals?: boolean;
     trackErrors?: boolean;

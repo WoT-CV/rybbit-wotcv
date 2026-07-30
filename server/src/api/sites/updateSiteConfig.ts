@@ -25,6 +25,31 @@ const updateSiteConfigSchema = z.object({
   excludedPaths: z.array(z.string().trim().min(1).max(2048)).max(100).optional(),
   excludedHostnames: z.array(z.string().trim().min(1).max(253)).max(100).optional(),
   excludedUserAgents: z.array(z.string().trim().min(1).max(512)).max(100).optional(),
+  excludedASNs: z
+    .array(
+      z
+        .string()
+        .trim()
+        .regex(/^(?:AS)?\d{1,10}$/i, "ASN must be a number, optionally prefixed with AS (e.g., AS13335 or 13335)")
+        .refine(value => Number(value.replace(/^AS/i, "")) <= 4294967295, {
+          message: "ASN must be at most 4294967295",
+        })
+    )
+    .max(100)
+    .optional(),
+  excludedQueryParams: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1)
+        .max(512)
+        .refine(value => !value.startsWith("="), {
+          message: "Query param rule must have a name before '=' (e.g., preview or utm_source=internal)",
+        })
+    )
+    .max(100)
+    .optional(),
   tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
   sessionReplay: z.boolean().optional(),
   webVitals: z.boolean().optional(),

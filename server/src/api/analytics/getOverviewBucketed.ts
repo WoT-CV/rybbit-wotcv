@@ -11,6 +11,7 @@ import {
 import { getFilterStatement } from "./utils/getFilterStatement.js";
 import { TimeBucket } from "./types.js";
 import { analyticsRoute, runAnalyticsQuery } from "./utils/analyticsQuery.js";
+import { effectiveUserId } from "./utils/effectiveUserId.js";
 
 function getTimeStatementFill(params: FilterParams, bucket: TimeBucket) {
   const { params: validatedParams, bucket: validatedBucket } = validateTimeStatementFillParams(params, bucket);
@@ -168,7 +169,7 @@ FULL JOIN
     SELECT
         toDateTime(${TimeBucketToFn[bucket]}(toTimeZone(timestamp, ${tzEscaped}))) AS time,
         countIf(type = 'pageview') AS pageviews,
-        COUNT(DISTINCT user_id) AS users
+        COUNT(DISTINCT ${effectiveUserId()}) AS users
     FROM events
     WHERE
         site_id = {siteId:Int32}

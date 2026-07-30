@@ -6,6 +6,7 @@ import { FilterParams } from "@rybbit/shared";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
 import { analyticsRoute, runAnalyticsQuery } from "../utils/analyticsQuery.js";
+import { effectiveUserId } from "../utils/effectiveUserId.js";
 
 export type GetUsersResponse = {
   user_id: string; // Device fingerprint
@@ -88,7 +89,7 @@ FROM (
 `
       : `
 SELECT
-    count(DISTINCT COALESCE(NULLIF(events.identified_user_id, ''), events.user_id)) AS total_count
+    count(DISTINCT ${effectiveUserId("events")}) AS total_count
 FROM events
 WHERE
     site_id = {siteId:Int32}
@@ -106,7 +107,7 @@ WHERE
 WITH AggregatedUsers AS (
     SELECT
         -- Group by effective user: identified_user_id for identified users, user_id (device) for anonymous
-        COALESCE(NULLIF(events.identified_user_id, ''), events.user_id) AS effective_user_id,
+        ${effectiveUserId("events")} AS effective_user_id,
         argMax(user_id, timestamp) AS user_id,
         argMax(identified_user_id, timestamp) AS identified_user_id,
         argMax(country, timestamp) AS country,

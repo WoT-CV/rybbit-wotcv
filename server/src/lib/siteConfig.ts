@@ -19,6 +19,8 @@ export interface SiteConfigData {
   excludedPaths: string[];
   excludedHostnames: string[];
   excludedUserAgents: string[];
+  excludedASNs: string[];
+  excludedQueryParams: string[];
   privateLinkKey?: string | null;
   sessionReplay: boolean;
   webVitals: boolean;
@@ -107,6 +109,8 @@ class SiteConfig {
         excludedPaths: Array.isArray(site.excludedPaths) ? site.excludedPaths : [],
         excludedHostnames: Array.isArray(site.excludedHostnames) ? site.excludedHostnames : [],
         excludedUserAgents: Array.isArray(site.excludedUserAgents) ? site.excludedUserAgents : [],
+        excludedASNs: Array.isArray(site.excludedASNs) ? site.excludedASNs : [],
+        excludedQueryParams: Array.isArray(site.excludedQueryParams) ? site.excludedQueryParams : [],
         privateLinkKey: site.privateLinkKey,
         sessionReplay: site.sessionReplay || false,
         webVitals: site.webVitals || false,

@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { sql } from "drizzle-orm";
 import { db } from "../../../db/postgres/postgres.js";
 import { analyticsRoute, runAnalyticsQuery } from "../utils/analyticsQuery.js";
+import { effectiveUserId } from "../utils/effectiveUserId.js";
 
 export interface GetUserTraitKeysRequest {
   Params: { siteId: string };
@@ -86,7 +87,7 @@ export const getUserTraitValues = analyticsRoute<GetUserTraitValuesRequest>(
 // Use events.identified_user_id to avoid conflict with the argMax alias
 export const buildTraitValueUsersQuery = () => `
       SELECT
-        COALESCE(NULLIF(events.identified_user_id, ''), events.user_id) AS effective_user_id,
+        ${effectiveUserId("events")} AS effective_user_id,
         argMax(events.user_id, timestamp) AS user_id,
         argMax(events.identified_user_id, timestamp) AS identified_user_id,
         argMax(country, timestamp) AS country,

@@ -121,6 +121,8 @@ import {
   getSiteExcludedIPs,
   getSiteExcludedPaths,
   getSiteExcludedUserAgents,
+  getSiteExcludedASNs,
+  getSiteExcludedQueryParams,
   getSiteHasData,
   getSiteImports,
   getSiteIsPublic,
@@ -438,6 +440,8 @@ async function sitesRoutes(fastify: FastifyInstance) {
   fastify.get("/sites/:siteId/excluded-paths", authSitesRead, getSiteExcludedPaths);
   fastify.get("/sites/:siteId/excluded-hostnames", authSitesRead, getSiteExcludedHostnames);
   fastify.get("/sites/:siteId/excluded-user-agents", authSitesRead, getSiteExcludedUserAgents);
+  fastify.get("/sites/:siteId/excluded-asns", authSitesRead, getSiteExcludedASNs);
+  fastify.get("/sites/:siteId/excluded-query-params", authSitesRead, getSiteExcludedQueryParams);
 
   // Site Usage
   fastify.get("/sites/:siteId/usage", authSitesRead, getSiteUsage);

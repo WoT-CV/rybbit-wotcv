@@ -156,6 +156,7 @@ describe("recordSessionReplay exclusions", () => {
         ipAddress: "198.51.100.10",
         candidateIps: ["198.51.100.10", "203.0.113.10"],
         pathname: "/admin/users",
+        querystring: "?tab=settings",
         hostname: "example.com",
         userAgent: "Mozilla/5.0 HeadlessChrome/120",
       }

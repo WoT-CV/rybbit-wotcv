@@ -95,6 +95,8 @@ CREATE TABLE "sites" (
   "excluded_paths" jsonb DEFAULT '[]',
   "excluded_hostnames" jsonb DEFAULT '[]',
   "excluded_user_agents" jsonb DEFAULT '[]',
+  "excluded_asns" jsonb DEFAULT '[]',
+  "excluded_query_params" jsonb DEFAULT '[]',
   "sessionReplay" boolean DEFAULT false,
   "webVitals" boolean DEFAULT false,
   "trackErrors" boolean DEFAULT false,

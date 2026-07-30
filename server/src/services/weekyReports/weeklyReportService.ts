@@ -5,6 +5,7 @@ import { db } from "../../db/postgres/postgres.js";
 import { organization, member, user, sites } from "../../db/postgres/schema.js";
 import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { processResults } from "../../api/analytics/utils/utils.js";
+import { effectiveUserId } from "../../api/analytics/utils/effectiveUserId.js";
 import { createServiceLogger } from "../../lib/logger/logger.js";
 import { sendWeeklyReportEmail } from "../../lib/email/email.js";
 import { filterSitesByMemberAccess } from "../../lib/siteAccess.js";
@@ -57,7 +58,7 @@ class WeeklyReportService {
               -- Page-level and user-level metrics
               SELECT
                   COUNT(*)                   AS pageviews,
-                  COUNT(DISTINCT user_id)    AS users
+                  COUNT(DISTINCT ${effectiveUserId()}) AS users
               FROM events
               WHERE
                   site_id = {siteId:Int32}
