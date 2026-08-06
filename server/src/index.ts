@@ -299,6 +299,7 @@ server.addHook("onSend", async (_request, reply, payload) => {
 server.register(fastifyStatic, {
   root: join(__dirname, "../public"),
   prefix: "/", // or whatever prefix you need
+  preCompressed: true,
 });
 
 server.register(
@@ -348,9 +349,15 @@ server.register(oauthWellKnownRoutes);
 // default to max-age=0, so each tracked page hit fires a conditional request that
 // lands on caddy and the backend. script.js gets a short TTL so tracker updates
 // still propagate quickly; the vendored libs rarely change and get a longer TTL.
-server.get("/api/script.js", async (_, reply) => reply.sendFile("script.js", { maxAge: "1h" }));
-server.get("/api/replay.js", async (_, reply) => reply.sendFile("rrweb.min.js", { maxAge: "1d" }));
-server.get("/api/metrics.js", async (_, reply) => reply.sendFile("web-vitals.iife.js", { maxAge: "1d" }));
+server.get("/api/script.js", async (_, reply) =>
+  reply.header("Vary", "Origin, Accept-Encoding").sendFile("script.js", { maxAge: "1h" })
+);
+server.get("/api/replay.js", async (_, reply) =>
+  reply.header("Vary", "Origin, Accept-Encoding").sendFile("rrweb.min.js", { maxAge: "1d" })
+);
+server.get("/api/metrics.js", async (_, reply) =>
+  reply.header("Vary", "Origin, Accept-Encoding").sendFile("web-vitals.iife.js", { maxAge: "1d" })
+);
 server.get("/api/source", { logLevel: "silent" }, async (_, reply) => reply.redirect(getSourceCodeUrl()));
 
 // Domain-specific route plugins

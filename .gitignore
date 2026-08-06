@@ -6,6 +6,8 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+server/public/*.js.br
+server/public/*.js.gz
 
 # Environment variables
 .env
