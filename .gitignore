@@ -5,6 +5,8 @@ node_modules/
 # Build outputs
 dist/
 build/
+__pycache__/
+*.py[cod]
 *.tsbuildinfo
 server/public/*.js.br
 server/public/*.js.gz

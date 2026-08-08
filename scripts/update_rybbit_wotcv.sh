@@ -11,8 +11,21 @@ PUBLIC_HEALTH_URL="${RYBBIT_PUBLIC_HEALTH_URL:-https://tracking.wot-cv.com/api/h
 export WOTCV_REMOTE="${WOTCV_REMOTE:-origin}"
 export WOTCV_BRANCH="${WOTCV_BRANCH:-feat/wotcv}"
 export WOTCV_COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME:-rybbit}"
-export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-${WOTCV_COMPOSE_PROJECT_NAME}}"
+export WOTCV_EXPECTED_COMPOSE_PROJECT_NAME="${WOTCV_EXPECTED_COMPOSE_PROJECT_NAME:-rybbit}"
+export WOTCV_CLICKHOUSE_VOLUME_NAME="${WOTCV_CLICKHOUSE_VOLUME_NAME:-rybbit_clickhouse-data}"
+export WOTCV_POSTGRES_VOLUME_NAME="${WOTCV_POSTGRES_VOLUME_NAME:-rybbit_postgres-data}"
+export WOTCV_REDIS_VOLUME_NAME="${WOTCV_REDIS_VOLUME_NAME:-rybbit_redis-data}"
 export WOTCV_HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
+
+if [[ -n "${COMPOSE_PROJECT_NAME:-}" && "${COMPOSE_PROJECT_NAME}" != "${WOTCV_COMPOSE_PROJECT_NAME}" ]]; then
+  echo "Refusing update: COMPOSE_PROJECT_NAME='${COMPOSE_PROJECT_NAME}' conflicts with WOTCV_COMPOSE_PROJECT_NAME='${WOTCV_COMPOSE_PROJECT_NAME}'." >&2
+  exit 1
+fi
+if [[ "${WOTCV_COMPOSE_PROJECT_NAME}" != "${WOTCV_EXPECTED_COMPOSE_PROJECT_NAME}" ]]; then
+  echo "Refusing update: Compose project '${WOTCV_COMPOSE_PROJECT_NAME}' does not match expected '${WOTCV_EXPECTED_COMPOSE_PROJECT_NAME}'." >&2
+  exit 1
+fi
+export COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME}"
 
 if [[ "${EUID}" -eq 0 ]]; then
   echo "Uruchom ten skrypt jako użytkownik wdrożeniowy, bez sudo." >&2

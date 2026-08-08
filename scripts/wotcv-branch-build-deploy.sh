@@ -12,8 +12,14 @@ HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
 BACKEND_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-backend"
 CLIENT_IMAGE="ghcr.io/wot-cv/rybbit-wotcv-client"
 COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-rybbit}}"
+EXPECTED_COMPOSE_PROJECT_NAME="${WOTCV_EXPECTED_COMPOSE_PROJECT_NAME:-rybbit}"
+CLICKHOUSE_VOLUME_NAME="${WOTCV_CLICKHOUSE_VOLUME_NAME:-rybbit_clickhouse-data}"
+POSTGRES_VOLUME_NAME="${WOTCV_POSTGRES_VOLUME_NAME:-rybbit_postgres-data}"
+REDIS_VOLUME_NAME="${WOTCV_REDIS_VOLUME_NAME:-rybbit_redis-data}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.wotcv.yml -f docker-compose.wotcv.branch-build.yml)
 COMPOSE_CONFIG_FILE=""
+CLICKHOUSE_EVENT_BASELINE=""
+POSTGRES_DATA_BASELINE=""
 
 cleanup() {
   [[ -z "${COMPOSE_CONFIG_FILE}" ]] || rm -f "${COMPOSE_CONFIG_FILE}"
@@ -25,6 +31,7 @@ cd "${ROOT_DIR}"
 export COMPOSE_PROJECT_NAME
 
 wotcv_require_non_root
+wotcv_require_expected_compose_project "${COMPOSE_PROJECT_NAME}" "${EXPECTED_COMPOSE_PROJECT_NAME}"
 wotcv_require_commands git docker curl python3
 wotcv_require_clean_worktree
 
@@ -62,6 +69,61 @@ for service_name in ("clickhouse", "postgres", "backend", "client"):
 
 print("Compose port validation passed.")
 PY
+}
+
+require_persistent_volumes() {
+  wotcv_require_named_volume "${CLICKHOUSE_VOLUME_NAME}"
+  wotcv_require_named_volume "${POSTGRES_VOLUME_NAME}"
+  wotcv_require_named_volume "${REDIS_VOLUME_NAME}"
+}
+
+validate_persistent_storage() {
+  wotcv_validate_container_persistence \
+    "$("${COMPOSE[@]}" ps -q clickhouse)" \
+    clickhouse \
+    "${EXPECTED_COMPOSE_PROJECT_NAME}" \
+    "${CLICKHOUSE_VOLUME_NAME}" \
+    /var/lib/clickhouse
+  wotcv_validate_container_persistence \
+    "$("${COMPOSE[@]}" ps -q postgres)" \
+    postgres \
+    "${EXPECTED_COMPOSE_PROJECT_NAME}" \
+    "${POSTGRES_VOLUME_NAME}" \
+    /var/lib/postgresql/data
+  wotcv_validate_container_persistence \
+    "$("${COMPOSE[@]}" ps -q redis)" \
+    redis \
+    "${EXPECTED_COMPOSE_PROJECT_NAME}" \
+    "${REDIS_VOLUME_NAME}" \
+    /data
+}
+
+capture_clickhouse_event_baseline() {
+  CLICKHOUSE_EVENT_BASELINE="$(wotcv_clickhouse_event_invariants "$("${COMPOSE[@]}" ps -q clickhouse)")"
+  printf 'ClickHouse event baseline: %s\n' "${CLICKHOUSE_EVENT_BASELINE}"
+}
+
+capture_postgres_data_baseline() {
+  POSTGRES_DATA_BASELINE="$(wotcv_postgres_data_invariants "$("${COMPOSE[@]}" ps -q postgres)")"
+  printf 'PostgreSQL data baseline: %s\n' "${POSTGRES_DATA_BASELINE}"
+}
+
+validate_clickhouse_event_baseline() {
+  local current_invariants
+
+  current_invariants="$(wotcv_clickhouse_event_invariants "$("${COMPOSE[@]}" ps -q clickhouse)")"
+  wotcv_assert_clickhouse_event_invariants_not_decreased \
+    "${CLICKHOUSE_EVENT_BASELINE}" \
+    "${current_invariants}"
+}
+
+validate_postgres_data_baseline() {
+  local current_invariants
+
+  current_invariants="$(wotcv_postgres_data_invariants "$("${COMPOSE[@]}" ps -q postgres)")"
+  wotcv_assert_postgres_invariants_not_decreased \
+    "${POSTGRES_DATA_BASELINE}" \
+    "${current_invariants}"
 }
 
 validate_infrastructure() {
@@ -160,10 +222,15 @@ PY
 prepare_identity_infrastructure() {
   echo "Applying PostgreSQL migrations before loading the identity dictionary..."
   "${COMPOSE[@]}" run --rm --no-deps --entrypoint sh backend -lc 'npm run db:migrate'
+  validate_persistent_storage
+  validate_postgres_data_baseline
 
   echo "Recreating ClickHouse with the PostgreSQL-backed identity dictionary..."
   "${COMPOSE[@]}" up -d --no-deps --force-recreate clickhouse
   wait_for_service_health clickhouse
+  validate_persistent_storage
+  validate_clickhouse_event_baseline
+  validate_postgres_data_baseline
 
   printf '%s\n' "SELECT dictGetOrDefault('user_identity_dict', 'user_id', tuple(toUInt64(0), ''), '')" | \
     docker exec -i clickhouse sh -lc \
@@ -231,6 +298,10 @@ rollback() {
   CLIENT_IMAGE_DIGEST="${previous_client_digest:-unknown}" \
     "${COMPOSE[@]}" up -d --no-deps --force-recreate backend client
 
+  validate_persistent_storage
+  validate_clickhouse_event_baseline
+  validate_postgres_data_baseline
+
   if ! rollback_response="$(wotcv_wait_for_health "${HEALTHCHECK_URL}" "${previous_git_sha}" "${previous_tag}")"; then
     echo "Rollback health check failed; manual intervention is required." >&2
     return 1
@@ -266,8 +337,21 @@ echo "Validating Compose configuration for ${DEPLOY_BRANCH} at ${WOTCV_GIT_SHA}.
 COMPOSE_CONFIG_FILE="$(mktemp "${TMPDIR:-/tmp}/rybbit-wotcv-branch-build-compose.${UID}.XXXXXX.json")"
 "${COMPOSE[@]}" config --format json >"${COMPOSE_CONFIG_FILE}"
 validate_compose_config
+wotcv_validate_compose_persistence \
+  "${COMPOSE_CONFIG_FILE}" \
+  "${EXPECTED_COMPOSE_PROJECT_NAME}" \
+  "${CLICKHOUSE_VOLUME_NAME}" \
+  "${POSTGRES_VOLUME_NAME}" \
+  "${REDIS_VOLUME_NAME}"
+require_persistent_volumes
+validate_persistent_storage
+capture_clickhouse_event_baseline
+capture_postgres_data_baseline
 ensure_redis_internal_only
 validate_infrastructure
+validate_persistent_storage
+validate_clickhouse_event_baseline
+validate_postgres_data_baseline
 
 BUILD_COMMAND=(build)
 if [[ "${WOTCV_BUILD_PULL:-0}" == "1" ]]; then
@@ -282,6 +366,9 @@ validate_runtime_images
 
 prepare_identity_infrastructure
 validate_infrastructure
+validate_persistent_storage
+validate_clickhouse_event_baseline
+validate_postgres_data_baseline
 
 BACKEND_IMAGE_DIGEST="$(image_id "${BACKEND_IMAGE}" "${IMAGE_TAG}")"
 CLIENT_IMAGE_DIGEST="$(image_id "${CLIENT_IMAGE}" "${IMAGE_TAG}")"
@@ -293,6 +380,10 @@ if ! "${COMPOSE[@]}" up -d --no-deps --force-recreate backend client; then
   rollback "${PREVIOUS_TAG}" "${PREVIOUS_GIT_SHA}" "${PREVIOUS_BUILD_TIME}" "${PREVIOUS_BACKEND_DIGEST}" "${PREVIOUS_CLIENT_DIGEST}" || true
   exit 1
 fi
+
+validate_persistent_storage
+validate_clickhouse_event_baseline
+validate_postgres_data_baseline
 
 if ! HEALTH_RESPONSE="$(wotcv_wait_for_health "${HEALTHCHECK_URL}" "${WOTCV_GIT_SHA}" "${IMAGE_TAG}")"; then
   echo "Health check failed. Recent logs:" >&2

@@ -7,12 +7,17 @@ source "${ROOT_DIR}/scripts/lib/wotcv-common.sh"
 STATE_FILE="${ROOT_DIR}/.wotcv-deployment.env"
 HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
 COMPOSE_PROJECT_NAME="${WOTCV_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-rybbit}}"
+EXPECTED_COMPOSE_PROJECT_NAME="${WOTCV_EXPECTED_COMPOSE_PROJECT_NAME:-rybbit}"
+CLICKHOUSE_VOLUME_NAME="${WOTCV_CLICKHOUSE_VOLUME_NAME:-rybbit_clickhouse-data}"
+POSTGRES_VOLUME_NAME="${WOTCV_POSTGRES_VOLUME_NAME:-rybbit_postgres-data}"
+REDIS_VOLUME_NAME="${WOTCV_REDIS_VOLUME_NAME:-rybbit_redis-data}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.wotcv.yml)
 
 cd "${ROOT_DIR}"
 export COMPOSE_PROJECT_NAME
 
 wotcv_require_non_root
+wotcv_require_expected_compose_project "${COMPOSE_PROJECT_NAME}" "${EXPECTED_COMPOSE_PROJECT_NAME}"
 wotcv_require_commands docker curl python3
 
 IMAGE_TAG="${IMAGE_TAG:-$(wotcv_read_state "${STATE_FILE}" LAST_IMAGE_TAG)}"
@@ -50,7 +55,7 @@ wait_for_container_ready() {
   return 1
 }
 
-echo "[1/7] Validating effective Compose ports..."
+echo "[1/7] Validating effective Compose ports and persistence..."
 compose_config="$(mktemp "${TMPDIR:-/tmp}/rybbit-identity-preflight.${UID}.XXXXXX.json")"
 trap 'rm -f "${compose_config}"' EXIT
 "${COMPOSE[@]}" config --format json >"${compose_config}"
@@ -69,11 +74,39 @@ for service_name in ("clickhouse", "postgres", "backend", "client"):
         if port.get("host_ip") not in ("127.0.0.1", "::1"):
             raise SystemExit(f"{service_name} publishes outside loopback: {port}")
 PY
+wotcv_validate_compose_persistence \
+  "${compose_config}" \
+  "${EXPECTED_COMPOSE_PROJECT_NAME}" \
+  "${CLICKHOUSE_VOLUME_NAME}" \
+  "${POSTGRES_VOLUME_NAME}" \
+  "${REDIS_VOLUME_NAME}"
+wotcv_require_named_volume "${CLICKHOUSE_VOLUME_NAME}"
+wotcv_require_named_volume "${POSTGRES_VOLUME_NAME}"
+wotcv_require_named_volume "${REDIS_VOLUME_NAME}"
 
-echo "[2/7] Verifying running containers and Redis isolation..."
+echo "[2/7] Verifying running containers, storage, and Redis isolation..."
 for service in postgres clickhouse redis backend client; do
   wait_for_container_ready "${service}"
 done
+
+wotcv_validate_container_persistence \
+  "$("${COMPOSE[@]}" ps -q clickhouse)" \
+  clickhouse \
+  "${EXPECTED_COMPOSE_PROJECT_NAME}" \
+  "${CLICKHOUSE_VOLUME_NAME}" \
+  /var/lib/clickhouse
+wotcv_validate_container_persistence \
+  "$("${COMPOSE[@]}" ps -q postgres)" \
+  postgres \
+  "${EXPECTED_COMPOSE_PROJECT_NAME}" \
+  "${POSTGRES_VOLUME_NAME}" \
+  /var/lib/postgresql/data
+wotcv_validate_container_persistence \
+  "$("${COMPOSE[@]}" ps -q redis)" \
+  redis \
+  "${EXPECTED_COMPOSE_PROJECT_NAME}" \
+  "${REDIS_VOLUME_NAME}" \
+  /data
 
 redis_id="$("${COMPOSE[@]}" ps -q redis)"
 redis_bindings="$(docker inspect "${redis_id}" --format '{{json .HostConfig.PortBindings}}')"

@@ -25,3 +25,17 @@ services:
       WOTCV_IMAGE_TAG: ${IMAGE_TAG}
       WOTCV_IMAGE_DIGEST: ${CLIENT_IMAGE_DIGEST:-unknown}
       WOTCV_DEPLOYED_AT: ${WOTCV_DEPLOYED_AT:-unknown}
+
+# Production data volumes are deliberately external and explicitly named.
+# Compose must fail instead of silently creating empty project-scoped volumes
+# when this checkout is moved or COMPOSE_PROJECT_NAME is wrong.
+volumes:
+  clickhouse-data:
+    name: ${WOTCV_CLICKHOUSE_VOLUME_NAME:-rybbit_clickhouse-data}
+    external: true
+  postgres-data:
+    name: ${WOTCV_POSTGRES_VOLUME_NAME:-rybbit_postgres-data}
+    external: true
+  redis-data:
+    name: ${WOTCV_REDIS_VOLUME_NAME:-rybbit_redis-data}
+    external: true
