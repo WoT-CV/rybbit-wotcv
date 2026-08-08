@@ -1,7 +1,7 @@
 import type { TimelinePositionedRow } from "./replayTimeline";
 
 export const TIMELINE_HIGHLIGHT_DURATION_MS = 1_500;
-export const MAX_RECENT_TIMELINE_HIGHLIGHTS = 24;
+const MAX_RECENT_TIMELINE_HIGHLIGHTS = 24;
 
 export function getActiveTimelineKeys(rows: readonly TimelinePositionedRow[], currentTime: number): string[] {
   return rows.filter(row => row.startOffset <= currentTime && row.endOffset >= currentTime).map(row => row.key);

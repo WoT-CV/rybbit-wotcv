@@ -8,32 +8,32 @@ export interface TimelinePositionedRow {
   endOffset: number;
 }
 
-export interface MeaningfulTimelineRow extends TimelinePositionedRow {
+interface MeaningfulTimelineRow extends TimelinePositionedRow {
   kind: "meaningful";
   event: MeaningfulEvent;
 }
 
-export interface TechnicalTimelineRow extends TimelinePositionedRow {
+interface TechnicalTimelineRow extends TimelinePositionedRow {
   kind: "technical";
   group: TechnicalGroup;
 }
 
-export interface NetworkTimelineRow extends TimelinePositionedRow {
+interface NetworkTimelineRow extends TimelinePositionedRow {
   kind: "network";
   request: ParsedNetworkRequest;
 }
 
 export type ReplayTimelineDataRow = MeaningfulTimelineRow | TechnicalTimelineRow | NetworkTimelineRow;
 
-export interface CurrentTimeMarkerRow {
+interface CurrentTimeMarkerRow {
   kind: "current-time-marker";
   key: "current-time-marker";
   offset: number;
 }
 
-export type ReplayTimelineRow<T extends TimelinePositionedRow = ReplayTimelineDataRow> = T | CurrentTimeMarkerRow;
+type ReplayTimelineRow<T extends TimelinePositionedRow = ReplayTimelineDataRow> = T | CurrentTimeMarkerRow;
 
-export interface TimelineRowsWithMarker<T extends TimelinePositionedRow> {
+interface TimelineRowsWithMarker<T extends TimelinePositionedRow> {
   rows: ReplayTimelineRow<T>[];
   markerIndex: number;
 }
@@ -48,7 +48,7 @@ export function buildMeaningfulTimelineRows(events: readonly MeaningfulEvent[]):
   }));
 }
 
-export function buildTechnicalTimelineRows(groups: readonly TechnicalGroup[]): TechnicalTimelineRow[] {
+function buildTechnicalTimelineRows(groups: readonly TechnicalGroup[]): TechnicalTimelineRow[] {
   return groups.map(group => ({
     kind: "technical",
     key: `technical:${group.key}`,
@@ -97,7 +97,7 @@ export function insertCurrentTimeMarker<T extends TimelinePositionedRow>(
   return { rows: rowsWithMarker, markerIndex };
 }
 
-export function getNetworkTimelineKey(request: Pick<ParsedNetworkRequest, "requestId">): string {
+function getNetworkTimelineKey(request: Pick<ParsedNetworkRequest, "requestId">): string {
   return `network:${request.requestId}`;
 }
 
