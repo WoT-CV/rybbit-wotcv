@@ -37,17 +37,19 @@ Migracja `0012_identity_resolution_v2.sql` dodaje do `user_aliases` pola `source
 
 Skrypt `scripts/wotcv-branch-build-deploy.sh` wykonuje operacje w tej kolejności:
 
-1. waliduje oczekiwany commit, working tree i efektywną konfigurację portów,
-2. w razie potrzeby odtwarza wyłącznie Redis bez portu hosta i czeka na `healthy`,
-3. waliduje pozostałą infrastrukturę oraz buduje i sprawdza obrazy backendu i klienta,
-4. uruchamia migracje PostgreSQL z nowego obrazu,
-5. odtwarza wyłącznie ClickHouse, aby załadować konfigurację słownika,
-6. sprawdza słownik przed uruchomieniem nowego backendu,
-7. odtwarza backend i klienta,
-8. sprawdza health oraz uruchamia `wotcv-identity-v2-preflight.sh`,
-9. w razie błędu aplikacji wraca do poprzednich lokalnych obrazów.
+1. waliduje oczekiwany commit, working tree, projekt Compose i efektywną konfigurację portów,
+2. wymaga trzech istniejących external volume i porównuje je z faktycznymi mountami kontenerów,
+3. zapisuje liczbę użytkowników i stron PostgreSQL oraz liczbę i skrajne timestampy tabeli ClickHouse `events`,
+4. w razie potrzeby odtwarza wyłącznie istniejący Redis bez portu hosta i czeka na `healthy`,
+5. waliduje pozostałą infrastrukturę oraz buduje i sprawdza obrazy backendu i klienta,
+6. uruchamia migracje PostgreSQL z nowego obrazu,
+7. sprawdza liczniki PostgreSQL po migracji, odtwarza wyłącznie ClickHouse, a następnie ponownie sprawdza mount oraz ciągłość `events`,
+8. sprawdza słownik przed uruchomieniem nowego backendu,
+9. odtwarza backend i klienta z `--no-deps`,
+10. sprawdza health oraz uruchamia `wotcv-identity-v2-preflight.sh`,
+11. w razie błędu aplikacji wraca do poprzednich lokalnych obrazów bez odtwarzania infrastruktury.
 
-Preflight sprawdza brak portu hosta Redisa, połączenie backend -> Redis, schemat PostgreSQL, stan słownika, przykładowe rozwiązanie aliasu, stare mutacje oraz SHA/tag obrazu.
+Preflight sprawdza również nazwę projektu, istnienie external volume i rzeczywiste mounty, a następnie brak portu hosta Redisa, połączenie backend -> Redis, schemat PostgreSQL, stan słownika, przykładowe rozwiązanie aliasu, stare mutacje oraz SHA/tag obrazu.
 
 ## Rollback
 

@@ -135,7 +135,7 @@ Build przekazuje:
 - `WOTCV_BUILD_TIME`,
 - `WOTCV_DEPLOYED_AT`.
 
-Backend zwraca te dane w `/api/health`. Projekt Compose zachowuje nazwę `rybbit`, aby korzystać z istniejących wolumenów Postgresa, ClickHouse i Redis.
+Backend zwraca te dane w `/api/health`. Projekt Compose zachowuje nazwę `rybbit`, a trzy volume danych są jawnie nazwane i oznaczone jako external. Deployment zatrzymuje się przy zmianie projektu, braku volume, niezgodnym mouncie, spadku liczby użytkowników lub stron PostgreSQL albo regresji liczby lub zakresu czasowego zdarzeń ClickHouse.
 
 ## Bramki jakości forka
 
@@ -199,6 +199,6 @@ Repozytorium i wskazane SHA muszą pozostać publicznie dostępne. Sekrety, `.en
 7. Otworzyć Pages, Performance i Bots na self-hosted.
 8. Uruchomić audyt polskich tłumaczeń.
 9. Sprawdzić `/api/health`, `/api/source` i banner trackera.
-10. Zweryfikować Compose i nazwy istniejących wolumenów.
+10. Zweryfikować projekt Compose, external volume, faktyczne mounty kontenerów oraz niezmienniki PostgreSQL i tabeli ClickHouse `events`.
 11. Porównać `git diff upstream/master...feat/wotcv` z tabelą funkcji w tym dokumencie.
 12. Dopiero po pełnej walidacji pushować `master` i `feat/wotcv`.

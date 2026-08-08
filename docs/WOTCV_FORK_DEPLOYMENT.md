@@ -8,7 +8,7 @@ Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-C
 
 - serwer buduje i uruchamia aplikację z gałęzi `feat/wotcv`,
 - `master` pozostaje gałęzią synchronizowaną z oficjalnym Rybbit,
-- Compose działa pod nazwą projektu `rybbit`, aby użyć obecnych volume `rybbit_*`,
+- Compose działa pod nazwą projektu `rybbit`, a dane są przypięte do istniejących zewnętrznych volume `rybbit_*`,
 - obecny port hosta Postgresa pozostaje `127.0.0.1:5433`,
 - nie używamy `latest` jako identyfikatora wdrożenia,
 - każde uruchomienie aplikacji ma widoczny commit SHA w `/api/health`,
@@ -56,6 +56,13 @@ git rev-parse HEAD > "$BACKUP_DIR/git-head.txt"
 git remote -v > "$BACKUP_DIR/git-remotes.txt"
 docker compose config > "$BACKUP_DIR/docker-compose.resolved.yml"
 docker compose ps > "$BACKUP_DIR/docker-compose-ps.txt"
+docker volume inspect \
+  rybbit_postgres-data \
+  rybbit_clickhouse-data \
+  rybbit_redis-data > "$BACKUP_DIR/docker-volumes.json"
+docker inspect postgres clickhouse redis \
+  --format '{{.Name}} {{index .Config.Labels "com.docker.compose.project"}} {{json .Mounts}}' \
+  > "$BACKUP_DIR/docker-container-mounts.txt"
 ```
 
 Backup Postgres:
@@ -104,10 +111,26 @@ cp /home/rybbit/Caddyfile /home/rybbit-wotcv/Caddyfile
 cd /home/rybbit-wotcv
 
 grep -q '^COMPOSE_PROJECT_NAME=' .env || echo 'COMPOSE_PROJECT_NAME=rybbit' >> .env
+grep -q '^WOTCV_COMPOSE_PROJECT_NAME=' .env || echo 'WOTCV_COMPOSE_PROJECT_NAME=rybbit' >> .env
+grep -q '^WOTCV_EXPECTED_COMPOSE_PROJECT_NAME=' .env || echo 'WOTCV_EXPECTED_COMPOSE_PROJECT_NAME=rybbit' >> .env
+grep -q '^WOTCV_CLICKHOUSE_VOLUME_NAME=' .env || echo 'WOTCV_CLICKHOUSE_VOLUME_NAME=rybbit_clickhouse-data' >> .env
+grep -q '^WOTCV_POSTGRES_VOLUME_NAME=' .env || echo 'WOTCV_POSTGRES_VOLUME_NAME=rybbit_postgres-data' >> .env
+grep -q '^WOTCV_REDIS_VOLUME_NAME=' .env || echo 'WOTCV_REDIS_VOLUME_NAME=rybbit_redis-data' >> .env
 grep -q '^HOST_POSTGRES_PORT=' .env || echo 'HOST_POSTGRES_PORT=127.0.0.1:5433:5432' >> .env
 ```
 
-Bez `COMPOSE_PROJECT_NAME=rybbit` Docker Compose uruchomiony z `/home/rybbit-wotcv` utworzy nowe volume zamiast użyć obecnych `rybbit_postgres-data`, `rybbit_clickhouse-data` i `rybbit_redis-data`.
+Overlay produkcyjny deklaruje trzy volume danych jako `external: true` i przypisuje im jawne nazwy. Dzięki temu zmiana katalogu roboczego nie zmienia miejsca zapisu, a brak któregokolwiek volume kończy się błędem przed uruchomieniem kontenera zamiast utworzeniem pustego zamiennika. Skrypty dodatkowo wymagają dokładnie projektu `rybbit` oraz sprawdzają etykiety projektu i faktyczne mounty uruchomionych kontenerów.
+
+Przed pierwszym użyciem nowego zabezpieczenia potwierdź, że wszystkie trzy istniejące volume są widoczne:
+
+```bash
+docker volume inspect \
+  rybbit_postgres-data \
+  rybbit_clickhouse-data \
+  rybbit_redis-data
+```
+
+Nie twórz brakującego volume na istniejącej instalacji tylko po to, aby przejść walidację. Brak oznacza konieczność zatrzymania wdrożenia i odnalezienia właściwego volume lub odtworzenia danych z backupu. Puste volume można utworzyć wyłącznie dla świadomie przygotowywanej, nowej instalacji.
 
 ## Opcjonalne funkcje self-hosted
 
@@ -175,7 +198,7 @@ docker compose \
   config --format json > /tmp/rybbit-wotcv-branch-build-compose.json
 ```
 
-Overlay `docker-compose.wotcv.yml` usuwa publikację portu Redisa na hosta i zachowuje mapowanie Postgresa pod `127.0.0.1:5433`. Skrypt wdrożeniowy analizuje efektywny Compose i faktyczne mapowania uruchomionych kontenerów przed buildem. Przerwie pracę, jeżeli Redis publikuje port albo ClickHouse, Postgres, backend lub client wystawiają port poza loopback.
+Overlay `docker-compose.wotcv.yml` usuwa publikację portu Redisa na hosta, zachowuje mapowanie Postgresa pod `127.0.0.1:5433` i wskazuje jawne zewnętrzne volume danych. Skrypt wdrożeniowy analizuje efektywny Compose, etykietę projektu, nazwy i tryb mountów oraz faktyczne mapowania portów przed buildem. Przerwie pracę, jeżeli wykryje inny projekt, brak lub podmianę volume, bind mount zamiast named volume, mount read-only, port Redisa albo port infrastruktury wystawiony poza loopback.
 
 Po zmianie konfiguracji Compose przygotuj Redis jednorazowo, bez odtwarzania pozostałej infrastruktury:
 
@@ -190,7 +213,9 @@ docker port redis
 docker exec backend sh -lc 'getent hosts redis && nc -zvw3 redis 6379'
 ```
 
-`docker port redis` nie powinien zwrócić żadnego mapowania. Backend nadal łączy się z `redis:6379` po wewnętrznej sieci Compose. Skrypt nie odtwarza Postgresa. Jeżeli Redis nie istnieje albo nadal publikuje port hosta, odtwarza wyłącznie jego kontener z zachowaniem named volume i czeka na `healthy`. Po migracji PostgreSQL odtwarza ClickHouse, aby załadować aktualną konfigurację zewnętrznego słownika tożsamości.
+`docker port redis` nie powinien zwrócić żadnego mapowania. Backend nadal łączy się z `redis:6379` po wewnętrznej sieci Compose. Skrypt wymaga, aby kontenery i trzy właściwe volume istniały przed pierwszą operacją odtworzenia; nie naprawia automatycznie brakującej infrastruktury. Jeżeli istniejący Redis nadal publikuje port hosta, odtwarza wyłącznie jego kontener z tym samym zweryfikowanym named volume i czeka na `healthy`. Po migracji PostgreSQL odtwarza ClickHouse, aby załadować aktualną konfigurację zewnętrznego słownika tożsamości.
+
+Przed mutacjami skrypt zapisuje liczbę użytkowników i stron z PostgreSQL oraz trzy niezmienniki tabeli ClickHouse `events`: liczbę rekordów, najstarszy i najnowszy timestamp. Po migracji i każdym odtworzeniu sprawdza, że liczniki PostgreSQL nie spadły, liczba eventów nie zmalała, najstarszy timestamp nie przesunął się do przodu, a najnowszy nie cofnął się. Nowe rekordy napływające podczas wdrożenia są dozwolone. Każda oznaka utraty zakresu danych zatrzymuje wdrożenie.
 
 Wdrożenie:
 
@@ -204,22 +229,28 @@ Skrypt:
 2. pobiera `origin/feat/wotcv`,
 3. przełącza lokalną gałąź `feat/wotcv`,
 4. wykonuje wyłącznie fast-forward,
-5. waliduje efektywną konfigurację portów Compose oraz stan infrastruktury,
-6. buduje backend i client lokalnie na serwerze,
-7. taguje obrazy jako `sha-<commit>`,
-8. uruchamia migracje PostgreSQL z nowego obrazu backendu,
-9. odtwarza ClickHouse i sprawdza słownik `user_identity_dict`,
-10. odtwarza `backend` i `client` z `--no-deps`,
-11. czeka na `/api/health` i sprawdza `gitSha` oraz `imageTag`,
-12. uruchamia pełny preflight Identity Resolution v2,
-13. zapisuje stan do `.wotcv-deployment.env`,
-14. próbuje wrócić do poprzedniego lokalnego obrazu, jeżeli start, health check lub preflight nie przejdzie.
+5. wymaga dokładnie oczekiwanego projektu Compose i trzech istniejących external volume,
+6. porównuje deklarowane volume z faktycznymi mountami kontenerów,
+7. waliduje efektywną konfigurację portów Compose oraz stan infrastruktury,
+8. zapisuje niezmienniki PostgreSQL oraz tabeli ClickHouse `events`,
+9. buduje backend i client lokalnie na serwerze,
+10. taguje obrazy jako `sha-<commit>`,
+11. uruchamia migracje PostgreSQL z nowego obrazu backendu,
+12. sprawdza niezmienniki PostgreSQL po migracji, odtwarza ClickHouse, ponownie sprawdza volume i ciągłość `events`, a następnie sprawdza słownik `user_identity_dict`,
+13. odtwarza wyłącznie `backend` i `client` z `--no-deps`,
+14. ponownie sprawdza mounty oraz niezmienniki PostgreSQL i ClickHouse,
+15. czeka na `/api/health` i sprawdza `gitSha` oraz `imageTag`,
+16. uruchamia pełny preflight Identity Resolution v2, w tym niezależną kontrolę mountów,
+17. zapisuje stan do `.wotcv-deployment.env`,
+18. próbuje wrócić do poprzedniego lokalnego obrazu, jeżeli start, health check lub preflight nie przejdzie.
 
 Parametry:
 
 ```bash
 WOTCV_BRANCH=feat/wotcv \
 WOTCV_REMOTE=origin \
+WOTCV_COMPOSE_PROJECT_NAME=rybbit \
+WOTCV_EXPECTED_COMPOSE_PROJECT_NAME=rybbit \
 WOTCV_HEALTHCHECK_URL=http://127.0.0.1:3001/api/health \
 bash scripts/wotcv-branch-build-deploy.sh
 ```
@@ -381,7 +412,7 @@ Nie publikuj `.env`, danych użytkowników, kluczy API ani innych sekretów. Nie
 
 ## Rollback
 
-Automatyczny rollback jest wykonywany po nieudanym health checku, jeżeli `.wotcv-deployment.env` zawiera poprzedni tag i lokalne obrazy nadal istnieją.
+Automatyczny rollback jest wykonywany po nieudanym health checku, jeżeli `.wotcv-deployment.env` zawiera poprzedni tag i lokalne obrazy nadal istnieją. Rollback odtwarza wyłącznie `backend` i `client` z `--no-deps`; również wtedy skrypt ponownie sprawdza projekt, mounty oraz niezmienniki PostgreSQL i ClickHouse.
 
 Ręczny rollback do poprzedniego tagu obrazów GHCR:
 
