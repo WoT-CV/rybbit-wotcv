@@ -98,16 +98,40 @@ wotcv_validate_container_persistence() {
 
 wotcv_clickhouse_event_invariants() {
   local container_id="$1"
+  local core_invariants
   local query
+  local v2_exists
+  local v2_sessions=0
 
   if [[ -z "${container_id}" ]]; then
     echo "Cannot read ClickHouse event invariants: container does not exist." >&2
     return 1
   fi
 
-  query="SELECT count(), if(count() = 0, 0, toUnixTimestamp(min(timestamp))), if(count() = 0, 0, toUnixTimestamp(max(timestamp))) FROM events FORMAT TSVRaw"
-  printf '%s\n' "${query}" | docker exec -i "${container_id}" sh -lc \
-    'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"'
+  query="SELECT
+    (SELECT count() FROM events),
+    (SELECT if(count() = 0, 0, toUnixTimestamp(min(timestamp))) FROM events),
+    (SELECT if(count() = 0, 0, toUnixTimestamp(max(timestamp))) FROM events),
+    (SELECT uniqExact(tuple(site_id, session_id)) FROM events),
+    (SELECT uniqExact(tuple(site_id, toDate(timestamp), session_id)) FROM events),
+    (SELECT count() FROM session_replay_events),
+    (SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_events),
+    (SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_metadata FINAL)
+  FORMAT TSVRaw"
+  core_invariants="$(printf '%s\n' "${query}" | docker exec -i "${container_id}" sh -lc \
+    'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
+
+  v2_exists="$(printf '%s\n' 'EXISTS TABLE session_replay_metadata_v2 FORMAT TSVRaw' | \
+    docker exec -i "${container_id}" sh -lc \
+      'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
+  if [[ "${v2_exists}" == "1" ]]; then
+    v2_sessions="$(printf '%s\n' \
+      'SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_metadata_v2 FINAL FORMAT TSVRaw' | \
+      docker exec -i "${container_id}" sh -lc \
+        'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
+  fi
+
+  printf '%s\t%s\n' "${core_invariants}" "${v2_sessions}"
 }
 
 wotcv_assert_clickhouse_event_invariants_not_decreased() {

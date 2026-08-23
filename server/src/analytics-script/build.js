@@ -1,6 +1,6 @@
 import { build } from "esbuild";
 import { existsSync, mkdirSync } from "fs";
-import { dirname } from "path";
+import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -12,6 +12,15 @@ const sourceNotice =
 if (!existsSync(publicDir)) {
   mkdirSync(publicDir, { recursive: true });
 }
+
+// The tracker shares the Bot Signal contract with the server through
+// @rybbit/shared, which is published as CommonJS. Resolving it normally would
+// bundle the module unshaken, so point esbuild at the TypeScript source and let
+// it tree-shake down to the handful of values the browser actually uses. The
+// alias names the contract module, not the package barrel, so nothing else in
+// @rybbit/shared can ever reach a tracked page.
+const botSignalContractSource = resolve(__dirname, "../../../shared/src/botSignalContract.ts");
+const bundleContractFromSource = { "@rybbit/shared/dist/botSignalContract.js": botSignalContractSource };
 
 async function buildScript() {
   try {
@@ -26,6 +35,7 @@ async function buildScript() {
       sourcemap: false,
       platform: "browser",
       banner: { js: sourceNotice },
+      alias: bundleContractFromSource,
     });
 
     console.log("✅ Built script-full.js");
@@ -41,6 +51,7 @@ async function buildScript() {
       sourcemap: false,
       platform: "browser",
       banner: { js: sourceNotice },
+      alias: bundleContractFromSource,
     });
 
     console.log("✅ Built script.js (minified)");

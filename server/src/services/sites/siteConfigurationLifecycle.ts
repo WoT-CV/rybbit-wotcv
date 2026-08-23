@@ -12,6 +12,10 @@ import {
   type NetworkReplayConfigUpdate,
 } from "../../lib/networkReplayConfig.js";
 import { siteConfig, type SiteConfigData } from "../../lib/siteConfig.js";
+import {
+  REPLAY_METADATA_V1_TABLE,
+  REPLAY_METADATA_V2_TABLE,
+} from "../replay/replayMetadataMode.js";
 
 type SiteRow = typeof sites.$inferSelect;
 type SiteInsert = typeof sites.$inferInsert;
@@ -420,10 +424,12 @@ class SiteConfigurationLifecycle {
         query: "DELETE FROM session_replay_events WHERE site_id = {id:UInt32}",
         query_params: { id: siteId },
       }),
-      clickhouse.command({
-        query: "DELETE FROM session_replay_metadata WHERE site_id = {id:UInt32}",
-        query_params: { id: siteId },
-      }),
+      ...[REPLAY_METADATA_V1_TABLE, REPLAY_METADATA_V2_TABLE].map(table =>
+        clickhouse.command({
+          query: `DELETE FROM ${table} WHERE site_id = {id:UInt32}`,
+          query_params: { id: siteId },
+        })
+      ),
     ]);
 
     await db.delete(sites).where(eq(sites.siteId, siteId));

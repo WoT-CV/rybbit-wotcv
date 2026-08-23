@@ -18,7 +18,9 @@ export function useGetGrowthAccounting(mode: RetentionMode = "day", range: numbe
 export function useDashboardGrowthAccounting(siteId: string | number | undefined, cardId: string, enabled = true) {
   const time = useStore(state => state.time);
   const bucket = useStore(state => state.bucket);
-  const apiParams = buildApiParams(time);
+  const timezone = useStore(state => state.timezone);
+  const resolvedTimeZone = getTimezone();
+  const apiParams = buildApiParams(time, { timeZone: resolvedTimeZone });
   const mode: RetentionMode = bucket === "week" || bucket === "month" || bucket === "year" ? "week" : "day";
   const params = {
     mode,
@@ -33,7 +35,7 @@ export function useDashboardGrowthAccounting(siteId: string | number | undefined
   };
 
   return useQuery<GrowthAccountingResponse>({
-    queryKey: ["dashboard-growth-accounting", siteId, cardId, params],
+    queryKey: ["dashboard-growth-accounting", siteId, cardId, timezone, params],
     queryFn: () => fetchGrowthAccounting(siteId!, params),
     enabled: enabled && !!siteId,
     retry: false,

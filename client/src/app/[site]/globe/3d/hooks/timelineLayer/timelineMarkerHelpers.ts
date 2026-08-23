@@ -1,26 +1,18 @@
-import BoringAvatar from "boring-avatars";
 import { createElement } from "react";
 // @ts-ignore - React 19 has built-in types
 import { renderToStaticMarkup } from "react-dom/server";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { Monitor, Smartphone } from "lucide-react";
-import { AVATAR_COLORS } from "../../../../../../lib/avatar";
 import { getChannelIconComponent } from "../../../../../../components/Channel";
+import { frogAvatarSVG } from "../../../../../../lib/frogAvatar";
 import {
   escapeHtmlAttribute,
   resolveUserIdentity,
   type UserIdentityLike,
 } from "../../../../../../lib/userIdentity";
 
-// Generate avatar SVG using boring-avatars
 export function generateAvatarSVG(userId: string, size: number): string {
-  const avatarElement = createElement(BoringAvatar, {
-    size,
-    name: userId,
-    variant: "beam",
-    colors: AVATAR_COLORS,
-  });
-  return renderToStaticMarkup(avatarElement);
+  return frogAvatarSVG(userId, size);
 }
 
 export function generateUserAvatarHTML(user: UserIdentityLike, size: number): string {
@@ -47,7 +39,6 @@ export function generateUserAvatarHTML(user: UserIdentityLike, size: number): st
     </span>
   `;
 }
-
 // Render country flag to static SVG
 export function renderCountryFlag(countryCode: string): string {
   if (!countryCode || countryCode.length !== 2) return "";

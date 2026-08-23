@@ -8,9 +8,8 @@ vi.mock("../../db/postgres/postgres.js", () => ({
 }));
 
 import { FilterParams } from "@rybbit/shared";
-import { buildOverviewQuery } from "./getOverview.js";
 import { buildOverviewBucketedQuery } from "./getOverviewBucketed.js";
-import { effectiveUserId, EFFECTIVE_SESSION_USER_ID } from "./utils/effectiveUserId.js";
+import { effectiveUserId } from "./utils/effectiveUserId.js";
 
 const SITE_ID = 1;
 
@@ -24,33 +23,9 @@ const baseParams = (overrides: Partial<Record<string, unknown>> = {}) =>
     ...overrides,
   }) as FilterParams & { bucket: "day" };
 
+// The unbucketed overview is built by the Site Metrics module, which the PDF
+// report and the weekly email share; its coverage lives in siteMetrics.test.ts.
 describe("unique user counting", () => {
-  describe("buildOverviewQuery", () => {
-    it("counts users by identity, falling back to the device fingerprint", () => {
-      const sql = buildOverviewQuery(baseParams(), SITE_ID);
-
-      expect(sql).toContain("COUNT(DISTINCT f.effective_user_id) AS users");
-      expect(sql).toContain(`${EFFECTIVE_SESSION_USER_ID} AS effective_user_id`);
-      expect(sql).toContain("dictGetOrDefault('user_identity_dict'");
-      expect(sql).toContain("anyLast(user_id)");
-    });
-
-    it("resolves the identity once per session rather than per event", () => {
-      const sql = buildOverviewQuery(baseParams(), SITE_ID);
-
-      // The identity expression must sit inside the session-grouped CTE, so a
-      // visitor whose first pageview predates identify() still counts once.
-      const sessionCteBody = sql.split("FilteredSessionsWithStats AS (")[1].split("GROUP BY session_id")[0];
-      expect(sessionCteBody).toContain(EFFECTIVE_SESSION_USER_ID);
-    });
-
-    it("never aliases the identity back onto user_id", () => {
-      // Shadowing a column with an alias used inside its own expression is a
-      // cyclic-alias error in ClickHouse.
-      expect(buildOverviewQuery(baseParams(), SITE_ID)).not.toMatch(/anyLast\(user_id\)\) AS user_id/);
-    });
-  });
-
   describe("buildOverviewBucketedQuery", () => {
     it("counts users by identity, falling back to the device fingerprint", () => {
       const sql = buildOverviewBucketedQuery(baseParams(), SITE_ID);

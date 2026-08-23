@@ -108,6 +108,15 @@ describe("mcp endpoint", () => {
 
   async function buildApp(options: McpRouteOptions): Promise<FastifyInstance> {
     const instance = Fastify();
+    // Fastify inject uses light-my-request's synthetic socket, which has no
+    // destroySoon(). Hono's Node adapter calls that method from its delayed
+    // request-drain fallback; a real net.Socket provides it. Supply the missing
+    // no-op only in this in-memory harness so delayed cleanup cannot escape the
+    // owning test under Node 24.
+    instance.addHook("onRequest", async request => {
+      const socket = request.raw.socket as typeof request.raw.socket & { destroySoon?: () => void };
+      socket.destroySoon ??= () => undefined;
+    });
     instance.register(
       async fastify => {
         await fastify.register(mcpRoutes, options);

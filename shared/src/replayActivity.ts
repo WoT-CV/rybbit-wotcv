@@ -46,7 +46,7 @@ export function calculateReplayActivityWindows(
     }));
 
   return windows.reduce<ReplayActivityWindow[]>((merged, window) => {
-    const current = merged.at(-1);
+    const current = merged[merged.length - 1];
     if (!current || window.start > current.end) {
       merged.push({ ...window });
     } else {

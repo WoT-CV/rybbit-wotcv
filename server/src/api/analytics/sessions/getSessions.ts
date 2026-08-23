@@ -2,13 +2,17 @@ import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
-import { enrichWithTraits, getTimeStatement } from "../utils/utils.js";
+import { enrichWithTraits } from "../utils/utils.js";
 import {
   clickhouseResolvedIdentifiedUserId,
   clickhouseResolvedUserCondition,
   resolveUserIdentity,
 } from "../../../services/userIdentity/userIdentityService.js";
+import { getTimeStatement } from "../utils/timeWindow.js";
 import { analyticsRoute, runAnalyticsQuery, QuerySpec } from "../utils/analyticsQuery.js";
+import { getReplayMetadataReadTable } from "../../../services/replay/replayMetadataMode.js";
+
+const REPLAY_METADATA_TABLE = getReplayMetadataReadTable();
 
 export type GetSessionsResponse = {
   session_id: string;
@@ -172,7 +176,7 @@ export const buildSessionsQuery = async (
   ),
   ReplaySessions AS (
       SELECT DISTINCT session_id
-      FROM session_replay_metadata
+      FROM ${REPLAY_METADATA_TABLE}
       FINAL
       WHERE site_id = {siteId:Int32}
         AND event_count >= 2

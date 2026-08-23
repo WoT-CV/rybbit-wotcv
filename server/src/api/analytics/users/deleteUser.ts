@@ -5,6 +5,10 @@ import { db } from "../../../db/postgres/postgres.js";
 import { userAliases, userProfiles } from "../../../db/postgres/schema.js";
 import { r2Storage } from "../../../services/storage/r2StorageService.js";
 import {
+  REPLAY_METADATA_V1_TABLE,
+  REPLAY_METADATA_V2_TABLE,
+} from "../../../services/replay/replayMetadataMode.js";
+import {
   clickhouseResolvedUserCondition,
   resolveUserIdentity,
 } from "../../../services/userIdentity/userIdentityService.js";
@@ -61,7 +65,7 @@ export async function deleteUser(req: FastifyRequest<DeleteUserRequest>, res: Fa
     }
 
     await Promise.all(
-      ["events", "session_replay_events", "session_replay_metadata"].map(table =>
+      ["events", "session_replay_events", REPLAY_METADATA_V1_TABLE, REPLAY_METADATA_V2_TABLE].map(table =>
         clickhouse.command({
           query: `DELETE FROM ${table} WHERE ${userCondition}`,
           query_params: queryParams,

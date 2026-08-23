@@ -5,11 +5,11 @@ import { db } from "../../../db/postgres/postgres.js";
 import { userProfiles, userAliases } from "../../../db/postgres/schema.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
-import { getTimeStatement } from "../utils/utils.js";
 import {
   clickhouseResolvedUserCondition,
   resolveUserIdentity,
 } from "../../../services/userIdentity/userIdentityService.js";
+import { getTimeStatement } from "../utils/timeWindow.js";
 import { runAnalyticsQuery } from "../utils/analyticsQuery.js";
 
 interface UserPageviewData {

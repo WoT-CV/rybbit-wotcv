@@ -156,7 +156,14 @@ describe("siteConfigurationLifecycle", () => {
   it("deletes replay data before the Site row and then invalidates the Site", async () => {
     await siteConfigurationLifecycle.delete(1);
 
-    expect(mocks.clickhouseCommand).toHaveBeenCalledTimes(2);
+    expect(mocks.clickhouseCommand).toHaveBeenCalledTimes(3);
+    expect(mocks.clickhouseCommand.mock.calls.map(([call]) => call.query)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("session_replay_events"),
+        expect.stringContaining("session_replay_metadata "),
+        expect.stringContaining("session_replay_metadata_v2"),
+      ])
+    );
     expect(state.deletes).toBe(1);
     expect(mocks.invalidate).toHaveBeenCalledWith(state.site);
   });

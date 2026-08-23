@@ -22,10 +22,12 @@ Pełny katalog funkcji, opcji konfiguracyjnych i etapów rozwoju znajduje się w
 | Network Replay UI | Filtry hosta, metody, statusu, initiatora i czasu; request details, correlation ID, body viewer i waterfall. |
 | Replay player | Automatyczne uruchamianie sesji, segmenty aktywności, pomijanie bezczynności, rozbudowana oś czasu i bezpieczny seek. |
 | Replay export | Eksport wybranego zakresu do 2 minut jako paczka diagnostyczna z replay, metadanymi i logami `api.wot-cv.com`. |
+| Replay metadata v2 | Kontrolowany rollout `v1` → `dual` → `v2`; brak automatycznego backfillu lub usuwania tabel i zachowana ścieżka rollbacku. |
 | Growth Accounting | Analiza użytkowników nowych, powracających, reaktywowanych i uśpionych dla okresów dziennych i tygodniowych. |
 | Dashboards | Preset Growth Accounting możliwy do dodania do pulpitu. |
 | Identity | Nazwa i awatar użytkownika na listach sesji, replay, profilu i globusie; `avatarUrl` jest kanonicznym polem logo. |
 | Self-hosted | Widoczność i użycie Pages, Performance oraz Bots na instalacji self-hosted. |
+| Uptime compatibility | Zachowany schemat PostgreSQL, tabela `monitor_events`, kod API/UI i historyczne dane Uptime usunięte w upstreamie; nie jest to deklaracja aktywnego monitoringu bez osobnego runtime. |
 | Język polski | Polska lokalizacja interfejsu bez usuwania pozostałych języków. |
 | Deployment | Build z `feat/wotcv`, obrazy oznaczone SHA, health metadata, rollback i synchronizacja upstreamu. |
 | AGPL-3.0 | Widoczne odnośniki do odpowiadającego kodu źródłowego, endpoint `/api/source`, nagłówki źródła i banner trackera. |
@@ -91,6 +93,12 @@ Pomijanie jest domyślnie aktywne. Aktywne fragmenty są odtwarzane z wybraną p
 - Zadania są kolejkowane w BullMQ, mają limit równoległości i czas wygaśnięcia.
 - Pobranie i status eksportu wymagają dostępu do strony oraz właściciela zadania.
 
+## Metadane Replay v2
+
+Nowa tabela `session_replay_metadata_v2` usuwa koszt ponownego skanowania całej sesji przy każdym batchu, ale jej włączenie nie jest częścią zwykłego deployu. Domyślny tryb `v1` czyta i zapisuje dotychczasową tabelę. Tryb `dual`, dopuszczalny dopiero po zatrzymanym ingescie, backupie i zweryfikowanym backfillu, czyta v2 i zapisuje obie tabele. Tryb `v2` czyta i zapisuje wyłącznie v2; od tego momentu prosty powrót do `v1` nie jest już bezstratny.
+
+Aplikacja zachowuje obie tabele, usuwa dane użytkownika i strony z obu oraz raportuje obie w diagnostyce. Pełna procedura i ograniczenia znajdują się w [REPLAY_METADATA_V2.md](../clickhouse/REPLAY_METADATA_V2.md).
+
 ## Growth Accounting
 
 | Stan | Definicja |
@@ -104,7 +112,7 @@ Widok Retention domyślnie korzysta z okresów dziennych. Wykres jest również 
 
 ## Tożsamość i awatary
 
-WoT-CV przekazuje identyfikator użytkownika i traits przez API trackera. `avatarUrl` jest jedynym polem obrazu. Nazwa wyświetlana może zawierać tag klanu i username. W razie braku poprawnego logo używany jest deterministyczny fallback Rybbit.
+WoT-CV przekazuje identyfikator użytkownika i traits przez API trackera. `avatarUrl` jest jedynym polem obrazu. Nazwa wyświetlana może zawierać tag klanu i username. W razie braku poprawnego logo używany jest deterministyczny awatar żaby generowany lokalnie, bez wysyłania identyfikatora do zewnętrznej usługi.
 
 Po `identify()` wcześniejsza anonimowa historia tego samego identyfikatora przeglądarki jest rozwiązywana jako historia konta przez słownik ClickHouse zasilany z PostgreSQL. Mechanizm nie wykonuje mutacji historycznych tabel, nie pozwala trackerowi przejąć aliasu innego konta oraz obraca anonimowe ID przy wylogowaniu i zmianie konta.
 
@@ -135,7 +143,7 @@ Build przekazuje:
 - `WOTCV_BUILD_TIME`,
 - `WOTCV_DEPLOYED_AT`.
 
-Backend zwraca te dane w `/api/health`. Projekt Compose zachowuje nazwę `rybbit`, a trzy volume danych są jawnie nazwane i oznaczone jako external. Deployment zatrzymuje się przy zmianie projektu, braku volume, niezgodnym mouncie, spadku liczby użytkowników lub stron PostgreSQL albo regresji liczby lub zakresu czasowego zdarzeń ClickHouse.
+Backend zwraca te dane w `/api/health`. Projekt Compose zachowuje nazwę `rybbit`, a trzy volume danych są jawnie nazwane i oznaczone jako external. Deployment zatrzymuje się przy zmianie projektu, braku volume, niezgodnym mouncie, spadku liczby użytkowników lub stron PostgreSQL albo regresji eventów, sesji, sesji dziennych, danych Replay lub którejkolwiek tabeli metadanych Replay w ClickHouse.
 
 ## Bramki jakości forka
 
@@ -199,6 +207,7 @@ Repozytorium i wskazane SHA muszą pozostać publicznie dostępne. Sekrety, `.en
 7. Otworzyć Pages, Performance i Bots na self-hosted.
 8. Uruchomić audyt polskich tłumaczeń.
 9. Sprawdzić `/api/health`, `/api/source` i banner trackera.
-10. Zweryfikować projekt Compose, external volume, faktyczne mounty kontenerów oraz niezmienniki PostgreSQL i tabeli ClickHouse `events`.
-11. Porównać `git diff upstream/master...feat/wotcv` z tabelą funkcji w tym dokumencie.
-12. Dopiero po pełnej walidacji pushować `master` i `feat/wotcv`.
+10. Zweryfikować projekt Compose, external volume, faktyczne mounty kontenerów oraz wszystkie niezmienniki PostgreSQL, eventów, sesji i Replay w ClickHouse.
+11. Potwierdzić, że `REPLAY_METADATA_MODE=v1`; rollout `dual`/`v2` wykonać wyłącznie jako osobną operację z checklistą z `clickhouse/REPLAY_METADATA_V2.md`.
+12. Porównać `git diff upstream/master...feat/wotcv` z tabelą funkcji w tym dokumencie.
+13. Dopiero po pełnej walidacji pushować `master` i `feat/wotcv`.

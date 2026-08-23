@@ -32,6 +32,12 @@ class EventInvariants:
     count: int
     minimum_timestamp: int
     maximum_timestamp: int
+    sessions: int = 0
+    daily_sessions: int = 0
+    replay_events: int = 0
+    replay_sessions: int = 0
+    replay_metadata_sessions: int = 0
+    replay_metadata_v2_sessions: int = 0
 
 
 @dataclass(frozen=True)
@@ -135,20 +141,42 @@ def validate_container_mounts(
 
 def parse_event_invariants(raw: str) -> EventInvariants:
     values = raw.strip().split()
-    if len(values) != 3:
+    if len(values) != 9:
         raise ValidationError(
             "ClickHouse event invariants must contain count, min timestamp, "
-            "and max timestamp."
+            "max timestamp, sessions, daily sessions, replay events, replay "
+            "sessions, legacy replay metadata sessions, and v2 replay "
+            "metadata sessions."
         )
 
     try:
-        count, minimum_timestamp, maximum_timestamp = map(int, values)
+        (
+            count,
+            minimum_timestamp,
+            maximum_timestamp,
+            sessions,
+            daily_sessions,
+            replay_events,
+            replay_sessions,
+            replay_metadata_sessions,
+            replay_metadata_v2_sessions,
+        ) = map(int, values)
     except ValueError as error:
         raise ValidationError(
             "ClickHouse event invariants must contain integers."
         ) from error
 
-    if min(count, minimum_timestamp, maximum_timestamp) < 0:
+    if min(
+        count,
+        minimum_timestamp,
+        maximum_timestamp,
+        sessions,
+        daily_sessions,
+        replay_events,
+        replay_sessions,
+        replay_metadata_sessions,
+        replay_metadata_v2_sessions,
+    ) < 0:
         raise ValidationError("ClickHouse event invariants cannot be negative.")
     if count == 0 and (minimum_timestamp != 0 or maximum_timestamp != 0):
         raise ValidationError(
@@ -159,7 +187,17 @@ def parse_event_invariants(raw: str) -> EventInvariants:
             "ClickHouse minimum event timestamp cannot exceed the maximum."
         )
 
-    return EventInvariants(count, minimum_timestamp, maximum_timestamp)
+    return EventInvariants(
+        count,
+        minimum_timestamp,
+        maximum_timestamp,
+        sessions,
+        daily_sessions,
+        replay_events,
+        replay_sessions,
+        replay_metadata_sessions,
+        replay_metadata_v2_sessions,
+    )
 
 
 def assert_event_invariants_not_decreased(
@@ -170,20 +208,41 @@ def assert_event_invariants_not_decreased(
         raise ValidationError(
             f"ClickHouse event count decreased from {before.count} to {after.count}."
         )
-    if before.count == 0:
-        return
-    if after.count == 0:
-        raise ValidationError("ClickHouse events disappeared after deployment.")
-    if after.minimum_timestamp > before.minimum_timestamp:
-        raise ValidationError(
-            "ClickHouse oldest event moved forward from "
-            f"{before.minimum_timestamp} to {after.minimum_timestamp}."
-        )
-    if after.maximum_timestamp < before.maximum_timestamp:
-        raise ValidationError(
-            "ClickHouse newest event moved backward from "
-            f"{before.maximum_timestamp} to {after.maximum_timestamp}."
-        )
+    if before.count > 0:
+        if after.count == 0:
+            raise ValidationError("ClickHouse events disappeared after deployment.")
+        if after.minimum_timestamp > before.minimum_timestamp:
+            raise ValidationError(
+                "ClickHouse oldest event moved forward from "
+                f"{before.minimum_timestamp} to {after.minimum_timestamp}."
+            )
+        if after.maximum_timestamp < before.maximum_timestamp:
+            raise ValidationError(
+                "ClickHouse newest event moved backward from "
+                f"{before.maximum_timestamp} to {after.maximum_timestamp}."
+            )
+
+    for description, before_value, after_value in (
+        ("session count", before.sessions, after.sessions),
+        ("daily session count", before.daily_sessions, after.daily_sessions),
+        ("replay event count", before.replay_events, after.replay_events),
+        ("replay session count", before.replay_sessions, after.replay_sessions),
+        (
+            "legacy replay metadata session count",
+            before.replay_metadata_sessions,
+            after.replay_metadata_sessions,
+        ),
+        (
+            "v2 replay metadata session count",
+            before.replay_metadata_v2_sessions,
+            after.replay_metadata_v2_sessions,
+        ),
+    ):
+        if after_value < before_value:
+            raise ValidationError(
+                f"ClickHouse {description} decreased from "
+                f"{before_value} to {after_value}."
+            )
 
 
 def parse_postgres_invariants(raw: str) -> PostgresInvariants:
@@ -304,7 +363,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             assert_event_invariants_not_decreased(before, after)
             print(
                 "ClickHouse event invariants preserved "
-                f"(count {before.count} -> {after.count})."
+                f"(events {before.count} -> {after.count}, "
+                f"sessions {before.sessions} -> {after.sessions}, "
+                f"replay metadata sessions "
+                f"{before.replay_metadata_sessions} -> "
+                f"{after.replay_metadata_sessions})."
             )
         elif args.command == "compare-postgres":
             before = parse_postgres_invariants(args.before)

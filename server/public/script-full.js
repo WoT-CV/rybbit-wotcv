@@ -29,6 +29,90 @@
   ));
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+  // ../../../shared/dist/botSignalContract.js
+  var require_botSignalContract = __commonJS({
+    "../../../shared/dist/botSignalContract.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.IMPLAUSIBLE_DESKTOP_VIEWPORTS = exports.MAX_PLAUSIBLE_SCREEN_DIMENSION = exports.MIN_PLAUSIBLE_SCREEN_DIMENSION = exports.MAX_CLIENT_BOT_SCORE = exports.STRONG_CLIENT_BOT_SIGNAL_BITS = exports.ALL_CLIENT_BOT_SIGNAL_BITS = exports.CLIENT_BOT_SIGNAL_WEIGHTS = exports.CLIENT_BOT_SIGNAL_NAMES = exports.CLIENT_BOT_SIGNAL_MASKS = void 0;
+      exports.isPlausibleScreenDimensions = isPlausibleScreenDimensions2;
+      exports.isDesktopUserAgent = isDesktopUserAgent2;
+      exports.getScreenDimensionSignals = getScreenDimensionSignals2;
+      exports.getClientBotSignalNames = getClientBotSignalNames;
+      exports.scoreFromMask = scoreFromMask;
+      exports.CLIENT_BOT_SIGNAL_MASKS = {
+        automationApi: 1 << 0,
+        zeroOuterDimensions: 1 << 1,
+        missingChrome: 1 << 2,
+        swiftShader: 1 << 3,
+        emptyPlugins: 1 << 4,
+        defaultViewport800x600: 1 << 5,
+        defaultViewport1024x768: 1 << 6,
+        impossibleDimensions: 1 << 7,
+        outerDimensionsWeird: 1 << 8,
+        pluginApiAbsence: 1 << 9,
+        defaultViewport1280x1200: 1 << 10,
+        squareScreen: 1 << 11,
+        missingScreenDimensions: 1 << 12
+      };
+      exports.CLIENT_BOT_SIGNAL_NAMES = Object.keys(exports.CLIENT_BOT_SIGNAL_MASKS);
+      exports.CLIENT_BOT_SIGNAL_WEIGHTS = {
+        automationApi: 3,
+        zeroOuterDimensions: 2,
+        missingChrome: 1,
+        swiftShader: 1,
+        emptyPlugins: 1,
+        defaultViewport800x600: 3,
+        defaultViewport1024x768: 3,
+        impossibleDimensions: 3,
+        outerDimensionsWeird: 2,
+        pluginApiAbsence: 0,
+        defaultViewport1280x1200: 3,
+        squareScreen: 3,
+        missingScreenDimensions: 1
+      };
+      exports.ALL_CLIENT_BOT_SIGNAL_BITS = exports.CLIENT_BOT_SIGNAL_NAMES.reduce((mask, name) => mask | exports.CLIENT_BOT_SIGNAL_MASKS[name], 0);
+      exports.STRONG_CLIENT_BOT_SIGNAL_BITS = exports.CLIENT_BOT_SIGNAL_MASKS.automationApi | exports.CLIENT_BOT_SIGNAL_MASKS.impossibleDimensions | exports.CLIENT_BOT_SIGNAL_MASKS.defaultViewport800x600 | exports.CLIENT_BOT_SIGNAL_MASKS.defaultViewport1024x768 | exports.CLIENT_BOT_SIGNAL_MASKS.defaultViewport1280x1200 | exports.CLIENT_BOT_SIGNAL_MASKS.squareScreen;
+      exports.MAX_CLIENT_BOT_SCORE = 10;
+      exports.MIN_PLAUSIBLE_SCREEN_DIMENSION = 200;
+      exports.MAX_PLAUSIBLE_SCREEN_DIMENSION = 8192;
+      exports.IMPLAUSIBLE_DESKTOP_VIEWPORTS = [
+        { width: 800, height: 600, signal: "defaultViewport800x600" },
+        { width: 1024, height: 768, signal: "defaultViewport1024x768" },
+        { width: 1280, height: 1200, signal: "defaultViewport1280x1200" }
+      ];
+      function isPlausibleScreenDimensions2(width, height) {
+        return Number.isFinite(width) && Number.isFinite(height) && width >= exports.MIN_PLAUSIBLE_SCREEN_DIMENSION && height >= exports.MIN_PLAUSIBLE_SCREEN_DIMENSION && width <= exports.MAX_PLAUSIBLE_SCREEN_DIMENSION && height <= exports.MAX_PLAUSIBLE_SCREEN_DIMENSION;
+      }
+      function isDesktopUserAgent2(userAgent) {
+        return /Windows NT|Macintosh|X11|Linux x86_64/.test(userAgent) && !/Mobile|Android|iPhone|iPad/.test(userAgent);
+      }
+      function getScreenDimensionSignals2(width, height, userAgent) {
+        if (!isPlausibleScreenDimensions2(width, height)) {
+          return ["impossibleDimensions"];
+        }
+        const signals = [];
+        if (width === height) {
+          signals.push("squareScreen");
+        }
+        if (isDesktopUserAgent2(userAgent)) {
+          for (const viewport of exports.IMPLAUSIBLE_DESKTOP_VIEWPORTS) {
+            if (width === viewport.width && height === viewport.height) {
+              signals.push(viewport.signal);
+            }
+          }
+        }
+        return signals;
+      }
+      function getClientBotSignalNames(mask) {
+        return exports.CLIENT_BOT_SIGNAL_NAMES.filter((name) => (mask & exports.CLIENT_BOT_SIGNAL_MASKS[name]) !== 0);
+      }
+      function scoreFromMask(mask) {
+        return getClientBotSignalNames(mask).reduce((total, name) => total + exports.CLIENT_BOT_SIGNAL_WEIGHTS[name], 0);
+      }
+    }
+  });
+
   // ../../../shared/dist/dashboards.js
   var require_dashboards = __commonJS({
     "../../../shared/dist/dashboards.js"(exports) {
@@ -171,7 +255,7 @@
           eventCount: 1
         }));
         return windows.reduce((merged, window2) => {
-          const current = merged.at(-1);
+          const current = merged[merged.length - 1];
           if (!current || window2.start > current.end) {
             merged.push({ ...window2 });
           } else {
@@ -262,6 +346,7 @@
         for (var p2 in m2) if (p2 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, p2)) __createBinding(exports2, m2, p2);
       };
       Object.defineProperty(exports, "__esModule", { value: true });
+      __exportStar(require_botSignalContract(), exports);
       __exportStar(require_dashboards(), exports);
       __exportStar(require_filters(), exports);
       __exportStar(require_networkReplay(), exports);
@@ -2352,10 +2437,9 @@
     }
   };
 
-  // botSignals.ts
+  // ../../../shared/src/botSignalContract.ts
   var CLIENT_BOT_SIGNAL_MASKS = {
     automationApi: 1 << 0,
-    webdriver: 1 << 0,
     zeroOuterDimensions: 1 << 1,
     missingChrome: 1 << 2,
     swiftShader: 1 << 3,
@@ -2366,15 +2450,64 @@
     outerDimensionsWeird: 1 << 8,
     pluginApiAbsence: 1 << 9,
     defaultViewport1280x1200: 1 << 10,
-    squareScreen: 1 << 11
+    squareScreen: 1 << 11,
+    missingScreenDimensions: 1 << 12
   };
+  var CLIENT_BOT_SIGNAL_NAMES = Object.keys(CLIENT_BOT_SIGNAL_MASKS);
+  var CLIENT_BOT_SIGNAL_WEIGHTS = {
+    automationApi: 3,
+    zeroOuterDimensions: 2,
+    missingChrome: 1,
+    swiftShader: 1,
+    emptyPlugins: 1,
+    defaultViewport800x600: 3,
+    defaultViewport1024x768: 3,
+    impossibleDimensions: 3,
+    outerDimensionsWeird: 2,
+    pluginApiAbsence: 0,
+    defaultViewport1280x1200: 3,
+    squareScreen: 3,
+    missingScreenDimensions: 1
+  };
+  var ALL_CLIENT_BOT_SIGNAL_BITS = CLIENT_BOT_SIGNAL_NAMES.reduce(
+    (mask, name) => mask | CLIENT_BOT_SIGNAL_MASKS[name],
+    0
+  );
+  var STRONG_CLIENT_BOT_SIGNAL_BITS = CLIENT_BOT_SIGNAL_MASKS.automationApi | CLIENT_BOT_SIGNAL_MASKS.impossibleDimensions | CLIENT_BOT_SIGNAL_MASKS.defaultViewport800x600 | CLIENT_BOT_SIGNAL_MASKS.defaultViewport1024x768 | CLIENT_BOT_SIGNAL_MASKS.defaultViewport1280x1200 | CLIENT_BOT_SIGNAL_MASKS.squareScreen;
+  var MAX_CLIENT_BOT_SCORE = 10;
   var MIN_PLAUSIBLE_SCREEN_DIMENSION = 200;
   var MAX_PLAUSIBLE_SCREEN_DIMENSION = 8192;
+  var IMPLAUSIBLE_DESKTOP_VIEWPORTS = [
+    { width: 800, height: 600, signal: "defaultViewport800x600" },
+    { width: 1024, height: 768, signal: "defaultViewport1024x768" },
+    { width: 1280, height: 1200, signal: "defaultViewport1280x1200" }
+  ];
   function isPlausibleScreenDimensions(width, height) {
     return Number.isFinite(width) && Number.isFinite(height) && width >= MIN_PLAUSIBLE_SCREEN_DIMENSION && height >= MIN_PLAUSIBLE_SCREEN_DIMENSION && width <= MAX_PLAUSIBLE_SCREEN_DIMENSION && height <= MAX_PLAUSIBLE_SCREEN_DIMENSION;
   }
+  function isDesktopUserAgent(userAgent) {
+    return /Windows NT|Macintosh|X11|Linux x86_64/.test(userAgent) && !/Mobile|Android|iPhone|iPad/.test(userAgent);
+  }
+  function getScreenDimensionSignals(width, height, userAgent) {
+    if (!isPlausibleScreenDimensions(width, height)) {
+      return ["impossibleDimensions"];
+    }
+    const signals = [];
+    if (width === height) {
+      signals.push("squareScreen");
+    }
+    if (isDesktopUserAgent(userAgent)) {
+      for (const viewport of IMPLAUSIBLE_DESKTOP_VIEWPORTS) {
+        if (width === viewport.width && height === viewport.height) {
+          signals.push(viewport.signal);
+        }
+      }
+    }
+    return signals;
+  }
+
+  // botSignals.ts
   var cachedBotSignals = null;
-  var MAX_BOT_SCORE = 10;
   function getBotScore() {
     return getBotSignals().score;
   }
@@ -2394,17 +2527,17 @@
   function calculateBotSignals() {
     let score = 0;
     let mask = 0;
-    function addSignal(signalMask, weight) {
+    function addSignal(name) {
+      const signalMask = CLIENT_BOT_SIGNAL_MASKS[name];
       if ((mask & signalMask) !== 0) {
         return;
       }
       mask |= signalMask;
-      score += weight;
+      score += CLIENT_BOT_SIGNAL_WEIGHTS[name];
     }
     try {
       const userAgent = navigator.userAgent;
       const isChromeLike = /Chrome\//.test(userAgent) && !/\bwv\b|; wv\)/.test(userAgent);
-      const isDesktopUA = /Windows NT|Macintosh|X11|Linux x86_64/.test(userAgent) && !/Mobile|Android|iPhone|iPad/.test(userAgent);
       const screenWidth = Number(window.screen?.width);
       const screenHeight = Number(window.screen?.height);
       const outerWidth = Number(window.outerWidth);
@@ -2431,31 +2564,20 @@
       ];
       const hasAutomationGlobal = automationGlobalNames.some((name) => name in window || name in document);
       if (navigator.webdriver === true || hasAutomationGlobal) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.automationApi, 3);
+        addSignal("automationApi");
       }
       if ((outerHeight === 0 || outerWidth === 0) && !isPrerendering()) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.zeroOuterDimensions, 2);
+        addSignal("zeroOuterDimensions");
       }
-      if (!isPlausibleScreenDimensions(screenWidth, screenHeight)) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.impossibleDimensions, 3);
-      } else if (screenWidth === screenHeight) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.squareScreen, 3);
-      }
-      if (isDesktopUA && screenWidth === 800 && screenHeight === 600) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.defaultViewport800x600, 3);
-      }
-      if (isDesktopUA && screenWidth === 1024 && screenHeight === 768) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.defaultViewport1024x768, 3);
-      }
-      if (isDesktopUA && screenWidth === 1280 && screenHeight === 1200) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.defaultViewport1280x1200, 3);
+      for (const signal of getScreenDimensionSignals(screenWidth, screenHeight, userAgent)) {
+        addSignal(signal);
       }
       if (Number.isFinite(outerWidth) && Number.isFinite(outerHeight) && Number.isFinite(innerWidth) && Number.isFinite(innerHeight) && outerWidth > 0 && outerHeight > 0 && innerWidth > 0 && innerHeight > 0 && (outerWidth + 8 < innerWidth || outerHeight + 8 < innerHeight)) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.outerDimensionsWeird, 2);
+        addSignal("outerDimensionsWeird");
       }
       let hasPluginOrApiAbsence = false;
       if (!window.chrome && isChromeLike) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.missingChrome, 1);
+        addSignal("missingChrome");
         hasPluginOrApiAbsence = true;
       }
       try {
@@ -2479,7 +2601,7 @@
             } catch {
             }
             if (rendererParts.join(" ").toLowerCase().includes("swiftshader")) {
-              addSignal(CLIENT_BOT_SIGNAL_MASKS.swiftShader, 1);
+              addSignal("swiftShader");
             }
           } finally {
             releaseWebGlContext(canvas, gl);
@@ -2488,16 +2610,16 @@
       } catch {
       }
       if ((!navigator.plugins || navigator.plugins.length === 0) && isChromeLike) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.emptyPlugins, 1);
+        addSignal("emptyPlugins");
         hasPluginOrApiAbsence = true;
       }
       if (hasPluginOrApiAbsence) {
-        addSignal(CLIENT_BOT_SIGNAL_MASKS.pluginApiAbsence, 0);
+        addSignal("pluginApiAbsence");
       }
     } catch (e2) {
     }
     return {
-      score: Math.min(score, MAX_BOT_SCORE),
+      score: Math.min(score, MAX_CLIENT_BOT_SCORE),
       mask
     };
   }

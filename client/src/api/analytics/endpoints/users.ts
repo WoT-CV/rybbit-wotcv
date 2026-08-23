@@ -152,38 +152,6 @@ export async function fetchUsers(site: string | number, params: UsersParams): Pr
   return response;
 }
 
-/**
- * Fetch session count per day for a user
- * GET /api/users/session-count/:site
- */
-export async function fetchUserSessionCount(
-  site: string | number,
-  params: UserSessionCountParams
-): Promise<{ data: UserSessionCountResponse[] }> {
-  const response = await authedFetch<{ data: UserSessionCountResponse[] }>(`/sites/${site}/users/session-count`, {
-    user_id: params.userId,
-    time_zone: params.timeZone,
-    filters: params.filters?.length ? params.filters : undefined,
-  });
-  return response;
-}
-
-/**
- * Fetch detailed user information, optionally scoped to a time range and filters
- * GET /api/users/:userId/:site
- */
-export async function fetchUserInfo(
-  site: string | number,
-  userId: string,
-  params?: CommonApiParams
-): Promise<UserInfo> {
-  const response = await authedFetch<{ data: UserInfo }>(
-    `/sites/${site}/users/${encodeURIComponent(userId)}`,
-    params ? toQueryParams(params) : undefined
-  );
-  return response.data;
-}
-
 export interface IdentifyUserPayload {
   anonymousId: string;
   userId: string;

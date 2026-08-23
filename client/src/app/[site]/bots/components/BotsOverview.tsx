@@ -89,7 +89,7 @@ export function BotsOverview() {
   const { site } = useStore();
   const { selectedLayer, setSelectedLayer } = useBotsStore();
   const { data, isLoading, isFetching } = useGetBotOverview({ site });
-  const overview = data?.data;
+  const overview = data;
   const layerLabels: { key: BotLayerKey; label: string; description: string }[] = [
     {
       key: "ua_pattern",

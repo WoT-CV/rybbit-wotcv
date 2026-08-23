@@ -117,6 +117,7 @@ grep -q '^WOTCV_CLICKHOUSE_VOLUME_NAME=' .env || echo 'WOTCV_CLICKHOUSE_VOLUME_N
 grep -q '^WOTCV_POSTGRES_VOLUME_NAME=' .env || echo 'WOTCV_POSTGRES_VOLUME_NAME=rybbit_postgres-data' >> .env
 grep -q '^WOTCV_REDIS_VOLUME_NAME=' .env || echo 'WOTCV_REDIS_VOLUME_NAME=rybbit_redis-data' >> .env
 grep -q '^HOST_POSTGRES_PORT=' .env || echo 'HOST_POSTGRES_PORT=127.0.0.1:5433:5432' >> .env
+grep -q '^REPLAY_METADATA_MODE=' .env || echo 'REPLAY_METADATA_MODE=v1' >> .env
 ```
 
 Overlay produkcyjny deklaruje trzy volume danych jako `external: true` i przypisuje im jawne nazwy. Dzięki temu zmiana katalogu roboczego nie zmienia miejsca zapisu, a brak któregokolwiek volume kończy się błędem przed uruchomieniem kontenera zamiast utworzeniem pustego zamiennika. Skrypty dodatkowo wymagają dokładnie projektu `rybbit` oraz sprawdzają etykiety projektu i faktyczne mounty uruchomionych kontenerów.
@@ -215,7 +216,9 @@ docker exec backend sh -lc 'getent hosts redis && nc -zvw3 redis 6379'
 
 `docker port redis` nie powinien zwrócić żadnego mapowania. Backend nadal łączy się z `redis:6379` po wewnętrznej sieci Compose. Skrypt wymaga, aby kontenery i trzy właściwe volume istniały przed pierwszą operacją odtworzenia; nie naprawia automatycznie brakującej infrastruktury. Jeżeli istniejący Redis nadal publikuje port hosta, odtwarza wyłącznie jego kontener z tym samym zweryfikowanym named volume i czeka na `healthy`. Po migracji PostgreSQL odtwarza ClickHouse, aby załadować aktualną konfigurację zewnętrznego słownika tożsamości.
 
-Przed mutacjami skrypt zapisuje liczbę użytkowników i stron z PostgreSQL oraz trzy niezmienniki tabeli ClickHouse `events`: liczbę rekordów, najstarszy i najnowszy timestamp. Po migracji i każdym odtworzeniu sprawdza, że liczniki PostgreSQL nie spadły, liczba eventów nie zmalała, najstarszy timestamp nie przesunął się do przodu, a najnowszy nie cofnął się. Nowe rekordy napływające podczas wdrożenia są dozwolone. Każda oznaka utraty zakresu danych zatrzymuje wdrożenie.
+Przed mutacjami skrypt zapisuje liczbę użytkowników i stron z PostgreSQL oraz niezmienniki ClickHouse: liczbę eventów, najstarszy i najnowszy timestamp, liczbę sesji, liczbę sesji dziennych, liczbę eventów i sesji Replay oraz liczbę sesji w obu tabelach metadanych Replay. Jeżeli tabela `session_replay_metadata_v2` nie istnieje jeszcze przed pierwszym wdrożeniem, jej wartość bazowa wynosi bezpiecznie zero. Po migracji i każdym odtworzeniu skrypt wymaga, aby żaden licznik nie spadł, najstarszy event nie przesunął się do przodu, a najnowszy nie cofnął się. Nowe rekordy napływające podczas wdrożenia są dozwolone. Każda oznaka utraty danych zatrzymuje wdrożenie.
+
+`REPLAY_METADATA_MODE` pozostaje ustawione na `v1` podczas zwykłego wdrożenia. Przejście przez `dual` do `v2` jest osobną, ręczną operacją z backupem, zatrzymaniem ingestu, jednorazowym backfillem i kontrolą per sesja opisaną w [REPLAY_METADATA_V2.md](../clickhouse/REPLAY_METADATA_V2.md). Skrypty wdrożeniowe nie wykonują backfillu, `TRUNCATE` ani `DROP TABLE`.
 
 Wdrożenie:
 
@@ -228,11 +231,11 @@ Skrypt:
 1. wymaga czystego working tree,
 2. pobiera `origin/feat/wotcv`,
 3. przełącza lokalną gałąź `feat/wotcv`,
-4. wykonuje wyłącznie fast-forward,
+4. wykonuje wyłącznie fast-forward i, jeżeli zmienił się SHA, uruchamia ponownie już zaktualizowaną wersję samego skryptu przed jakąkolwiek walidacją, buildem lub operacją na kontenerach,
 5. wymaga dokładnie oczekiwanego projektu Compose i trzech istniejących external volume,
 6. porównuje deklarowane volume z faktycznymi mountami kontenerów,
 7. waliduje efektywną konfigurację portów Compose oraz stan infrastruktury,
-8. zapisuje niezmienniki PostgreSQL oraz tabeli ClickHouse `events`,
+8. zapisuje niezmienniki PostgreSQL, eventów, sesji i obu generacji metadanych Replay w ClickHouse,
 9. buduje backend i client lokalnie na serwerze,
 10. taguje obrazy jako `sha-<commit>`,
 11. uruchamia migracje PostgreSQL z nowego obrazu backendu,

@@ -100,7 +100,7 @@ export function buildTooltipHTML(session: GetSessionsResponse[number], lng: numb
       </div>
       <button
         class="view-session-btn w-full px-2 py-1 bg-accent-600 hover:bg-accent-700 text-white text-xs font-medium rounded transition-colors"
-        data-session-id="${session.session_id}"
+        data-session-id="${escapeHtmlAttribute(session.session_id)}"
         tabindex="-1"
       >
         View Details

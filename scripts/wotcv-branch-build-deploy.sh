@@ -322,7 +322,17 @@ PREVIOUS_BACKEND_DIGEST="$(wotcv_read_state "${STATE_FILE}" BACKEND_IMAGE_DIGEST
 PREVIOUS_CLIENT_DIGEST="$(wotcv_read_state "${STATE_FILE}" CLIENT_IMAGE_DIGEST)"
 
 echo "Fetching and fast-forwarding ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}..."
+SCRIPT_START_SHA="$(git rev-parse HEAD)"
 switch_to_branch
+
+# A fast-forward can replace this script while an older Bash process is
+# already reading it. Restart from the checked-out copy before any validation,
+# build, migration, or container operation.
+CURRENT_GIT_SHA="$(git rev-parse HEAD)"
+if [[ "${SCRIPT_START_SHA}" != "${CURRENT_GIT_SHA}" ]]; then
+  echo "Deployment script changed during fast-forward; restarting at ${CURRENT_GIT_SHA}..."
+  exec bash "${ROOT_DIR}/scripts/wotcv-branch-build-deploy.sh"
+fi
 
 WOTCV_GIT_SHA="$(git rev-parse HEAD)"
 IMAGE_TAG="sha-${WOTCV_GIT_SHA}"

@@ -69,7 +69,15 @@ describe("deleteUser", () => {
     await deleteUser(request, reply);
 
     expect(mocks.resolveUserIdentity).toHaveBeenCalledWith(42, "device-a");
-    expect(mocks.command).toHaveBeenCalledTimes(3);
+    expect(mocks.command).toHaveBeenCalledTimes(4);
+    expect(mocks.command.mock.calls.map(([call]) => call.query)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("DELETE FROM events"),
+        expect.stringContaining("DELETE FROM session_replay_events"),
+        expect.stringContaining("DELETE FROM session_replay_metadata "),
+        expect.stringContaining("DELETE FROM session_replay_metadata_v2"),
+      ])
+    );
     for (const [call] of mocks.command.mock.calls) {
       expect(call.query_params).toEqual({
         siteId: 42,

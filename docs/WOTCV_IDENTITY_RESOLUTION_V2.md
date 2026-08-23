@@ -39,11 +39,11 @@ Skrypt `scripts/wotcv-branch-build-deploy.sh` wykonuje operacje w tej kolejnośc
 
 1. waliduje oczekiwany commit, working tree, projekt Compose i efektywną konfigurację portów,
 2. wymaga trzech istniejących external volume i porównuje je z faktycznymi mountami kontenerów,
-3. zapisuje liczbę użytkowników i stron PostgreSQL oraz liczbę i skrajne timestampy tabeli ClickHouse `events`,
+3. zapisuje liczbę użytkowników i stron PostgreSQL oraz liczbę i zakres eventów, sesje, sesje dzienne, dane Replay i obie generacje metadanych Replay w ClickHouse,
 4. w razie potrzeby odtwarza wyłącznie istniejący Redis bez portu hosta i czeka na `healthy`,
 5. waliduje pozostałą infrastrukturę oraz buduje i sprawdza obrazy backendu i klienta,
 6. uruchamia migracje PostgreSQL z nowego obrazu,
-7. sprawdza liczniki PostgreSQL po migracji, odtwarza wyłącznie ClickHouse, a następnie ponownie sprawdza mount oraz ciągłość `events`,
+7. sprawdza liczniki PostgreSQL po migracji, odtwarza wyłącznie ClickHouse, a następnie ponownie sprawdza mount oraz wszystkie niezmienniki eventów, sesji i Replay,
 8. sprawdza słownik przed uruchomieniem nowego backendu,
 9. odtwarza backend i klienta z `--no-deps`,
 10. sprawdza health oraz uruchamia `wotcv-identity-v2-preflight.sh`,

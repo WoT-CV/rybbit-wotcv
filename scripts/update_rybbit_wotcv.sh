@@ -99,7 +99,38 @@ git status --short --branch
 git log -1 --oneline
 echo
 
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Refusing update: working tree must be clean before fast-forward." >&2
+  exit 1
+fi
+
+# Fast-forward before opening the inner deployment script. Otherwise Bash may
+# continue executing a stale copy of the safety logic after Git replaced it.
+echo "Bootstrapping current deployment scripts from ${WOTCV_REMOTE}/${WOTCV_BRANCH}..."
+git fetch "${WOTCV_REMOTE}" --prune
+REMOTE_SHA="$(git rev-parse "${WOTCV_REMOTE}/${WOTCV_BRANCH}")"
+if [[ -n "${WOTCV_EXPECTED_SHA:-}" && "${REMOTE_SHA}" != "${WOTCV_EXPECTED_SHA}" ]]; then
+  echo "Refusing update: remote SHA ${REMOTE_SHA} does not match expected ${WOTCV_EXPECTED_SHA}." >&2
+  exit 1
+fi
+
+if git show-ref --verify --quiet "refs/heads/${WOTCV_BRANCH}"; then
+  git switch "${WOTCV_BRANCH}"
+else
+  git switch --track -c "${WOTCV_BRANCH}" "${WOTCV_REMOTE}/${WOTCV_BRANCH}"
+fi
+git merge --ff-only "${WOTCV_REMOTE}/${WOTCV_BRANCH}"
+export WOTCV_EXPECTED_SHA="${REMOTE_SHA}"
+
 bash "${REPO_DIR}/scripts/wotcv-branch-build-deploy.sh"
+
+STATE_FILE="${REPO_DIR}/.wotcv-deployment.env"
+IMAGE_TAG="$(sed -n 's/^LAST_IMAGE_TAG=//p' "${STATE_FILE}" | tail -n 1)"
+if [[ -z "${IMAGE_TAG}" ]]; then
+  echo "Deployment state does not contain LAST_IMAGE_TAG: ${STATE_FILE}" >&2
+  exit 1
+fi
+export IMAGE_TAG
 
 echo
 echo "Containers:"

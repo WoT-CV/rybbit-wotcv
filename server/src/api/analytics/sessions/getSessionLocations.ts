@@ -1,7 +1,8 @@
 import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
-import { enrichWithTraits, getTimeStatement } from "../utils/utils.js";
+import { enrichWithTraits } from "../utils/utils.js";
+import { getTimeStatement } from "../utils/timeWindow.js";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { analyticsRoute, runAnalyticsQuery } from "../utils/analyticsQuery.js";
 

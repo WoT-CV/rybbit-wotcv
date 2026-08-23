@@ -4,7 +4,8 @@ import {
   SessionReplayListItem,
   GetSessionReplayEventsResponse,
 } from "../../types/sessionReplay.js";
-import { processResults, getTimeStatement } from "../../api/analytics/utils/utils.js";
+import { processResults } from "../../api/analytics/utils/utils.js";
+import { getTimeStatement } from "../../api/analytics/utils/timeWindow.js";
 import { FilterParams } from "@rybbit/shared";
 import { r2Storage } from "../storage/r2StorageService.js";
 import { getFilterStatement } from "../../api/analytics/utils/getFilterStatement.js";
@@ -13,11 +14,52 @@ import {
   clickhouseResolvedIdentifiedUserId,
   resolveUserIdentity,
 } from "../userIdentity/userIdentityService.js";
+import {
+  getReplayMetadataDurationExpression,
+  getReplayMetadataReadTable,
+  REPLAY_METADATA_V1_TABLE,
+  REPLAY_METADATA_V2_TABLE,
+} from "./replayMetadataMode.js";
 
 /**
  * Service responsible for querying/retrieving session replay data
  * Handles listing sessions and getting replay events
  */
+const METADATA_TABLE = getReplayMetadataReadTable();
+const DURATION_MS = getReplayMetadataDurationExpression();
+
+// SELECT * is not usable against an aggregating table: it would return the raw
+// per-batch columns and omit the derived duration. List what readers consume.
+const METADATA_COLUMNS = `
+  site_id,
+  session_id,
+  user_id,
+  ${clickhouseResolvedIdentifiedUserId()} AS identified_user_id,
+  start_time,
+  end_time,
+  ${DURATION_MS} AS duration_ms,
+  event_count,
+  compressed_size_bytes,
+  page_url,
+  country,
+  region,
+  city,
+  lat,
+  lon,
+  browser,
+  browser_version,
+  operating_system,
+  operating_system_version,
+  language,
+  screen_width,
+  screen_height,
+  device_type,
+  channel,
+  hostname,
+  referrer,
+  has_replay_data
+`;
+
 export class SessionReplayQueryService {
   async getSessionReplayList(
     siteId: number,
@@ -29,7 +71,7 @@ export class SessionReplayQueryService {
     }>
   ): Promise<SessionReplayListItem[]> {
     const { limit = 50, offset = 0, userId, minDuration } = options;
-    const timeStatement = getTimeStatement(options).replace(/timestamp/g, "start_time");
+    const timeStatement = getTimeStatement(options, "start_time");
 
     const filterStatement = getFilterStatement(options.filters || "");
 
@@ -43,7 +85,10 @@ export class SessionReplayQueryService {
     }
 
     if (minDuration !== undefined) {
-      whereConditions.push(`duration_ms >= {minDuration:UInt32}`);
+      // Derived from the merged bounds rather than stored: each batch only
+      // knows its own slice of the session, so duration is only meaningful
+      // after FINAL has combined them.
+      whereConditions.push(`${DURATION_MS} >= {minDuration:UInt32}`);
       queryParams.minDuration = minDuration * 1000; // Convert seconds to milliseconds
     }
 
@@ -58,7 +103,7 @@ export class SessionReplayQueryService {
     if (filterStatement) {
       sessionIdsSubquery = `
         SELECT DISTINCT srm.session_id
-        FROM session_replay_metadata srm
+        FROM ${METADATA_TABLE} srm
         FINAL
         WHERE srm.site_id = {siteId:UInt16}
           AND srm.session_id IN (
@@ -82,7 +127,7 @@ export class SessionReplayQueryService {
         ${clickhouseResolvedIdentifiedUserId()} AS identified_user_id,
         start_time,
         end_time,
-        duration_ms,
+        ${DURATION_MS} AS duration_ms,
         page_url,
         event_count,
         country,
@@ -95,7 +140,7 @@ export class SessionReplayQueryService {
         device_type,
         screen_width,
         screen_height
-      FROM session_replay_metadata
+      FROM ${METADATA_TABLE}
       FINAL
       WHERE ${whereConditions.join(" AND ")}
         AND event_count >= 2
@@ -119,12 +164,10 @@ export class SessionReplayQueryService {
     // Get metadata
     const metadataResult = await clickhouse.query({
       query: `
-        SELECT
-          * EXCEPT (identified_user_id),
-          ${clickhouseResolvedIdentifiedUserId()} AS identified_user_id
-        FROM session_replay_metadata
+        SELECT ${METADATA_COLUMNS}
+        FROM ${METADATA_TABLE}
         FINAL
-        WHERE site_id = {siteId:UInt16} 
+        WHERE site_id = {siteId:UInt16}
           AND session_id = {sessionId:String}
         LIMIT 1
       `,
@@ -285,10 +328,8 @@ export class SessionReplayQueryService {
   async getSessionReplayMetadata(siteId: number, sessionId: string): Promise<SessionReplayMetadata | null> {
     const result = await clickhouse.query({
       query: `
-        SELECT
-          * EXCEPT (identified_user_id),
-          ${clickhouseResolvedIdentifiedUserId()} AS identified_user_id
-        FROM session_replay_metadata
+        SELECT ${METADATA_COLUMNS}
+        FROM ${METADATA_TABLE}
         FINAL
         WHERE site_id = {siteId:UInt16}
           AND session_id = {sessionId:String}
@@ -310,7 +351,7 @@ export class SessionReplayQueryService {
    * Delete a session replay and all associated data
    * This includes:
    * - Events from session_replay_events table
-   * - Metadata from session_replay_metadata table
+   * - Metadata from both replay metadata tables during the rollout window
    * - R2 stored data (if enabled)
    */
   async deleteSessionReplay(siteId: number, sessionId: string): Promise<void> {
@@ -349,13 +390,17 @@ export class SessionReplayQueryService {
       query_params: { siteId, sessionId },
     });
 
-    await clickhouse.command({
-      query: `
-        DELETE FROM session_replay_metadata
-        WHERE site_id = {siteId:UInt16}
-          AND session_id = {sessionId:String}
-      `,
-      query_params: { siteId, sessionId },
-    });
+    await Promise.all(
+      [REPLAY_METADATA_V1_TABLE, REPLAY_METADATA_V2_TABLE].map(table =>
+        clickhouse.command({
+          query: `
+            DELETE FROM ${table}
+            WHERE site_id = {siteId:UInt16}
+              AND session_id = {sessionId:String}
+          `,
+          query_params: { siteId, sessionId },
+        })
+      )
+    );
   }
 }

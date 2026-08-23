@@ -182,8 +182,8 @@ class ContainerMountTests(unittest.TestCase):
 class EventInvariantTests(unittest.TestCase):
     def test_parses_valid_invariants(self):
         self.assertEqual(
-            parse_event_invariants("12\t100\t200\n"),
-            EventInvariants(12, 100, 200),
+            parse_event_invariants("12\t100\t200\t4\t6\t8\t3\t3\t2\n"),
+            EventInvariants(12, 100, 200, 4, 6, 8, 3, 3, 2),
         )
 
     def test_accepts_new_events_without_losing_old_range(self):
@@ -216,6 +216,31 @@ class EventInvariantTests(unittest.TestCase):
     def test_rejects_malformed_values(self):
         with self.assertRaisesRegex(ValidationError, "must contain"):
             parse_event_invariants("12 100")
+
+    def test_rejects_lost_daily_sessions(self):
+        with self.assertRaisesRegex(ValidationError, "daily session count decreased"):
+            assert_event_invariants_not_decreased(
+                EventInvariants(12, 100, 200, 4, 6, 8, 3, 3, 2),
+                EventInvariants(12, 100, 200, 4, 5, 8, 3, 3, 2),
+            )
+
+    def test_rejects_lost_replay_metadata(self):
+        with self.assertRaisesRegex(
+            ValidationError, "replay metadata session count decreased"
+        ):
+            assert_event_invariants_not_decreased(
+                EventInvariants(12, 100, 200, 4, 6, 8, 3, 3, 2),
+                EventInvariants(12, 100, 200, 4, 6, 8, 3, 2, 2),
+            )
+
+    def test_rejects_lost_v2_replay_metadata_even_without_events(self):
+        with self.assertRaisesRegex(
+            ValidationError, "v2 replay metadata session count decreased"
+        ):
+            assert_event_invariants_not_decreased(
+                EventInvariants(0, 0, 0, 0, 0, 0, 0, 0, 3),
+                EventInvariants(0, 0, 0, 0, 0, 0, 0, 0, 2),
+            )
 
 
 class PostgresInvariantTests(unittest.TestCase):

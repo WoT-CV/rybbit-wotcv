@@ -3,14 +3,7 @@ import { useDebounce } from "@uidotdev/usehooks";
 import { useExtracted } from "next-intl";
 import { FUNNEL_PAGE_FILTERS } from "../../../../lib/filterGroups";
 import { getFilteredFilters, useStore } from "../../../../lib/store";
-import {
-  analyzeFunnel,
-  AnalyzeFunnelParams,
-  FunnelRequest,
-  FunnelResponse,
-  saveFunnel,
-  SaveFunnelRequest,
-} from "../../endpoints";
+import { FunnelRequest, FunnelResponse, saveFunnel, SaveFunnelRequest } from "../../endpoints";
 import { useAnalyticsQuery } from "../../useAnalyticsQuery";
 
 /**
@@ -23,13 +16,13 @@ export function useGetFunnel(config?: FunnelRequest, debounce?: boolean) {
   // filters at all (not the store's full filter list).
   const filteredFilters = getFilteredFilters(FUNNEL_PAGE_FILTERS);
 
-  return useAnalyticsQuery<FunnelResponse[], AnalyzeFunnelParams>({
+  return useAnalyticsQuery<FunnelResponse[]>({
     key: "funnel",
+    path: "funnels/analyze",
     useFilters: filteredFilters.length > 0,
     customFilters: filteredFilters,
-    extraParams: { steps: configToUse?.steps ?? [], name: configToUse?.name },
+    body: () => ({ steps: configToUse?.steps ?? [], name: configToUse?.name }),
     enabled: !!configToUse,
-    fetch: (site, params) => analyzeFunnel(site, params),
   });
 }
 
@@ -38,7 +31,7 @@ export function useGetFunnel(config?: FunnelRequest, debounce?: boolean) {
  */
 export function useSaveFunnel() {
   const t = useExtracted();
-  const { site } = useStore();
+  const site = useStore(state => state.site);
   const queryClient = useQueryClient();
 
   return useMutation<{ success: boolean; funnelId: number }, Error, SaveFunnelRequest>({

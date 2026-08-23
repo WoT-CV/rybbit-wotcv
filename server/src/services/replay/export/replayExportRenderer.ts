@@ -66,7 +66,10 @@ export class ReplayExportRenderer {
         jobData.sessionId
       );
       const firstTimestamp = events[0]?.timestamp ?? 0;
-      const totalDuration = Math.max(0, (events.at(-1)?.timestamp ?? firstTimestamp) - firstTimestamp);
+      const totalDuration = Math.max(
+        0,
+        (events[events.length - 1]?.timestamp ?? firstTimestamp) - firstTimestamp
+      );
       const options = normalizeOptions(jobData.options, totalDuration);
       const playbackWindows = getActivePlaybackWindows(events, options.startMs, options.endMs);
       const outputDurationMs = validateReplayExportActivityDuration(playbackWindows);
@@ -217,7 +220,7 @@ async function recordReplayRange(
 
 function getActivePlaybackWindows(events: any[], startMs: number, endMs: number): PlaybackWindow[] {
   const firstTimestamp = Number(events[0]?.timestamp);
-  const lastTimestamp = Number(events.at(-1)?.timestamp);
+  const lastTimestamp = Number(events[events.length - 1]?.timestamp);
   if (!Number.isFinite(firstTimestamp) || !Number.isFinite(lastTimestamp)) return [];
   const totalDuration = Math.max(endMs, lastTimestamp - firstTimestamp);
   return calculateReplayActivityWindows(events, totalDuration, startMs, endMs).map(({ start, end }) => ({

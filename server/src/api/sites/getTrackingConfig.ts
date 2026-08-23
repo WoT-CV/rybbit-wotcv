@@ -27,6 +27,9 @@ export async function getTrackingConfig(request: FastifyRequest<{ Params: { site
 
     // Return tracking configuration
     // This endpoint is public since the analytics script needs to fetch it
+    // Every field below the plan/type overrides arrives already defaulted from
+    // the Site Configuration module — re-applying `?? true` / `|| false` here
+    // would only hide it if that ever stopped being true.
     return reply.send({
       type: config.type,
       featureFlagsEnabled,

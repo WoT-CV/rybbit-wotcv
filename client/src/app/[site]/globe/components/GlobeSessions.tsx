@@ -170,7 +170,7 @@ export function GlobeSessions() {
   // Combine all pages of data
   const flattenedData = useMemo(() => {
     if (!data) return [];
-    return data.pages.flatMap(page => page.data || []);
+    return data.pages.flatMap(page => page || []);
   }, [data]);
 
   return (

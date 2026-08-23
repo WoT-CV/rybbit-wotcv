@@ -5,12 +5,14 @@ const mocks = vi.hoisted(() => ({
   generateUserId: vi.fn(),
   generateUserIdFromClientId: vi.fn(),
   insert: vi.fn(),
+  query: vi.fn(),
   updateSession: vi.fn(),
 }));
 
 vi.mock("../../db/clickhouse/clickhouse.js", () => ({
   clickhouse: {
     insert: mocks.insert,
+    query: mocks.query,
   },
 }));
 
@@ -65,6 +67,18 @@ describe("SessionReplayIngestService identity", () => {
       })
     );
     mocks.insert.mockResolvedValue(undefined);
+    mocks.query.mockResolvedValue({
+      json: async () => [
+        {
+          start_time: "2026-08-23 10:00:00",
+          end_time: "2026-08-23 10:00:01",
+          event_count: "1",
+          compressed_size_bytes: "20",
+          screen_width: "1920",
+          screen_height: "1080",
+        },
+      ],
+    });
   });
 
   it("separates identified replay users behind a shared proxy", async () => {
@@ -108,5 +122,25 @@ describe("SessionReplayIngestService identity", () => {
       identifiedUserId: "",
       siteId: 42,
     });
+  });
+
+  it.each([
+    ["v1", ["session_replay_events", "session_replay_metadata"], 1],
+    ["dual", ["session_replay_events", "session_replay_metadata", "session_replay_metadata_v2"], 1],
+    ["v2", ["session_replay_events", "session_replay_metadata_v2"], 0],
+  ] as const)("writes the expected metadata tables in %s mode", async (mode, expectedTables, expectedReads) => {
+    const service = new SessionReplayIngestService(mode);
+    const request = replayRequest("employee-alice", "browser-alice");
+    request.metadata = {
+      pageUrl: "https://example.test/dashboard",
+      viewportWidth: 1920,
+      viewportHeight: 1080,
+      language: "pl",
+    };
+
+    await service.recordEvents(42, request);
+
+    expect(mocks.insert.mock.calls.map(call => call[0].table)).toEqual(expectedTables);
+    expect(mocks.query).toHaveBeenCalledTimes(expectedReads);
   });
 });

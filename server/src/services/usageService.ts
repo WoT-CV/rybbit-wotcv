@@ -9,6 +9,7 @@ import { member, organization, sites, user } from "../db/postgres/schema.js";
 import { IS_CLOUD, USAGE_COUNTED_EVENT_TYPES } from "../lib/const.js";
 import { sendApproachingLimitEmail, sendLimitExceededEmail } from "../lib/email/email.js";
 import { createServiceLogger } from "../lib/logger/logger.js";
+import { getReplayMetadataReadTable } from "./replay/replayMetadataMode.js";
 import {
   getAllStripeSubscriptionsByCustomer,
   getBestSubscriptionFromStripeSub,
@@ -19,6 +20,8 @@ import {
 } from "../lib/subscriptionUtils.js";
 
 type UsageUpdateCallback = () => void;
+
+const REPLAY_METADATA_TABLE = getReplayMetadataReadTable();
 
 class UsageService {
   private sitesOverLimit = new Set<number>();
@@ -238,7 +241,7 @@ class UsageService {
           SELECT
             site_id,
             uniq(session_id) as count
-          FROM session_replay_metadata
+          FROM ${REPLAY_METADATA_TABLE}
           WHERE start_time >= toDate({periodStart:String})
           GROUP BY site_id
         `,

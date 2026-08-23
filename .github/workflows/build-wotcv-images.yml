@@ -3,6 +3,8 @@ name: Build WoT-CV Images
 on:
   push:
     branches: [master, feat/wotcv]
+  pull_request:
+    branches: [master, feat/wotcv]
   workflow_dispatch:
 
 permissions:
@@ -34,7 +36,7 @@ jobs:
             scripts/update_rybbit_wotcv.sh
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: |
             shared/package-lock.json
@@ -45,10 +47,12 @@ jobs:
         run: npm ci && npm run build
       - name: Verify generated tracker artifacts
         working-directory: server
-        run: npm ci --legacy-peer-deps && npm run test:run && npm run db:check && npm run check:analytics
+        run: npm ci --legacy-peer-deps && npm run test:run && npm run db:check && npm run build && npm run check:analytics
       - name: Verify WoT-CV client code
         working-directory: client
-        run: npm ci --legacy-peer-deps && npm run test:run && npm run lint:wotcv && npm run knip && npm run audit:polish && npm run format:check:wotcv && npx tsc --noEmit
+        env:
+          NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
+        run: npm ci --legacy-peer-deps && npm run test:run && npm run lint:wotcv && npm run knip && npm run audit:polish && npm run format:check:wotcv && npx tsc --noEmit && npm run build
       - name: Verify merged Compose configuration
         env:
           BASE_URL: https://tracking.example.com
@@ -75,6 +79,7 @@ jobs:
             --redis-volume rybbit_redis-data
 
   backend:
+    if: github.event_name != 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
     steps:
@@ -109,6 +114,7 @@ jobs:
           echo 'Digest: `${{ steps.build.outputs.digest }}`' >> "$GITHUB_STEP_SUMMARY"
 
   client:
+    if: github.event_name != 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
     steps:
