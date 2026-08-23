@@ -4,6 +4,9 @@ set -Eeuo pipefail
 
 WOTCV_COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WOTCV_PERSISTENCE_HELPER="${WOTCV_COMMON_DIR}/wotcv_persistence.py"
+# Replay tables expire after 30 days. Protecting a fixed 29-day cohort leaves
+# a full day before its oldest row can legitimately be removed by TTL.
+WOTCV_REPLAY_PROTECTED_WINDOW_SECONDS=$((29 * 24 * 60 * 60))
 
 wotcv_require_non_root() {
   if [[ "${EUID}" -eq 0 ]]; then
@@ -98,25 +101,74 @@ wotcv_validate_container_persistence() {
 
 wotcv_clickhouse_event_invariants() {
   local container_id="$1"
+  local replay_window_start_timestamp="${2:-}"
+  local protected_cohort_end_timestamp="${3:-}"
   local core_invariants
   local query
+  local snapshot_timestamp
   local v2_exists
   local v2_sessions=0
+  local v2_protected_sessions=0
 
   if [[ -z "${container_id}" ]]; then
     echo "Cannot read ClickHouse event invariants: container does not exist." >&2
     return 1
   fi
 
+  snapshot_timestamp="$(printf '%s\n' 'SELECT toUnixTimestamp(now()) FORMAT TSVRaw' | \
+    docker exec -i "${container_id}" sh -lc \
+      'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
+  if [[ ! "${snapshot_timestamp}" =~ ^[0-9]+$ ]]; then
+    echo "Cannot read a valid ClickHouse invariant snapshot timestamp." >&2
+    return 1
+  fi
+
+  if [[ -z "${replay_window_start_timestamp}" && -z "${protected_cohort_end_timestamp}" ]]; then
+    protected_cohort_end_timestamp="${snapshot_timestamp}"
+    replay_window_start_timestamp=$((protected_cohort_end_timestamp - WOTCV_REPLAY_PROTECTED_WINDOW_SECONDS))
+  elif [[ -z "${replay_window_start_timestamp}" || -z "${protected_cohort_end_timestamp}" ]]; then
+    echo "ClickHouse replay protection window requires both start and end timestamps." >&2
+    return 1
+  elif [[ ! "${replay_window_start_timestamp}" =~ ^[0-9]+$ ]] || \
+    [[ ! "${protected_cohort_end_timestamp}" =~ ^[0-9]+$ ]]; then
+    echo "ClickHouse replay protection window bounds must be integer timestamps." >&2
+    return 1
+  fi
+  if (( protected_cohort_end_timestamp > snapshot_timestamp )); then
+    echo "ClickHouse protected cohort cannot end after its snapshot." >&2
+    return 1
+  fi
+  if (( replay_window_start_timestamp >= protected_cohort_end_timestamp )); then
+    echo "ClickHouse replay protection window must start before its cohort end." >&2
+    return 1
+  fi
+
   query="SELECT
-    (SELECT count() FROM events),
-    (SELECT if(count() = 0, 0, toUnixTimestamp(min(timestamp))) FROM events),
-    (SELECT if(count() = 0, 0, toUnixTimestamp(max(timestamp))) FROM events),
-    (SELECT uniqExact(tuple(site_id, session_id)) FROM events),
-    (SELECT uniqExact(tuple(site_id, toDate(timestamp), session_id)) FROM events),
+    (SELECT count() FROM events
+      WHERE timestamp <= toDateTime(${protected_cohort_end_timestamp})),
+    (SELECT if(count() = 0, 0, toUnixTimestamp(min(timestamp))) FROM events
+      WHERE timestamp <= toDateTime(${protected_cohort_end_timestamp})),
+    (SELECT if(count() = 0, 0, toUnixTimestamp(max(timestamp))) FROM events
+      WHERE timestamp <= toDateTime(${protected_cohort_end_timestamp})),
+    (SELECT uniqExact(tuple(site_id, session_id)) FROM events
+      WHERE timestamp <= toDateTime(${protected_cohort_end_timestamp})),
+    (SELECT uniqExact(tuple(site_id, toDate(timestamp), session_id)) FROM events
+      WHERE timestamp <= toDateTime(${protected_cohort_end_timestamp})),
+    toUInt64(${snapshot_timestamp}),
+    toUInt64(${replay_window_start_timestamp}),
+    toUInt64(${protected_cohort_end_timestamp}),
     (SELECT count() FROM session_replay_events),
     (SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_events),
-    (SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_metadata FINAL)
+    (SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_metadata FINAL),
+    (SELECT count() FROM session_replay_events
+      WHERE timestamp >= toDateTime(${replay_window_start_timestamp})
+        AND timestamp <= toDateTime(${protected_cohort_end_timestamp})),
+    (SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_events
+      WHERE timestamp >= toDateTime(${replay_window_start_timestamp})
+        AND timestamp <= toDateTime(${protected_cohort_end_timestamp})),
+    (SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_metadata FINAL
+      WHERE start_time >= toDateTime(${replay_window_start_timestamp})
+        AND start_time <= toDateTime(${protected_cohort_end_timestamp}))
   FORMAT TSVRaw"
   core_invariants="$(printf '%s\n' "${query}" | docker exec -i "${container_id}" sh -lc \
     'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
@@ -125,13 +177,50 @@ wotcv_clickhouse_event_invariants() {
     docker exec -i "${container_id}" sh -lc \
       'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
   if [[ "${v2_exists}" == "1" ]]; then
-    v2_sessions="$(printf '%s\n' \
-      'SELECT uniqExact(tuple(site_id, session_id)) FROM session_replay_metadata_v2 FINAL FORMAT TSVRaw' | \
+    read -r v2_sessions v2_protected_sessions <<<"$(printf '%s\n' \
+      "SELECT
+        uniqExact(tuple(site_id, session_id)),
+        uniqExactIf(
+          tuple(site_id, session_id),
+          start_time >= toDateTime(${replay_window_start_timestamp})
+            AND start_time <= toDateTime(${protected_cohort_end_timestamp})
+        )
+      FROM session_replay_metadata_v2 FINAL
+      FORMAT TSVRaw" | \
       docker exec -i "${container_id}" sh -lc \
         'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
   fi
 
-  printf '%s\t%s\n' "${core_invariants}" "${v2_sessions}"
+  printf '%s\t%s\t%s\n' \
+    "${core_invariants}" \
+    "${v2_sessions}" \
+    "${v2_protected_sessions}"
+}
+
+wotcv_clickhouse_replay_window_start() {
+  local invariants="$1"
+  local -a values
+
+  read -r -a values <<<"${invariants}"
+  if (( ${#values[@]} != 16 )) || [[ ! "${values[6]}" =~ ^[0-9]+$ ]]; then
+    echo "Cannot extract ClickHouse replay protection window from malformed invariants." >&2
+    return 1
+  fi
+
+  printf '%s\n' "${values[6]}"
+}
+
+wotcv_clickhouse_protected_cohort_end() {
+  local invariants="$1"
+  local -a values
+
+  read -r -a values <<<"${invariants}"
+  if (( ${#values[@]} != 16 )) || [[ ! "${values[7]}" =~ ^[0-9]+$ ]]; then
+    echo "Cannot extract ClickHouse protected cohort end from malformed invariants." >&2
+    return 1
+  fi
+
+  printf '%s\n' "${values[7]}"
 }
 
 wotcv_assert_clickhouse_event_invariants_not_decreased() {

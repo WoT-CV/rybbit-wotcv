@@ -143,7 +143,7 @@ Build przekazuje:
 - `WOTCV_BUILD_TIME`,
 - `WOTCV_DEPLOYED_AT`.
 
-Backend zwraca te dane w `/api/health`. Projekt Compose zachowuje nazwę `rybbit`, a trzy volume danych są jawnie nazwane i oznaczone jako external. Deployment zatrzymuje się przy zmianie projektu, braku volume, niezgodnym mouncie, spadku liczby użytkowników lub stron PostgreSQL albo regresji eventów, sesji, sesji dziennych, danych Replay lub którejkolwiek tabeli metadanych Replay w ClickHouse.
+Backend zwraca te dane w `/api/health`. Projekt Compose zachowuje nazwę `rybbit`, a trzy volume danych są jawnie nazwane i oznaczone jako external. Deployment zatrzymuje się przy zmianie projektu, braku volume, niezgodnym mouncie, spadku liczby użytkowników lub stron PostgreSQL albo regresji stałej kohorty eventów, sesji i sesji dziennych w ClickHouse. Dla tabel Replay objętych TTL 30 dni pełne sumy pozostają diagnostyczne, a ochronie przed spadkiem podlega zamknięta, 29-dniowa kohorta zakotwiczona na początku wdrożenia; baseline jest ważny maksymalnie sześć godzin.
 
 ## Bramki jakości forka
 

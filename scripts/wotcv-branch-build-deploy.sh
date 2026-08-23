@@ -19,6 +19,8 @@ REDIS_VOLUME_NAME="${WOTCV_REDIS_VOLUME_NAME:-rybbit_redis-data}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.wotcv.yml -f docker-compose.wotcv.branch-build.yml)
 COMPOSE_CONFIG_FILE=""
 CLICKHOUSE_EVENT_BASELINE=""
+CLICKHOUSE_REPLAY_WINDOW_START=""
+CLICKHOUSE_PROTECTED_COHORT_END=""
 POSTGRES_DATA_BASELINE=""
 
 cleanup() {
@@ -100,6 +102,8 @@ validate_persistent_storage() {
 
 capture_clickhouse_event_baseline() {
   CLICKHOUSE_EVENT_BASELINE="$(wotcv_clickhouse_event_invariants "$("${COMPOSE[@]}" ps -q clickhouse)")"
+  CLICKHOUSE_REPLAY_WINDOW_START="$(wotcv_clickhouse_replay_window_start "${CLICKHOUSE_EVENT_BASELINE}")"
+  CLICKHOUSE_PROTECTED_COHORT_END="$(wotcv_clickhouse_protected_cohort_end "${CLICKHOUSE_EVENT_BASELINE}")"
   printf 'ClickHouse event baseline: %s\n' "${CLICKHOUSE_EVENT_BASELINE}"
 }
 
@@ -111,7 +115,10 @@ capture_postgres_data_baseline() {
 validate_clickhouse_event_baseline() {
   local current_invariants
 
-  current_invariants="$(wotcv_clickhouse_event_invariants "$("${COMPOSE[@]}" ps -q clickhouse)")"
+  current_invariants="$(wotcv_clickhouse_event_invariants \
+    "$("${COMPOSE[@]}" ps -q clickhouse)" \
+    "${CLICKHOUSE_REPLAY_WINDOW_START}" \
+    "${CLICKHOUSE_PROTECTED_COHORT_END}")"
   wotcv_assert_clickhouse_event_invariants_not_decreased \
     "${CLICKHOUSE_EVENT_BASELINE}" \
     "${current_invariants}"

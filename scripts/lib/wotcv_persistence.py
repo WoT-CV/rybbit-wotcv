@@ -19,6 +19,12 @@ class ValidationError(ValueError):
     """Raised when persistent storage does not match the deployment contract."""
 
 
+# Replay tables have a 30-day TTL. A fixed 29-day cohort is guaranteed not to
+# expire while the baseline remains below the much shorter six-hour age limit.
+REPLAY_PROTECTED_WINDOW_SECONDS = 29 * 24 * 60 * 60
+MAX_EVENT_INVARIANT_AGE_SECONDS = 6 * 60 * 60
+
+
 @dataclass(frozen=True)
 class VolumeSpec:
     logical_name: str
@@ -34,10 +40,17 @@ class EventInvariants:
     maximum_timestamp: int
     sessions: int = 0
     daily_sessions: int = 0
+    snapshot_timestamp: int = 0
+    replay_window_start_timestamp: int = 0
+    protected_cohort_end_timestamp: int = 0
     replay_events: int = 0
     replay_sessions: int = 0
     replay_metadata_sessions: int = 0
+    protected_replay_events: int = 0
+    protected_replay_sessions: int = 0
+    protected_replay_metadata_sessions: int = 0
     replay_metadata_v2_sessions: int = 0
+    protected_replay_metadata_v2_sessions: int = 0
 
 
 @dataclass(frozen=True)
@@ -141,12 +154,15 @@ def validate_container_mounts(
 
 def parse_event_invariants(raw: str) -> EventInvariants:
     values = raw.strip().split()
-    if len(values) != 9:
+    if len(values) != 16:
         raise ValidationError(
             "ClickHouse event invariants must contain count, min timestamp, "
-            "max timestamp, sessions, daily sessions, replay events, replay "
-            "sessions, legacy replay metadata sessions, and v2 replay "
-            "metadata sessions."
+            "max timestamp, sessions, daily sessions, snapshot timestamp, "
+            "replay protection window start, protected cohort end, total replay "
+            "events and sessions, total legacy replay metadata sessions, "
+            "protected replay events and sessions, protected legacy replay "
+            "metadata sessions, and total and protected v2 replay metadata "
+            "sessions."
         )
 
     try:
@@ -156,10 +172,17 @@ def parse_event_invariants(raw: str) -> EventInvariants:
             maximum_timestamp,
             sessions,
             daily_sessions,
+            snapshot_timestamp,
+            replay_window_start_timestamp,
+            protected_cohort_end_timestamp,
             replay_events,
             replay_sessions,
             replay_metadata_sessions,
+            protected_replay_events,
+            protected_replay_sessions,
+            protected_replay_metadata_sessions,
             replay_metadata_v2_sessions,
+            protected_replay_metadata_v2_sessions,
         ) = map(int, values)
     except ValueError as error:
         raise ValidationError(
@@ -172,10 +195,17 @@ def parse_event_invariants(raw: str) -> EventInvariants:
         maximum_timestamp,
         sessions,
         daily_sessions,
+        snapshot_timestamp,
+        replay_window_start_timestamp,
+        protected_cohort_end_timestamp,
         replay_events,
         replay_sessions,
         replay_metadata_sessions,
+        protected_replay_events,
+        protected_replay_sessions,
+        protected_replay_metadata_sessions,
         replay_metadata_v2_sessions,
+        protected_replay_metadata_v2_sessions,
     ) < 0:
         raise ValidationError("ClickHouse event invariants cannot be negative.")
     if count == 0 and (minimum_timestamp != 0 or maximum_timestamp != 0):
@@ -186,17 +216,57 @@ def parse_event_invariants(raw: str) -> EventInvariants:
         raise ValidationError(
             "ClickHouse minimum event timestamp cannot exceed the maximum."
         )
+    if snapshot_timestamp == 0:
+        raise ValidationError(
+            "ClickHouse invariant snapshot timestamp must be positive."
+        )
+    if protected_cohort_end_timestamp > snapshot_timestamp:
+        raise ValidationError(
+            "ClickHouse protected cohort cannot end after its snapshot."
+        )
+    if replay_window_start_timestamp >= protected_cohort_end_timestamp:
+        raise ValidationError(
+            "ClickHouse replay protection window must start before its cohort end."
+        )
+
+    for description, protected_value, total_value in (
+        ("replay events", protected_replay_events, replay_events),
+        ("replay sessions", protected_replay_sessions, replay_sessions),
+        (
+            "legacy replay metadata sessions",
+            protected_replay_metadata_sessions,
+            replay_metadata_sessions,
+        ),
+        (
+            "v2 replay metadata sessions",
+            protected_replay_metadata_v2_sessions,
+            replay_metadata_v2_sessions,
+        ),
+    ):
+        if protected_value > total_value:
+            raise ValidationError(
+                f"Protected ClickHouse {description} cannot exceed its total."
+            )
 
     return EventInvariants(
-        count,
-        minimum_timestamp,
-        maximum_timestamp,
-        sessions,
-        daily_sessions,
-        replay_events,
-        replay_sessions,
-        replay_metadata_sessions,
-        replay_metadata_v2_sessions,
+        count=count,
+        minimum_timestamp=minimum_timestamp,
+        maximum_timestamp=maximum_timestamp,
+        sessions=sessions,
+        daily_sessions=daily_sessions,
+        snapshot_timestamp=snapshot_timestamp,
+        replay_window_start_timestamp=replay_window_start_timestamp,
+        protected_cohort_end_timestamp=protected_cohort_end_timestamp,
+        replay_events=replay_events,
+        replay_sessions=replay_sessions,
+        replay_metadata_sessions=replay_metadata_sessions,
+        protected_replay_events=protected_replay_events,
+        protected_replay_sessions=protected_replay_sessions,
+        protected_replay_metadata_sessions=protected_replay_metadata_sessions,
+        replay_metadata_v2_sessions=replay_metadata_v2_sessions,
+        protected_replay_metadata_v2_sessions=(
+            protected_replay_metadata_v2_sessions
+        ),
     )
 
 
@@ -204,6 +274,41 @@ def assert_event_invariants_not_decreased(
     before: EventInvariants,
     after: EventInvariants,
 ) -> None:
+    expected_window_start = (
+        before.protected_cohort_end_timestamp - REPLAY_PROTECTED_WINDOW_SECONDS
+    )
+    if before.replay_window_start_timestamp != expected_window_start:
+        raise ValidationError(
+            "ClickHouse replay protection window is not anchored 29 days "
+            "before the baseline snapshot."
+        )
+    if before.protected_cohort_end_timestamp != before.snapshot_timestamp:
+        raise ValidationError(
+            "ClickHouse protected cohort must end at the baseline snapshot."
+        )
+    if after.replay_window_start_timestamp != before.replay_window_start_timestamp:
+        raise ValidationError(
+            "ClickHouse replay protection window changed during deployment."
+        )
+    if (
+        after.protected_cohort_end_timestamp
+        != before.protected_cohort_end_timestamp
+    ):
+        raise ValidationError(
+            "ClickHouse protected cohort end changed during deployment."
+        )
+
+    invariant_age = after.snapshot_timestamp - before.snapshot_timestamp
+    if invariant_age < 0:
+        raise ValidationError(
+            "ClickHouse invariant snapshot timestamp moved backward during deployment."
+        )
+    if invariant_age > MAX_EVENT_INVARIANT_AGE_SECONDS:
+        raise ValidationError(
+            "ClickHouse event baseline is older than the six-hour deployment "
+            "safety limit; capture a fresh baseline."
+        )
+
     if after.count < before.count:
         raise ValidationError(
             f"ClickHouse event count decreased from {before.count} to {after.count}."
@@ -225,17 +330,25 @@ def assert_event_invariants_not_decreased(
     for description, before_value, after_value in (
         ("session count", before.sessions, after.sessions),
         ("daily session count", before.daily_sessions, after.daily_sessions),
-        ("replay event count", before.replay_events, after.replay_events),
-        ("replay session count", before.replay_sessions, after.replay_sessions),
         (
-            "legacy replay metadata session count",
-            before.replay_metadata_sessions,
-            after.replay_metadata_sessions,
+            "protected replay event count",
+            before.protected_replay_events,
+            after.protected_replay_events,
         ),
         (
-            "v2 replay metadata session count",
-            before.replay_metadata_v2_sessions,
-            after.replay_metadata_v2_sessions,
+            "protected replay session count",
+            before.protected_replay_sessions,
+            after.protected_replay_sessions,
+        ),
+        (
+            "protected legacy replay metadata session count",
+            before.protected_replay_metadata_sessions,
+            after.protected_replay_metadata_sessions,
+        ),
+        (
+            "protected v2 replay metadata session count",
+            before.protected_replay_metadata_v2_sessions,
+            after.protected_replay_metadata_v2_sessions,
         ),
     ):
         if after_value < before_value:
@@ -365,9 +478,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 "ClickHouse event invariants preserved "
                 f"(events {before.count} -> {after.count}, "
                 f"sessions {before.sessions} -> {after.sessions}, "
-                f"replay metadata sessions "
-                f"{before.replay_metadata_sessions} -> "
-                f"{after.replay_metadata_sessions})."
+                f"TTL replay events {before.replay_events} -> "
+                f"{after.replay_events}, protected replay events "
+                f"{before.protected_replay_events} -> "
+                f"{after.protected_replay_events}, protected replay metadata "
+                f"sessions v1 {before.protected_replay_metadata_sessions} -> "
+                f"{after.protected_replay_metadata_sessions}, v2 "
+                f"{before.protected_replay_metadata_v2_sessions} -> "
+                f"{after.protected_replay_metadata_v2_sessions})."
             )
         elif args.command == "compare-postgres":
             before = parse_postgres_invariants(args.before)
