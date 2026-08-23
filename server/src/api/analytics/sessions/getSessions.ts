@@ -2,7 +2,8 @@ import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
-import { enrichWithTraits, getTimeStatement } from "../utils/utils.js";
+import { enrichWithTraits } from "../utils/utils.js";
+import { getTimeStatement } from "../utils/timeWindow.js";
 import { analyticsRoute, runAnalyticsQuery, QuerySpec } from "../utils/analyticsQuery.js";
 import { matchesUser } from "../utils/effectiveUserId.js";
 
@@ -161,7 +162,7 @@ export const buildSessionsQuery = (query: GetSessionsRequest["Querystring"], sit
   ),
   ReplaySessions AS (
       SELECT DISTINCT session_id
-      FROM session_replay_metadata
+      FROM session_replay_metadata_v2
       FINAL
       WHERE site_id = {siteId:Int32}
         AND event_count >= 2
