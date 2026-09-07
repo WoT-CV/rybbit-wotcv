@@ -141,6 +141,14 @@
       window.clearTimeout(timeout);
     }
   }
+  function getSiteIdFromSrc(src) {
+    try {
+      const url = new URL(src, window.location.href);
+      return url.searchParams.get("siteId") || url.searchParams.get("site-id") || url.searchParams.get("site_id");
+    } catch (e2) {
+      return null;
+    }
+  }
   async function parseScriptConfig(scriptTag) {
     const src = scriptTag.getAttribute("src");
     if (!src) {
@@ -152,9 +160,9 @@
       console.error("Please provide a valid analytics host");
       return null;
     }
-    const siteId = scriptTag.getAttribute("data-site-id") || scriptTag.getAttribute("site-id");
+    const siteId = getSiteIdFromSrc(src) || scriptTag.getAttribute("data-site-id") || scriptTag.getAttribute("site-id");
     if (!siteId) {
-      console.error("Please provide a valid site ID using the data-site-id attribute");
+      console.error("Please provide a valid site ID using the ?siteId= query parameter or the data-site-id attribute");
       return null;
     }
     const namespace = scriptTag.getAttribute("data-namespace") || "rybbit";
@@ -483,7 +491,8 @@
     outerDimensionsWeird: 1 << 8,
     pluginApiAbsence: 1 << 9,
     defaultViewport1280x1200: 1 << 10,
-    squareScreen: 1 << 11
+    squareScreen: 1 << 11,
+    missingScreenDimensions: 1 << 12
   };
   var CLIENT_BOT_SIGNAL_NAMES = Object.keys(CLIENT_BOT_SIGNAL_MASKS);
   var CLIENT_BOT_SIGNAL_WEIGHTS = {
@@ -498,7 +507,8 @@
     outerDimensionsWeird: 2,
     pluginApiAbsence: 0,
     defaultViewport1280x1200: 3,
-    squareScreen: 3
+    squareScreen: 3,
+    missingScreenDimensions: 1
   };
   var ALL_CLIENT_BOT_SIGNAL_BITS = CLIENT_BOT_SIGNAL_NAMES.reduce(
     (mask, name) => mask | CLIENT_BOT_SIGNAL_MASKS[name],
@@ -1575,7 +1585,7 @@
 
   // index.ts
   (async function() {
-    const scriptTag = document.currentScript;
+    const scriptTag = document.currentScript || document.querySelector('script[src*="/script.js"]');
     if (!scriptTag) {
       console.error("Could not find current script tag");
       return;

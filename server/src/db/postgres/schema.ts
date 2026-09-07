@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import type { DashboardConfig } from "@rybbit/shared";
+import type { AnnotationColor, DashboardConfig, Filter, SegmentType } from "@rybbit/shared";
 import {
   boolean,
   check,
@@ -42,6 +42,9 @@ export const user = pgTable(
     // deprecated
     monthlyEventCount: integer().default(0),
     sendAutoEmailReports: boolean().default(true),
+    // deprecated - Resend email IDs from the retired pre-scheduled tip sequence; kept so
+    // unsubscribe can still cancel tips already scheduled for users who signed up before
+    // the lifecycle email system replaced it
     scheduledTipEmailIds: jsonb("scheduled_tip_email_ids").$type<string[]>().default([]),
   },
   table => [unique("user_username_unique").on(table.username), unique("user_email_unique").on(table.email)]
@@ -100,6 +103,9 @@ export const sites = pgTable(
     apiKey: text("api_key"), // Format: rb_{64_hex_chars} = 67 chars total
     privateLinkKey: text("private_link_key"),
     tags: jsonb("tags").default([]).$type<string[]>(),
+    // Platform fingerprinted from the site's homepage at creation time (e.g. "wordpress",
+    // "next-js"); used to link the right install guide in lifecycle emails
+    detectedPlatform: text("detected_platform"),
   },
   table => [check("sites_type_check", sql`${table.type} IS NULL OR ${table.type} IN ('web', 'mobile')`)]
 );
@@ -135,6 +141,60 @@ export const dashboards = pgTable("dashboards", {
   createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
 });
+
+// Timeline annotations: a note pinned to a date (or range) on the traffic chart.
+// site_id is null for organization-wide annotations, which show on every site
+// in organization_id.
+export const annotations = pgTable(
+  "annotations",
+  {
+    annotationId: serial("annotation_id").primaryKey().notNull(),
+    siteId: integer("site_id").references(() => sites.siteId, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    date: timestamp("date", { mode: "string", withTimezone: true }).notNull(),
+    endDate: timestamp("end_date", { mode: "string", withTimezone: true }),
+    color: text("color").$type<AnnotationColor>(),
+    icon: text("icon"),
+    isPublic: boolean("is_public").notNull().default(false),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
+  },
+  table => [
+    index("annotations_site_date_idx").on(table.siteId, table.date),
+    index("annotations_org_date_idx").on(table.organizationId, table.date),
+  ]
+);
+
+// Saved segments: a named, reusable set of analytics filters. A segment is
+// scoped to one site or, with a null site_id, to every site in its
+// organization. `type` is reserved so cohorts can share the table later.
+export const segments = pgTable(
+  "segments",
+  {
+    segmentId: serial("segment_id").primaryKey().notNull(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    siteId: integer("site_id").references(() => sites.siteId, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    filters: jsonb("filters").notNull().$type<Filter[]>().default([]),
+    isPublic: boolean("is_public").default(false).notNull(),
+    type: text("type").notNull().default("segment").$type<SegmentType>(),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
+  },
+  table => [
+    index("segments_organization_idx").on(table.organizationId),
+    index("segments_site_idx").on(table.siteId),
+  ]
+);
 
 // Account table (BetterAuth)
 export const account = pgTable("account", {
@@ -621,4 +681,21 @@ export const importStatus = pgTable(
       name: "import_status_organization_id_organization_id_fk",
     }),
   ]
+);
+
+// One row per lifecycle email actually sent. The (userId, emailKey) unique index is the
+// idempotency guard for the state-machine cron: per-site emails embed the siteId in the
+// key (e.g. "site_live:42") so each fires at most once.
+export const lifecycleEmailLog = pgTable(
+  "lifecycle_email_log",
+  {
+    id: serial("id").primaryKey().notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    emailKey: text("email_key").notNull(),
+    siteId: integer("site_id"),
+    sentAt: timestamp("sent_at", { mode: "string" }).defaultNow().notNull(),
+  },
+  table => [unique("lifecycle_email_log_user_email_key_unique").on(table.userId, table.emailKey)]
 );
