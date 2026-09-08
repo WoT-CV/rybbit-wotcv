@@ -134,11 +134,12 @@ function BotRows({
   );
 }
 
-function useBotSectionData(dimension: BotDimensionKey) {
+function useBotSectionData(dimension: BotDimensionKey, purpose?: string) {
   const { site } = useStore();
   const { data, isLoading, isFetching, error, refetch } = useGetBotDimension({
     site,
     dimension,
+    purpose,
     limit: 100,
     page: 1,
   });
@@ -173,6 +174,8 @@ export type BotSectionBaseProps = {
   getValue: (item: BotDimensionItem) => string;
   getLink?: (item: BotDimensionItem) => string | undefined;
   filterable?: boolean;
+  /** Narrows the section to one bot purpose, or to "ai" / "ai_crawler". */
+  purpose?: string;
 };
 
 type BotSectionProps = BotSectionBaseProps & {
@@ -188,9 +191,10 @@ export function BotSectionDialogBody({
   getValue,
   getLink,
   filterable = true,
+  purpose,
 }: BotSectionBaseProps) {
   const t = useExtracted();
-  const { items, ratio, isLoading, error, refetch } = useBotSectionData(dimension);
+  const { items, ratio, isLoading, error, refetch } = useBotSectionData(dimension, purpose);
   const filterParameter = filterable ? (dimension as FilterParameter) : undefined;
 
   if (isLoading) {
@@ -234,10 +238,11 @@ export function BotSection({
   expanded,
   close,
   filterable = true,
+  purpose,
   renderDialog = true,
 }: BotSectionProps) {
   const t = useExtracted();
-  const { items, ratio, isLoading, isFetching, error, refetch } = useBotSectionData(dimension);
+  const { items, ratio, isLoading, isFetching, error, refetch } = useBotSectionData(dimension, purpose);
   const filterParameter = filterable ? (dimension as FilterParameter) : undefined;
 
   const content = (

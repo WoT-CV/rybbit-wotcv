@@ -423,7 +423,14 @@ export const endpointCategories: EndpointCategory[] = [
         name: "Pobierz boty w czasie",
         description: "Zwraca liczbę żądań botów w czasie",
         hasCommonParams: true,
-        specificParams: ["bucket", "layer"],
+        specificParams: ["bucket", "layer", "purpose"],
+      },
+      {
+        method: "GET",
+        path: "/sites/:site/bots/ai-summary",
+        name: "Get AI Summary",
+        description: "Returns crawls and referrals per AI operator, side by side",
+        hasCommonParams: true,
       },
       {
         method: "GET",
@@ -432,7 +439,7 @@ export const endpointCategories: EndpointCategory[] = [
         description: "Zwraca żądania botów w podziale według wymiaru",
         hasCommonParams: true,
         requiredParams: ["dimension"],
-        specificParams: ["dimension", "limit", "page", "layer"],
+        specificParams: ["dimension", "limit", "page", "layer", "purpose"],
         parameterMetadata: {
           dimension: {
             label: "Wymiar",
@@ -451,7 +458,11 @@ export const endpointCategories: EndpointCategory[] = [
               "pathname",
               "dimensions",
               "asn_org",
+              "asn_provider",
               "bot_category",
+              "bot_name",
+              "bot_operator",
+              "bot_purpose",
               "matched_ua_pattern",
             ],
           },
@@ -896,6 +907,25 @@ export const parameterMetadata: Record<string, ParameterMetadata> = {
     label: "Warstwa",
     type: "select",
     options: ["ua_pattern", "header_heuristics", "client_signals", "bot_asn", "rate_anomaly"],
+  },
+  purpose: {
+    label: "Purpose",
+    type: "select",
+    // "ai" and "ai_crawler" are groups; the rest are the stored values.
+    options: [
+      "ai",
+      "ai_crawler",
+      "ai_training",
+      "ai_search",
+      "ai_agent",
+      "search",
+      "social_preview",
+      "seo",
+      "monitoring",
+      "security",
+      "scripted",
+      "headless",
+    ],
   },
   mode: {
     label: "Tryb",

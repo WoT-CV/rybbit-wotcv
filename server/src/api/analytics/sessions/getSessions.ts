@@ -1,7 +1,7 @@
 import { FilterParams } from "@rybbit/shared";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { getFilterStatement } from "../utils/getFilterStatement.js";
 import { SESSION_CHANNEL_AGG, SESSION_REFERRER_AGG } from "../utils/sessionAttribution.js";
+import { getSessionFilterStatement } from "../utils/sessionFilters.js";
 import { enrichWithTraits } from "../utils/utils.js";
 import {
   clickhouseResolvedIdentifiedUserId,
@@ -75,15 +75,6 @@ export interface GetSessionsRequest {
   }>;
 }
 
-// Field mappings for the CTE which extracts UTM params as separate columns
-const SESSION_FIELD_MAPPINGS = {
-  "url_parameters['utm_source']": "utm_source",
-  "url_parameters['utm_medium']": "utm_medium",
-  "url_parameters['utm_campaign']": "utm_campaign",
-  "url_parameters['utm_term']": "utm_term",
-  "url_parameters['utm_content']": "utm_content",
-};
-
 export const buildSessionsQuery = async (
   query: GetSessionsRequest["Querystring"],
   siteId: number
@@ -111,11 +102,7 @@ export const buildSessionsQuery = async (
   //   containing a matching event) — required for any parameter the aggregated CTE
   //   below doesn't project, otherwise the outer WHERE hits an unknown identifier
   // - fieldMappings: CTE extracts UTM params as separate columns, so we need to map the field names
-  const filterStatement = getFilterStatement(filters, siteId, timeStatement, {
-    sessionLevelParams: ["event_name", "pathname", "page_title", "querystring", "channel"],
-    fieldMappings: SESSION_FIELD_MAPPINGS,
-    userIdExpression: "if(identified_user_id != '', identified_user_id, user_id)",
-  });
+  const filterStatement = getSessionFilterStatement(filters, siteId, timeStatement);
   const requestedIdentity = userId ? await resolveUserIdentity(siteId, userId) : null;
   const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
   const requestedIdentityCondition = clickhouseResolvedUserCondition("events");
@@ -149,8 +136,8 @@ export const buildSessionsQuery = async (
           MAX(timestamp) AS session_end,
           MIN(timestamp) AS session_start,
           dateDiff('second', MIN(timestamp), MAX(timestamp)) AS session_duration,
-          argMinIf(pathname, timestamp, type = 'pageview') AS entry_page,
-          argMaxIf(pathname, timestamp, type = 'pageview') AS exit_page,
+          argMinIf(pathname, timestamp_ms, type = 'pageview') AS entry_page,
+          argMaxIf(pathname, timestamp_ms, type = 'pageview') AS exit_page,
           countIf(type = 'pageview') AS pageviews,
           countIf(type = 'custom_event') AS events,
           countIf(type = 'error') AS errors,
@@ -163,6 +150,7 @@ export const buildSessionsQuery = async (
           argMax(lat, timestamp) AS lat,
           argMax(lon, timestamp) AS lon,
           argMax(tag, timestamp) AS tag,
+          argMax(feature_flags, timestamp) AS feature_flags,
           argMax(timezone, timestamp) AS timezone
       FROM events
       WHERE

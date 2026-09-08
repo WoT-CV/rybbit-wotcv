@@ -3,8 +3,9 @@
 import { useExtracted } from "next-intl";
 import { truncateString } from "../../../../../lib/utils";
 import { BotSectionTabs, type BotSectionTab } from "../BotSectionTabs";
+import { formatBotPurpose } from "../ai/aiLabels";
 
-type Tab = "asn_orgs" | "bot_categories" | "ua_patterns";
+type Tab = "bots" | "operators" | "purposes" | "asn_orgs" | "bot_categories" | "ua_patterns";
 
 function formatBotCategory(value: string, uncategorizedLabel: string) {
   if (!value) return uncategorizedLabel;
@@ -19,6 +20,45 @@ export function BotMetadata() {
   const t = useExtracted();
 
   const tabs: BotSectionTab<Tab>[] = [
+    {
+      value: "bots",
+      label: t("Bots"),
+      section: {
+        dimension: "bot_name",
+        title: t("Bots"),
+        getValue: item => item.value,
+        getKey: item => item.value || "unnamed",
+        // Only the curated patterns carry a name. A hit on a generic rule is a
+        // bot nobody has identified, and rows written before identity shipped
+        // land here too.
+        getLabel: item => item.value || t("Unnamed"),
+        filterable: false,
+      },
+    },
+    {
+      value: "operators",
+      label: t("Operators"),
+      section: {
+        dimension: "bot_operator",
+        title: t("Operators"),
+        getValue: item => item.value,
+        getKey: item => item.value || "unknown",
+        getLabel: item => item.value || t("Unknown"),
+        filterable: false,
+      },
+    },
+    {
+      value: "purposes",
+      label: t("Purpose"),
+      section: {
+        dimension: "bot_purpose",
+        title: t("Purpose"),
+        getValue: item => item.value,
+        getKey: item => item.value || "unclassified",
+        getLabel: item => formatBotPurpose(item.value, t),
+        filterable: false,
+      },
+    },
     {
       value: "asn_orgs",
       label: t("ASN Orgs"),
@@ -57,5 +97,5 @@ export function BotMetadata() {
     },
   ];
 
-  return <BotSectionTabs defaultValue="asn_orgs" tabs={tabs} />;
+  return <BotSectionTabs defaultValue="bots" tabs={tabs} />;
 }

@@ -107,6 +107,7 @@ wotcv_clickhouse_event_invariants() {
   local query
   local snapshot_timestamp
   local v2_exists
+  local v2_invariants
   local v2_sessions=0
   local v2_protected_sessions=0
 
@@ -117,7 +118,10 @@ wotcv_clickhouse_event_invariants() {
 
   snapshot_timestamp="$(printf '%s\n' 'SELECT toUnixTimestamp(now()) FORMAT TSVRaw' | \
     docker exec -i "${container_id}" sh -lc \
-      'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
+      'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')" || {
+    echo "Cannot read ClickHouse snapshot timestamp." >&2
+    return 1
+  }
   if [[ ! "${snapshot_timestamp}" =~ ^[0-9]+$ ]]; then
     echo "Cannot read a valid ClickHouse invariant snapshot timestamp." >&2
     return 1
@@ -171,13 +175,23 @@ wotcv_clickhouse_event_invariants() {
         AND start_time <= toDateTime(${protected_cohort_end_timestamp}))
   FORMAT TSVRaw"
   core_invariants="$(printf '%s\n' "${query}" | docker exec -i "${container_id}" sh -lc \
-    'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
+    'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')" || {
+    echo "Cannot read ClickHouse core invariants." >&2
+    return 1
+  }
 
   v2_exists="$(printf '%s\n' 'EXISTS TABLE session_replay_metadata_v2 FORMAT TSVRaw' | \
     docker exec -i "${container_id}" sh -lc \
-      'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
+      'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')" || {
+    echo "Cannot check whether Replay v2 metadata exists." >&2
+    return 1
+  }
+  if [[ "${v2_exists}" != "0" && "${v2_exists}" != "1" ]]; then
+    echo "Invalid Replay v2 table existence response." >&2
+    return 1
+  fi
   if [[ "${v2_exists}" == "1" ]]; then
-    read -r v2_sessions v2_protected_sessions <<<"$(printf '%s\n' \
+    v2_invariants="$(printf '%s\n' \
       "SELECT
         uniqExact(tuple(site_id, session_id)),
         uniqExactIf(
@@ -188,7 +202,15 @@ wotcv_clickhouse_event_invariants() {
       FROM session_replay_metadata_v2 FINAL
       FORMAT TSVRaw" | \
       docker exec -i "${container_id}" sh -lc \
-        'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')"
+        'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" --database "$CLICKHOUSE_DB"')" || {
+      echo "Cannot read Replay v2 metadata invariants." >&2
+      return 1
+    }
+    if [[ ! "${v2_invariants}" =~ ^[0-9]+[[:blank:]]+[0-9]+$ ]]; then
+      echo "Invalid Replay v2 metadata invariants." >&2
+      return 1
+    fi
+    read -r v2_sessions v2_protected_sessions <<<"${v2_invariants}"
   fi
 
   printf '%s\t%s\t%s\n' \

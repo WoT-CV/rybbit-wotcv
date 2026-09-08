@@ -6,6 +6,10 @@ type ColumnDefinition = {
 };
 
 const EVENTS_COLUMNS_TO_ENSURE: ColumnDefinition[] = [
+  // `timestamp` is part of the MergeTree key and ClickHouse forbids widening a
+  // key column in place. Keep it for partition pruning; use this additive
+  // column wherever event order matters. Old rows read as whole-second values.
+  { name: "timestamp_ms", definition: "timestamp_ms DateTime64(3) DEFAULT toDateTime64(timestamp, 3) AFTER timestamp" },
   { name: "lcp", definition: "lcp Nullable(Float64)" },
   { name: "cls", definition: "cls Nullable(Float64)" },
   { name: "inp", definition: "inp Nullable(Float64)" },
@@ -34,6 +38,17 @@ const BOT_EVENTS_COLUMNS_TO_ENSURE: ColumnDefinition[] = [
   // say why the request was convicted.
   { name: "anomaly_reasons", definition: "anomaly_reasons String DEFAULT ''" },
   { name: "anomaly_score", definition: "anomaly_score UInt8 DEFAULT 0" },
+  // Bot identity. `matched_ua_pattern` stores a regex source, which is evidence
+  // but not an answer to "who is this" — these carry the name the operator
+  // publishes. Empty on rows written before the columns existed; nothing is
+  // backfilled, so readers must tolerate ''.
+  { name: "bot_name", definition: "bot_name LowCardinality(String) DEFAULT ''" },
+  { name: "bot_operator", definition: "bot_operator LowCardinality(String) DEFAULT ''" },
+  { name: "bot_purpose", definition: "bot_purpose LowCardinality(String) DEFAULT ''" },
+  // The curated provider behind the request's ASN, resolved during detection
+  // and until now discarded. A UA can claim any name; this is the independent
+  // half of the claim, so the two together are what makes attribution arguable.
+  { name: "asn_provider", definition: "asn_provider LowCardinality(String) DEFAULT ''" },
 ];
 
 // Runs against both audit tables: they carry the same columns on purpose, so a
@@ -87,6 +102,7 @@ export async function initializeCoreTables() {
       CREATE TABLE IF NOT EXISTS events (
         site_id UInt16,
         timestamp DateTime,
+        timestamp_ms DateTime64(3) DEFAULT toDateTime64(timestamp, 3),
         session_id String,
         user_id String,
         hostname String,
@@ -175,7 +191,11 @@ export async function initializeCoreTables() {
         client_bot_score Nullable(UInt8),
         client_signal_mask UInt16 DEFAULT 0,
         anomaly_reasons String DEFAULT '',
-        anomaly_score UInt8 DEFAULT 0
+        anomaly_score UInt8 DEFAULT 0,
+        bot_name LowCardinality(String) DEFAULT '',
+        bot_operator LowCardinality(String) DEFAULT '',
+        bot_purpose LowCardinality(String) DEFAULT '',
+        asn_provider LowCardinality(String) DEFAULT ''
       )
       ENGINE = MergeTree()
       PARTITION BY toYYYYMM(timestamp)
@@ -227,7 +247,11 @@ export async function initializeCoreTables() {
         client_bot_score Nullable(UInt8),
         client_signal_mask UInt16 DEFAULT 0,
         anomaly_reasons String DEFAULT '',
-        anomaly_score UInt8 DEFAULT 0
+        anomaly_score UInt8 DEFAULT 0,
+        bot_name LowCardinality(String) DEFAULT '',
+        bot_operator LowCardinality(String) DEFAULT '',
+        bot_purpose LowCardinality(String) DEFAULT '',
+        asn_provider LowCardinality(String) DEFAULT ''
       )
       ENGINE = MergeTree()
       PARTITION BY toYYYYMM(timestamp)

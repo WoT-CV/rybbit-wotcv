@@ -31,7 +31,7 @@ export interface JourneysResponse {
 
 // Page title types
 export type PageTitleItem = {
-  value: string; // The page_title
+  value: string; // The page_title; empty when the row represents an untitled pathname
   pathname: string; // A representative pathname
   count: number;
   percentage: number;

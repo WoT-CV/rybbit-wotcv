@@ -28,12 +28,14 @@ jobs:
       - name: Verify deployment persistence guards
         run: |
           python3 -m unittest discover -s scripts/tests -p 'test_*.py'
-          bash -n \
+          for script in \
             scripts/lib/wotcv-common.sh \
             scripts/wotcv-branch-build-deploy.sh \
             scripts/wotcv-deploy.sh \
             scripts/wotcv-identity-v2-preflight.sh \
-            scripts/update_rybbit_wotcv.sh
+            scripts/update_rybbit_wotcv.sh; do
+            bash -n "$script"
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: 24

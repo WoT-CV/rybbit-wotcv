@@ -189,6 +189,26 @@ Eksport PDF, Web Vitals i informacje o źródle geolokalizacji są dostępne na 
 
 ## Build i wdrożenie z `feat/wotcv`
 
+### Zmiany schematu po synchronizacji 2026-09-08
+
+Dla instalacji będącej na forkowej migracji `0014` standardowy skrypt wdrożeniowy automatycznie zastosuje trzy nowe migracje PostgreSQL z nowego obrazu:
+
+| Migracja | Zakres |
+| --- | --- |
+| `0015_round_trish_tilby` | Tabela dziennika wiadomości lifecycle i kolumna `sites.detected_platform`. Marketing pozostaje wyłączony na self-hosted. |
+| `0016_shocking_vance_astro` | Zapisane segmenty i ich powiązania z organizacją, stroną oraz autorem. |
+| `0017_burly_nick_fury` | Adnotacje wykresów i ich powiązania. |
+
+Nie należy uruchamiać dodatkowo ręcznego `db:push`, generowania migracji ani upstreamowej `0014_huge_dagger`. Historia forka do `0014` jest zachowana; nowe snapshoty kontynuują tę historię i nie usuwają tabel Uptime ani własnych pól Network Replay/identity.
+
+Przy starcie backendu inicjalizacja ClickHouse dodaje brakujące `events.timestamp_ms` oraz pola identyfikacji botów (`bot_name`, `bot_operator`, `bot_purpose`, `asn_provider`) w obu tabelach audytu botów. Nie zmienia klucza istniejących eventów ani retencji Replay. Nie jest wymagany backfill historycznych danych; starsze eventy korzystają z domyślnej wartości `timestamp_ms` wyliczanej z dotychczasowego `timestamp`.
+
+Custom SQL i karty oparte na SQL używają nowego, ograniczonego użytkownika `rybbit_query`. Jego provisioning jest wykonywany automatycznie na starcie, ale wymaga prawa zarządzania użytkownikami po stronie głównego konta ClickHouse. Compose przekazuje `CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1`; rzeczywiste uprawnienia istniejącej instalacji trzeba potwierdzić po wdrożeniu. `CLICKHOUSE_QUERY_PASSWORD` jest opcjonalne — przy braku wartości używane jest dotychczasowe hasło ClickHouse. Ograniczony użytkownik musi być różny od głównego użytkownika i `default`; błąd konfiguracji jest odrzucany przed zmianą uprawnień. Brak możliwości provisioningu nie powoduje powrotu zapytań użytkownika do uprzywilejowanego klienta.
+
+Przed wdrożeniem wymagany jest odtwarzalny backup. Po wdrożeniu należy sprawdzić nowe segmenty, adnotacje i custom SQL oraz stare sesje, identity i Replay — sam healthcheck nie pokrywa tych funkcji. `REPLAY_METADATA_MODE=v1` pozostaje domyślne; nie uruchamiać migracji danych do v2 w ramach zwykłej aktualizacji. Pełny zakres i ograniczenia walidacji opisuje [raport synchronizacji](WOTCV_UPSTREAM_SYNC_2026-09-08.md).
+
+### Procedura
+
 Używany zestaw Compose:
 
 ```bash
@@ -219,6 +239,8 @@ docker exec backend sh -lc 'getent hosts redis && nc -zvw3 redis 6379'
 Przed mutacjami skrypt zapisuje liczbę użytkowników i stron z PostgreSQL oraz zakotwicza snapshot ClickHouse. Dla zwykłych eventów sprawdza stałą kohortę kończącą się w chwili snapshotu: liczbę eventów, najstarszy i najnowszy timestamp oraz liczbę sesji i sesji dziennych. Te dane nie są objęte retencją, dlatego żaden licznik kohorty nie może spaść, najstarszy timestamp nie może przesunąć się do przodu, a najnowszy nie może się cofnąć. Eventy napływające po snapshocie nie maskują ewentualnego ubytku wcześniejszych danych.
 
 Tabele Replay mają TTL 30 dni, więc ich pełne sumy pozostają diagnostyczne i mogą prawidłowo maleć podczas merge wykonywanego przez ClickHouse. Dla nich skrypt chroni zamkniętą, 29-dniową kohortę od `snapshot - 29 dni` do chwili snapshotu i przy każdym kolejnym sprawdzeniu używa dokładnie tych samych granic. Liczba eventów, sesji oraz sesji metadanych Replay w tej kohorcie nie może spaść, a nowe rekordy po snapshocie nie mogą zamaskować ubytku. Baseline wygasa po sześciu godzinach, czyli na długo przed dojściem najstarszej chronionej granicy do 30-dniowego TTL; po tym czasie trzeba rozpocząć wdrożenie od nowego baseline'u. Jeżeli tabela `session_replay_metadata_v2` nie istnieje jeszcze przed pierwszym wdrożeniem, jej wartość bazowa wynosi bezpiecznie zero. Spóźnione rekordy należące do kohorty mogą zwiększyć liczniki, natomiast utrata danych niewynikająca z TTL nadal zatrzymuje wdrożenie.
+
+Odczyt baseline jest przerywany po każdym błędzie zapytania, również wtedy, gdy klient wypisze częściowe wyniki przed błędem. Wyłącznie poprawna odpowiedź `0` na `EXISTS TABLE session_replay_metadata_v2` pozwala użyć zera dla brakującej tabeli; błąd uprawnień, połączenia albo niepoprawny wynik nie oznacza braku tabeli. Kontrole te nie zmieniają TTL i nie pozwalają ignorować spadku chronionej kohorty.
 
 `REPLAY_METADATA_MODE` pozostaje ustawione na `v1` podczas zwykłego wdrożenia. Przejście przez `dual` do `v2` jest osobną, ręczną operacją z backupem, zatrzymaniem ingestu, jednorazowym backfillem i kontrolą per sesja opisaną w [REPLAY_METADATA_V2.md](../clickhouse/REPLAY_METADATA_V2.md). Skrypty wdrożeniowe nie wykonują backfillu, `TRUNCATE` ani `DROP TABLE`.
 

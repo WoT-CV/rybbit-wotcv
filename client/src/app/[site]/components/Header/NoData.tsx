@@ -133,21 +133,20 @@ export function NoData() {
   const hiddenCount = PLATFORM_GUIDES.length - VISIBLE_PLATFORM_COUNT;
 
   const isMobileSite = siteMetadata?.type === "mobile";
-  const scriptUrl = `${globalThis.location.origin}/api/script.js`;
+  const scriptUrl = `${globalThis.location.origin}/api/script.js?siteId=${encodeURIComponent(siteId)}`;
 
-  const htmlSnippet = `<script\n    src="${scriptUrl}"\n    data-site-id="${siteId}"\n    defer\n></script>`;
+  const htmlSnippet = `<script\n    src="${scriptUrl}"\n    defer\n></script>`;
 
   const jsSnippet = `<script>
   (function() {
     var el = document.createElement("script");
     el.src = "${scriptUrl}";
     el.defer = true;
-    el.setAttribute("data-site-id", "${siteId}");
     document.head.appendChild(el);
   })();
 </script>`;
 
-  const aiPrompt = `Zainstaluj analitykę Rybbit na tej stronie.\n\nDodaj ten tag skryptu do sekcji <head> każdej strony, najlepiej w głównym layoucie lub bazowym szablonie, jeśli taki istnieje:\n\n<script src="${scriptUrl}" data-site-id="${siteId}" defer></script>\n`;
+  const aiPrompt = `Zainstaluj analitykę Rybbit na tej stronie.\n\nDodaj ten tag skryptu do sekcji <head> każdej strony, najlepiej w głównym layoucie lub bazowym szablonie, jeśli taki istnieje:\n\n<script src="${scriptUrl}" defer></script>\n`;
 
   const rnInstallSnippet = "npm install @rybbit/react-native @react-native-async-storage/async-storage";
 

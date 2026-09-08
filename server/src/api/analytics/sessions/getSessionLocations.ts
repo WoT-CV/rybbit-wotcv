@@ -3,7 +3,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { clickhouseResolvedIdentifiedUserId } from "../../../services/userIdentity/userIdentityService.js";
 import { enrichWithTraits } from "../utils/utils.js";
 import { getTimeStatement } from "../utils/timeWindow.js";
-import { getFilterStatement } from "../utils/getFilterStatement.js";
+import { buildFilteredSessionsCTE } from "../utils/sessionFilters.js";
 import { analyticsRoute, runAnalyticsQuery } from "../utils/analyticsQuery.js";
 
 export interface GetSessionLocationsRequest {
@@ -15,26 +15,28 @@ export interface GetSessionLocationsRequest {
 
 export const buildSessionLocationsQuery = (query: GetSessionLocationsRequest["Querystring"], siteId: number) => {
   const timeStatement = getTimeStatement(query);
-  const filterStatement = getFilterStatement(query.filters, siteId, timeStatement);
   const resolvedIdentifiedUserId = clickhouseResolvedIdentifiedUserId("events");
+  const filteredSessionsCTE = buildFilteredSessionsCTE(query.filters, siteId, timeStatement);
+  const filteredSessionsJoin = filteredSessionsCTE ? "INNER JOIN FilteredSessions USING (session_id)" : "";
 
   return `
-WITH stuff AS (
+WITH ${filteredSessionsCTE ? `${filteredSessionsCTE},` : ""}
+stuff AS (
     SELECT
         session_id,
-        argMax(user_id, timestamp) AS user_id,
-        argMax(${resolvedIdentifiedUserId}, timestamp) AS identified_user_id,
-        any(lat) AS lat,
-        any(lon) AS lon,
-        any(city) AS city,
-        any(country) AS country,
+        argMax(events.user_id, timestamp_ms) AS user_id,
+        argMax(${resolvedIdentifiedUserId}, timestamp_ms) AS identified_user_id,
+        argMax(lat, timestamp) AS lat,
+        argMax(lon, timestamp) AS lon,
+        argMax(city, timestamp) AS city,
+        argMax(country, timestamp) AS country,
         min(timestamp) AS session_start
     FROM
         events
+    ${filteredSessionsJoin}
     WHERE
         site_id = {site:Int32}
         ${timeStatement}
-        ${filterStatement}
     GROUP BY
         session_id
 )

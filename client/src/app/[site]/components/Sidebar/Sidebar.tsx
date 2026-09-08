@@ -26,11 +26,11 @@ import { useGetSite } from "../../../../api/admin/hooks/useSites";
 import { Sidebar as SidebarComponents } from "../../../../components/sidebar/Sidebar";
 import { SiteSettings } from "../../../../components/SiteSettings/SiteSettings";
 import { ANALYTICS_CAPABILITIES } from "../../../../lib/capabilities";
+import { useAppEnv } from "../../../../hooks/useIsProduction";
 import { getSiteRouteContext } from "../../../../lib/siteRoute";
+import { useStripeSubscription } from "../../../../lib/subscription/useStripeSubscription";
 import { useEmbedPageOptions } from "../../utils";
 import { SiteSelector } from "./SiteSelector";
-import { useStripeSubscription } from "../../../../lib/subscription/useStripeSubscription";
-import { useAppEnv } from "../../../../hooks/useIsProduction";
 
 function SidebarContent() {
   const t = useExtracted();

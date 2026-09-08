@@ -84,8 +84,31 @@ describe("getUserInfo", () => {
 
     expect(sessionsQuery).toContain("count() AS event_rows");
     expect(sessionsQuery).toContain("SUM(event_rows) AS event_rows");
-    expect(sessionsQuery).toContain("events.identified_user_id = {canonicalUserId:String}");
-    expect(sessionsQuery).toContain("events.user_id IN ({anonymousIds:Array(String)})");
+    expect(sessionsQuery).toContain("source_events.identified_user_id = {canonicalUserId:String}");
+    expect(sessionsQuery).toContain("source_events.user_id IN ({anonymousIds:Array(String)})");
+  });
+
+  it("keeps all user panels on the same site-scoped session cohort and qualified identity", () => {
+    const queries = buildUserInfoQueries(
+      {
+        start_date: "",
+        end_date: "",
+        filters: JSON.stringify([{ parameter: "user_id", type: "equals", value: ["account-42"] }]),
+        time_zone: "UTC",
+      },
+      42
+    );
+
+    for (const sql of Object.values(queries)) {
+      expect(sql).toContain("FilteredSessions AS");
+      expect(sql).toContain("WHERE site_id = 42");
+      expect(sql).toContain("INNER JOIN FilteredSessions USING (session_id)");
+      expect(sql).toContain("AND source_events.site_id = {site:Int32}");
+      expect(sql).toContain("source_events.identified_user_id = {canonicalUserId:String}");
+      expect(sql).toContain("source_events.identified_user_id = ''");
+      expect(sql).toContain("source_events.user_id IN ({anonymousIds:Array(String)})");
+      expect(sql).not.toMatch(/(?<!source_)events\.identified_user_id = \{canonicalUserId:String\}/);
+    }
   });
 
   it("returns 404 for an ID with neither analytics data nor a persisted identity", async () => {

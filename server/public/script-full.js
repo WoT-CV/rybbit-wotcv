@@ -178,6 +178,8 @@
         goals: ["read", "write"],
         funnels: ["read", "write"],
         dashboards: ["read", "write"],
+        annotations: ["read", "write"],
+        segments: ["read", "write"],
         flags: ["read", "write"],
         experiments: ["read", "write"],
         sites: ["read", "write"],
@@ -194,6 +196,18 @@
         const actions = exports.SCOPE_MATRIX[resource];
         return !!actions && actions.includes(action);
       }
+    }
+  });
+
+  // ../../../shared/dist/segments.js
+  var require_segments = __commonJS({
+    "../../../shared/dist/segments.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.SEGMENT_MAX_FILTERS = exports.SEGMENT_DESCRIPTION_MAX_LENGTH = exports.SEGMENT_NAME_MAX_LENGTH = void 0;
+      exports.SEGMENT_NAME_MAX_LENGTH = 80;
+      exports.SEGMENT_DESCRIPTION_MAX_LENGTH = 500;
+      exports.SEGMENT_MAX_FILTERS = 20;
     }
   });
 
@@ -325,6 +339,61 @@
     }
   });
 
+  // ../../../shared/dist/aiOperators.js
+  var require_aiOperators = __commonJS({
+    "../../../shared/dist/aiOperators.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.AI_CHAT_DOMAINS = exports.AI_CHAT_ONLY_DOMAINS = exports.AI_REFERRER_DOMAIN_TO_OPERATOR = exports.AI_OPERATOR_REFERRER_DOMAINS = void 0;
+      exports.AI_OPERATOR_REFERRER_DOMAINS = {
+        OpenAI: ["chatgpt.com", "chat.openai.com"],
+        Anthropic: ["claude.ai"],
+        Google: ["gemini.google.com"],
+        Microsoft: ["copilot.microsoft.com"],
+        Perplexity: ["perplexity.ai"],
+        Meta: ["meta.ai"],
+        Mistral: ["chat.mistral.ai", "mistral.ai"],
+        xAI: ["grok.com"],
+        "You.com": ["you.com"],
+        // DuckDuckGo is deliberately absent: DuckAssistBot crawls, but a referral
+        // from duckduckgo.com is organic search, not an AI chat hand-off, and
+        // listing it here would reclassify every DuckDuckGo visit as AI traffic.
+        Cursor: ["cursor.com"],
+        Cohere: ["coral.cohere.com"]
+      };
+      exports.AI_REFERRER_DOMAIN_TO_OPERATOR = Object.fromEntries(Object.entries(exports.AI_OPERATOR_REFERRER_DOMAINS).flatMap(([operator, domains]) => domains.map((domain) => [domain, operator])));
+      exports.AI_CHAT_ONLY_DOMAINS = [
+        "deepseek.com",
+        "chat.deepseek.com",
+        "poe.com",
+        "pi.ai",
+        "heypi.com",
+        "character.ai",
+        "qwen.ai",
+        "jasper.ai",
+        "writesonic.com",
+        "chatsonic.com",
+        "phind.com",
+        "andi.com",
+        "codeium.com"
+      ];
+      exports.AI_CHAT_DOMAINS = [
+        ...Object.keys(exports.AI_REFERRER_DOMAIN_TO_OPERATOR),
+        ...exports.AI_CHAT_ONLY_DOMAINS
+      ];
+    }
+  });
+
+  // ../../../shared/dist/annotations.js
+  var require_annotations = __commonJS({
+    "../../../shared/dist/annotations.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.ANNOTATION_COLORS = void 0;
+      exports.ANNOTATION_COLORS = ["amber", "rose", "sky", "violet", "lime"];
+    }
+  });
+
   // ../../../shared/dist/index.js
   var require_dist = __commonJS({
     "../../../shared/dist/index.js"(exports) {
@@ -352,11 +421,14 @@
       __exportStar(require_networkReplay(), exports);
       __exportStar(require_params(), exports);
       __exportStar(require_scopes(), exports);
+      __exportStar(require_segments(), exports);
       __exportStar(require_time(), exports);
       __exportStar(require_performance(), exports);
       __exportStar(require_replayExport(), exports);
       __exportStar(require_replayActivity(), exports);
       __exportStar(require_growthAccounting(), exports);
+      __exportStar(require_aiOperators(), exports);
+      __exportStar(require_annotations(), exports);
     }
   });
 
@@ -519,6 +591,14 @@
       window.clearTimeout(timeout);
     }
   }
+  function getSiteIdFromSrc(src) {
+    try {
+      const url = new URL(src, window.location.href);
+      return url.searchParams.get("siteId") || url.searchParams.get("site-id") || url.searchParams.get("site_id");
+    } catch (e2) {
+      return null;
+    }
+  }
   async function parseScriptConfig(scriptTag) {
     const src = scriptTag.getAttribute("src");
     if (!src) {
@@ -530,9 +610,9 @@
       console.error("Please provide a valid analytics host");
       return null;
     }
-    const siteId = scriptTag.getAttribute("data-site-id") || scriptTag.getAttribute("site-id");
+    const siteId = getSiteIdFromSrc(src) || scriptTag.getAttribute("data-site-id") || scriptTag.getAttribute("site-id");
     if (!siteId) {
-      console.error("Please provide a valid site ID using the data-site-id attribute");
+      console.error("Please provide a valid site ID using the ?siteId= query parameter or the data-site-id attribute");
       return null;
     }
     const namespace = scriptTag.getAttribute("data-namespace") || "rybbit";
@@ -3584,7 +3664,7 @@
 
   // index.ts
   (async function() {
-    const scriptTag = document.currentScript;
+    const scriptTag = document.currentScript || document.querySelector('script[src*="/script.js"]');
     if (!scriptTag) {
       console.error("Could not find current script tag");
       return;

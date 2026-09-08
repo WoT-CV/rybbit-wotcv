@@ -16,6 +16,8 @@ Pełny katalog funkcji, opcji konfiguracyjnych i etapów rozwoju znajduje się w
 
 ## Funkcje dodane przez WoT-CV
 
+Stan po integracji `master` `31009572` opisuje [raport synchronizacji 2026-09-08](WOTCV_UPSTREAM_SYNC_2026-09-08.md). Przyjęto segmenty, adnotacje, nowy wybór dat, klasyfikację botów AI i ograniczonego użytkownika Custom SQL, zachowując poniższe rozszerzenia forka. Filtry sesji i list użytkowników nadal uwzględniają słownik identity v2; nowe snapshoty PostgreSQL zachowują forkową linię migracji i tabele Uptime. Ochrona deployu traktuje błędy odczytu ClickHouse jako przerwanie operacji, a nie brak danych.
+
 | Obszar | Różnica |
 | --- | --- |
 | Network Replay | Recorder fetch/XHR/Performance Resource Timing, nagłówki, body, timingi, status i wynik requestu jako eventy replay. |

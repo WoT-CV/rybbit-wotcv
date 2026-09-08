@@ -26,7 +26,6 @@ import {
   sendOtpEmail,
   sendWelcomeEmail,
 } from "./email/email.js";
-import { onboardingTipsService } from "../services/onboardingTips/onboardingTipsService.js";
 import { getTrustedCorsOrigins } from "./cors.js";
 import { createServiceLogger } from "./logger/logger.js";
 import { runtimeCapabilities } from "./runtimeCapabilities.js";
@@ -363,16 +362,12 @@ export const auth = betterAuth({
 
           if (IS_CLOUD) {
             sendWelcomeEmail(u.email, u.name);
+            // Lifecycle marketing is cloud-only; transactional mail remains
+            // controlled independently by runtimeCapabilities on self-hosted.
             try {
               await addContactToAudience(u.email, u.name);
-
-              const emailIds = await onboardingTipsService.scheduleOnboardingEmails(u.email, u.name);
-
-              if (emailIds.length > 0) {
-                await db.update(user).set({ scheduledTipEmailIds: emailIds }).where(eq(user.id, u.id));
-              }
             } catch (error) {
-              authLogger.error({ err: error, userId: u.id }, "Error setting up onboarding emails");
+              authLogger.error({ err: error, userId: u.id }, "Error adding contact to marketing audience");
             }
           }
         },
