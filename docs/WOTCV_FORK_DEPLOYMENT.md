@@ -15,6 +15,17 @@ Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-C
 - migracje PostgreSQL wykonuje automatycznie sprawdzony obraz backendu przed przełączeniem aplikacji,
 - szczegóły korelacji użytkowników opisuje [WOTCV_IDENTITY_RESOLUTION_V2.md](WOTCV_IDENTITY_RESOLUTION_V2.md).
 
+## Token Mapbox
+
+Fork zawiera domyślny publiczny token Mapbox WoT-CV w kodzie backendu, konfiguracji Compose, `.env.example` oraz `setup.sh`. Backend przekazuje go do klienta przez `/api/config`, więc glob i mapy użytkowników korzystają ze wspólnej konfiguracji. Nie trzeba wpisywać tokena osobno w komponentach aplikacji.
+
+- Niepusta zmienna `MAPBOX_TOKEN` ma pierwszeństwo przed wartością domyślną. Jeżeli istniejące `.env` lub środowisko wdrożenia zawierają inny token, aktualizacja kodu go nie zastąpi. Aby używać tokena WoT-CV, ustaw wartość zgodną z `.env.example` albo usuń wyłącznie to nadpisanie.
+- Brak tokena, pusta wartość i same białe znaki powodują użycie wartości domyślnej przez backend.
+- Osobna aplikacja dokumentacji korzysta z `NEXT_PUBLIC_MAPBOX_TOKEN` i ma ten sam token domyślny. Przykład nadpisania znajduje się w `docs/.env.example`; lokalne nadpisanie umieść w `docs/.env.local`. Zmiana tej zmiennej wymaga ponownego builda dokumentacji.
+- Zmiana tokena nie wymaga migracji PostgreSQL ani ClickHouse. Nowa konfiguracja zacznie działać po wdrożeniu backendu; samo pobranie kodu nie zmienia działającego kontenera. Nie trzeba przebudowywać klienta wyłącznie dla runtime zmiennej `MAPBOX_TOKEN`.
+
+Token typu `pk.` jest przeznaczony do przeglądarki i będzie widoczny w `/api/config` oraz ruchu do Mapbox. Nigdy nie zastępuj go tokenem sekretnym `sk.`. W panelu Mapbox ogranicz dozwolone adresy URL do faktycznych domen aplikacji i dokumentacji; dodaj lokalny adres deweloperski tylko wtedy, gdy jest potrzebny. Uprawnienia, aktywność tokena, dozwolone URL i limity konta są zarządzane w Mapbox, a nie przez ten fork.
+
 ## Inwentaryzacja serwera
 
 Na serwerze uruchom:

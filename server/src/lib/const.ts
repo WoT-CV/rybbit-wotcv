@@ -9,7 +9,10 @@ export const DISABLE_TELEMETRY = process.env.DISABLE_TELEMETRY === "true";
 export const LITE_DASHBOARD = process.env.LITE_DASHBOARD === "true";
 export const IDENTITY_RESOLUTION_V2 = process.env.IDENTITY_RESOLUTION_V2 !== "false";
 export const SECRET = process.env.BETTER_AUTH_SECRET;
-export const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
+// Public browser token; a non-empty environment value overrides the WoT-CV default.
+export const MAPBOX_TOKEN =
+  process.env.MAPBOX_TOKEN?.trim() ||
+  "pk.eyJ1Ijoid290LWN2IiwiYSI6ImNtcjZ3OGtyMDBsZWsyenM5aWliNmEyYW8ifQ.UlyVi6ufRJ4dmIfBzbpHHw";
 
 // Trial constants (commented out as we're replacing with free tier)
 // export const TRIAL_DURATION_DAYS = 14;

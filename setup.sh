@@ -7,7 +7,8 @@ set -e
 USE_WEBSERVER="true"
 BACKEND_PORT="3001"
 CLIENT_PORT="3002"
-MAPBOX_TOKEN=""
+# Public browser token; environment and --mapbox-token can override this default.
+MAPBOX_TOKEN="${MAPBOX_TOKEN:-pk.eyJ1Ijoid290LWN2IiwiYSI6ImNtcjZ3OGtyMDBsZWsyenM5aWliNmEyYW8ifQ.UlyVi6ufRJ4dmIfBzbpHHw}"
 
 # Help function
 show_help() {
@@ -19,7 +20,7 @@ show_help() {
   echo "  --no-webserver          Disable the built-in Caddy webserver"
   echo "  --backend-port <port>   Set custom host port for backend (default: 3001)"
   echo "  --client-port <port>    Set custom host port for client (default: 3002)"
-  echo "  --mapbox-token <token>  Set Mapbox API token (optional but recommended for maps)"
+  echo "  --mapbox-token <token>  Override the default WoT-CV public Mapbox token"
   echo "  --help                  Show this help message"
 }
 
@@ -161,4 +162,4 @@ else
 fi
 
 echo "Setup complete. Services are starting in the background."
-echo "You can monitor logs with: docker compose logs -f" 
+echo "You can monitor logs with: docker compose logs -f"

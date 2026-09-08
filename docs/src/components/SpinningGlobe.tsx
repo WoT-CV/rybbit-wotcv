@@ -350,14 +350,16 @@ function buildTooltipHTML(session: Session): string {
         </div>
       </div>
       <div class="tooltip-stats">
-        ${browserIconPath
-      ? `<img src="${browserIconPath}" alt="${session.browser}" title="${session.browser}" class="tooltip-icon" />`
-      : ""
-    }
-        ${osIconPath
-      ? `<img src="${osIconPath}" alt="${session.operating_system}" title="${session.operating_system}" class="tooltip-icon" />`
-      : ""
-    }
+        ${
+          browserIconPath
+            ? `<img src="${browserIconPath}" alt="${session.browser}" title="${session.browser}" class="tooltip-icon" />`
+            : ""
+        }
+        ${
+          osIconPath
+            ? `<img src="${osIconPath}" alt="${session.operating_system}" title="${session.operating_system}" class="tooltip-icon" />`
+            : ""
+        }
         <span class="tooltip-device" title="${session.device_type}">${deviceIconSVG}</span>
         <span class="tooltip-badge">
           ${pageviewIconSVG}
@@ -550,7 +552,9 @@ export function SpinningGlobe() {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [sessions, setSessions] = useState<SessionsResponse>([]);
 
-  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const mapboxToken =
+    process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.trim() ||
+    "pk.eyJ1Ijoid290LWN2IiwiYSI6ImNtcjZ3OGtyMDBsZWsyenM5aWliNmEyYW8ifQ.UlyVi6ufRJ4dmIfBzbpHHw";
 
   // Inject tooltip styles
   useEffect(() => {
