@@ -123,7 +123,12 @@ export function UserSidebar({ data, isLoading, sessionCount, isLoadingCalendar, 
       <SidebarCard>
         <SidebarHeader title={t("Location & Device")} />
         {showMap && data && !isLoading && (
-          <UserLocationMap country={data.country} region={data.region} city={data.city} className="mb-3 h-[132px]" />
+          <UserLocationMap
+            country={data.country}
+            region={getRegionName(data.region)}
+            city={data.city}
+            className="mb-3 h-[132px]"
+          />
         )}
         <LocationDevices data={data} isLoading={isLoading} getRegionName={getRegionName} />
       </SidebarCard>

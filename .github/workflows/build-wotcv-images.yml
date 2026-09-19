@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  TZ: UTC
   BACKEND_IMAGE: ghcr.io/wot-cv/rybbit-wotcv-backend
   CLIENT_IMAGE: ghcr.io/wot-cv/rybbit-wotcv-client
   IMAGE_TAG: sha-${{ github.sha }}
@@ -30,6 +31,7 @@ jobs:
           python3 -m unittest discover -s scripts/tests -p 'test_*.py'
           for script in \
             scripts/lib/wotcv-common.sh \
+            scripts/lib/wotcv-auth-cutover.sh \
             scripts/wotcv-branch-build-deploy.sh \
             scripts/wotcv-deploy.sh \
             scripts/wotcv-identity-v2-preflight.sh \
@@ -49,12 +51,12 @@ jobs:
         run: npm ci && npm run build
       - name: Verify generated tracker artifacts
         working-directory: server
-        run: npm ci --legacy-peer-deps && npm run test:run && npm run db:check && npm run build && npm run check:analytics
+        run: npm ci --legacy-peer-deps && npm run test:run -- --maxWorkers=4 --minWorkers=1 && npm run db:check && npm run build && npm run check:analytics
       - name: Verify WoT-CV client code
         working-directory: client
         env:
           NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
-        run: npm ci --legacy-peer-deps && npm run test:run && npm run lint:wotcv && npm run knip && npm run audit:polish && npm run format:check:wotcv && npx tsc --noEmit && npm run build
+        run: npm ci --legacy-peer-deps && npm run test:run -- --maxWorkers=4 && npm run lint:wotcv && npm run knip && npm run audit:polish && npm run format:check:wotcv && npx tsc --noEmit && npm run build
       - name: Verify merged Compose configuration
         env:
           BASE_URL: https://tracking.example.com

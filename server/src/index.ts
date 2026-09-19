@@ -134,6 +134,8 @@ import {
 import {
   addSite,
   batchImportEvents,
+  claimSite,
+  createUnclaimedSite,
   createSiteImport,
   deleteSite,
   deleteSiteImport,
@@ -183,6 +185,7 @@ import {
 } from "./api/user/index.js";
 import { validateHttpTimeParams } from "./api/analytics/utils/query-validation.js";
 import { initializeClickhouse } from "./db/clickhouse/clickhouse.js";
+import { unclaimedSiteRouteOptions } from "./api/sites/createUnclaimedSite.js";
 import { apiRateLimitRedis } from "./db/redis/redis.js";
 import { initPostgres } from "./db/postgres/initPostgres.js";
 import {
@@ -216,6 +219,7 @@ import { trackEvent } from "./services/tracker/trackEvent.js";
 import { startSiteBaselineRefresh } from "./services/tracker/botBlocking/siteBaseline.js";
 import { usageService } from "./services/usageService.js";
 import { replayExportQueueService } from "./services/replay/export/replayExportQueueService.js";
+import { unclaimedSiteCleanupService } from "./services/sites/unclaimedSiteCleanupService.js";
 import { weeklyReportService } from "./services/weekyReports/weeklyReportService.js";
 import { handleAppSumoWebhook, activateAppSumoLicense } from "./api/as/index.js";
 
@@ -599,6 +603,10 @@ async function organizationsRoutes(fastify: FastifyInstance) {
   fastify.get("/organizations", getMyOrganizations);
   fastify.get("/organizations/:organizationId/sites", orgOrgRead, getSitesFromOrg);
   fastify.post("/organizations/:organizationId/sites", orgAdminSitesWrite, addSite);
+  // Landing-page domain input: creates an owner-less site reachable only by
+  // its private link key. Public, so cap creations per IP.
+  fastify.post("/sites/unclaimed", unclaimedSiteRouteOptions, createUnclaimedSite);
+  fastify.post("/sites/:siteId/claim", { ...authOnlyScoped("sites", "write"), bodyLimit: 1024 }, claimSite);
   fastify.get("/organizations/:organizationId/members", orgOrgRead, listOrganizationMembers);
   fastify.post("/organizations/:organizationId/members", authOrgWrite, addUserToOrganization);
   fastify.post("/organizations/:organizationId/users", authOrgWrite, createUserInOrganization);
@@ -713,6 +721,9 @@ const start = async () => {
     if (!cluster.isWorker) {
       telemetryService.startTelemetryCron();
       usageService.startUsageCheckCron();
+      if (runtimeCapabilities.unclaimedSites) {
+        unclaimedSiteCleanupService.startCleanupCron();
+      }
       if (runtimeCapabilities.weeklyReports && process.env.NODE_ENV !== "development") {
         weeklyReportService.startWeeklyReportCron();
       }
@@ -764,6 +775,7 @@ const shutdown = async (signal: string) => {
   }, 10000); // 10 second timeout
 
   try {
+    unclaimedSiteCleanupService.stopCleanupCron();
     // Stop accepting new connections
     await server.close();
     await replayExportQueueService.shutdown();

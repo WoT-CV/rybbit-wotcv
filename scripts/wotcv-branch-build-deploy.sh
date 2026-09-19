@@ -4,6 +4,7 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT_DIR}/scripts/lib/wotcv-common.sh"
+source "${ROOT_DIR}/scripts/lib/wotcv-auth-cutover.sh"
 STATE_FILE="${ROOT_DIR}/.wotcv-deployment.env"
 DEPLOY_BRANCH="${WOTCV_BRANCH:-feat/wotcv}"
 DEPLOY_REMOTE="${WOTCV_REMOTE:-origin}"
@@ -24,6 +25,10 @@ CLICKHOUSE_PROTECTED_COHORT_END=""
 POSTGRES_DATA_BASELINE=""
 
 cleanup() {
+  local code=$?
+  if [[ "${code}" != 0 && "${WOTCV_AUTH_CUTOVER_STARTED}" == 1 ]]; then
+    echo "Auth cutover did not complete. Old workers were stopped; do not restart a 1.6 image blindly. See docs/WOTCV_AUTH_CUTOVER.md." >&2
+  fi
   [[ -z "${COMPOSE_CONFIG_FILE}" ]] || rm -f "${COMPOSE_CONFIG_FILE}"
 }
 
@@ -48,6 +53,10 @@ validate_runtime_images() {
     --input-type=module --eval 'await import("@rybbit/shared")'
   docker run --rm --entrypoint node "${CLIENT_IMAGE}:${IMAGE_TAG}" \
     --check /app/client/server.js
+  if [[ "$(wotcv_auth_image_version "${BACKEND_IMAGE}:${IMAGE_TAG}")" != 1.7.3 ]]; then
+    echo "This deployment script supports the reviewed Better Auth 1.7.3 images only." >&2
+    return 1
+  fi
 }
 
 validate_compose_config() {
@@ -227,8 +236,10 @@ PY
 }
 
 prepare_identity_infrastructure() {
+  wotcv_auth_prepare_cutover "$("${COMPOSE[@]}" ps -q postgres)"
   echo "Applying PostgreSQL migrations before loading the identity dictionary..."
   "${COMPOSE[@]}" run --rm --no-deps --entrypoint sh backend -lc 'npm run db:migrate'
+  [[ "$(wotcv_auth_schema_state "$("${COMPOSE[@]}" ps -q postgres)")" == current ]]
   validate_persistent_storage
   validate_postgres_data_baseline
 
@@ -295,6 +306,7 @@ rollback() {
   fi
 
   echo "Rolling back to ${previous_tag}..." >&2
+  wotcv_auth_assert_rollback_safe "${BACKEND_IMAGE}:${previous_tag}" "$("${COMPOSE[@]}" ps -q postgres)" || return 1
   rollback_deployed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
   IMAGE_TAG="${previous_tag}" \

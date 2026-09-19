@@ -7,6 +7,7 @@ import { runtimeCapabilities } from "./lib/runtimeCapabilities.js";
 import { lifecycleEmailService } from "./services/lifecycleEmails/lifecycleEmailService.js";
 import { sessionsService } from "./services/sessions/sessionsService.js";
 import { telemetryService } from "./services/telemetryService.js";
+import { unclaimedSiteCleanupService } from "./services/sites/unclaimedSiteCleanupService.js";
 import { usageService } from "./services/usageService.js";
 import { weeklyReportService } from "./services/weekyReports/weeklyReportService.js";
 
@@ -46,6 +47,9 @@ if (workerCount === 0) {
   // Start cron jobs on the primary process only
   telemetryService.startTelemetryCron();
   usageService.startUsageCheckCron();
+  if (runtimeCapabilities.unclaimedSites) {
+    unclaimedSiteCleanupService.startCleanupCron();
+  }
   if (runtimeCapabilities.weeklyReports && process.env.NODE_ENV !== "development") {
     weeklyReportService.startWeeklyReportCron();
   }
@@ -118,6 +122,7 @@ if (workerCount === 0) {
 
     // Stop cron jobs
     usageService.stopUsageCheckCron();
+    unclaimedSiteCleanupService.stopCleanupCron();
     void sessionsService.close();
     telemetryService.stopTelemetryCron();
     if (runtimeCapabilities.weeklyReports) {

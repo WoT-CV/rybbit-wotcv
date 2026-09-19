@@ -2,6 +2,18 @@ import { describe, expect, it } from "vitest";
 import { getRuntimeCapabilities } from "./runtimeCapabilities.js";
 
 describe("getRuntimeCapabilities", () => {
+  it.each([
+    [{}, false, false],
+    [{ ENABLE_UNCLAIMED_SITES: "true" }, false, true],
+    [{ ENABLE_UNCLAIMED_SITES: "false" }, true, false],
+    [{ ENABLE_UNCLAIMED_SITES: "" }, true, false],
+    [{ ENABLE_UNCLAIMED_SITES: "invalid" }, true, false],
+    [{}, true, true],
+    [{ DISABLE_SIGNUP: "true" }, true, false],
+    [{ ENABLE_UNCLAIMED_SITES: "true", DISABLE_SIGNUP: "true" }, false, false],
+  ])("gates anonymous onboarding (%j, cloud=%s)", (env, cloud, expected) => {
+    expect(getRuntimeCapabilities(env, cloud).unclaimedSites).toBe(expected);
+  });
   it("keeps optional self-hosted capabilities disabled without configuration", () => {
     expect(getRuntimeCapabilities({}, false)).toEqual({
       googleSearchConsole: false,
@@ -10,6 +22,7 @@ describe("getRuntimeCapabilities", () => {
       transactionalEmail: false,
       turnstile: false,
       weeklyReports: false,
+      unclaimedSites: false,
     });
   });
 
@@ -40,6 +53,7 @@ describe("getRuntimeCapabilities", () => {
       transactionalEmail: true,
       turnstile: true,
       weeklyReports: true,
+      unclaimedSites: false,
     });
   });
 

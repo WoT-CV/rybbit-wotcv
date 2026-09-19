@@ -8,6 +8,25 @@ const build = (parameter: string, value: string) =>
   buildFilteredSessionsCTE(JSON.stringify([{ parameter, type: "equals", value: [value] }]), SITE_ID, timeStatement)!;
 
 describe("buildFilteredSessionsCTE", () => {
+  it("combines upstream UTM attribution with fork identity and event membership", () => {
+    const sql = buildFilteredSessionsCTE(
+      JSON.stringify([
+        { parameter: "user_id", type: "equals", value: ["account-42"] },
+        { parameter: "utm_campaign", type: "equals", value: ["launch"] },
+        { parameter: "pathname", type: "equals", value: ["/pricing"] },
+      ]),
+      SITE_ID,
+      timeStatement
+    )!;
+    expect(sql).toContain("dictGetOrDefault('user_identity_dict'");
+    expect(sql).toContain("toUInt64(events.site_id)");
+    expect(sql).toContain("argMinIf(url_parameters['utm_campaign']");
+    expect(sql).toContain("AS utm_campaign");
+    expect(sql).toContain("utm_campaign = 'launch'");
+    expect(sql).toContain("session_id IN");
+    expect(sql).toContain("pathname = '/pricing'");
+    expect(sql).toContain("if(identified_user_id != '', identified_user_id, user_id) = 'account-42'");
+  });
   it("resolves historical identity within the site-scoped aggregate, not its outer filter", () => {
     const sql = build("user_id", "account-42");
     expect(sql).toContain("WHERE site_id = 1");
@@ -29,7 +48,9 @@ describe("buildFilteredSessionsCTE", () => {
   it("projects only the aggregate needed by a UTM filter", () => {
     const sql = build("utm_campaign", "launch");
 
-    expect(sql).toContain("argMin(url_parameters, timestamp)['utm_campaign'] AS utm_campaign");
+    expect(sql).toContain(
+      "argMinIf(url_parameters['utm_campaign'], timestamp, url_parameters['utm_campaign'] != '') AS utm_campaign"
+    );
     expect(sql).not.toContain("argMax(browser,");
     expect(sql).not.toContain("AS utm_source");
     expect(sql).not.toContain("feature_flags");

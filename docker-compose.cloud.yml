@@ -122,6 +122,7 @@ services:
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BASE_URL=${BASE_URL}
       - DISABLE_SIGNUP=${DISABLE_SIGNUP}
+      - ENABLE_UNCLAIMED_SITES=${ENABLE_UNCLAIMED_SITES:-true}
       # below is only for rybbit cloud
       - CLOUD=${CLOUD}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}

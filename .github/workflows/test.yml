@@ -43,6 +43,10 @@ jobs:
         working-directory: docs
         run: npm ci
 
+      - name: Lint integration guides
+        working-directory: docs
+        run: npm run lint:guides
+
       - name: Run agent-readiness tests
         working-directory: docs
         run: npm run test:agent-readiness
@@ -83,7 +87,7 @@ jobs:
 
       - name: Run server tests
         working-directory: server
-        run: npm run test:run
+        run: npm run test:run -- --maxWorkers=4 --minWorkers=1
 
   client:
     name: Client
@@ -111,4 +115,4 @@ jobs:
 
       - name: Run client tests
         working-directory: client
-        run: npm run test:run
+        run: npm run test:run -- --maxWorkers=4

@@ -2,6 +2,7 @@ import type { NetworkReplayConfig } from "@rybbit/shared";
 import { eq, type SQL } from "drizzle-orm";
 import { db } from "../db/postgres/postgres.js";
 import { sites } from "../db/postgres/schema.js";
+import { claimExpiryIso } from "../services/sites/claimExpiry.js";
 import { logger } from "./logger/logger.js";
 import { normalizeNetworkReplayConfig } from "./networkReplayConfig.js";
 
@@ -24,6 +25,7 @@ export interface SiteConfigData {
   excludedASNs: string[];
   excludedQueryParams: string[];
   privateLinkKey?: string | null;
+  claimExpiresAt?: string | null;
   sessionReplay: boolean;
   networkReplayConfig: NetworkReplayConfig;
   webVitals: boolean;
@@ -121,6 +123,7 @@ class SiteConfig {
       excludedASNs: Array.isArray(site.excludedASNs) ? site.excludedASNs : [],
       excludedQueryParams: Array.isArray(site.excludedQueryParams) ? site.excludedQueryParams : [],
       privateLinkKey: site.privateLinkKey,
+      claimExpiresAt: site.organizationId === null ? claimExpiryIso(site.claimExpiresAt ?? null) : null,
       sessionReplay: site.sessionReplay || false,
       networkReplayConfig: normalizeNetworkReplayConfig(site.networkReplayConfig),
       webVitals: site.webVitals || false,
@@ -191,7 +194,13 @@ class SiteConfig {
     if (!siteIdOrId) return undefined;
 
     try {
-      return await this.getSiteByAnyId(siteIdOrId);
+      let config = await this.getSiteByAnyId(siteIdOrId);
+      if (config?.claimExpiresAt && Date.parse(config.claimExpiresAt) <= Date.now()) {
+        // A different worker may have claimed it since this cache was filled.
+        config = await this.reload(siteIdOrId);
+        if (config?.claimExpiresAt && Date.parse(config.claimExpiresAt) <= Date.now()) return undefined;
+      }
+      return config;
     } catch (error) {
       logger.error(error as Error, `Error fetching site configuration for ${siteIdOrId}`);
       return undefined;

@@ -4,6 +4,8 @@ Opis funkcjonalnych i architektonicznych różnic forka znajduje się w [WOTCV_F
 
 Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-CV bez zmiany nazw volume, domen ani reverse proxy.
 
+**Aktualizacja 2026-09-19:** pierwsze wdrożenie wersji z Better Auth 1.7.3 wymaga dodatkowo [runbooka kontrolowanego przejścia](WOTCV_AUTH_CUTOVER.md). Nie uruchamiaj aktualizacji przez granicę 1.6 → 1.7 bez zweryfikowanego backupu, przeglądu wszystkich writerów i okna serwisowego. Automatyczny rollback do starego auth jest celowo blokowany. Nowy anonymous onboarding pozostaje domyślnie wyłączony (`ENABLE_UNCLAIMED_SITES=false`).
+
 ## Założenia
 
 - serwer buduje i uruchamia aplikację z gałęzi `feat/wotcv`,

@@ -1,8 +1,8 @@
 import { FilterParameter } from "../types.js";
 import { getFilterStatement } from "./getFilterStatement.js";
 import { validateFilters } from "./query-validation.js";
-import { SESSION_REFERRER_AGG } from "./sessionAttribution.js";
 import { clickhouseResolvedIdentifiedUserId } from "../../../db/clickhouse/identityDictionary.js";
+import { SESSION_REFERRER_AGG, SESSION_UTM_AGG_BY_PARAMETER } from "./sessionAttribution.js";
 
 // These fields are event-scoped rather than stable session attributes. Session
 // reports include a session when any event matches them; channel has its own
@@ -88,7 +88,9 @@ export const buildFilteredSessionsCTE = (
     } else if (parameter === "referrer") {
       aggregates.add(`${SESSION_REFERRER_AGG} AS referrer`);
     } else if (parameter.startsWith("utm_")) {
-      aggregates.add(`argMin(url_parameters, timestamp)['${parameter}'] AS ${parameter}`);
+      const utmAggregate = SESSION_UTM_AGG_BY_PARAMETER[parameter];
+      if (!utmAggregate) continue;
+      aggregates.add(`${utmAggregate} AS ${parameter}`);
     } else if (parameter === "hostname") {
       aggregates.add("argMin(hostname, timestamp) AS hostname");
     } else if (parameter === "dimensions") {

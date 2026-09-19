@@ -16,7 +16,7 @@ const snapshot = (index: number): Snapshot =>
 
 describe("WoT-CV migration lineage (no database connection)", () => {
   it("continues the fork snapshot rather than upstream's divergent 0014", () => {
-    for (const index of [15, 16, 17]) {
+    for (const index of [15, 16, 17, 18, 19, 20]) {
       expect(snapshot(index).prevId).toBe(snapshot(index - 1).id);
     }
     expect(snapshot(15).prevId).toBe("e38adbc1-bf05-486f-9a30-25d6043da90c");
@@ -38,7 +38,7 @@ describe("WoT-CV migration lineage (no database connection)", () => {
   });
 
   it("matches runtime table and column names, including Uptime, Network Replay and identity", () => {
-    const latest = snapshot(17);
+    const latest = snapshot(20);
     const tables = Object.values(schema)
       .filter(value => is(value, PgTable))
       .map(table => getTableConfig(table));
@@ -50,7 +50,25 @@ describe("WoT-CV migration lineage (no database connection)", () => {
     }
   });
 
-  it("retains the fork journal and appends only the three additive migrations", () => {
+  it("preserves all fork definitions while adding auth and onboarding metadata", () => {
+    const original = snapshot(17);
+    for (const index of [18, 19, 20]) {
+      const current = snapshot(index);
+      expect(Object.keys(current.tables)).toHaveLength(46);
+      for (const [name, table] of Object.entries(original.tables)) {
+        const actual = structuredClone(current.tables[name]);
+        if (name === "public.team") delete actual.columns.memberCount;
+        if (name === "public.teamMember") {
+          delete actual.columns.membershipKey;
+          delete (actual.uniqueConstraints as Record<string, unknown>).teamMember_membershipKey_unique;
+        }
+        if (index >= 20 && name === "public.sites") delete actual.columns.claim_expires_at;
+        expect(actual, `${index}: ${name}`).toEqual(table);
+      }
+    }
+  });
+
+  it("retains the fork journal and appends the reviewed upstream migrations", () => {
     const journal = JSON.parse(readFileSync(new URL("../../../drizzle/meta/_journal.json", import.meta.url), "utf8"));
     const tail = journal.entries.slice(10).map((entry: { tag: string }) => entry.tag);
     expect(tail).toEqual([
@@ -62,12 +80,20 @@ describe("WoT-CV migration lineage (no database connection)", () => {
       "0015_round_trish_tilby",
       "0016_shocking_vance_astro",
       "0017_burly_nick_fury",
+      "0018_better_auth_173",
+      "0019_invitation_created_at",
+      "0020_unclaimed_sites",
     ]);
-    for (const entry of journal.entries.slice(15)) {
+    for (const entry of journal.entries.slice(15, 18)) {
       const sql = readFileSync(new URL(`../../../drizzle/${entry.tag}.sql`, import.meta.url), "utf8");
       expect(sql).not.toMatch(/^\s*(?:DROP|TRUNCATE|DELETE|UPDATE)\b/im);
       expect(sql).not.toMatch(/ALTER TABLE[^;]*\bDROP\b/i);
       expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS/);
+    }
+    for (const entry of journal.entries.slice(18)) {
+      const sql = readFileSync(new URL(`../../../drizzle/${entry.tag}.sql`, import.meta.url), "utf8");
+      expect(sql).not.toMatch(/^\s*(?:DROP|TRUNCATE|DELETE)\b/im);
+      expect(sql).not.toMatch(/ALTER TABLE[^;]*\bDROP\b/i);
     }
   });
 });

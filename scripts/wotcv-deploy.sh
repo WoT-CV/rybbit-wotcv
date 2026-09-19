@@ -4,6 +4,7 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT_DIR}/scripts/lib/wotcv-common.sh"
+source "${ROOT_DIR}/scripts/lib/wotcv-auth-cutover.sh"
 STATE_FILE="${ROOT_DIR}/.wotcv-deployment.env"
 HEALTHCHECK_URL="${WOTCV_HEALTHCHECK_URL:-http://127.0.0.1:3001/api/health}"
 TARGET_TAG="${1:-${IMAGE_TAG:-}}"
@@ -22,6 +23,10 @@ CLICKHOUSE_PROTECTED_COHORT_END=""
 POSTGRES_DATA_BASELINE=""
 
 cleanup() {
+  local code=$?
+  if [[ "${code}" != 0 && "${WOTCV_AUTH_CUTOVER_STARTED}" == 1 ]]; then
+    echo "Auth cutover did not complete. Do not restart a 1.6 image blindly; see docs/WOTCV_AUTH_CUTOVER.md." >&2
+  fi
   [[ -z "${COMPOSE_CONFIG_FILE}" ]] || rm -f "${COMPOSE_CONFIG_FILE}"
 }
 
@@ -128,6 +133,7 @@ rollback() {
   CLIENT_IMAGE_DIGEST="${previous_client_digest:-unknown}" \
   WOTCV_DEPLOYED_AT="${rollback_deployed_at}" \
     "${COMPOSE[@]}" pull backend client
+  wotcv_auth_assert_rollback_safe "${BACKEND_IMAGE}:${previous_tag}" "$("${COMPOSE[@]}" ps -q postgres)" || return 1
   IMAGE_TAG="${previous_tag}" \
   BACKEND_IMAGE_DIGEST="${previous_backend_digest:-unknown}" \
   CLIENT_IMAGE_DIGEST="${previous_client_digest:-unknown}" \
@@ -175,6 +181,28 @@ capture_postgres_data_baseline
 
 echo "Pulling immutable application images..."
 "${COMPOSE[@]}" pull backend client
+
+# Database preflight must come from exactly the revision being deployed.
+TARGET_REVISION="$(docker image inspect "${BACKEND_IMAGE}:${TARGET_TAG}" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')"
+if [[ "${TARGET_REVISION}" != "$(git rev-parse HEAD)" ]]; then
+  echo "Check out the target image revision before deploying: local migration preflight must match the image." >&2
+  exit 1
+fi
+CLIENT_REVISION="$(docker image inspect "${CLIENT_IMAGE}:${TARGET_TAG}" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')"
+if [[ "${CLIENT_REVISION}" != "${TARGET_REVISION}" ]]; then
+  echo "Client and backend images must come from the same reviewed revision." >&2
+  exit 1
+fi
+if [[ "$(wotcv_auth_image_version "${BACKEND_IMAGE}:${TARGET_TAG}")" != 1.7.3 ]]; then
+  echo "This deployment script supports the reviewed Better Auth 1.7.3 images only." >&2
+  exit 1
+fi
+wotcv_auth_prepare_cutover "$("${COMPOSE[@]}" ps -q postgres)"
+echo "Applying PostgreSQL migrations with old auth workers drained when required..."
+"${COMPOSE[@]}" run --rm --no-deps --entrypoint sh backend -lc 'npm run db:migrate'
+[[ "$(wotcv_auth_schema_state "$("${COMPOSE[@]}" ps -q postgres)")" == current ]]
+validate_persistent_storage
+validate_postgres_data_baseline
 
 BACKEND_IMAGE_DIGEST="$(image_digest "${BACKEND_IMAGE}")"
 CLIENT_IMAGE_DIGEST="$(image_digest "${CLIENT_IMAGE}")"

@@ -12,6 +12,7 @@ export interface RuntimeCapabilities {
   transactionalEmail: boolean;
   turnstile: boolean;
   weeklyReports: boolean;
+  unclaimedSites: boolean;
 }
 
 export function getRuntimeCapabilities(
@@ -31,6 +32,8 @@ export function getRuntimeCapabilities(
     transactionalEmail,
     turnstile: hasValue(env.TURNSTILE_SECRET_KEY) && hasValue(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),
     weeklyReports: transactionalEmail && (isCloud || env.ENABLE_WEEKLY_REPORTS === "true"),
+    unclaimedSites:
+      (env.ENABLE_UNCLAIMED_SITES ?? (isCloud ? "true" : "false")) === "true" && env.DISABLE_SIGNUP !== "true",
   };
 }
 
