@@ -53,3 +53,38 @@ Fizyczny iPhone oraz stagingowy pipeline to osobne bramki release, nie założen
 - Review: dodano bramkę wykrywającą wzrost limitów i ukrywanie treści błędu
   parsera JSON (odpowiedź serwera nie może wyciec do raportu diagnostycznego).
 - `git diff --check`: PASS. Bez zmian runtime, zależności i danych produkcyjnych.
+
+## Etap 1A — wynik w BE
+
+BE `05278c30`: jawne stany/rozmiary, ograniczony capture, brak doczytywania
+odrzuconych requestów, izolacja błędów loggera, redakcja sekretów strukturalnych.
+Plan, review i komendy w BE `docs/REPLAY_DATA_REDUCTION.md`. Reactor
+`mvn -pl observability,api-shared -am test -q` PASS. Bez deploy. Staged pliki
+ResourceTimingFilter zachowane, potwierdzone niezmienionymi hashami indeksu.
+
+## Etap 1C — analiza i plan przed implementacją
+
+Nie ma archiwum, więc nie implementujemy readera, receipt ani linku do obiektu.
+Istniejące linki Grafana pozostają wyszukiwaniem logów/trace, nie dowodem pokrycia.
+Nowe stany z 1A nie są jeszcze na produkcji. Read-only audyt nie może zaliczać
+starych wpisów jako nowego kontraktu.
+
+1. Bounded CLI Loki query (ostatnia godzina, maks. 200 wpisów; bez paginacji
+   ukrytej jako kompletne pokrycie). Maks. 8 MiB odpowiedzi narzędzia, 10 s timeout.
+2. Raport tylko liczników: rozkład stanów, brakujące strony wymian, budżet
+   UTF-8 metadata 64 KiB / 128 atrybutów i wartości SDK 16384 znaków.
+3. Unknown/fake state i brak body przy inline = luka. Empty nie równa się brak
+   loga. Nie wypisywać wartości ani correlation ID; próbka nie jest gwarancją.
+4. Runbook Grafana, zapytania i macierz testów staging (bez mutacji prod),
+   warunki NO-GO przy dropach/retencji/niepełnych danych. Test redakcji raportu.
+5. Uruchomić CLI przez istniejące SSH wyłącznie read-only, review, commit.
+
+### Wynik 1C / review
+
+4/4 testy Node PASS. SSH: 200 wpisów, 100 sparowanych correlation ID, maks.
+10570 B / 61 atrybutów; w próbce brak przekroczeń. 200 stanów unknown jest
+oczekiwane — nowy BE nie został wdrożony. Próbka osiąga limit i NIE dowodzi
+trwałości ani kompletności całego ruchu. Test end-to-end po wdrożeniu na staging
+pozostaje bramką release. Review poprawiło odczyt API Loki: należy zażądać
+`categorize-labels` i czytać `structuredMetadata`, nie traktować braku pola jako
+zera wykorzystania budżetu. Brak metadata ma osobny licznik.
