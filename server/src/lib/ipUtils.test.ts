@@ -29,11 +29,10 @@ describe("validateIPPattern", () => {
     }
   });
 
-  it("accepts zero-padded IPv4 octets (ip-address normalizes them)", () => {
-    // Documenting current behavior: "01.2.3.4" parses as 1.2.3.4 rather than
-    // being rejected as ambiguous octal-looking input.
-    expect(validateIPPattern("01.2.3.4")).toEqual({ valid: true });
-    expect(validateIPPattern("192.168.001.1")).toEqual({ valid: true });
+  it("rejects ambiguous zero-padded IPv4 octets consistently with the updated parser", () => {
+    expect(validateIPPattern("01.2.3.4")).toEqual({ valid: false, error: "Invalid IP address format" });
+    expect(validateIPPattern("192.168.001.1")).toEqual({ valid: false, error: "Invalid IP address format" });
+    expect(validateIPPattern("192.168.001.0/24")).toEqual({ valid: false, error: "Invalid CIDR notation" });
   });
 
   it("accepts CIDR notation for IPv4 and IPv6", () => {

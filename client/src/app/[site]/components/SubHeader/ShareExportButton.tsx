@@ -4,6 +4,7 @@ import { Copy, Download, FileArchive, FileText, Loader2, Share } from "lucide-re
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { useHydrated } from "@/hooks/useHydrated";
 import { toast } from "@/components/ui/sonner";
 import {
   useGeneratePrivateLinkKey,
@@ -31,7 +32,10 @@ export function ShareExportButton() {
   const session = authClient.useSession();
   const params = useParams();
   const siteId = Number(params.site);
-  const canShare = !!session.data;
+  // The shared auth store can resolve before hydration reaches this subtree.
+  // Its first client render must still match the unauthenticated server HTML.
+  const hydrated = useHydrated();
+  const canShare = hydrated && !!session.data;
 
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);

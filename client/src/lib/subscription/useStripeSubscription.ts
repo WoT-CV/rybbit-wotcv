@@ -38,6 +38,6 @@ export function useStripeSubscription(): UseQueryResult<SubscriptionData | undef
     queryFn: fetchSubscription,
     staleTime: 5 * 60 * 1000,
     retry: false,
-    enabled: !!activeOrg,
+    enabled: IS_CLOUD && !!activeOrg,
   });
 }

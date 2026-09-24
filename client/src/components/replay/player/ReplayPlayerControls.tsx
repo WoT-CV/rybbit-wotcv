@@ -6,7 +6,7 @@ import { getReplayActivityDuration } from "@rybbit/shared";
 
 import { ActivitySlider } from "@/components/ui/activity-slider";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { ReplayExportButton } from "../export/ReplayExportButton";
 import { createInitialExportRange, ReplayExportRangeSlider } from "../export/ReplayExportRangeSlider";
@@ -22,6 +22,7 @@ interface ReplayPlayerControlsProps {
   onPlayPause: () => void;
   onSliderChange: (value: number[]) => void;
   onSliderCommit: (value: number[]) => void;
+  onSliderCancel: () => void;
   onSpeedChange: (speed: string) => void;
   onFullscreenOpen?: () => void;
   isDrawer?: boolean;
@@ -32,6 +33,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   onPlayPause,
   onSliderChange,
   onSliderCommit,
+  onSliderCancel,
   onSpeedChange,
   onFullscreenOpen,
   isDrawer,
@@ -106,6 +108,8 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
           value={[duration > 0 ? (currentTime / duration) * 100 : 0]}
           onValueChange={onSliderChange}
           onValueCommit={onSliderCommit}
+          onPointerCancel={onSliderCancel}
+          onLostPointerCapture={onSliderCancel}
           max={100}
           step={0.1}
           activityPeriods={activityPeriods}
@@ -128,8 +132,14 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
         )}
       </div>
 
-      <div className="mt-2 flex items-center gap-2">
-        <Button variant="ghost" size="smIcon" onClick={onPlayPause} disabled={!player}>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <Button
+          variant="ghost"
+          size="smIcon"
+          aria-label={isPlaying ? t("Pause") : t("Play")}
+          onClick={onPlayPause}
+          disabled={!player}
+        >
           {isPlaying ? (
             <Pause className="w-4 h-4" fill="currentColor" />
           ) : (
@@ -166,25 +176,29 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
               <SelectValue />
             </SelectTrigger>
             <SelectContent size="sm">
-              {INACTIVITY_FAST_FORWARD_SPEEDS.map(speed => (
-                <SelectItem key={speed} value={speed.toString()} size="sm">
-                  {speed}x
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                {INACTIVITY_FAST_FORWARD_SPEEDS.map(speed => (
+                  <SelectItem key={speed} value={speed.toString()} size="sm">
+                    {speed}x
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
 
         <Select value={playbackSpeed} onValueChange={onSpeedChange}>
-          <SelectTrigger size="sm" className="w-14 mx-2">
+          <SelectTrigger size="sm" className="w-14 shrink-0" aria-label={t("Playback speed")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent size="sm">
-            {PLAYBACK_SPEEDS.map(speed => (
-              <SelectItem key={speed.value} value={speed.value} size="sm">
-                {speed.label}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              {PLAYBACK_SPEEDS.map(speed => (
+                <SelectItem key={speed.value} value={speed.value} size="sm">
+                  {speed.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
         {!isDrawer && onFullscreenOpen && (

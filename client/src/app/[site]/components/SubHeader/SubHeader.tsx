@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { useHydrated } from "@/hooks/useHydrated";
 import { canGoBack, canGoForward, goBack, goForward, useStore } from "@/lib/store";
 import { FilterParameter } from "@rybbit/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -13,6 +14,7 @@ import { ShareExportButton } from "./ShareExportButton";
 
 export function SubHeader({ availableFilters }: { availableFilters?: FilterParameter[] }) {
   const { time, setTime } = useStore();
+  const hydrated = useHydrated();
 
   return (
     <div>
@@ -32,7 +34,7 @@ export function SubHeader({ availableFilters }: { availableFilters?: FilterParam
               variant="secondary"
               size="icon"
               onClick={goBack}
-              disabled={!canGoBack(time)}
+              disabled={!hydrated || !canGoBack(time)}
               className="rounded-r-none h-8 w-8"
             >
               <ChevronLeft />
@@ -41,7 +43,7 @@ export function SubHeader({ availableFilters }: { availableFilters?: FilterParam
               variant="secondary"
               size="icon"
               onClick={goForward}
-              disabled={!canGoForward(time)}
+              disabled={!hydrated || !canGoForward(time)}
               className="rounded-l-none -ml-px h-8 w-8"
             >
               <ChevronRight />

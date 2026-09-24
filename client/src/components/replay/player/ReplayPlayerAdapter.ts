@@ -1,4 +1,4 @@
-import type { eventWithTime, playerMetaData } from "@rrweb/types";
+import type { eventWithTime } from "@rrweb/types";
 import rrwebPlayer from "rrweb-player";
 
 import type { ReplayEventLike } from "../network/types";
@@ -59,7 +59,9 @@ export class ReplayPlayerAdapter {
   }
 
   getIsPlaying(): boolean {
-    return Boolean((this.player.getMetaData() as playerMetaData & { isPlaying?: boolean }).isPlaying);
+    // Metadata contains timestamps only, not playback state. In particular,
+    // using metadata here kept playing a recording in background Safari tabs.
+    return this.active && this.player.getReplayer().service.state.matches("playing");
   }
 
   onCurrentTime(handler: (time: number) => void): void {

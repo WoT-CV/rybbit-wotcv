@@ -38,25 +38,26 @@ jobs:
             scripts/update_rybbit_wotcv.sh; do
             bash -n "$script"
           done
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: |
-            shared/package-lock.json
-            server/package-lock.json
-            client/package-lock.json
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install workspace dependencies
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+        run: pnpm install --frozen-lockfile
       - name: Build shared contracts
-        working-directory: shared
-        run: npm ci && npm run build
+        run: pnpm --filter @rybbit/shared build
       - name: Verify generated tracker artifacts
         working-directory: server
-        run: npm ci --legacy-peer-deps && npm run test:run -- --maxWorkers=4 --minWorkers=1 && npm run db:check && npm run build && npm run check:analytics
+        run: pnpm test:run --maxWorkers=4 --minWorkers=1 && pnpm db:check && pnpm build && pnpm check:analytics
       - name: Verify WoT-CV client code
         working-directory: client
         env:
           NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
-        run: npm ci --legacy-peer-deps && npm run test:run -- --maxWorkers=4 && npm run lint:wotcv && npm run knip && npm run audit:polish && npm run format:check:wotcv && npx tsc --noEmit && npm run build
+        run: pnpm test:run --maxWorkers=4 && pnpm lint:wotcv && pnpm knip && pnpm audit:polish && pnpm format:check:wotcv && pnpm typecheck && pnpm build
       - name: Verify merged Compose configuration
         env:
           BASE_URL: https://tracking.example.com

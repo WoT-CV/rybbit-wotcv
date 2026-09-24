@@ -95,6 +95,7 @@ function syncPlaybackMode(
   playbackState: "paused" | "playing" | "skipping-inactivity" | "ended"
 ) {
   const state = useReplayStore.getState();
+  if (state.playbackState === "seeking") return;
   if (state.isSkippingInactivity === isSkippingInactivity && state.playbackState === playbackState) return;
 
   useReplayStore.setState({ isSkippingInactivity, playbackState });

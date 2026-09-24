@@ -53,7 +53,7 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
   // Calculate activity periods when player and data are ready
   useActivityPeriods({ data });
   useSkipInactivity({ player: activePlayer });
-  const { commitPreviewSeek, previewSeek, seekTo } = useReplaySeek();
+  const { cancelPreviewSeek, commitPreviewSeek, previewSeek, seekTo } = useReplaySeek();
 
   const handlePlayPause = useCallback(() => {
     if (!activePlayer) return;
@@ -154,6 +154,7 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
         onPlayPause={handlePlayPause}
         onSliderChange={handleSliderChange}
         onSliderCommit={handleSliderCommit}
+        onSliderCancel={cancelPreviewSeek}
         onSpeedChange={handleSpeedChange}
         onFullscreenOpen={!isDrawer ? handleFullscreenOpen : undefined}
         isDrawer={isDrawer}

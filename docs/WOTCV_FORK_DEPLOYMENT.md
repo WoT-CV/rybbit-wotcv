@@ -8,6 +8,8 @@ Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-C
 
 ## Założenia
 
+**Synchronizacja 2026-09-24:** client/server/shared przechodzą na pnpm 10.33.0 i jeden root `pnpm-lock.yaml`; `docs` nadal używa npm i własnego lockfile. Szczegółowy plan, wyniki testów, diagnostyka mobilnego Replay oraz niewykonane jeszcze bramki odbioru są w [raporcie synchronizacji](WOTCV_UPSTREAM_SYNC_2026-09-24.md). Ta integracja nie dodaje migracji PostgreSQL i nie zmienia Better Auth 1.7.3. Nie należy ponownie uruchamiać jednorazowego cutoveru z 19.09 na instalacji, która już go przeszła.
+
 - serwer buduje i uruchamia aplikację z gałęzi `feat/wotcv`,
 - `master` pozostaje gałęzią synchronizowaną z oficjalnym Rybbit,
 - Compose działa pod nazwą projektu `rybbit`, a dane są przypięte do istniejących zewnętrznych volume `rybbit_*`,
@@ -16,6 +18,25 @@ Ten dokument opisuje przełączenie istniejącej instalacji Rybbit na fork WoT-C
 - każde uruchomienie aplikacji ma widoczny commit SHA w `/api/health`,
 - migracje PostgreSQL wykonuje automatycznie sprawdzony obraz backendu przed przełączeniem aplikacji,
 - szczegóły korelacji użytkowników opisuje [WOTCV_IDENTITY_RESOLUTION_V2.md](WOTCV_IDENTITY_RESOLUTION_V2.md).
+
+## Budowanie po przejściu na pnpm
+
+Dockerfile obu aplikacji instalują zależności wewnątrz obrazu z `--frozen-lockfile`. Kontekst builda musi być katalogiem głównym repo, nie samym `server/` lub `client/`, ponieważ potrzebne są root manifest, workspace i shared. Produkcyjny serwer nie wymaga instalowania pnpm na hoście, jeżeli aplikacje budowane są przez dostarczone Dockerfile.
+
+Dla lokalnego rozwoju użyj Node 24 oraz pnpm wskazanego przez pole `packageManager` w root `package.json`:
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm build:server
+pnpm build:client
+```
+
+Przy przejściu istniejącego checkoutu z npm zatrzymaj najpierw własne procesy korzystające ze starych node_modules. Nie uruchamiaj `npm ci` w client/server/shared. Dokumentacja nadal wymaga `npm ci` w `docs/`. W runtime backendu pozostaje lokalny bin Drizzle, więc dotychczasowe `npm run db:migrate` w skrypcie wdrożeniowym nadal działa bez instalowania pnpm w finalnym obrazie.
+
+Nowy cache analityki ma domyślnie maksymalnie 30 sekund TTL (`DASHBOARD_CACHE_TTL_SECONDS`); wartość `0` go wyłącza. Namespace zawiera SHA, bazę ClickHouse i tryb identity. Dla izolacji wyników podczas zmiany wersji zawsze przekazuj prawdziwe `WOTCV_GIT_SHA` przez istniejący skrypt wdrożeniowy.
+
+Przed pierwszym wdrożeniem nowych Dockerfile wykonaj build/runtime smoke w izolowanym środowisku Linux i przegląd pozostałych ostrzeżeń bezpieczeństwa opisanych w raporcie. Sam pozytywny build Next lub lokalny test portable dependencies na Windows nie zastępuje testu obrazu, eksportu ffmpeg ani odtwarzania na rzeczywistym iPhonie.
 
 ## Token Mapbox
 

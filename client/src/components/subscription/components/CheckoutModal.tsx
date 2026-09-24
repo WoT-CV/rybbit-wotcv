@@ -1,10 +1,12 @@
 "use client";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe } from "@stripe/stripe-js/pure";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { STRIPE_PUBLISHABLE_KEY } from "@/lib/const";
 
-const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+// Self-hosted installations have no Stripe key. Importing the default loader
+// injects Stripe.js even if no checkout is ever opened.
+const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null;
 
 interface CheckoutModalProps {
   clientSecret: string | null;

@@ -19,9 +19,16 @@ const withNextIntl = createNextIntlPlugin({
 
 const withMDX = createMDX();
 
+// Vercel packages monorepo builds relative to its supplied tracing root.
+// Keep local builds rooted in docs when that override is absent.
+const tracingRoot = process.env.NEXT_PRIVATE_OUTPUT_TRACE_ROOT || import.meta.dirname;
+
 /** @type {import('next').NextConfig} */
 const config = {
+  agentRules: false,
   reactStrictMode: true,
+  outputFileTracingRoot: tracingRoot,
+  turbopack: { root: tracingRoot },
   images: {
     remotePatterns: [
       {

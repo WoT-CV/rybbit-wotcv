@@ -12,6 +12,7 @@ interface UseReplayPlayerProps {
 }
 
 export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) => {
+  const events = data?.events;
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<ReplayPlayerAdapter | null>(null);
   const { setPlayer, setCurrentTime, setIsPlaying, setDuration } = useReplayStore(
@@ -33,7 +34,7 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
 
   useEffect(() => {
     const target = playerContainerRef.current;
-    if (!data?.events || !target) return;
+    if (!events || !target) return;
 
     const initializedState = useReplayStore.getState();
     const initializedSessionId = initializedState.sessionId;
@@ -44,6 +45,12 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
     let handleVisibilityChange: (() => void) | undefined;
     let resizeObserver: ResizeObserver | undefined;
     let adapter: ReplayPlayerAdapter;
+    let cleanupPlayer = () => target.replaceChildren();
+    const cleanup = () => {
+      if (handleVisibilityChange) document.removeEventListener("visibilitychange", handleVisibilityChange);
+      resizeObserver?.disconnect();
+      cleanupPlayer();
+    };
 
     target.replaceChildren();
 
@@ -51,16 +58,22 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
       const initialRect = target.getBoundingClientRect();
       adapter = new ReplayPlayerAdapter({
         target,
-        events: data.events,
+        events,
         width: initialRect.width || widthRef.current,
         height: initialRect.height || heightRef.current,
       });
 
       playerRef.current = adapter;
+      cleanupPlayer = () => {
+        adapter.destroy();
+        if (playerRef.current === adapter) playerRef.current = null;
+        if (useReplayStore.getState().player === adapter) setPlayer(null);
+      };
       setPlayer(adapter);
 
       adapter.onCurrentTime(currentTime => {
-        if (useReplayStore.getState().player !== adapter) return;
+        const state = useReplayStore.getState();
+        if (state.player !== adapter || state.playbackState === "seeking") return;
         const playerDuration = adapter.getDuration();
         if (playerDuration && currentTime > playerDuration) {
           adapter.pause();
@@ -160,20 +173,13 @@ export const useReplayPlayer = ({ data, width, height }: UseReplayPlayerProps) =
       });
       resizeObserver.observe(target);
     } catch (error) {
+      cleanup();
       console.error("Failed to initialize rrweb player:", error);
       return;
     }
 
-    return () => {
-      if (handleVisibilityChange) document.removeEventListener("visibilitychange", handleVisibilityChange);
-      resizeObserver?.disconnect();
-      adapter.destroy();
-      playerRef.current = null;
-      if (useReplayStore.getState().player === adapter) {
-        setPlayer(null);
-      }
-    };
-  }, [data, setCurrentTime, setDuration, setIsPlaying, setPlayer]);
+    return cleanup;
+  }, [events, setCurrentTime, setDuration, setIsPlaying, setPlayer]);
 
   useEffect(() => {
     const target = playerContainerRef.current;

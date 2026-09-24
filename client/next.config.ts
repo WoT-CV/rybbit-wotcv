@@ -19,7 +19,10 @@ const withNextIntl = createNextIntlPlugin({
 });
 
 const nextConfig: NextConfig = {
+  // Repository-specific agent guidance is maintained explicitly, not generated.
+  agentRules: false,
   output: "standalone",
+  outputFileTracingRoot: repositoryRoot,
   transpilePackages: ["@rybbit/shared"],
   turbopack: {
     root: repositoryRoot,

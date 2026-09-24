@@ -7,6 +7,7 @@ const rrwebPlayerMock = vi.hoisted(() => ({
   destroyReplayer: vi.fn(),
   destroySvelte: vi.fn(),
   pause: vi.fn(),
+  matches: vi.fn(),
 }));
 
 vi.mock("rrweb-player", () => ({
@@ -32,7 +33,7 @@ vi.mock("rrweb-player", () => ({
     }
 
     getReplayer() {
-      return { destroy: rrwebPlayerMock.destroyReplayer };
+      return { destroy: rrwebPlayerMock.destroyReplayer, service: { state: { matches: rrwebPlayerMock.matches } } };
     }
 
     addEventListener() {}
@@ -53,6 +54,7 @@ describe("ReplayPlayerAdapter", () => {
     rrwebPlayerMock.destroyReplayer.mockClear();
     rrwebPlayerMock.destroySvelte.mockClear();
     rrwebPlayerMock.pause.mockClear();
+    rrwebPlayerMock.matches.mockReset();
   });
 
   it("disables the native rrweb inactivity acceleration", () => {
@@ -72,6 +74,19 @@ describe("ReplayPlayerAdapter", () => {
     expect(rrwebPlayerMock.destroyReplayer).toHaveBeenCalledOnce();
     expect(rrwebPlayerMock.destroySvelte).toHaveBeenCalledOnce();
     expect(replaceChildren).toHaveBeenCalledOnce();
+  });
+
+  it("reads playback state from the replayer, not static recording metadata", () => {
+    const adapter = createAdapter();
+    rrwebPlayerMock.matches.mockReturnValue(true);
+    expect(adapter.getIsPlaying()).toBe(true);
+    expect(rrwebPlayerMock.matches).toHaveBeenCalledWith("playing");
+    rrwebPlayerMock.matches.mockReturnValue(false);
+    expect(adapter.getIsPlaying()).toBe(false);
+    adapter.destroy();
+    rrwebPlayerMock.matches.mockClear();
+    expect(adapter.getIsPlaying()).toBe(false);
+    expect(rrwebPlayerMock.matches).not.toHaveBeenCalled();
   });
 });
 
