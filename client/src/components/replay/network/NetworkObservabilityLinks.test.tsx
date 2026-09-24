@@ -66,4 +66,10 @@ describe("request observability actions", () => {
     render(<NetworkObservabilityLinks request={{ ...request, correlationId: undefined }} />);
     expect(screen.queryByRole("link")).toBeNull();
   });
+  it("renders a trace-only request without an empty logs link", () => {
+    state.profiles![0].tempoDatasourceUid = "tempo";
+    render(<NetworkObservabilityLinks request={{ ...request, correlationId: undefined, traceId: "a".repeat(32) }} />);
+    expect(screen.queryByRole("link", { name: "Open logs in Grafana" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Open trace in Grafana" }).getAttribute("rel")).toBe("noopener noreferrer");
+  });
 });

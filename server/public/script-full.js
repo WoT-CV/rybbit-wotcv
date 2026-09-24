@@ -186,11 +186,17 @@
         return /^[0-9a-f]{32}$/.test(id) && !/^0+$/.test(id) ? id : void 0;
       }
       function readResponseCorrelation3(getHeader) {
-        try {
-          return { correlationId: normalizeCorrelationId(getHeader("x-correlation-id")) };
-        } catch {
-          return {};
-        }
+        const read = (name) => {
+          try {
+            return getHeader(name);
+          } catch {
+            return void 0;
+          }
+        };
+        return {
+          correlationId: normalizeCorrelationId(read("x-correlation-id")),
+          traceId: normalizeTraceId(read("x-trace-id"))
+        };
       }
     }
   });

@@ -62,8 +62,6 @@ Stage 1 review and verification:
 - Tracker production bundles and compressed assets build successfully. No migration
   or production operation was run. Live Grafana login/click-through remains a rollout gate.
 
-### Later stages
-
 ### Stage 2 — Metadata-only network capture
 
 Fresh analysis: disabling body flags currently still clones `Request` during fetch
@@ -114,12 +112,73 @@ Stage 2 review and verification:
   Build-time FE rollback to `full` cannot override a metadata server policy; a server
   rollback must explicitly re-enable the four body/header flags if required.
 
-- Stage 2: metadata-only capture, no body reads/clones, privacy-safe network URLs,
-  explicit capture policy and FE rollout configuration; old recordings retained.
-- Stage 3: real OpenTelemetry request traces, response trace IDs, CORS, propagation,
-  trace/log context and Tempo links; no synthetic IDs presented as real traces.
-- Stage 4: cross-component regression tests, reproducible payload/CPU checks,
-  deployment/rollback instructions and a truthful production-readiness gate.
+### Stage 3 — Real server traces and Tempo
+
+Fresh analysis (before implementation): the exact installed OpenTelemetry 2.31.1
+source orders its MVC filter at `HIGHEST_PRECEDENCE + 1`. Both BE and refresher
+register their Logbook filters at the same order. Depending on registration order,
+the HTTP log pair is emitted outside the server span. A read-only production GET
+confirmed a correlation ID and a searchable Loki pair, but no trace/span fields.
+This is evidence of the symptom, not proof that production tracing is entirely off.
+
+The starter already instruments Spring Boot 4 `RestTemplateBuilder` through a
+customizer (including non-bean clients built by the existing refresher clients).
+Do not inject another tracing interceptor or change the isolated clan-reserve pools.
+
+Implementation plan:
+1. Preserve correlation at order +0, OpenTelemetry at +1, add response trace context
+   at +2, move Logbook to +3 and the refresher exception filter to +4. Thus normal,
+   denied and failed requests have logging inside the existing server span.
+2. Read `Span.current()` only; expose `X-Trace-Id` only for valid sampled context.
+   Never trust an incoming X-Trace-Id or substitute correlation IDs. Add the
+   correlation ID as a span attribute, bridge real IDs into MDC for text logs and
+   restore previous MDC even after errors. Preserve native status/body behavior.
+3. Expose X-Trace-Id alongside X-Correlation-Id in BE CORS without widening allowed
+   origins, credentials, request headers or methods. The browser adds no headers,
+   so this feature introduces no preflight requests.
+4. Read the two response IDs independently in fetch/XHR. Missing, opaque, malformed,
+   zero and unsampled IDs yield correlation-only diagnostics. Keep schema v1 and
+   support historical response-header fallback without reading body streams.
+5. Create a separate Tempo Explore action with the configured datasource UID and
+   a validated real trace ID, bounded absolute range and no application credentials.
+   Keep logs available when Tempo is not configured. Translate the action in all locales.
+6. Test actual OTel servlet instrumentation, parent trace continuation, outbound
+   propagation, filter ordering, response/CORS behavior, MDC cleanup, errors, disabled
+   sampling, link encoding and independent fallbacks. Test offline with in-memory
+   export; do not send test payloads to the production collector.
+7. Run builds and relevant regression suites, inspect each diff and staged file list,
+   fix findings, then commit stage 3 separately in every changed repository. Preserve
+   the pre-existing BE ResourceTimingFilter index entries and any concurrent user work.
+
+Privacy review: backend Logbook deliberately preserves raw HTTP headers/bodies,
+with explicit regression tests for that policy. Changing that existing policy is
+not a prerequisite for recording metadata-only in Rybbit. It is left untouched
+pending the user's separate choice; Grafana access/retention must be restricted.
+No new sensitive body collection, anonymous Grafana access or server secrets are added.
+
+Stage 3 self-review and verification:
+- Fixed the actual ordering collision in both Java services. No extra server span,
+  request header injection, tracing dependency upgrade or executor changes.
+- Tested actual MVC instrumentation with an incoming W3C parent, actual Logbook
+  callbacks and the starter's Boot 4 RestTemplate customizer: one server span and
+  one client span, same trace, correct parent IDs and restored MDC. Added the
+  missing restclient starter to the BE API module's **test scope only**.
+- BE focused tests: 36 passed, including 401/500, unsampled/no-op contexts,
+  exception identity, CORS and correlation. Refresher's full selected reactor:
+  observability 35, domain 1052, api-service 45 passed (1132 total, none skipped).
+- Rybbit: 32 network UI/parser/link tests and 30 recorder tests passed; both
+  typechecks, backend/tracker build and scoped UI lint passed. All 12 locales filled.
+- Confirmed Tempo query contract against Grafana's datasource schema:
+  [traceId query type and query field](https://raw.githubusercontent.com/grafana/grafana/v12.2.0/public/app/plugins/datasource/tempo/dataquery.gen.ts).
+  A sampled ID is not a delivery guarantee: exporter failures, retention and
+  tail-sampling can still make a valid trace unavailable.
+- Existing backend raw-log policy is unchanged pending the explicit user choice.
+  Production has not been changed by this implementation.
+
+### Stage 4 — Release validation (plan to be re-analysed before implementation)
+
+Cross-component regression tests, reproducible payload/CPU checks, deployment and
+rollback instructions, and an evidence-backed production-readiness gate.
 
 Each later section will record its fresh analysis and detailed plan before edits.
 Physical iPhone validation and deployed Grafana/Tempo checks cannot be replaced

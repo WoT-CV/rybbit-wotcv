@@ -2360,5 +2360,6 @@
   "vDpLV2": "{type}eingabefeld geändert",
   "WMOCxZ": "Zugriff auf Grafana ist erforderlich. Logs können vor dieser Aufzeichnung ablaufen.",
   "pl7iME": "Logs in Grafana öffnen",
-  "2o6ues": "Nur Metadaten: Inhalte, Header und URL-Parameter wurden nicht aufgezeichnet."
+  "2o6ues": "Nur Metadaten: Inhalte, Header und URL-Parameter wurden nicht aufgezeichnet.",
+  "nzu4J7": "Trace in Grafana öffnen"
 }

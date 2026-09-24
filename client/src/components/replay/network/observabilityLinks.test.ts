@@ -40,7 +40,7 @@ const parse = (overrides: Record<string, unknown> = {}) =>
 
 describe("Grafana links", () => {
   it("uses an absolute time range, configured datasource and environment, not the URL query", () => {
-    const url = new URL(getObservabilityLinks(parse(), [testProfile])!.logs);
+    const url = new URL(getObservabilityLinks(parse(), [testProfile])!.logs!);
     expect(url.origin).toBe("https://grafana.example.com");
     expect(url.pathname).toBe("/grafana/explore");
     expect(url.searchParams.get("orgId")).toBe("2");
@@ -89,7 +89,28 @@ describe("Grafana links", () => {
   });
   it("bounds untrusted times and rejects invalid timestamps", () => {
     expect(getObservabilityLinks({ ...parse(), startedAt: NaN }, [testProfile])).toBeUndefined();
-    const url = new URL(getObservabilityLinks({ ...parse(), completedAt: 8e15 }, [testProfile])!.logs);
+    const url = new URL(getObservabilityLinks({ ...parse(), completedAt: 8e15 }, [testProfile])!.logs!);
     expect(JSON.parse(url.searchParams.get("panes")!).logs.range.to).toBe("1700003720000");
+  });
+  it("links real traces independently of log correlation and preserves absolute time", () => {
+    const profile = { ...testProfile, tempoDatasourceUid: "tempo-prod" };
+    const links = getObservabilityLinks(parse({ correlationId: undefined, traceId: "a".repeat(32) }), [profile])!;
+    expect(links.logs).toBeUndefined();
+    const url = new URL(links.trace!);
+    const pane = JSON.parse(url.searchParams.get("panes")!).trace;
+    expect(pane.datasource).toBe("tempo-prod");
+    expect(pane.queries).toEqual([
+      { refId: "A", datasource: { type: "tempo", uid: "tempo-prod" }, queryType: "traceId", query: "a".repeat(32) },
+    ]);
+    expect(pane.range).toEqual({ from: "1699999880000", to: "1700000120100" });
+  });
+  it("uses historical trace headers but never turns a correlation ID into a trace", () => {
+    const profile = { ...testProfile, tempoDatasourceUid: "tempo-prod" };
+    expect(
+      getObservabilityLinks(parse({ responseHeaders: { "X-Trace-Id": "A".repeat(32) } }), [profile])?.trace
+    ).toBeDefined();
+    expect(getObservabilityLinks(parse({ correlationId: "a".repeat(32) }), [profile])?.trace).toBeUndefined();
+    expect(getObservabilityLinks(parse({ traceId: "0".repeat(32) }), [profile])?.trace).toBeUndefined();
+    expect(getObservabilityLinks(parse({ traceId: "a".repeat(32) }), [testProfile])?.trace).toBeUndefined();
   });
 });

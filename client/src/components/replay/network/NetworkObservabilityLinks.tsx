@@ -15,12 +15,22 @@ export function NetworkObservabilityLinks({ request }: { request: ParsedNetworkR
   return (
     <div className="space-y-2 border-b border-neutral-100 p-2 dark:border-neutral-800">
       <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="outline">
-          <a href={links.logs} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
-            <ExternalLink aria-hidden="true" />
-            {t("Open logs in Grafana")}
-          </a>
-        </Button>
+        {links.logs && (
+          <Button asChild size="sm" variant="outline">
+            <a href={links.logs} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
+              <ExternalLink aria-hidden="true" />
+              {t("Open logs in Grafana")}
+            </a>
+          </Button>
+        )}
+        {links.trace && (
+          <Button asChild size="sm" variant="outline">
+            <a href={links.trace} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">
+              <ExternalLink aria-hidden="true" />
+              {t("Open trace in Grafana")}
+            </a>
+          </Button>
+        )}
       </div>
       <p className="text-xs text-neutral-500 dark:text-neutral-400">
         {t("Grafana access is required. Logs may expire before this replay.")}

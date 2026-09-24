@@ -2360,5 +2360,6 @@
   "vDpLV2": "{type}champ de saisie modifié",
   "WMOCxZ": "Un accès à Grafana est requis. Les journaux peuvent expirer avant cet enregistrement.",
   "pl7iME": "Ouvrir les journaux dans Grafana",
-  "2o6ues": "Métadonnées uniquement : corps, en-têtes et paramètres d’URL non enregistrés."
+  "2o6ues": "Métadonnées uniquement : corps, en-têtes et paramètres d’URL non enregistrés.",
+  "nzu4J7": "Ouvrir la trace dans Grafana"
 }

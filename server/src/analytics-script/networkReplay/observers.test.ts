@@ -18,7 +18,9 @@ afterEach(() => vi.unstubAllGlobals());
 describe("network observer correlation", () => {
   it("fetch preserves response identity and correlation with headers and bodies disabled", async () => {
     const records: CapturedNetworkRequest[] = [];
-    const response = new Response("payload", { headers: { "x-correlation-id": "request-123" } });
+    const response = new Response("payload", {
+      headers: { "x-correlation-id": "request-123", "x-trace-id": "a".repeat(32) },
+    });
     const fetch = vi.fn().mockResolvedValue(response);
     vi.stubGlobal("window", { fetch, location: page });
     const stop = observeFetch({
@@ -29,7 +31,12 @@ describe("network observer correlation", () => {
     try {
       expect(await window.fetch("https://api.example.com/a")).toBe(response);
       await vi.waitFor(() => expect(records).toHaveLength(1));
-      expect(records[0]).toMatchObject({ correlationId: "request-123", requestHeaders: {}, responseHeaders: {} });
+      expect(records[0]).toMatchObject({
+        correlationId: "request-123",
+        traceId: "a".repeat(32),
+        requestHeaders: {},
+        responseHeaders: {},
+      });
       expect(records[0].responseBody).toBeUndefined();
       expect(await response.text()).toBe("payload");
     } finally {
@@ -48,7 +55,7 @@ describe("network observer correlation", () => {
         return "x-correlation-id: request-456\r\n";
       }
       getResponseHeader(name: string) {
-        return name === "x-correlation-id" ? "request-456" : null;
+        return name === "x-correlation-id" ? "request-456" : name === "x-trace-id" ? "b".repeat(32) : null;
       }
       send() {
         this.dispatchEvent(new Event("loadend"));
@@ -67,7 +74,7 @@ describe("network observer correlation", () => {
       xhr.open("GET", "https://api.example.com/a");
       xhr.send();
       await vi.waitFor(() => expect(records).toHaveLength(1));
-      expect(records[0]).toMatchObject({ correlationId: "request-456", responseHeaders: {} });
+      expect(records[0]).toMatchObject({ correlationId: "request-456", traceId: "b".repeat(32), responseHeaders: {} });
     } finally {
       stop();
     }

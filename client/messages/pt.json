@@ -2360,5 +2360,6 @@
   "vDpLV2": "{type}campo de entrada alterado",
   "WMOCxZ": "É necessário ter acesso ao Grafana. Os logs podem expirar antes desta gravação.",
   "pl7iME": "Abrir logs no Grafana",
-  "2o6ues": "Apenas metadados: corpos, cabeçalhos e parâmetros de URL não foram gravados."
+  "2o6ues": "Apenas metadados: corpos, cabeçalhos e parâmetros de URL não foram gravados.",
+  "nzu4J7": "Abrir rastreamento no Grafana"
 }

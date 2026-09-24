@@ -10,7 +10,7 @@ describe("network correlation metadata", () => {
         return "  abc-123._  ";
       })
     ).toEqual({ correlationId: "abc-123._" });
-    expect(names).toEqual(["x-correlation-id"]);
+    expect(names).toEqual(["x-correlation-id", "x-trace-id"]);
   });
   it.each([null, undefined, 42, "", "a".repeat(129), "a b", 'a" | json', "<script>", "a\nb"])(
     "rejects malformed ID %j",
@@ -30,5 +30,14 @@ describe("network correlation metadata", () => {
     expect(normalizeTraceId("a".repeat(32))).toBe("a".repeat(32));
     expect(normalizeTraceId("0".repeat(32))).toBeUndefined();
     expect(normalizeTraceId("error-id")).toBeUndefined();
+  });
+  it("reads a real response trace independently of unavailable correlation headers", () => {
+    expect(
+      readResponseCorrelation(name => {
+        if (name === "x-correlation-id") throw new Error("unavailable");
+        return "ABCDEF0123456789ABCDEF0123456789";
+      })
+    ).toEqual({ traceId: "abcdef0123456789abcdef0123456789" });
+    expect(readResponseCorrelation(() => "0".repeat(32)).traceId).toBeUndefined();
   });
 });

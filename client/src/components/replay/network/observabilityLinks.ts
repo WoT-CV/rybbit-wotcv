@@ -1,6 +1,6 @@
 import type { ReplayObservabilityProfile } from "@rybbit/shared";
 
-import { getResponseCorrelationId } from "./networkEventUtils";
+import { getResponseCorrelationId, getResponseTraceId } from "./networkEventUtils";
 import type { ParsedNetworkRequest } from "./types";
 
 export function getObservabilityLinks(
@@ -25,25 +25,40 @@ export function getObservabilityLinks(
       Math.max(request.startedAt, request.completedAt ?? request.startedAt)
     );
     if (!Number.isFinite(end)) return undefined;
-    const range = { from: String(Math.max(0, request.startedAt - padding)), to: String(Math.min(8.64e15, end + padding)) };
+    const range = {
+      from: String(Math.max(0, request.startedAt - padding)),
+      to: String(Math.min(8.64e15, end + padding)),
+    };
     const correlationId = getResponseCorrelationId(request);
-    if (!correlationId) return undefined;
-    const expr = `{service_name=${JSON.stringify(profile.serviceName)}, deployment_environment=${JSON.stringify(profile.environment)}} | http_correlation_id=${JSON.stringify(correlationId)}`;
+    const traceId = getResponseTraceId(request);
+    if (!correlationId && !(traceId && profile.tempoDatasourceUid)) return undefined;
     target.pathname = `${target.pathname.replace(/\/$/, "")}/explore`;
-    target.search = new URLSearchParams({
-      schemaVersion: "1",
-      orgId: String(profile.orgId),
-      panes: JSON.stringify({
-        logs: {
-          datasource: profile.lokiDatasourceUid,
-          queries: [
-            { refId: "A", datasource: { type: "loki", uid: profile.lokiDatasourceUid }, expr, queryType: "range" },
-          ],
-          range,
-        },
-      }),
-    }).toString();
-    return { logs: target.href };
+    const explore = (paneId: string, type: string, uid: string, query: Record<string, string>) => {
+      const url = new URL(target);
+      url.search = new URLSearchParams({
+        schemaVersion: "1",
+        orgId: String(profile.orgId),
+        panes: JSON.stringify({
+          [paneId]: { datasource: uid, queries: [{ refId: "A", datasource: { type, uid }, ...query }], range },
+        }),
+      }).toString();
+      return url.href;
+    };
+    return {
+      logs: correlationId
+        ? explore("logs", "loki", profile.lokiDatasourceUid, {
+            expr: `{service_name=${JSON.stringify(profile.serviceName)}, deployment_environment=${JSON.stringify(profile.environment)}} | http_correlation_id=${JSON.stringify(correlationId)}`,
+            queryType: "range",
+          })
+        : undefined,
+      trace:
+        traceId && profile.tempoDatasourceUid
+          ? explore("trace", "tempo", profile.tempoDatasourceUid, {
+              query: traceId,
+              queryType: "traceId",
+            })
+          : undefined,
+    };
   } catch {
     return undefined;
   }

@@ -1,4 +1,4 @@
-import { normalizeCorrelationId } from "@rybbit/shared";
+import { normalizeCorrelationId, normalizeTraceId } from "@rybbit/shared";
 
 import type { NetworkRequestFilters, NetworkStatusGroup, ParsedNetworkRequest } from "./types";
 
@@ -152,6 +152,10 @@ export function getResponseCorrelationId(request: ParsedNetworkRequest): string 
     normalizeCorrelationId(request.correlationId) ??
     normalizeCorrelationId(getHeaderValue(request.responseHeaders, ["x-correlation-id", "correlation-id"]))
   );
+}
+
+export function getResponseTraceId(request: ParsedNetworkRequest): string | undefined {
+  return normalizeTraceId(request.traceId) ?? normalizeTraceId(getHeaderValue(request.responseHeaders, ["x-trace-id"]));
 }
 
 export function isNetworkRequestError(request: ParsedNetworkRequest): boolean {
