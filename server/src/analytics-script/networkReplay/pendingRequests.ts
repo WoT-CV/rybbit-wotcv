@@ -43,7 +43,15 @@ export class PendingRequests {
     requestId: string,
     updates: Pick<
       CapturedNetworkRequest,
-      "completedAt" | "durationMs" | "error" | "outcome" | "responseHeaders" | "status" | "statusText"
+      | "completedAt"
+      | "durationMs"
+      | "error"
+      | "outcome"
+      | "responseHeaders"
+      | "status"
+      | "statusText"
+      | "correlationId"
+      | "traceId"
     >,
     responseBody?: Promise<CapturedBody>,
     completionTask?: Promise<void>

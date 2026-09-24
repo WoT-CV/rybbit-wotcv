@@ -133,6 +133,7 @@ import {
   getSessionReplays,
   recordSessionReplay,
 } from "./api/sessionReplay/index.js";
+import { getReplayObservability } from "./api/sessionReplay/getReplayObservability.js";
 import {
   addSite,
   batchImportEvents,
@@ -564,6 +565,7 @@ async function sessionReplayRoutes(fastify: FastifyInstance) {
   // Session Replay
   fastify.post("/session-replay/record/:siteId", recordSessionReplay); // Public - tracking endpoint
   fastify.get("/sites/:siteId/session-replay/list", publicReplayRead, getSessionReplays);
+  fastify.get("/sites/:siteId/replay-observability", authReplayRead, getReplayObservability);
   fastify.get("/sites/:siteId/session-replay/:sessionId", publicReplayRead, getSessionReplayEvents);
   fastify.delete("/sites/:siteId/session-replay/:sessionId", authReplayWrite, deleteSessionReplay);
   fastify.post("/sites/:siteId/session-replay/:sessionId/exports", authReplayWrite, createReplayExport);

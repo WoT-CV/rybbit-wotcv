@@ -1,4 +1,4 @@
-import type { NetworkReplayConfig } from "@rybbit/shared";
+import { readResponseCorrelation, type NetworkReplayConfig } from "@rybbit/shared";
 
 import { captureBodyValue, captureXhrResponseBody, type BodyCaptureLimits } from "./bodyCapture.js";
 import { appendCapturedHeader, getCapturedHeader, parseXhrResponseHeaders } from "./headerCapture.js";
@@ -255,6 +255,7 @@ function finalizeXhrRequest(
       error: state.error,
       outcome: state.outcome ?? getXhrOutcome(status),
       responseHeaders: config.captureResponseHeaders ? allResponseHeaders : {},
+      ...readResponseCorrelation(name => state.xhr.getResponseHeader(name)),
       status,
       statusText: getXhrStatusText(state.xhr),
     },

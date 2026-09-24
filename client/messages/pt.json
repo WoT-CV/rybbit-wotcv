@@ -2357,5 +2357,7 @@
   "QOaR8l": "Formulário enviado para \"{action}\"",
   "IQ5tZg": "Formulário enviado",
   "+B+qvw": "{type}campo de entrada \"{name}\" alterado",
-  "vDpLV2": "{type}campo de entrada alterado"
+  "vDpLV2": "{type}campo de entrada alterado",
+  "WMOCxZ": "É necessário ter acesso ao Grafana. Os logs podem expirar antes desta gravação.",
+  "pl7iME": "Abrir logs no Grafana"
 }

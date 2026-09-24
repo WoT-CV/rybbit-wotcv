@@ -1,0 +1,69 @@
+import React from "react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReplayObservabilityProfile } from "@rybbit/shared";
+
+const state = vi.hoisted(() => ({ profiles: undefined as ReplayObservabilityProfile[] | undefined }));
+vi.mock("@/api/admin/hooks/useReplayObservability", () => ({ useReplayObservability: () => state.profiles }));
+vi.mock("next-intl", () => ({ useExtracted: () => (message: string) => message }));
+
+import { NetworkObservabilityLinks } from "./NetworkObservabilityLinks";
+import { parseNetworkEvents } from "./parseNetworkEvents";
+
+const request = parseNetworkEvents([
+  {
+    type: 6,
+    timestamp: 1700000000100,
+    data: {
+      plugin: "rrweb/network@1",
+      payload: {
+        version: 1,
+        requests: [
+          {
+            schemaVersion: 1,
+            requestId: "r",
+            url: "https://api.example.com/a",
+            startedAt: 1700000000000,
+            correlationId: "c",
+          },
+        ],
+      },
+    },
+  },
+])[0];
+
+beforeEach(() => {
+  state.profiles = [
+    {
+      requestOrigin: "https://api.example.com",
+      grafanaUrl: "https://logs.example.com",
+      orgId: 1,
+      lokiDatasourceUid: "loki",
+      serviceName: "api",
+      environment: "prod",
+      timePaddingMs: 120000,
+    },
+  ];
+});
+afterEach(cleanup);
+
+describe("request observability actions", () => {
+  it("opens a protected external destination with no opener or referrer", () => {
+    render(<NetworkObservabilityLinks request={request} />);
+    const link = screen.getByRole("link", { name: "Open logs in Grafana" });
+    expect(link.getAttribute("href")).toMatch(/^https:\/\/logs\.example\.com\/explore\?/);
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(link.getAttribute("referrerpolicy")).toBe("no-referrer");
+    expect(link.getAttribute("target")).toBe("_blank");
+  });
+  it("renders no action when the protected profile was not supplied", () => {
+    state.profiles = undefined;
+    const { container } = render(<NetworkObservabilityLinks request={request} />);
+    expect(container.textContent).toBe("");
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+  it("does not link requests without an identifier", () => {
+    render(<NetworkObservabilityLinks request={{ ...request, correlationId: undefined }} />);
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+});

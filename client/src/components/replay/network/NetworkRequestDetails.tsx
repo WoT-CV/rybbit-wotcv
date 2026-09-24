@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { BodyViewer } from "./BodyViewer";
+import { NetworkObservabilityLinks } from "./NetworkObservabilityLinks";
 import {
   formatNetworkDuration,
   formatTransferSize,
@@ -48,6 +49,7 @@ export function NetworkRequestDetails({ request, onBack }: NetworkRequestDetails
         </div>
       </div>
 
+      <NetworkObservabilityLinks request={request} />
       <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col p-2 pt-1.5">
         <div className="shrink-0 overflow-x-auto pb-1">
           <TabsList className="h-7 w-max p-0.5">

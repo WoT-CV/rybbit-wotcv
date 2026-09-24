@@ -1,4 +1,4 @@
-import type { NetworkReplayConfig } from "@rybbit/shared";
+import { readResponseCorrelation, type NetworkReplayConfig } from "@rybbit/shared";
 
 import {
   captureBodyValue,
@@ -175,6 +175,7 @@ function completeFetchResponse(
       durationMs: getDurationMs(context.startedAt, completedAt),
       outcome: getHttpOutcome(response.status),
       responseHeaders: config.captureResponseHeaders ? captureHeaders(response.headers) : {},
+      ...readResponseCorrelation(name => response.headers.get(name)),
       status: response.status,
       statusText: response.statusText,
     },
@@ -203,6 +204,7 @@ function completeFetchResponseWithoutBody(
       durationMs: getDurationMs(context.startedAt, completedAt),
       outcome: getHttpOutcome(response.status),
       responseHeaders: config.captureResponseHeaders ? captureHeaders(response.headers) : {},
+      ...readResponseCorrelation(name => response.headers.get(name)),
       status: response.status,
       statusText: response.statusText,
     },

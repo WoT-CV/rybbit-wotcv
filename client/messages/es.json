@@ -2357,5 +2357,7 @@
   "QOaR8l": "Formulario enviado a \"{action}\"",
   "IQ5tZg": "Formulario enviado",
   "+B+qvw": "{type}campo de entrada \"{name}\" cambiado",
-  "vDpLV2": "{type}campo de entrada cambiado"
+  "vDpLV2": "{type}campo de entrada cambiado",
+  "WMOCxZ": "Se requiere acceso a Grafana. Los registros pueden caducar antes que esta grabación.",
+  "pl7iME": "Abrir registros en Grafana"
 }

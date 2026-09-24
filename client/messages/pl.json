@@ -2357,5 +2357,7 @@
   "QOaR8l": "Przesłano formularz do \"{action}\"",
   "IQ5tZg": "Przesłano formularz",
   "+B+qvw": "Zmieniono {type}pole wprowadzania \"{name}\"",
-  "vDpLV2": "Zmieniono {type}pole wprowadzania"
+  "vDpLV2": "Zmieniono {type}pole wprowadzania",
+  "WMOCxZ": "Wymagany jest dostęp do Grafany. Logi mogą wygasnąć wcześniej niż to nagranie.",
+  "pl7iME": "Otwórz logi w Grafanie"
 }

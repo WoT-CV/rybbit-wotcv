@@ -2357,5 +2357,7 @@
   "QOaR8l": "Formular an \"{action}\" gesendet",
   "IQ5tZg": "Formular abgesendet",
   "+B+qvw": "{type}eingabefeld \"{name}\" geändert",
-  "vDpLV2": "{type}eingabefeld geändert"
+  "vDpLV2": "{type}eingabefeld geändert",
+  "WMOCxZ": "Zugriff auf Grafana ist erforderlich. Logs können vor dieser Aufzeichnung ablaufen.",
+  "pl7iME": "Logs in Grafana öffnen"
 }

@@ -1,4 +1,4 @@
-import { NETWORK_REPLAY_SCHEMA_VERSION } from "@rybbit/shared";
+import { NETWORK_REPLAY_SCHEMA_VERSION, normalizeCorrelationId, normalizeTraceId } from "@rybbit/shared";
 
 import type {
   CapturedBody,
@@ -146,6 +146,8 @@ function parseRequest(
     outcome: getOutcome(value.outcome, status),
     requestHeaders: getStringRecord(value.requestHeaders),
     responseHeaders: getStringRecord(value.responseHeaders),
+    correlationId: normalizeCorrelationId(value.correlationId),
+    traceId: normalizeTraceId(value.traceId),
     requestBody: getBody(value.requestBody),
     responseBody: getBody(value.responseBody),
     timing: getNumberRecord<CapturedNetworkTiming>(value.timing),

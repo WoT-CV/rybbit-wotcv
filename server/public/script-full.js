@@ -154,6 +154,44 @@
     }
   });
 
+  // ../../../shared/dist/networkCorrelation.js
+  var require_networkCorrelation = __commonJS({
+    "../../../shared/dist/networkCorrelation.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.normalizeCorrelationId = normalizeCorrelationId;
+      exports.normalizeTraceId = normalizeTraceId;
+      exports.readResponseCorrelation = readResponseCorrelation3;
+      function normalizeCorrelationId(value) {
+        if (typeof value !== "string")
+          return void 0;
+        const id = value.trim();
+        return /^[a-zA-Z0-9._-]{1,128}$/.test(id) ? id : void 0;
+      }
+      function normalizeTraceId(value) {
+        if (typeof value !== "string")
+          return void 0;
+        const id = value.trim().toLowerCase();
+        return /^[0-9a-f]{32}$/.test(id) && !/^0+$/.test(id) ? id : void 0;
+      }
+      function readResponseCorrelation3(getHeader) {
+        try {
+          return { correlationId: normalizeCorrelationId(getHeader("x-correlation-id")) };
+        } catch {
+          return {};
+        }
+      }
+    }
+  });
+
+  // ../../../shared/dist/replayObservability.js
+  var require_replayObservability = __commonJS({
+    "../../../shared/dist/replayObservability.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+    }
+  });
+
   // ../../../shared/dist/params.js
   var require_params = __commonJS({
     "../../../shared/dist/params.js"(exports) {
@@ -419,6 +457,8 @@
       __exportStar(require_dashboards(), exports);
       __exportStar(require_filters(), exports);
       __exportStar(require_networkReplay(), exports);
+      __exportStar(require_networkCorrelation(), exports);
+      __exportStar(require_replayObservability(), exports);
       __exportStar(require_params(), exports);
       __exportStar(require_scopes(), exports);
       __exportStar(require_segments(), exports);
@@ -731,6 +771,9 @@
       this.status = status;
     }
   };
+
+  // networkReplay/fetchObserver.ts
+  var import_shared3 = __toESM(require_dist(), 1);
 
   // networkReplay/utils.ts
   function createRequestId() {
@@ -1311,6 +1354,7 @@
         durationMs: getDurationMs(context.startedAt, completedAt),
         outcome: getHttpOutcome(response.status),
         responseHeaders: config.captureResponseHeaders ? captureHeaders(response.headers) : {},
+        ...(0, import_shared3.readResponseCorrelation)((name) => response.headers.get(name)),
         status: response.status,
         statusText: response.statusText
       },
@@ -1329,6 +1373,7 @@
         durationMs: getDurationMs(context.startedAt, completedAt),
         outcome: getHttpOutcome(response.status),
         responseHeaders: config.captureResponseHeaders ? captureHeaders(response.headers) : {},
+        ...(0, import_shared3.readResponseCorrelation)((name) => response.headers.get(name)),
         status: response.status,
         statusText: response.statusText
       },
@@ -1839,6 +1884,7 @@
   }
 
   // networkReplay/xhrObserver.ts
+  var import_shared4 = __toESM(require_dist(), 1);
   function observeXhr({
     analyticsHost,
     config,
@@ -2016,6 +2062,7 @@
         error: state.error,
         outcome: state.outcome ?? getXhrOutcome(status),
         responseHeaders: config.captureResponseHeaders ? allResponseHeaders : {},
+        ...(0, import_shared4.readResponseCorrelation)((name) => state.xhr.getResponseHeader(name)),
         status,
         statusText: getXhrStatusText(state.xhr)
       },

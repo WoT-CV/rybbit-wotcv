@@ -1,3 +1,5 @@
+import { normalizeCorrelationId } from "@rybbit/shared";
+
 import type { NetworkRequestFilters, NetworkStatusGroup, ParsedNetworkRequest } from "./types";
 
 export const DEFAULT_REPLAY_NETWORK_HOST = "api.wot-cv.com";
@@ -146,7 +148,10 @@ export function getNetworkTransferSizeInfo(
 }
 
 export function getResponseCorrelationId(request: ParsedNetworkRequest): string | undefined {
-  return getHeaderValue(request.responseHeaders, ["x-correlation-id", "correlation-id"]);
+  return (
+    normalizeCorrelationId(request.correlationId) ??
+    normalizeCorrelationId(getHeaderValue(request.responseHeaders, ["x-correlation-id", "correlation-id"]))
+  );
 }
 
 export function isNetworkRequestError(request: ParsedNetworkRequest): boolean {

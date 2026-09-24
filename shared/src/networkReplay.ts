@@ -98,6 +98,8 @@ export interface CapturedNetworkRequest {
   outcome: NetworkOutcome;
   requestHeaders: Record<string, string>;
   responseHeaders: Record<string, string>;
+  correlationId?: string;
+  traceId?: string;
   requestBody?: CapturedBody;
   responseBody?: CapturedBody;
   timing?: CapturedNetworkTiming;

@@ -2,6 +2,8 @@ export * from "./botSignalContract";
 export * from "./dashboards";
 export * from "./filters";
 export * from "./networkReplay";
+export * from "./networkCorrelation";
+export * from "./replayObservability";
 export * from "./params";
 export * from "./scopes";
 export * from "./segments";

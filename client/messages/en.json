@@ -2357,5 +2357,7 @@
   "QOaR8l": "Submitted form to \"{action}\"",
   "IQ5tZg": "Submitted form",
   "+B+qvw": "Changed {type}input \"{name}\"",
-  "vDpLV2": "Changed {type}input"
+  "vDpLV2": "Changed {type}input",
+  "WMOCxZ": "Grafana access is required. Logs may expire before this replay.",
+  "pl7iME": "Open logs in Grafana"
 }
