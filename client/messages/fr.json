@@ -2003,7 +2003,11 @@
   "kLv1vW": "",
   "norCmC": "",
   "75OT8F": "",
+  "pl7iME": "Ouvrir les journaux dans Grafana",
+  "nzu4J7": "Ouvrir la trace dans Grafana",
+  "WMOCxZ": "Un accès à Grafana est requis. Les journaux peuvent expirer avant cet enregistrement.",
   "ovdkHn": "",
+  "2o6ues": "Métadonnées uniquement : corps, en-têtes et paramètres d’URL non enregistrés.",
   "/rKJc5": "",
   "87dMhC": "",
   "LURpp7": "",
@@ -2357,9 +2361,5 @@
   "QOaR8l": "Formulaire soumis à \"{action}\"",
   "IQ5tZg": "Formulaire soumis",
   "+B+qvw": "{type}champ de saisie \"{name}\" modifié",
-  "vDpLV2": "{type}champ de saisie modifié",
-  "WMOCxZ": "Un accès à Grafana est requis. Les journaux peuvent expirer avant cet enregistrement.",
-  "pl7iME": "Ouvrir les journaux dans Grafana",
-  "2o6ues": "Métadonnées uniquement : corps, en-têtes et paramètres d’URL non enregistrés.",
-  "nzu4J7": "Ouvrir la trace dans Grafana"
+  "vDpLV2": "{type}champ de saisie modifié"
 }

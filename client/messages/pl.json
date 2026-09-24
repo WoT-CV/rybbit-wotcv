@@ -2003,7 +2003,11 @@
   "kLv1vW": "Przycięte",
   "norCmC": "Treść jest niedostępna.",
   "75OT8F": "Kopiuj treść",
+  "pl7iME": "Otwórz logi w Grafanie",
+  "nzu4J7": "Otwórz ślad w Grafanie",
+  "WMOCxZ": "Wymagany jest dostęp do Grafany. Logi mogą wygasnąć wcześniej niż to nagranie.",
   "ovdkHn": "Wróć do żądań sieciowych",
+  "2o6ues": "Tylko metadane: treści żądań i odpowiedzi, nagłówki oraz parametry URL nie były nagrywane.",
   "/rKJc5": "Czasy",
   "87dMhC": "Nagłówki żądania",
   "LURpp7": "Treść żądania",
@@ -2357,9 +2361,5 @@
   "QOaR8l": "Przesłano formularz do \"{action}\"",
   "IQ5tZg": "Przesłano formularz",
   "+B+qvw": "Zmieniono {type}pole wprowadzania \"{name}\"",
-  "vDpLV2": "Zmieniono {type}pole wprowadzania",
-  "WMOCxZ": "Wymagany jest dostęp do Grafany. Logi mogą wygasnąć wcześniej niż to nagranie.",
-  "pl7iME": "Otwórz logi w Grafanie",
-  "2o6ues": "Tylko metadane: treści żądań i odpowiedzi, nagłówki oraz parametry URL nie były nagrywane.",
-  "nzu4J7": "Otwórz ślad w Grafanie"
+  "vDpLV2": "Zmieniono {type}pole wprowadzania"
 }

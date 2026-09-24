@@ -2003,7 +2003,11 @@
   "kLv1vW": "",
   "norCmC": "",
   "75OT8F": "",
+  "pl7iME": "Abrir logs no Grafana",
+  "nzu4J7": "Abrir rastreamento no Grafana",
+  "WMOCxZ": "É necessário ter acesso ao Grafana. Os logs podem expirar antes desta gravação.",
   "ovdkHn": "",
+  "2o6ues": "Apenas metadados: corpos, cabeçalhos e parâmetros de URL não foram gravados.",
   "/rKJc5": "",
   "87dMhC": "",
   "LURpp7": "",
@@ -2357,9 +2361,5 @@
   "QOaR8l": "Formulário enviado para \"{action}\"",
   "IQ5tZg": "Formulário enviado",
   "+B+qvw": "{type}campo de entrada \"{name}\" alterado",
-  "vDpLV2": "{type}campo de entrada alterado",
-  "WMOCxZ": "É necessário ter acesso ao Grafana. Os logs podem expirar antes desta gravação.",
-  "pl7iME": "Abrir logs no Grafana",
-  "2o6ues": "Apenas metadados: corpos, cabeçalhos e parâmetros de URL não foram gravados.",
-  "nzu4J7": "Abrir rastreamento no Grafana"
+  "vDpLV2": "{type}campo de entrada alterado"
 }

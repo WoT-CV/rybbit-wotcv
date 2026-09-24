@@ -2003,7 +2003,11 @@
   "kLv1vW": "Truncated",
   "norCmC": "Body content is unavailable.",
   "75OT8F": "Copy body",
+  "pl7iME": "Open logs in Grafana",
+  "nzu4J7": "Open trace in Grafana",
+  "WMOCxZ": "Grafana access is required. Logs may expire before this replay.",
   "ovdkHn": "Back to network requests",
+  "2o6ues": "Metadata only: bodies, headers and URL parameters were not recorded.",
   "/rKJc5": "Timing",
   "87dMhC": "Request headers",
   "LURpp7": "Request body",
@@ -2357,9 +2361,5 @@
   "QOaR8l": "Submitted form to \"{action}\"",
   "IQ5tZg": "Submitted form",
   "+B+qvw": "Changed {type}input \"{name}\"",
-  "vDpLV2": "Changed {type}input",
-  "WMOCxZ": "Grafana access is required. Logs may expire before this replay.",
-  "pl7iME": "Open logs in Grafana",
-  "2o6ues": "Metadata only: bodies, headers and URL parameters were not recorded.",
-  "nzu4J7": "Open trace in Grafana"
+  "vDpLV2": "Changed {type}input"
 }

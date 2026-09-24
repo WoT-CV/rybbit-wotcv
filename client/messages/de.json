@@ -2003,7 +2003,11 @@
   "kLv1vW": "",
   "norCmC": "",
   "75OT8F": "",
+  "pl7iME": "Logs in Grafana öffnen",
+  "nzu4J7": "Trace in Grafana öffnen",
+  "WMOCxZ": "Zugriff auf Grafana ist erforderlich. Logs können vor dieser Aufzeichnung ablaufen.",
   "ovdkHn": "",
+  "2o6ues": "Nur Metadaten: Inhalte, Header und URL-Parameter wurden nicht aufgezeichnet.",
   "/rKJc5": "",
   "87dMhC": "",
   "LURpp7": "",
@@ -2357,9 +2361,5 @@
   "QOaR8l": "Formular an \"{action}\" gesendet",
   "IQ5tZg": "Formular abgesendet",
   "+B+qvw": "{type}eingabefeld \"{name}\" geändert",
-  "vDpLV2": "{type}eingabefeld geändert",
-  "WMOCxZ": "Zugriff auf Grafana ist erforderlich. Logs können vor dieser Aufzeichnung ablaufen.",
-  "pl7iME": "Logs in Grafana öffnen",
-  "2o6ues": "Nur Metadaten: Inhalte, Header und URL-Parameter wurden nicht aufgezeichnet.",
-  "nzu4J7": "Trace in Grafana öffnen"
+  "vDpLV2": "{type}eingabefeld geändert"
 }

@@ -2003,7 +2003,11 @@
   "kLv1vW": "",
   "norCmC": "",
   "75OT8F": "",
+  "pl7iME": "Abrir registros en Grafana",
+  "nzu4J7": "Abrir traza en Grafana",
+  "WMOCxZ": "Se requiere acceso a Grafana. Los registros pueden caducar antes que esta grabación.",
   "ovdkHn": "",
+  "2o6ues": "Solo metadatos: no se grabaron cuerpos, cabeceras ni parámetros de URL.",
   "/rKJc5": "",
   "87dMhC": "",
   "LURpp7": "",
@@ -2357,9 +2361,5 @@
   "QOaR8l": "Formulario enviado a \"{action}\"",
   "IQ5tZg": "Formulario enviado",
   "+B+qvw": "{type}campo de entrada \"{name}\" cambiado",
-  "vDpLV2": "{type}campo de entrada cambiado",
-  "WMOCxZ": "Se requiere acceso a Grafana. Los registros pueden caducar antes que esta grabación.",
-  "pl7iME": "Abrir registros en Grafana",
-  "2o6ues": "Solo metadatos: no se grabaron cuerpos, cabeceras ni parámetros de URL.",
-  "nzu4J7": "Abrir traza en Grafana"
+  "vDpLV2": "{type}campo de entrada cambiado"
 }

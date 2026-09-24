@@ -2003,7 +2003,11 @@
   "kLv1vW": "",
   "norCmC": "",
   "75OT8F": "",
+  "pl7iME": "在 Grafana 中打开日志",
+  "nzu4J7": "在 Grafana 中打开跟踪",
+  "WMOCxZ": "需要 Grafana 访问权限。日志可能比此录制更早过期。",
   "ovdkHn": "",
+  "2o6ues": "仅元数据：未录制正文、标头和 URL 参数。",
   "/rKJc5": "",
   "87dMhC": "",
   "LURpp7": "",
@@ -2357,9 +2361,5 @@
   "QOaR8l": "已提交表单到 \"{action}\"",
   "IQ5tZg": "已提交表单",
   "+B+qvw": "已更改 {type}输入框 \"{name}\"",
-  "vDpLV2": "已更改 {type}输入框",
-  "WMOCxZ": "需要 Grafana 访问权限。日志可能比此录制更早过期。",
-  "pl7iME": "在 Grafana 中打开日志",
-  "2o6ues": "仅元数据：未录制正文、标头和 URL 参数。",
-  "nzu4J7": "在 Grafana 中打开跟踪"
+  "vDpLV2": "已更改 {type}输入框"
 }
