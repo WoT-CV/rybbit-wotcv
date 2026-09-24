@@ -17,10 +17,13 @@ if (!existsSync(publicDir)) {
 // @rybbit/shared, which is published as CommonJS. Resolving it normally would
 // bundle the module unshaken, so point esbuild at the TypeScript source and let
 // it tree-shake down to the handful of values the browser actually uses. The
-// alias names the contract module, not the package barrel, so nothing else in
-// @rybbit/shared can ever reach a tracked page.
+// Other browser contracts also resolve from ESM source so unused dashboard
+// coverage/resolution code in the CommonJS barrel is not shipped to tracked pages.
 const botSignalContractSource = resolve(__dirname, "../../../shared/src/botSignalContract.ts");
-const bundleContractFromSource = { "@rybbit/shared/dist/botSignalContract.js": botSignalContractSource };
+const bundleContractFromSource = {
+  "@rybbit/shared/dist/botSignalContract.js": botSignalContractSource,
+  "@rybbit/shared": resolve(__dirname, "../../../shared/src/index.ts"),
+};
 
 async function buildScript() {
   try {

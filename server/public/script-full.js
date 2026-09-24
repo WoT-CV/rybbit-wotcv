@@ -1,556 +1,310 @@
 /*! Modified WoT-CV fork of Rybbit | GNU AGPL-3.0 | Source: https://github.com/WoT-CV/rybbit-wotcv */
 "use strict";
 (() => {
-  var __create = Object.create;
   var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __getProtoOf = Object.getPrototypeOf;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-  var __commonJS = (cb, mod) => function __require() {
-    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-  };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-    // If the importer is in node compatibility mode or this is not an ESM
-    // file that has been converted to a CommonJS file using a Babel-
-    // compatible transform (i.e. "__esModule" has not been set), then set
-    // "default" to the CommonJS "module.exports" for node compatibility.
-    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-    mod
-  ));
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
-  // ../../../shared/dist/botSignalContract.js
-  var require_botSignalContract = __commonJS({
-    "../../../shared/dist/botSignalContract.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.IMPLAUSIBLE_DESKTOP_VIEWPORTS = exports.MAX_PLAUSIBLE_SCREEN_DIMENSION = exports.MIN_PLAUSIBLE_SCREEN_DIMENSION = exports.MAX_CLIENT_BOT_SCORE = exports.STRONG_CLIENT_BOT_SIGNAL_BITS = exports.ALL_CLIENT_BOT_SIGNAL_BITS = exports.CLIENT_BOT_SIGNAL_WEIGHTS = exports.CLIENT_BOT_SIGNAL_NAMES = exports.CLIENT_BOT_SIGNAL_MASKS = void 0;
-      exports.isPlausibleScreenDimensions = isPlausibleScreenDimensions2;
-      exports.isDesktopUserAgent = isDesktopUserAgent2;
-      exports.getScreenDimensionSignals = getScreenDimensionSignals2;
-      exports.getClientBotSignalNames = getClientBotSignalNames;
-      exports.scoreFromMask = scoreFromMask;
-      exports.CLIENT_BOT_SIGNAL_MASKS = {
-        automationApi: 1 << 0,
-        zeroOuterDimensions: 1 << 1,
-        missingChrome: 1 << 2,
-        swiftShader: 1 << 3,
-        emptyPlugins: 1 << 4,
-        defaultViewport800x600: 1 << 5,
-        defaultViewport1024x768: 1 << 6,
-        impossibleDimensions: 1 << 7,
-        outerDimensionsWeird: 1 << 8,
-        pluginApiAbsence: 1 << 9,
-        defaultViewport1280x1200: 1 << 10,
-        squareScreen: 1 << 11,
-        missingScreenDimensions: 1 << 12
-      };
-      exports.CLIENT_BOT_SIGNAL_NAMES = Object.keys(exports.CLIENT_BOT_SIGNAL_MASKS);
-      exports.CLIENT_BOT_SIGNAL_WEIGHTS = {
-        automationApi: 3,
-        zeroOuterDimensions: 2,
-        missingChrome: 1,
-        swiftShader: 1,
-        emptyPlugins: 1,
-        defaultViewport800x600: 3,
-        defaultViewport1024x768: 3,
-        impossibleDimensions: 3,
-        outerDimensionsWeird: 2,
-        pluginApiAbsence: 0,
-        defaultViewport1280x1200: 3,
-        squareScreen: 3,
-        missingScreenDimensions: 1
-      };
-      exports.ALL_CLIENT_BOT_SIGNAL_BITS = exports.CLIENT_BOT_SIGNAL_NAMES.reduce((mask, name) => mask | exports.CLIENT_BOT_SIGNAL_MASKS[name], 0);
-      exports.STRONG_CLIENT_BOT_SIGNAL_BITS = exports.CLIENT_BOT_SIGNAL_MASKS.automationApi | exports.CLIENT_BOT_SIGNAL_MASKS.impossibleDimensions | exports.CLIENT_BOT_SIGNAL_MASKS.defaultViewport800x600 | exports.CLIENT_BOT_SIGNAL_MASKS.defaultViewport1024x768 | exports.CLIENT_BOT_SIGNAL_MASKS.defaultViewport1280x1200 | exports.CLIENT_BOT_SIGNAL_MASKS.squareScreen;
-      exports.MAX_CLIENT_BOT_SCORE = 10;
-      exports.MIN_PLAUSIBLE_SCREEN_DIMENSION = 200;
-      exports.MAX_PLAUSIBLE_SCREEN_DIMENSION = 8192;
-      exports.IMPLAUSIBLE_DESKTOP_VIEWPORTS = [
-        { width: 800, height: 600, signal: "defaultViewport800x600" },
-        { width: 1024, height: 768, signal: "defaultViewport1024x768" },
-        { width: 1280, height: 1200, signal: "defaultViewport1280x1200" }
-      ];
-      function isPlausibleScreenDimensions2(width, height) {
-        return Number.isFinite(width) && Number.isFinite(height) && width >= exports.MIN_PLAUSIBLE_SCREEN_DIMENSION && height >= exports.MIN_PLAUSIBLE_SCREEN_DIMENSION && width <= exports.MAX_PLAUSIBLE_SCREEN_DIMENSION && height <= exports.MAX_PLAUSIBLE_SCREEN_DIMENSION;
-      }
-      function isDesktopUserAgent2(userAgent) {
-        return /Windows NT|Macintosh|X11|Linux x86_64/.test(userAgent) && !/Mobile|Android|iPhone|iPad/.test(userAgent);
-      }
-      function getScreenDimensionSignals2(width, height, userAgent) {
-        if (!isPlausibleScreenDimensions2(width, height)) {
-          return ["impossibleDimensions"];
-        }
-        const signals = [];
-        if (width === height) {
-          signals.push("squareScreen");
-        }
-        if (isDesktopUserAgent2(userAgent)) {
-          for (const viewport of exports.IMPLAUSIBLE_DESKTOP_VIEWPORTS) {
-            if (width === viewport.width && height === viewport.height) {
-              signals.push(viewport.signal);
-            }
-          }
-        }
-        return signals;
-      }
-      function getClientBotSignalNames(mask) {
-        return exports.CLIENT_BOT_SIGNAL_NAMES.filter((name) => (mask & exports.CLIENT_BOT_SIGNAL_MASKS[name]) !== 0);
-      }
-      function scoreFromMask(mask) {
-        return getClientBotSignalNames(mask).reduce((total, name) => total + exports.CLIENT_BOT_SIGNAL_WEIGHTS[name], 0);
-      }
+  // ../../../shared/src/botSignalContract.ts
+  var CLIENT_BOT_SIGNAL_MASKS = {
+    automationApi: 1 << 0,
+    zeroOuterDimensions: 1 << 1,
+    missingChrome: 1 << 2,
+    swiftShader: 1 << 3,
+    emptyPlugins: 1 << 4,
+    defaultViewport800x600: 1 << 5,
+    defaultViewport1024x768: 1 << 6,
+    impossibleDimensions: 1 << 7,
+    outerDimensionsWeird: 1 << 8,
+    pluginApiAbsence: 1 << 9,
+    defaultViewport1280x1200: 1 << 10,
+    squareScreen: 1 << 11,
+    missingScreenDimensions: 1 << 12
+  };
+  var CLIENT_BOT_SIGNAL_NAMES = Object.keys(CLIENT_BOT_SIGNAL_MASKS);
+  var CLIENT_BOT_SIGNAL_WEIGHTS = {
+    automationApi: 3,
+    zeroOuterDimensions: 2,
+    missingChrome: 1,
+    swiftShader: 1,
+    emptyPlugins: 1,
+    defaultViewport800x600: 3,
+    defaultViewport1024x768: 3,
+    impossibleDimensions: 3,
+    outerDimensionsWeird: 2,
+    pluginApiAbsence: 0,
+    defaultViewport1280x1200: 3,
+    squareScreen: 3,
+    missingScreenDimensions: 1
+  };
+  var ALL_CLIENT_BOT_SIGNAL_BITS = CLIENT_BOT_SIGNAL_NAMES.reduce(
+    (mask, name) => mask | CLIENT_BOT_SIGNAL_MASKS[name],
+    0
+  );
+  var STRONG_CLIENT_BOT_SIGNAL_BITS = CLIENT_BOT_SIGNAL_MASKS.automationApi | CLIENT_BOT_SIGNAL_MASKS.impossibleDimensions | CLIENT_BOT_SIGNAL_MASKS.defaultViewport800x600 | CLIENT_BOT_SIGNAL_MASKS.defaultViewport1024x768 | CLIENT_BOT_SIGNAL_MASKS.defaultViewport1280x1200 | CLIENT_BOT_SIGNAL_MASKS.squareScreen;
+  var MAX_CLIENT_BOT_SCORE = 10;
+  var MIN_PLAUSIBLE_SCREEN_DIMENSION = 200;
+  var MAX_PLAUSIBLE_SCREEN_DIMENSION = 8192;
+  var IMPLAUSIBLE_DESKTOP_VIEWPORTS = [
+    { width: 800, height: 600, signal: "defaultViewport800x600" },
+    { width: 1024, height: 768, signal: "defaultViewport1024x768" },
+    { width: 1280, height: 1200, signal: "defaultViewport1280x1200" }
+  ];
+  function isPlausibleScreenDimensions(width, height) {
+    return Number.isFinite(width) && Number.isFinite(height) && width >= MIN_PLAUSIBLE_SCREEN_DIMENSION && height >= MIN_PLAUSIBLE_SCREEN_DIMENSION && width <= MAX_PLAUSIBLE_SCREEN_DIMENSION && height <= MAX_PLAUSIBLE_SCREEN_DIMENSION;
+  }
+  function isDesktopUserAgent(userAgent) {
+    return /Windows NT|Macintosh|X11|Linux x86_64/.test(userAgent) && !/Mobile|Android|iPhone|iPad/.test(userAgent);
+  }
+  function getScreenDimensionSignals(width, height, userAgent) {
+    if (!isPlausibleScreenDimensions(width, height)) {
+      return ["impossibleDimensions"];
     }
-  });
-
-  // ../../../shared/dist/dashboards.js
-  var require_dashboards = __commonJS({
-    "../../../shared/dist/dashboards.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
+    const signals = [];
+    if (width === height) {
+      signals.push("squareScreen");
     }
-  });
-
-  // ../../../shared/dist/filters.js
-  var require_filters = __commonJS({
-    "../../../shared/dist/filters.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-    }
-  });
-
-  // ../../../shared/dist/networkReplay.js
-  var require_networkReplay = __commonJS({
-    "../../../shared/dist/networkReplay.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.DEFAULT_NETWORK_REPLAY_CONFIG = exports.NETWORK_REPLAY_SCHEMA_VERSION = void 0;
-      exports.applyNetworkReplayCapturePolicy = applyNetworkReplayCapturePolicy2;
-      exports.NETWORK_REPLAY_SCHEMA_VERSION = 1;
-      exports.DEFAULT_NETWORK_REPLAY_CONFIG = {
-        enabled: false,
-        captureMode: "full",
-        captureFetch: true,
-        captureXhr: true,
-        capturePerformanceResources: true,
-        captureInitialPerformanceResources: true,
-        captureRequestHeaders: true,
-        captureResponseHeaders: true,
-        captureRequestBody: true,
-        captureResponseBody: true,
-        maxBodySizeBytes: 1e6,
-        bodyReadTimeoutMs: 1e3,
-        maxNetworkEventSizeBytes: 25e5,
-        maxReplayBatchSizeBytes: 7e6
-      };
-      function applyNetworkReplayCapturePolicy2(config) {
-        return config.captureMode === "metadata" ? {
-          ...config,
-          captureRequestHeaders: false,
-          captureResponseHeaders: false,
-          captureRequestBody: false,
-          captureResponseBody: false
-        } : config;
-      }
-    }
-  });
-
-  // ../../../shared/dist/networkReplayMetadata.js
-  var require_networkReplayMetadata = __commonJS({
-    "../../../shared/dist/networkReplayMetadata.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.sanitizeNetworkUrl = sanitizeNetworkUrl2;
-      exports.toMetadataRequest = toMetadataRequest2;
-      function sanitizeNetworkUrl2(value) {
-        try {
-          const url = new URL(value);
-          if (url.protocol !== "https:" && url.protocol !== "http:")
-            return "[redacted]";
-          const path = url.pathname.length <= 2048 ? url.pathname : "/[redacted]";
-          return `${url.origin}${path}`;
-        } catch {
-          return "[redacted]";
+    if (isDesktopUserAgent(userAgent)) {
+      for (const viewport of IMPLAUSIBLE_DESKTOP_VIEWPORTS) {
+        if (width === viewport.width && height === viewport.height) {
+          signals.push(viewport.signal);
         }
       }
-      function toMetadataRequest2(request) {
-        return {
-          schemaVersion: request.schemaVersion,
-          captureMode: "metadata",
-          requestId: request.requestId,
-          url: sanitizeNetworkUrl2(request.url),
-          currentUrl: sanitizeNetworkUrl2(request.currentUrl),
-          method: request.method,
-          initiatorType: request.initiatorType,
-          startedAt: request.startedAt,
-          completedAt: request.completedAt,
-          durationMs: request.durationMs,
-          status: request.status,
-          outcome: request.outcome,
-          requestHeaders: {},
-          responseHeaders: {},
-          correlationId: request.correlationId,
-          traceId: request.traceId,
-          timing: request.timing,
-          sizes: request.sizes,
-          performanceEntryFound: request.performanceEntryFound,
-          // Exception messages/stack and statusText can contain URLs, credentials or body data.
-          error: request.error ? {
-            name: request.outcome === "aborted" ? "AbortError" : request.outcome === "timeout" ? "TimeoutError" : "NetworkError"
-          } : void 0
-        };
-      }
     }
-  });
+    return signals;
+  }
 
-  // ../../../shared/dist/networkCorrelation.js
-  var require_networkCorrelation = __commonJS({
-    "../../../shared/dist/networkCorrelation.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.normalizeCorrelationId = normalizeCorrelationId;
-      exports.normalizeTraceId = normalizeTraceId;
-      exports.readResponseCorrelation = readResponseCorrelation3;
-      function normalizeCorrelationId(value) {
-        if (typeof value !== "string")
-          return void 0;
-        const id = value.trim();
-        return /^[a-zA-Z0-9._-]{1,128}$/.test(id) ? id : void 0;
-      }
-      function normalizeTraceId(value) {
-        if (typeof value !== "string")
-          return void 0;
-        const id = value.trim().toLowerCase();
-        return /^[0-9a-f]{32}$/.test(id) && !/^0+$/.test(id) ? id : void 0;
-      }
-      function readResponseCorrelation3(getHeader) {
-        const read = (name) => {
-          try {
-            return getHeader(name);
-          } catch {
-            return void 0;
-          }
-        };
-        return {
-          correlationId: normalizeCorrelationId(read("x-correlation-id")),
-          traceId: normalizeTraceId(read("x-trace-id"))
-        };
-      }
+  // ../../../shared/src/networkReplay.ts
+  var DEFAULT_NETWORK_REPLAY_CONFIG = {
+    enabled: false,
+    captureMode: "full",
+    captureFetch: true,
+    captureXhr: true,
+    capturePerformanceResources: true,
+    captureInitialPerformanceResources: true,
+    captureRequestHeaders: true,
+    captureResponseHeaders: true,
+    captureRequestBody: true,
+    captureResponseBody: true,
+    maxBodySizeBytes: 1e6,
+    bodyReadTimeoutMs: 1e3,
+    maxNetworkEventSizeBytes: 25e5,
+    maxReplayBatchSizeBytes: 7e6
+  };
+  function applyNetworkReplayCapturePolicy(config) {
+    return config.captureMode === "metadata" ? {
+      ...config,
+      captureRequestHeaders: false,
+      captureResponseHeaders: false,
+      captureRequestBody: false,
+      captureResponseBody: false
+    } : config;
+  }
+  function resolveNetworkReplayPrivacyCap(config, scriptMode) {
+    if (scriptMode === void 0 || scriptMode === null || scriptMode.trim().toLowerCase() === "full") {
+      return applyNetworkReplayCapturePolicy(config);
     }
-  });
+    return applyNetworkReplayCapturePolicy({ ...config, captureMode: "metadata" });
+  }
 
-  // ../../../shared/dist/replayObservability.js
-  var require_replayObservability = __commonJS({
-    "../../../shared/dist/replayObservability.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
+  // ../../../shared/src/networkReplayMetadata.ts
+  function sanitizeNetworkUrl(value) {
+    try {
+      const url = new URL(value);
+      if (url.protocol !== "https:" && url.protocol !== "http:") return "[redacted]";
+      const path = url.pathname.length <= 2048 ? url.pathname : "/[redacted]";
+      return `${url.origin}${path}`;
+    } catch {
+      return "[redacted]";
     }
-  });
+  }
+  function toMetadataRequest(request) {
+    return {
+      schemaVersion: request.schemaVersion,
+      captureMode: "metadata",
+      requestId: request.requestId,
+      url: sanitizeNetworkUrl(request.url),
+      currentUrl: sanitizeNetworkUrl(request.currentUrl),
+      method: request.method,
+      initiatorType: request.initiatorType,
+      startedAt: request.startedAt,
+      completedAt: request.completedAt,
+      durationMs: request.durationMs,
+      status: request.status,
+      outcome: request.outcome,
+      requestHeaders: {},
+      responseHeaders: {},
+      correlationId: request.correlationId,
+      traceId: request.traceId,
+      timing: request.timing,
+      sizes: request.sizes,
+      performanceEntryFound: request.performanceEntryFound,
+      // Exception messages/stack and statusText can contain URLs, credentials or body data.
+      error: request.error ? {
+        name: request.outcome === "aborted" ? "AbortError" : request.outcome === "timeout" ? "TimeoutError" : "NetworkError"
+      } : void 0
+    };
+  }
 
-  // ../../../shared/dist/params.js
-  var require_params = __commonJS({
-    "../../../shared/dist/params.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-    }
-  });
-
-  // ../../../shared/dist/scopes.js
-  var require_scopes = __commonJS({
-    "../../../shared/dist/scopes.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.ALL_SCOPE_STRINGS = exports.SCOPE_RESOURCES = exports.OIDC_STANDARD_SCOPES = exports.SCOPE_MATRIX = exports.ORG_API_KEY_CONFIG_ID = void 0;
-      exports.isValidScopePair = isValidScopePair;
-      exports.ORG_API_KEY_CONFIG_ID = "org";
-      exports.SCOPE_MATRIX = {
-        analytics: ["read"],
-        sessions: ["read"],
-        events: ["read"],
-        users: ["read", "write"],
-        goals: ["read", "write"],
-        funnels: ["read", "write"],
-        dashboards: ["read", "write"],
-        annotations: ["read", "write"],
-        segments: ["read", "write"],
-        flags: ["read", "write"],
-        experiments: ["read", "write"],
-        sites: ["read", "write"],
-        gsc: ["read", "write"],
-        org: ["read", "write"],
-        replay: ["read", "write"],
-        sql: ["read"],
-        ingest: ["write"]
-      };
-      exports.OIDC_STANDARD_SCOPES = ["openid", "profile", "email", "offline_access"];
-      exports.SCOPE_RESOURCES = Object.keys(exports.SCOPE_MATRIX);
-      exports.ALL_SCOPE_STRINGS = exports.SCOPE_RESOURCES.flatMap((resource) => exports.SCOPE_MATRIX[resource].map((action) => `${resource}:${action}`));
-      function isValidScopePair(resource, action) {
-        const actions = exports.SCOPE_MATRIX[resource];
-        return !!actions && actions.includes(action);
+  // ../../../shared/src/networkCorrelation.ts
+  function normalizeCorrelationId(value) {
+    if (typeof value !== "string") return void 0;
+    const id = value.trim();
+    return /^[a-zA-Z0-9._-]{1,128}$/.test(id) ? id : void 0;
+  }
+  function normalizeTraceId(value) {
+    if (typeof value !== "string") return void 0;
+    const id = value.trim().toLowerCase();
+    return /^[0-9a-f]{32}$/.test(id) && !/^0+$/.test(id) ? id : void 0;
+  }
+  function readResponseCorrelation(getHeader) {
+    const read = (name) => {
+      try {
+        return getHeader(name);
+      } catch {
+        return void 0;
       }
-    }
-  });
+    };
+    return {
+      correlationId: normalizeCorrelationId(read("x-correlation-id")),
+      traceId: normalizeTraceId(read("x-trace-id"))
+    };
+  }
 
-  // ../../../shared/dist/segments.js
-  var require_segments = __commonJS({
-    "../../../shared/dist/segments.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.SEGMENT_MAX_FILTERS = exports.SEGMENT_DESCRIPTION_MAX_LENGTH = exports.SEGMENT_NAME_MAX_LENGTH = void 0;
-      exports.SEGMENT_NAME_MAX_LENGTH = 80;
-      exports.SEGMENT_DESCRIPTION_MAX_LENGTH = 500;
-      exports.SEGMENT_MAX_FILTERS = 20;
-    }
-  });
+  // ../../../shared/src/scopes.ts
+  var SCOPE_MATRIX = {
+    analytics: ["read"],
+    sessions: ["read"],
+    events: ["read"],
+    users: ["read", "write"],
+    goals: ["read", "write"],
+    funnels: ["read", "write"],
+    dashboards: ["read", "write"],
+    annotations: ["read", "write"],
+    segments: ["read", "write"],
+    flags: ["read", "write"],
+    experiments: ["read", "write"],
+    sites: ["read", "write"],
+    gsc: ["read", "write"],
+    org: ["read", "write"],
+    replay: ["read", "write"],
+    sql: ["read"],
+    ingest: ["write"]
+  };
+  var SCOPE_RESOURCES = Object.keys(SCOPE_MATRIX);
+  var ALL_SCOPE_STRINGS = SCOPE_RESOURCES.flatMap(
+    (resource) => SCOPE_MATRIX[resource].map((action) => `${resource}:${action}`)
+  );
 
-  // ../../../shared/dist/time.js
-  var require_time = __commonJS({
-    "../../../shared/dist/time.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-    }
-  });
+  // ../../../shared/src/replayExport.ts
+  var MAX_REPLAY_EXPORT_DURATION_MS = 2 * 6e4;
 
-  // ../../../shared/dist/performance.js
-  var require_performance = __commonJS({
-    "../../../shared/dist/performance.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-    }
-  });
-
-  // ../../../shared/dist/replayExport.js
-  var require_replayExport = __commonJS({
-    "../../../shared/dist/replayExport.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.REPLAY_EXPORT_NETWORK_HOST = exports.MAX_REPLAY_EXPORT_DURATION_MS = void 0;
-      exports.MAX_REPLAY_EXPORT_DURATION_MS = 2 * 6e4;
-      exports.REPLAY_EXPORT_NETWORK_HOST = "api.wot-cv.com";
-    }
-  });
-
-  // ../../../shared/dist/replayActivity.js
-  var require_replayActivity = __commonJS({
-    "../../../shared/dist/replayActivity.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.REPLAY_ACTIVITY_POST_ROLL_MS = exports.REPLAY_ACTIVITY_PRE_ROLL_MS = void 0;
-      exports.calculateReplayActivityWindows = calculateReplayActivityWindows;
-      exports.getReplayActivityOffsets = getReplayActivityOffsets;
-      exports.getReplayActivityDuration = getReplayActivityDuration;
-      exports.getReplayCaptureVersion = getReplayCaptureVersion;
-      exports.isReplayActivityEvent = isReplayActivityEvent;
-      exports.REPLAY_ACTIVITY_PRE_ROLL_MS = 1e3;
-      exports.REPLAY_ACTIVITY_POST_ROLL_MS = 1e3;
-      var FULL_SNAPSHOT_EVENT_TYPE = 2;
-      var INCREMENTAL_EVENT_TYPE = 3;
-      var META_EVENT_TYPE = 4;
-      var CUSTOM_EVENT_TYPE = 5;
-      var ACTIVE_INCREMENTAL_SOURCES = /* @__PURE__ */ new Set([1, 2, 3, 4, 5, 6, 7, 12]);
-      function calculateReplayActivityWindows(events, totalDuration, rangeStart = 0, rangeEnd = totalDuration) {
-        const sortedEvents = getSortedReplayEvents(events);
-        const firstTimestamp = sortedEvents[0]?.timestamp;
-        if (firstTimestamp === void 0)
-          return [];
-        const safeStart = clamp(rangeStart, 0, totalDuration);
-        const safeEnd = clamp(rangeEnd, safeStart, totalDuration);
-        const windows = sortedEvents.filter(isReplayActivityEvent).map((event) => event.timestamp - firstTimestamp).filter((offset) => offset >= safeStart - exports.REPLAY_ACTIVITY_POST_ROLL_MS && offset <= safeEnd + exports.REPLAY_ACTIVITY_PRE_ROLL_MS).map((offset) => ({
-          start: Math.max(safeStart, offset - exports.REPLAY_ACTIVITY_PRE_ROLL_MS),
-          end: Math.min(safeEnd, offset + exports.REPLAY_ACTIVITY_POST_ROLL_MS),
-          eventCount: 1
-        }));
-        return windows.reduce((merged, window2) => {
-          const current = merged[merged.length - 1];
-          if (!current || window2.start > current.end) {
-            merged.push({ ...window2 });
-          } else {
-            current.end = Math.max(current.end, window2.end);
-            current.eventCount += 1;
-          }
-          return merged;
-        }, []);
-      }
-      function getReplayActivityOffsets(events, totalDuration) {
-        const sortedEvents = getSortedReplayEvents(events);
-        const firstTimestamp = sortedEvents[0]?.timestamp;
-        if (firstTimestamp === void 0)
-          return [];
-        return sortedEvents.filter(isReplayActivityEvent).map((event) => clamp(event.timestamp - firstTimestamp, 0, totalDuration));
-      }
-      function getReplayActivityDuration(periods, rangeStart = 0, rangeEnd = Number.POSITIVE_INFINITY) {
-        const safeStart = Number.isFinite(rangeStart) ? Math.max(0, rangeStart) : 0;
-        const safeEnd = Number.isFinite(rangeEnd) ? Math.max(safeStart, rangeEnd) : Number.POSITIVE_INFINITY;
-        return periods.reduce((total, period) => {
-          const start = Math.max(safeStart, period.start);
-          const end = Math.min(safeEnd, period.end);
-          return total + Math.max(0, end - start);
-        }, 0);
-      }
-      function getReplayCaptureVersion(events) {
-        for (const event of events) {
-          if (Number(event.type) !== CUSTOM_EVENT_TYPE || !isRecord(event.data) || event.data.tag !== "wotcv/replay-config") {
-            continue;
-          }
-          const payload = event.data.payload;
-          if (!isRecord(payload))
-            continue;
-          const version = Number(payload.activityCaptureVersion);
-          if (Number.isFinite(version))
-            return version;
-        }
-        return null;
-      }
-      function isReplayActivityEvent(event) {
-        const eventType = Number(event.type);
-        if (eventType === FULL_SNAPSHOT_EVENT_TYPE || eventType === META_EVENT_TYPE)
-          return true;
-        if (eventType !== INCREMENTAL_EVENT_TYPE || !isRecord(event.data))
-          return false;
-        return ACTIVE_INCREMENTAL_SOURCES.has(Number(event.data.source));
-      }
-      function getSortedReplayEvents(events) {
-        return events.filter((event) => Number.isFinite(event.timestamp)).slice().sort((first, second) => first.timestamp - second.timestamp);
-      }
-      function clamp(value, minimum, maximum) {
-        if (!Number.isFinite(value))
-          return minimum;
-        return Math.max(minimum, Math.min(maximum, value));
-      }
-      function isRecord(value) {
-        return typeof value === "object" && value !== null && !Array.isArray(value);
-      }
-    }
-  });
-
-  // ../../../shared/dist/growthAccounting.js
-  var require_growthAccounting = __commonJS({
-    "../../../shared/dist/growthAccounting.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-    }
-  });
-
-  // ../../../shared/dist/aiOperators.js
-  var require_aiOperators = __commonJS({
-    "../../../shared/dist/aiOperators.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.AI_CHAT_DOMAINS = exports.AI_CHAT_ONLY_DOMAINS = exports.AI_REFERRER_DOMAIN_TO_OPERATOR = exports.AI_OPERATOR_REFERRER_DOMAINS = void 0;
-      exports.AI_OPERATOR_REFERRER_DOMAINS = {
-        OpenAI: ["chatgpt.com", "chat.openai.com"],
-        Anthropic: ["claude.ai"],
-        Google: ["gemini.google.com"],
-        Microsoft: ["copilot.microsoft.com"],
-        Perplexity: ["perplexity.ai"],
-        Meta: ["meta.ai"],
-        Mistral: ["chat.mistral.ai", "mistral.ai"],
-        xAI: ["grok.com"],
-        "You.com": ["you.com"],
-        // DuckDuckGo is deliberately absent: DuckAssistBot crawls, but a referral
-        // from duckduckgo.com is organic search, not an AI chat hand-off, and
-        // listing it here would reclassify every DuckDuckGo visit as AI traffic.
-        Cursor: ["cursor.com"],
-        Cohere: ["coral.cohere.com"]
-      };
-      exports.AI_REFERRER_DOMAIN_TO_OPERATOR = Object.fromEntries(Object.entries(exports.AI_OPERATOR_REFERRER_DOMAINS).flatMap(([operator, domains]) => domains.map((domain) => [domain, operator])));
-      exports.AI_CHAT_ONLY_DOMAINS = [
-        "deepseek.com",
-        "chat.deepseek.com",
-        "poe.com",
-        "pi.ai",
-        "heypi.com",
-        "character.ai",
-        "qwen.ai",
-        "jasper.ai",
-        "writesonic.com",
-        "chatsonic.com",
-        "phind.com",
-        "andi.com",
-        "codeium.com"
-      ];
-      exports.AI_CHAT_DOMAINS = [
-        ...Object.keys(exports.AI_REFERRER_DOMAIN_TO_OPERATOR),
-        ...exports.AI_CHAT_ONLY_DOMAINS
-      ];
-    }
-  });
-
-  // ../../../shared/dist/annotations.js
-  var require_annotations = __commonJS({
-    "../../../shared/dist/annotations.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.ANNOTATION_COLORS = void 0;
-      exports.ANNOTATION_COLORS = ["amber", "rose", "sky", "violet", "lime"];
-    }
-  });
-
-  // ../../../shared/dist/index.js
-  var require_dist = __commonJS({
-    "../../../shared/dist/index.js"(exports) {
-      "use strict";
-      var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o2, m2, k2, k22) {
-        if (k22 === void 0) k22 = k2;
-        var desc = Object.getOwnPropertyDescriptor(m2, k2);
-        if (!desc || ("get" in desc ? !m2.__esModule : desc.writable || desc.configurable)) {
-          desc = { enumerable: true, get: function() {
-            return m2[k2];
-          } };
-        }
-        Object.defineProperty(o2, k22, desc);
-      }) : (function(o2, m2, k2, k22) {
-        if (k22 === void 0) k22 = k2;
-        o2[k22] = m2[k2];
-      }));
-      var __exportStar = exports && exports.__exportStar || function(m2, exports2) {
-        for (var p2 in m2) if (p2 !== "default" && !Object.prototype.hasOwnProperty.call(exports2, p2)) __createBinding(exports2, m2, p2);
-      };
-      Object.defineProperty(exports, "__esModule", { value: true });
-      __exportStar(require_botSignalContract(), exports);
-      __exportStar(require_dashboards(), exports);
-      __exportStar(require_filters(), exports);
-      __exportStar(require_networkReplay(), exports);
-      __exportStar(require_networkReplayMetadata(), exports);
-      __exportStar(require_networkCorrelation(), exports);
-      __exportStar(require_replayObservability(), exports);
-      __exportStar(require_params(), exports);
-      __exportStar(require_scopes(), exports);
-      __exportStar(require_segments(), exports);
-      __exportStar(require_time(), exports);
-      __exportStar(require_performance(), exports);
-      __exportStar(require_replayExport(), exports);
-      __exportStar(require_replayActivity(), exports);
-      __exportStar(require_growthAccounting(), exports);
-      __exportStar(require_aiOperators(), exports);
-      __exportStar(require_annotations(), exports);
-    }
-  });
+  // ../../../shared/src/aiOperators.ts
+  var AI_OPERATOR_REFERRER_DOMAINS = {
+    OpenAI: ["chatgpt.com", "chat.openai.com"],
+    Anthropic: ["claude.ai"],
+    Google: ["gemini.google.com"],
+    Microsoft: ["copilot.microsoft.com"],
+    Perplexity: ["perplexity.ai"],
+    Meta: ["meta.ai"],
+    Mistral: ["chat.mistral.ai", "mistral.ai"],
+    xAI: ["grok.com"],
+    "You.com": ["you.com"],
+    // DuckDuckGo is deliberately absent: DuckAssistBot crawls, but a referral
+    // from duckduckgo.com is organic search, not an AI chat hand-off, and
+    // listing it here would reclassify every DuckDuckGo visit as AI traffic.
+    Cursor: ["cursor.com"],
+    Cohere: ["coral.cohere.com"]
+  };
+  var AI_REFERRER_DOMAIN_TO_OPERATOR = Object.fromEntries(
+    Object.entries(AI_OPERATOR_REFERRER_DOMAINS).flatMap(
+      ([operator, domains]) => domains.map((domain) => [domain, operator])
+    )
+  );
+  var AI_CHAT_ONLY_DOMAINS = [
+    "deepseek.com",
+    "chat.deepseek.com",
+    "poe.com",
+    "pi.ai",
+    "heypi.com",
+    "character.ai",
+    "qwen.ai",
+    "jasper.ai",
+    "writesonic.com",
+    "chatsonic.com",
+    "phind.com",
+    "andi.com",
+    "codeium.com"
+  ];
+  var AI_CHAT_DOMAINS = [
+    ...Object.keys(AI_REFERRER_DOMAIN_TO_OPERATOR),
+    ...AI_CHAT_ONLY_DOMAINS
+  ];
 
   // networkReplay/config.ts
-  var import_shared = __toESM(require_dist(), 1);
-  var import_shared2 = __toESM(require_dist(), 1);
   function normalizeNetworkReplayConfig(config) {
     if (!config || typeof config !== "object" || Array.isArray(config)) {
-      return import_shared.DEFAULT_NETWORK_REPLAY_CONFIG;
+      return DEFAULT_NETWORK_REPLAY_CONFIG;
     }
-    return (0, import_shared.applyNetworkReplayCapturePolicy)({
-      ...import_shared.DEFAULT_NETWORK_REPLAY_CONFIG,
+    return applyNetworkReplayCapturePolicy({
+      ...DEFAULT_NETWORK_REPLAY_CONFIG,
       ...config,
       enabled: config.enabled === true,
       captureMode: config.captureMode === void 0 || config.captureMode === "full" ? "full" : "metadata"
     });
+  }
+
+  // types.ts
+  var SessionReplayTransportError = class extends Error {
+    constructor(status, statusText) {
+      super(`Session replay transport failed with HTTP ${status}${statusText ? ` ${statusText}` : ""}`);
+      this.name = "SessionReplayTransportError";
+      this.status = status;
+    }
+  };
+
+  // replayUpload.ts
+  function acceptsReplayGzip(value) {
+    return typeof value === "object" && value !== null && "version" in value && value.version === 1 && "gzip" in value && value.gzip === true;
+  }
+  function createReplayUploader(url, capability) {
+    let gzipEnabled = acceptsReplayGzip(capability);
+    return async (batch) => {
+      const json = JSON.stringify(batch);
+      let body = json;
+      let compressed = false;
+      if (gzipEnabled && typeof CompressionStream !== "undefined" && (typeof document === "undefined" || document.visibilityState !== "hidden")) {
+        try {
+          const plain = new Blob([json], { type: "application/json" });
+          if (plain.size >= 4096) {
+            const bytes = await new Response(plain.stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
+            if (bytes.byteLength <= plain.size * 0.9) {
+              body = bytes;
+              compressed = true;
+            }
+          }
+        } catch {
+          gzipEnabled = false;
+        }
+      }
+      let response;
+      try {
+        response = await fetch(url, {
+          method: "POST",
+          headers: compressed ? { "Content-Type": "application/json", "Content-Encoding": "gzip" } : { "Content-Type": "application/json" },
+          body,
+          mode: "cors",
+          keepalive: false
+        });
+      } catch (error) {
+        if (compressed) gzipEnabled = false;
+        throw error;
+      }
+      if (!response.ok) {
+        if (response.status === 415 && compressed) gzipEnabled = false;
+        throw new SessionReplayTransportError(response.status, response.statusText);
+      }
+    };
   }
 
   // utils.ts
@@ -770,7 +524,7 @@
       enableWebVitals: false,
       trackErrors: false,
       enableSessionReplay: false,
-      networkReplay: import_shared2.DEFAULT_NETWORK_REPLAY_CONFIG,
+      networkReplay: DEFAULT_NETWORK_REPLAY_CONFIG,
       trackButtonClicks: false,
       trackCopy: false,
       trackFormInteractions: false,
@@ -811,6 +565,7 @@
           trackErrors: apiConfig.trackErrors ?? defaultConfig.trackErrors,
           enableSessionReplay: apiConfig.sessionReplay ?? defaultConfig.enableSessionReplay,
           networkReplay: normalizeNetworkReplayConfig(apiConfig.networkReplay),
+          replayTransport: { version: 1, gzip: acceptsReplayGzip(apiConfig.replayTransport) },
           trackButtonClicks: apiConfig.trackButtonClicks ?? defaultConfig.trackButtonClicks,
           trackCopy: apiConfig.trackCopy ?? defaultConfig.trackCopy,
           trackFormInteractions: apiConfig.trackFormInteractions ?? defaultConfig.trackFormInteractions,
@@ -822,13 +577,10 @@
     } catch (error) {
       console.warn("Error fetching tracking config:", error);
     }
-    const networkMode = scriptTag.getAttribute("data-replay-network-mode")?.trim().toLowerCase();
-    if (networkMode !== void 0 && networkMode !== "full") {
-      resolvedConfig.networkReplay = normalizeNetworkReplayConfig({
-        ...resolvedConfig.networkReplay,
-        captureMode: "metadata"
-      });
-    }
+    resolvedConfig.networkReplay = resolveNetworkReplayPrivacyCap(
+      resolvedConfig.networkReplay ?? DEFAULT_NETWORK_REPLAY_CONFIG,
+      scriptTag.getAttribute("data-replay-network-mode")
+    );
     if (resolvedConfig.featureFlagsEnabled) {
       const result = await fetchFeatureFlags(analyticsHost, siteId, namespace, visitorId);
       resolvedConfig.featureFlagsEnabled = result.enabled;
@@ -836,18 +588,6 @@
     }
     return resolvedConfig;
   }
-
-  // types.ts
-  var SessionReplayTransportError = class extends Error {
-    constructor(status, statusText) {
-      super(`Session replay transport failed with HTTP ${status}${statusText ? ` ${statusText}` : ""}`);
-      this.name = "SessionReplayTransportError";
-      this.status = status;
-    }
-  };
-
-  // networkReplay/fetchObserver.ts
-  var import_shared3 = __toESM(require_dist(), 1);
 
   // networkReplay/utils.ts
   function createRequestId() {
@@ -1428,7 +1168,7 @@
         durationMs: getDurationMs(context.startedAt, completedAt),
         outcome: getHttpOutcome(response.status),
         responseHeaders: config.captureResponseHeaders ? captureHeaders(response.headers) : {},
-        ...(0, import_shared3.readResponseCorrelation)((name) => response.headers.get(name)),
+        ...readResponseCorrelation((name) => response.headers.get(name)),
         status: response.status,
         statusText: response.statusText
       },
@@ -1447,7 +1187,7 @@
         durationMs: getDurationMs(context.startedAt, completedAt),
         outcome: getHttpOutcome(response.status),
         responseHeaders: config.captureResponseHeaders ? captureHeaders(response.headers) : {},
-        ...(0, import_shared3.readResponseCorrelation)((name) => response.headers.get(name)),
+        ...readResponseCorrelation((name) => response.headers.get(name)),
         status: response.status,
         statusText: response.statusText
       },
@@ -1508,9 +1248,6 @@
   function getHttpOutcome(status) {
     return status >= 400 ? "http_error" : "success";
   }
-
-  // networkReplay/metadataCapture.ts
-  var import_shared4 = __toESM(require_dist(), 1);
 
   // networkReplay/pendingRequests.ts
   var PendingRequests = class {
@@ -1961,7 +1698,6 @@
   }
 
   // networkReplay/xhrObserver.ts
-  var import_shared5 = __toESM(require_dist(), 1);
   function observeXhr({
     analyticsHost,
     config,
@@ -2139,7 +1875,7 @@
         error: state.error,
         outcome: state.outcome ?? getXhrOutcome(status),
         responseHeaders: config.captureResponseHeaders ? allResponseHeaders : {},
-        ...(0, import_shared5.readResponseCorrelation)((name) => state.xhr.getResponseHeader(name)),
+        ...readResponseCorrelation((name) => state.xhr.getResponseHeader(name)),
         status,
         statusText: getXhrStatusText(state.xhr)
       },
@@ -2222,7 +1958,7 @@
     emit: emitRequest
   }) {
     const config = normalizeNetworkReplayConfig(inputConfig);
-    const emit = (request) => emitRequest(config.captureMode === "metadata" ? (0, import_shared4.toMetadataRequest)(request) : request);
+    const emit = (request) => emitRequest(config.captureMode === "metadata" ? toMetadataRequest(request) : request);
     stopActiveRecorder?.();
     stopActiveRecorder = void 0;
     if (!config.enabled) {
@@ -2643,75 +2379,6 @@
     }
   };
 
-  // ../../../shared/src/botSignalContract.ts
-  var CLIENT_BOT_SIGNAL_MASKS = {
-    automationApi: 1 << 0,
-    zeroOuterDimensions: 1 << 1,
-    missingChrome: 1 << 2,
-    swiftShader: 1 << 3,
-    emptyPlugins: 1 << 4,
-    defaultViewport800x600: 1 << 5,
-    defaultViewport1024x768: 1 << 6,
-    impossibleDimensions: 1 << 7,
-    outerDimensionsWeird: 1 << 8,
-    pluginApiAbsence: 1 << 9,
-    defaultViewport1280x1200: 1 << 10,
-    squareScreen: 1 << 11,
-    missingScreenDimensions: 1 << 12
-  };
-  var CLIENT_BOT_SIGNAL_NAMES = Object.keys(CLIENT_BOT_SIGNAL_MASKS);
-  var CLIENT_BOT_SIGNAL_WEIGHTS = {
-    automationApi: 3,
-    zeroOuterDimensions: 2,
-    missingChrome: 1,
-    swiftShader: 1,
-    emptyPlugins: 1,
-    defaultViewport800x600: 3,
-    defaultViewport1024x768: 3,
-    impossibleDimensions: 3,
-    outerDimensionsWeird: 2,
-    pluginApiAbsence: 0,
-    defaultViewport1280x1200: 3,
-    squareScreen: 3,
-    missingScreenDimensions: 1
-  };
-  var ALL_CLIENT_BOT_SIGNAL_BITS = CLIENT_BOT_SIGNAL_NAMES.reduce(
-    (mask, name) => mask | CLIENT_BOT_SIGNAL_MASKS[name],
-    0
-  );
-  var STRONG_CLIENT_BOT_SIGNAL_BITS = CLIENT_BOT_SIGNAL_MASKS.automationApi | CLIENT_BOT_SIGNAL_MASKS.impossibleDimensions | CLIENT_BOT_SIGNAL_MASKS.defaultViewport800x600 | CLIENT_BOT_SIGNAL_MASKS.defaultViewport1024x768 | CLIENT_BOT_SIGNAL_MASKS.defaultViewport1280x1200 | CLIENT_BOT_SIGNAL_MASKS.squareScreen;
-  var MAX_CLIENT_BOT_SCORE = 10;
-  var MIN_PLAUSIBLE_SCREEN_DIMENSION = 200;
-  var MAX_PLAUSIBLE_SCREEN_DIMENSION = 8192;
-  var IMPLAUSIBLE_DESKTOP_VIEWPORTS = [
-    { width: 800, height: 600, signal: "defaultViewport800x600" },
-    { width: 1024, height: 768, signal: "defaultViewport1024x768" },
-    { width: 1280, height: 1200, signal: "defaultViewport1280x1200" }
-  ];
-  function isPlausibleScreenDimensions(width, height) {
-    return Number.isFinite(width) && Number.isFinite(height) && width >= MIN_PLAUSIBLE_SCREEN_DIMENSION && height >= MIN_PLAUSIBLE_SCREEN_DIMENSION && width <= MAX_PLAUSIBLE_SCREEN_DIMENSION && height <= MAX_PLAUSIBLE_SCREEN_DIMENSION;
-  }
-  function isDesktopUserAgent(userAgent) {
-    return /Windows NT|Macintosh|X11|Linux x86_64/.test(userAgent) && !/Mobile|Android|iPhone|iPad/.test(userAgent);
-  }
-  function getScreenDimensionSignals(width, height, userAgent) {
-    if (!isPlausibleScreenDimensions(width, height)) {
-      return ["impossibleDimensions"];
-    }
-    const signals = [];
-    if (width === height) {
-      signals.push("squareScreen");
-    }
-    if (isDesktopUserAgent(userAgent)) {
-      for (const viewport of IMPLAUSIBLE_DESKTOP_VIEWPORTS) {
-        if (width === viewport.width && height === viewport.height) {
-          signals.push(viewport.signal);
-        }
-      }
-    }
-    return signals;
-  }
-
   // botSignals.ts
   var cachedBotSignals = null;
   function getBotScore() {
@@ -2851,6 +2518,10 @@
       this.errorDedupeLastCleanup = 0;
       this.exposedFeatureFlags = /* @__PURE__ */ new Set();
       this.config = config;
+      this.sendReplay = createReplayUploader(
+        `${config.analyticsHost}/session-replay/record/${config.siteId}`,
+        config.replayTransport
+      );
       this.loadUserId();
       if (config.enableSessionReplay) {
         this.initializeSessionReplay();
@@ -2940,19 +2611,7 @@
       }
     }
     async sendSessionReplayBatch(batch) {
-      const response = await fetch(`${this.config.analyticsHost}/session-replay/record/${this.config.siteId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(batch),
-        mode: "cors",
-        keepalive: false
-        // Disable keepalive for large session replay requests
-      });
-      if (!response.ok) {
-        throw new SessionReplayTransportError(response.status, response.statusText);
-      }
+      await this.sendReplay(batch);
     }
     createBasePayload() {
       const url = new URL(window.location.href);

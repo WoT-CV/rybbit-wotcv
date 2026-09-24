@@ -222,3 +222,44 @@ Heap dostępny tylko jako końcowy pomiar Chromium, nie peak per-codec ani dowó
 braku regresji na urządzeniu. Brak tych pomiarów NIE jest uznany za zaliczenie.
 Testy odrzucają nieznane wersje/indeksy/kolizje i nadmierne rozmiary. Limitów
 nie zmieniono; dane użytkowników nigdy nie są używane jako fixture.
+
+## Etap 6 — ponowna analiza i szczegółowy plan zamknięcia
+
+Pozostają trzy niezależne warstwy: reprezentacja HTTP w BE, bezstratny transport
+replay oraz rollout. Zaliczenie jednostkowych testów nie oznacza kompletności
+Loki ani poprawności Safari/iPhone na produkcji. Etap 1B jest wyłączony.
+
+1. Przeczytać diff BE/Rybbit, zwłaszcza wrappery Servlet, częściowo odczytany
+   request, reset/sendError/redirect, async, MDC cleanup, redakcję oraz granice
+   capture. Nie ruszać obcych staged ResourceTimingFilter w BE.
+2. Uruchomić pełne testy Rybbit, shared/server/client typecheck/build/lint oraz
+   narzędzia Node/Python dotyczące bezpieczeństwa deploy i nowego audytu.
+   BE: pełny reactor observability + api-shared z zależnościami.
+3. Lokalny test HTTP: te SAME produkcyjne uploader/decoder, cross-origin CORS,
+   Chromium/Firefox/WebKit, historyczne/nowe eventy, concurrency i rollback415;
+   odczyt canonical payloadu bez DB, żadnych zapytań mutujących produkcję.
+4. Sprawdzić odseparowany build klienta (brak server/src w obrazie). Docker jeśli
+   dostępny; w przeciwnym razie analogiczny izolowany kontekst i jawne ograniczenie.
+5. Staging/prod: tylko read-only health/config i licznikowy audyt logów. Brak
+   produkcyjnego wdrożenia, zmian env, migracji albo testowych POST na własne API.
+6. Każdą znalezioną wadę opisać, poprawić i dodać regresję; powtórzyć dotknięte
+   testy. Release manifest: commity, wyniki, flagi, kolejność BE -> Rybbit decoder
+   -> canary writer, rollback bez kasowania historii, osobne NO-GO coverage/gzip.
+7. Fizyczny iPhone, staging przez reverse proxy oraz end-to-end potwierdzenie
+   nowych stanów BE w Loki pozostają obowiązkowe przed pełnym rolloutem. Nie
+   pozorować ich wykonania ani obiecywać, że duże body będą w Grafanie.
+
+### Korekta 6B — plan przed poprawką bundla
+
+Review artefaktu wykazało, że CommonJS barrel shared dokleja do trackera nawet
+resolver pokrycia używany wyłącznie w panelu. Plan: alias shared na jego źródło
+ESM w esbuild (analogicznie do istniejącego aliasu kontraktu botów), umożliwiający
+tree shaking; porównać faktyczne bajty/minified/gzip i sprawdzić metafile, że
+żaden kod Node ani zależności serwera nie trafia do bundla. Test regressji bundla,
+ponowny build i test trackerów; bez zmiany logiki ani zależności.
+
+Wynik 6B: test metafile i tree shaking PASS. Minified tracker spadł z 71180 B
+(bazowy d6b623ec) do 63369 B, mimo dodania gzip. Przy tym samym gzipSync:
+22059 -> 19753 B. Produkcyjny precompress (jego poziom) daje 19726 B gzip.
+W bundlu nie ma resolvera coverage, usług serwera ani CommonJS shared/dist;
+pozostaje celowa zależność web-vitals. Nie usunięto danych replay.
