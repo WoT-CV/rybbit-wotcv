@@ -173,3 +173,52 @@ nowym hooku. Nie zmieniono retry, split413 ani kolejek recordera. Flaga false.
 Buforowanie jest ograniczone: wejście do route bodyLimit, wyjście do tej samej
 wartości przez async zlib maxOutputLength; nie są to zwiększone limity.
 Zewnętrzny proxy i fizyczny iPhone wymagają canary przed aktywacją flagi.
+
+## Etap 5 — ponowna analiza i plan przed implementacją
+
+Gzip już usuwa powtarzające się nazwy/URL. Kompaktowy JSON nie gwarantuje mniejszego
+transferu po gzip. Prototypy będą wyłącznie w narzędziu benchmarkowym, nigdy w
+publicznym ingest, dopóki nie przejdą bramek. Badamy osobno: (A) puste nagłówki
+i stałe v1/metadata w znanym pluginie oraz (B) słownik powtórzonych stringów
+wyłącznie w typowanych polach Network Replay. Nie zmieniamy DOM ani historii.
+
+1. Wersjonowane envelope obu prototypów, jawne odtwarzanie nieobecności vs pustych
+   pól, ograniczona liczba referencji/słownika, kontrola indeksów i kolizji.
+2. Golden/property-style testy: Unicode, null/0/false, empty vs absent, unknown
+   plugin, próba prototype pollution, mutacja wejścia, limity canonical.
+3. Porównać plain/gzip obu kandydatów z v1 na tym samym korpusie. 30 powtórzeń
+   po rozgrzewce, encode+serialize+native gzip, round-trip decode, p95, long tasks
+   i heap tam gdzie API przeglądarki je udostępnia. Tylko syntetyczne dane.
+4. Użycie Chromium/Firefox/WebKit jeśli lokalne narzędzia dostępne; odnotować
+   brak wsparcia zamiast zastępować wyniki pomiarem Node pod nazwą Safari.
+5. Dla każdego kandydata decyzja: wdrożenie dopiero przy oszczędności po gzip i
+   CPU <=110% v1. W przeciwnym razie commit prototypów/raportu z odrzuceniem,
+   bez nowego decoder-a produkcyjnego i powierzchni ataku. Review i commit.
+
+### Wynik 5 / review — oba prototypy odrzucone
+
+6/6 testów (w tym 400 wariantów danych) PASS. Native CompressionStream w
+Chromium 153, Firefox 155 i WebKit 26.6: wszystkie byte/semantic round-trip PASS.
+Raport: `replay-browser-benchmark-2026-09-24.json`. 30 prób po 3 rozgrzewkowych.
+
+Przykład Chromium, bajty gzip (v1 / defaults / dictionary):
+
+| Korpus | v1 | Puste/stałe | Słownik |
+| --- | ---: | ---: | ---: |
+| small | 459 | 478 | 500 |
+| metadata | 4635 | 6175 | 5610 |
+| legacy | 1723 | 1951 | 2000 |
+| mixed | 13776 | 14458 | 14332 |
+
+Mniejszy JSON dał WIĘKSZY gzip we wszystkich korpusach i silnikach. Dodatkowo
+Chromium mixed encode p95 0.8 ms -> 3.6/3.8 ms. Nie ma uzasadnienia dla aktywacji
+v2 ani dodawania produkcyjnego parsera. Oba kandydaty zakończone decyzją REJECT.
+Prototypy pozostają wyłącznie w scripts/lib, nie importuje ich produkcja.
+
+WebKit Windows nie jest fizycznym iPhonem. Upload p95 obejmuje scheduler i
+rozdzielczość zegara (szczególnie 15–16 ms WebKit), nie jest czystym CPU gzip.
+Long Tasks: Chromium 0 w tym teście, pozostałe silniki API unsupported (null).
+Heap dostępny tylko jako końcowy pomiar Chromium, nie peak per-codec ani dowód
+braku regresji na urządzeniu. Brak tych pomiarów NIE jest uznany za zaliczenie.
+Testy odrzucają nieznane wersje/indeksy/kolizje i nadmierne rozmiary. Limitów
+nie zmieniono; dane użytkowników nigdy nie są używane jako fixture.

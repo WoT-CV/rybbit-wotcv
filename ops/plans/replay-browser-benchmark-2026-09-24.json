@@ -1,0 +1,362 @@
+{
+  "physicalIphone": "not-tested",
+  "reports": [
+    {
+      "engine": "chromium",
+      "version": "153.0.8010.12",
+      "measurement": "synthetic native browser gzip; uploadP95 includes asynchronous scheduling, encode/decode are main-thread wall time",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+      "attempts": 30,
+      "longTasks": 0,
+      "heapBytes": 81400000,
+      "results": [
+        {
+          "name": "small",
+          "codec": "v1",
+          "rawBytes": 871,
+          "gzipBytes": 459,
+          "uploadP95Ms": 0.9,
+          "encodeP95Ms": 0,
+          "decodeP95Ms": 0
+        },
+        {
+          "name": "small",
+          "codec": "defaults",
+          "rawBytes": 879,
+          "gzipBytes": 478,
+          "uploadP95Ms": 0.5,
+          "encodeP95Ms": 0.1,
+          "decodeP95Ms": 0.1
+        },
+        {
+          "name": "small",
+          "codec": "dictionary",
+          "rawBytes": 950,
+          "gzipBytes": 500,
+          "uploadP95Ms": 0.5,
+          "encodeP95Ms": 0.1,
+          "decodeP95Ms": 0.1
+        },
+        {
+          "name": "metadata",
+          "codec": "v1",
+          "rawBytes": 104223,
+          "gzipBytes": 4635,
+          "uploadP95Ms": 1.3,
+          "encodeP95Ms": 0.2,
+          "decodeP95Ms": 0.3
+        },
+        {
+          "name": "metadata",
+          "codec": "defaults",
+          "rawBytes": 97243,
+          "gzipBytes": 6175,
+          "uploadP95Ms": 2.3,
+          "encodeP95Ms": 1.3,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "metadata",
+          "codec": "dictionary",
+          "rawBytes": 93018,
+          "gzipBytes": 5610,
+          "uploadP95Ms": 2.1,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 0.9
+        },
+        {
+          "name": "legacy",
+          "codec": "v1",
+          "rawBytes": 32183,
+          "gzipBytes": 1723,
+          "uploadP95Ms": 0.6,
+          "encodeP95Ms": 0.1,
+          "decodeP95Ms": 0.1
+        },
+        {
+          "name": "legacy",
+          "codec": "defaults",
+          "rawBytes": 31423,
+          "gzipBytes": 1951,
+          "uploadP95Ms": 1,
+          "encodeP95Ms": 0.4,
+          "decodeP95Ms": 0.4
+        },
+        {
+          "name": "legacy",
+          "codec": "dictionary",
+          "rawBytes": 29408,
+          "gzipBytes": 2000,
+          "uploadP95Ms": 0.9,
+          "encodeP95Ms": 0.4,
+          "decodeP95Ms": 0.5
+        },
+        {
+          "name": "mixed",
+          "codec": "v1",
+          "rawBytes": 258393,
+          "gzipBytes": 13776,
+          "uploadP95Ms": 2.3,
+          "encodeP95Ms": 0.8,
+          "decodeP95Ms": 0.5
+        },
+        {
+          "name": "mixed",
+          "codec": "defaults",
+          "rawBytes": 255549,
+          "gzipBytes": 14458,
+          "uploadP95Ms": 5.6,
+          "encodeP95Ms": 3.6,
+          "decodeP95Ms": 2.5
+        },
+        {
+          "name": "mixed",
+          "codec": "dictionary",
+          "rawBytes": 254070,
+          "gzipBytes": 14332,
+          "uploadP95Ms": 6,
+          "encodeP95Ms": 3.8,
+          "decodeP95Ms": 2.6
+        }
+      ]
+    },
+    {
+      "engine": "firefox",
+      "version": "155.0",
+      "measurement": "synthetic native browser gzip; uploadP95 includes asynchronous scheduling, encode/decode are main-thread wall time",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:155.0) Gecko/20100101 Firefox/155.0",
+      "attempts": 30,
+      "longTasks": null,
+      "heapBytes": null,
+      "results": [
+        {
+          "name": "small",
+          "codec": "v1",
+          "rawBytes": 871,
+          "gzipBytes": 461,
+          "uploadP95Ms": 1,
+          "encodeP95Ms": 0,
+          "decodeP95Ms": 0
+        },
+        {
+          "name": "small",
+          "codec": "defaults",
+          "rawBytes": 879,
+          "gzipBytes": 479,
+          "uploadP95Ms": 1,
+          "encodeP95Ms": 0,
+          "decodeP95Ms": 0
+        },
+        {
+          "name": "small",
+          "codec": "dictionary",
+          "rawBytes": 950,
+          "gzipBytes": 501,
+          "uploadP95Ms": 1,
+          "encodeP95Ms": 0,
+          "decodeP95Ms": 0
+        },
+        {
+          "name": "metadata",
+          "codec": "v1",
+          "rawBytes": 104223,
+          "gzipBytes": 4497,
+          "uploadP95Ms": 1,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "metadata",
+          "codec": "defaults",
+          "rawBytes": 97243,
+          "gzipBytes": 6088,
+          "uploadP95Ms": 3,
+          "encodeP95Ms": 2,
+          "decodeP95Ms": 2
+        },
+        {
+          "name": "metadata",
+          "codec": "dictionary",
+          "rawBytes": 93018,
+          "gzipBytes": 5815,
+          "uploadP95Ms": 2,
+          "encodeP95Ms": 2,
+          "decodeP95Ms": 2
+        },
+        {
+          "name": "legacy",
+          "codec": "v1",
+          "rawBytes": 32183,
+          "gzipBytes": 1708,
+          "uploadP95Ms": 1,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "legacy",
+          "codec": "defaults",
+          "rawBytes": 31423,
+          "gzipBytes": 1943,
+          "uploadP95Ms": 1,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "legacy",
+          "codec": "dictionary",
+          "rawBytes": 29408,
+          "gzipBytes": 2062,
+          "uploadP95Ms": 1,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "mixed",
+          "codec": "v1",
+          "rawBytes": 258393,
+          "gzipBytes": 13842,
+          "uploadP95Ms": 2,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "mixed",
+          "codec": "defaults",
+          "rawBytes": 255549,
+          "gzipBytes": 14594,
+          "uploadP95Ms": 7,
+          "encodeP95Ms": 5,
+          "decodeP95Ms": 5
+        },
+        {
+          "name": "mixed",
+          "codec": "dictionary",
+          "rawBytes": 254070,
+          "gzipBytes": 14542,
+          "uploadP95Ms": 7,
+          "encodeP95Ms": 5,
+          "decodeP95Ms": 4
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "version": "26.6",
+      "measurement": "synthetic native browser gzip; uploadP95 includes asynchronous scheduling, encode/decode are main-thread wall time",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+      "attempts": 30,
+      "longTasks": null,
+      "heapBytes": null,
+      "results": [
+        {
+          "name": "small",
+          "codec": "v1",
+          "rawBytes": 871,
+          "gzipBytes": 461,
+          "uploadP95Ms": 16,
+          "encodeP95Ms": 0,
+          "decodeP95Ms": 0
+        },
+        {
+          "name": "small",
+          "codec": "defaults",
+          "rawBytes": 879,
+          "gzipBytes": 479,
+          "uploadP95Ms": 16,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "small",
+          "codec": "dictionary",
+          "rawBytes": 950,
+          "gzipBytes": 501,
+          "uploadP95Ms": 16,
+          "encodeP95Ms": 0,
+          "decodeP95Ms": 0
+        },
+        {
+          "name": "metadata",
+          "codec": "v1",
+          "rawBytes": 104223,
+          "gzipBytes": 4501,
+          "uploadP95Ms": 16,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "metadata",
+          "codec": "defaults",
+          "rawBytes": 97243,
+          "gzipBytes": 6072,
+          "uploadP95Ms": 15,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "metadata",
+          "codec": "dictionary",
+          "rawBytes": 93018,
+          "gzipBytes": 5807,
+          "uploadP95Ms": 15,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "legacy",
+          "codec": "v1",
+          "rawBytes": 32183,
+          "gzipBytes": 1713,
+          "uploadP95Ms": 16,
+          "encodeP95Ms": 0,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "legacy",
+          "codec": "defaults",
+          "rawBytes": 31423,
+          "gzipBytes": 1948,
+          "uploadP95Ms": 16,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "legacy",
+          "codec": "dictionary",
+          "rawBytes": 29408,
+          "gzipBytes": 2067,
+          "uploadP95Ms": 16,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "mixed",
+          "codec": "v1",
+          "rawBytes": 258393,
+          "gzipBytes": 13851,
+          "uploadP95Ms": 15,
+          "encodeP95Ms": 1,
+          "decodeP95Ms": 1
+        },
+        {
+          "name": "mixed",
+          "codec": "defaults",
+          "rawBytes": 255549,
+          "gzipBytes": 14602,
+          "uploadP95Ms": 13,
+          "encodeP95Ms": 2,
+          "decodeP95Ms": 2
+        },
+        {
+          "name": "mixed",
+          "codec": "dictionary",
+          "rawBytes": 254070,
+          "gzipBytes": 14554,
+          "uploadP95Ms": 14,
+          "encodeP95Ms": 2,
+          "decodeP95Ms": 2
+        }
+      ]
+    }
+  ]
+}
