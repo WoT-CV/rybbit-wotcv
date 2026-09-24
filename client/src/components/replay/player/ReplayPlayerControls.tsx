@@ -1,6 +1,6 @@
 import { Maximize2, Pause, Play, SkipForward } from "lucide-react";
 import { useExtracted } from "next-intl";
-import { memo, useCallback, useEffect, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, type ComponentProps } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { getReplayActivityDuration } from "@rybbit/shared";
 
@@ -28,6 +28,32 @@ interface ReplayPlayerControlsProps {
   isDrawer?: boolean;
 }
 
+// Only the timeline needs the precise per-frame clock. Keeping this subscription
+// below the toolbar avoids rebuilding the menus and export controls every frame.
+const ReplayTimeline = memo(function ReplayTimeline({
+  duration = 0,
+  ...props
+}: Omit<ComponentProps<typeof ActivitySlider>, "currentTime" | "value">) {
+  const currentTime = useReplayStore(s => s.currentTime);
+  return (
+    <ActivitySlider
+      {...props}
+      duration={duration}
+      currentTime={currentTime}
+      value={[duration > 0 ? (currentTime / duration) * 100 : 0]}
+    />
+  );
+});
+
+const ReplayTime = memo(function ReplayTime({ duration }: { duration: number }) {
+  const time = useReplayStore(s => formatTime(s.currentTime));
+  return (
+    <div className="ml-auto whitespace-nowrap text-center text-xs text-neutral-700 dark:text-neutral-300">
+      {time} / {formatTime(duration)}
+    </div>
+  );
+});
+
 export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   events,
   onPlayPause,
@@ -41,7 +67,6 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   const t = useExtracted();
   const {
     activityPeriods,
-    currentTime,
     duration,
     exportRange,
     isPlaying,
@@ -57,7 +82,6 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   } = useReplayStore(
     useShallow(s => ({
       activityPeriods: s.activityPeriods,
-      currentTime: s.currentTime,
       duration: s.duration,
       exportRange: s.exportRange,
       isPlaying: s.isPlaying,
@@ -77,8 +101,8 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
 
   useEffect(() => {
     if (duration <= 0 || exportRange || replaySegments.length === 0) return;
-    setExportRange(createInitialExportRange(currentTime, duration, activityPeriods));
-  }, [activityPeriods, currentTime, duration, exportRange, replaySegments.length, setExportRange]);
+    setExportRange(createInitialExportRange(useReplayStore.getState().currentTime, duration, activityPeriods));
+  }, [activityPeriods, duration, exportRange, replaySegments.length, setExportRange]);
 
   const exportDuration = exportRange ? getReplayActivityDuration(activityPeriods, exportRange[0], exportRange[1]) : 0;
 
@@ -104,8 +128,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
   return (
     <div className="border border-neutral-100 dark:border-neutral-800 bg-white p-2 pb-3 dark:bg-neutral-900 rounded-b-lg">
       <div>
-        <ActivitySlider
-          value={[duration > 0 ? (currentTime / duration) * 100 : 0]}
+        <ReplayTimeline
           onValueChange={onSliderChange}
           onValueCommit={onSliderCommit}
           onPointerCancel={onSliderCancel}
@@ -117,7 +140,6 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
           duration={duration}
           events={events}
           networkRequests={networkRequests}
-          currentTime={currentTime}
           exportRange={exportRange}
           onNetworkSeek={handleNetworkSeek}
           className="w-full"
@@ -146,9 +168,7 @@ export const ReplayPlayerControls = memo(function ReplayPlayerControls({
             <Play className="w-4 h-4" fill="currentColor" />
           )}
         </Button>
-        <div className="ml-auto whitespace-nowrap text-center text-xs text-neutral-700 dark:text-neutral-300">
-          {formatTime(currentTime)} / {formatTime(duration)}
-        </div>
+        <ReplayTime duration={duration} />
         <div className="flex min-w-0 items-center gap-1.5">
           <ReplayExportButton
             disabled={!player || duration <= 0 || exportDuration <= 0}

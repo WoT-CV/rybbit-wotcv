@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { useGetSessionReplayEvents } from "@/api/analytics/hooks/sessionReplay/useGetSessionReplayEvents";
 import {
   BrowserTooltipIcon,
@@ -8,7 +8,6 @@ import {
   DeviceTypeTooltipIcon,
   OperatingSystemTooltipIcon,
 } from "@/components/TooltipIcons/TooltipIcons";
-import { useShallow } from "zustand/react/shallow";
 import { useReplayStore } from "../replayStore";
 
 // Extract pathname from full URL for display
@@ -21,12 +20,10 @@ function getDisplayPath(url: string): string {
   }
 }
 
-export function ReplayPlayerTopbar() {
+export const ReplayPlayerTopbar = memo(function ReplayPlayerTopbar() {
   const params = useParams();
   const siteId = Number(params.site);
-  const { sessionId, currentTime } = useReplayStore(
-    useShallow(s => ({ sessionId: s.sessionId, currentTime: s.currentTime }))
-  );
+  const sessionId = useReplayStore(s => s.sessionId);
 
   const { data } = useGetSessionReplayEvents(siteId, sessionId);
 
@@ -34,11 +31,12 @@ export function ReplayPlayerTopbar() {
   const screenDimensions = `${metadata?.screen_width} × ${metadata?.screen_height}`;
 
   const pageViewEvents = useMemo(() => {
-    return data?.events?.filter((event: any) => Number(event.type) === 4);
+    return data?.events?.filter(event => Number(event.type) === 4);
   }, [data?.events]);
 
-  // Get the current page URL based on the replay currentTime
-  const pageUrl = useMemo(() => {
+  // The URL changes on navigation, not every animation frame. Keep the full
+  // precision clock in the store without re-rendering tooltips and query hooks.
+  const pageUrl = useReplayStore(({ currentTime }) => {
     if (!pageViewEvents || pageViewEvents.length === 0 || currentTime === 0) {
       return metadata?.page_url;
     }
@@ -54,7 +52,7 @@ export function ReplayPlayerTopbar() {
     }
 
     return currentUrl;
-  }, [pageViewEvents, currentTime, metadata?.page_url]);
+  });
 
   if (!pageUrl || !metadata) {
     return (
@@ -110,4 +108,4 @@ export function ReplayPlayerTopbar() {
       </div>
     </div>
   );
-}
+});

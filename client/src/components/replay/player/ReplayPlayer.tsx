@@ -21,27 +21,14 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
   const params = useParams();
   const siteId = Number(params.site);
   const [replayDrawerOpen, setReplayDrawerOpen] = useState(false);
-  const {
-    sessionId,
-    player,
-    isPlaying,
-    setIsPlaying,
-    currentTime,
-    duration,
-    setPlaybackSpeed,
-    replaySegments,
-    skipInactivityEnabled,
-  } = useReplayStore(
+  const { sessionId, player, isPlaying, setIsPlaying, duration, setPlaybackSpeed } = useReplayStore(
     useShallow(s => ({
       sessionId: s.sessionId,
       player: s.player,
       isPlaying: s.isPlaying,
       setIsPlaying: s.setIsPlaying,
-      currentTime: s.currentTime,
       duration: s.duration,
       setPlaybackSpeed: s.setPlaybackSpeed,
-      replaySegments: s.replaySegments,
-      skipInactivityEnabled: s.skipInactivityEnabled,
     }))
   );
 
@@ -70,6 +57,9 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
 
   const handleSkipBack = useCallback(() => {
     if (!activePlayer) return;
+    // Read the precise clock when invoked, without re-rendering the entire
+    // player (and replacing its keyboard listener) on every animation frame.
+    const { currentTime, replaySegments, skipInactivityEnabled } = useReplayStore.getState();
     const requestedTime = Math.max(0, currentTime - SKIP_SECONDS);
     const requestedSegment = findSegmentAtTime(replaySegments, requestedTime);
     const previousActiveSegment =
@@ -80,13 +70,14 @@ export function ReplayPlayer({ width, height, isDrawer }: { width: number; heigh
       ? Math.max(previousActiveSegment.start, previousActiveSegment.end - 1)
       : requestedTime;
     seekTo(newTime);
-  }, [activePlayer, currentTime, replaySegments, seekTo, skipInactivityEnabled]);
+  }, [activePlayer, seekTo]);
 
   const handleSkipForward = useCallback(() => {
     if (!activePlayer) return;
+    const { currentTime, duration } = useReplayStore.getState();
     const newTime = Math.min(duration, currentTime + SKIP_SECONDS);
     seekTo(newTime);
-  }, [activePlayer, duration, currentTime, seekTo]);
+  }, [activePlayer, seekTo]);
 
   const handleSliderChange = useCallback(
     (value: number[]) => {

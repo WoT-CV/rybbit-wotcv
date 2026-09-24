@@ -12,68 +12,48 @@ interface UseSkipInactivityProps {
 
 export function useSkipInactivity({ player }: UseSkipInactivityProps) {
   const appliedSpeedRef = useRef<{ player: ReplayPlayerAdapter; speed: number } | null>(null);
-  const {
-    currentTime,
-    duration,
-    isPlaying,
-    playbackSpeed,
-    replaySegments,
-    skipInactivityEnabled,
-    skipInactivitySpeed,
-  } = useReplayStore(
-    useShallow(state => ({
-      currentTime: state.currentTime,
-      duration: state.duration,
-      isPlaying: state.isPlaying,
-      playbackSpeed: state.playbackSpeed,
-      replaySegments: state.replaySegments,
-      skipInactivityEnabled: state.skipInactivityEnabled,
-      skipInactivitySpeed: state.skipInactivitySpeed,
-    }))
+  // Evaluate every clock update, but only notify React when the playback mode
+  // actually changes. Throttling the clock itself would overshoot activity
+  // boundaries at 25x/50x; subscribing the whole player to it wastes each frame.
+  const { speed, isSkippingInactivity, playbackState, seekRevision } = useReplayStore(
+    useShallow(state => {
+      const selectedSpeed = Number.parseFloat(state.playbackSpeed) || 1;
+      const currentSegment = findSegmentAtTime(state.replaySegments, state.currentTime);
+      const shouldFastForward = Boolean(
+        state.skipInactivityEnabled &&
+        state.isPlaying &&
+        currentSegment &&
+        !currentSegment.isActive &&
+        shouldFastForwardInactivity(currentSegment.duration)
+      );
+
+      if (!state.isPlaying) {
+        return {
+          speed: selectedSpeed,
+          isSkippingInactivity: false,
+          seekRevision: state.seekRevision,
+          playbackState:
+            state.duration > 0 && state.currentTime >= state.duration ? ("ended" as const) : ("paused" as const),
+        };
+      }
+
+      return {
+        speed:
+          shouldFastForward && currentSegment
+            ? getInactivityFastForwardSpeed(currentSegment.duration, selectedSpeed, state.skipInactivitySpeed)
+            : selectedSpeed,
+        isSkippingInactivity: shouldFastForward,
+        seekRevision: state.seekRevision,
+        playbackState: shouldFastForward ? ("skipping-inactivity" as const) : ("playing" as const),
+      };
+    })
   );
 
   useEffect(() => {
     if (!player) return;
-
-    const selectedSpeed = Number.parseFloat(playbackSpeed) || 1;
-    const currentSegment = findSegmentAtTime(replaySegments, currentTime);
-    const shouldFastForward = Boolean(
-      skipInactivityEnabled &&
-      isPlaying &&
-      currentSegment &&
-      !currentSegment.isActive &&
-      shouldFastForwardInactivity(currentSegment.duration)
-    );
-
-    if (!isPlaying) {
-      applySpeed(player, selectedSpeed, appliedSpeedRef);
-      syncPlaybackMode(false, duration > 0 && currentTime >= duration ? "ended" : "paused");
-      return;
-    }
-
-    if (shouldFastForward && currentSegment) {
-      const fastForwardSpeed = getInactivityFastForwardSpeed(
-        currentSegment.duration,
-        selectedSpeed,
-        skipInactivitySpeed
-      );
-      applySpeed(player, fastForwardSpeed, appliedSpeedRef);
-      syncPlaybackMode(true, "skipping-inactivity");
-      return;
-    }
-
-    applySpeed(player, selectedSpeed, appliedSpeedRef);
-    syncPlaybackMode(false, "playing");
-  }, [
-    currentTime,
-    duration,
-    isPlaying,
-    playbackSpeed,
-    player,
-    replaySegments,
-    skipInactivityEnabled,
-    skipInactivitySpeed,
-  ]);
+    applySpeed(player, speed, appliedSpeedRef);
+    syncPlaybackMode(isSkippingInactivity, playbackState);
+  }, [isSkippingInactivity, playbackState, player, seekRevision, speed]);
 }
 
 function applySpeed(
