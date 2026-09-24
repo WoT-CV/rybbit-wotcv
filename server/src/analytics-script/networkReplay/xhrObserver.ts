@@ -85,7 +85,11 @@ export function observeXhr({
   const observedSetRequestHeader = function (this: XMLHttpRequest, name: string, value: string): void {
     Reflect.apply(originalSetRequestHeader, this, [name, value]);
     const state = states.get(this);
-    if (state && !state.ignored) {
+    if (
+      state &&
+      !state.ignored &&
+      (config.captureRequestHeaders || (config.captureRequestBody && name.toLowerCase() === "content-type"))
+    ) {
       appendCapturedHeader(state.requestHeaders, name, value);
     }
   };
@@ -236,7 +240,8 @@ function finalizeXhrRequest(
 
   const completedAt = Date.now();
   const status = getXhrStatus(state.xhr);
-  const allResponseHeaders = getXhrResponseHeaders(state.xhr);
+  const allResponseHeaders =
+    config.captureResponseHeaders || config.captureResponseBody ? getXhrResponseHeaders(state.xhr) : {};
   const responseContentType = getCapturedHeader(allResponseHeaders, "content-type");
   const responseBody = config.captureResponseBody
     ? captureXhrResponseBody(state.xhr, responseContentType, limits)

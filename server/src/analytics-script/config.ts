@@ -142,8 +142,7 @@ export async function parseScriptConfig(scriptTag: HTMLScriptElement): Promise<S
   // optimizers such as WP Rocket, Perfmatters, and FlyingPress recreate the
   // tag from `data-src` and drop every other `data-*` attribute, but they keep
   // the URL intact. The attributes remain supported for existing installs.
-  const siteId =
-    getSiteIdFromSrc(src) || scriptTag.getAttribute("data-site-id") || scriptTag.getAttribute("site-id");
+  const siteId = getSiteIdFromSrc(src) || scriptTag.getAttribute("data-site-id") || scriptTag.getAttribute("site-id");
   if (!siteId) {
     console.error("Please provide a valid site ID using the ?siteId= query parameter or the data-site-id attribute");
     return null;
@@ -282,6 +281,14 @@ export async function parseScriptConfig(scriptTag: HTMLScriptElement): Promise<S
   } catch (error) {
     // If network error, log and use defaults
     console.warn("Error fetching tracking config:", error);
+  }
+
+  // A script tag may reduce collection, never enable it or relax the server policy.
+  if (scriptTag.getAttribute("data-replay-network-mode") === "metadata") {
+    resolvedConfig.networkReplay = normalizeNetworkReplayConfig({
+      ...resolvedConfig.networkReplay,
+      captureMode: "metadata",
+    });
   }
 
   if (resolvedConfig.featureFlagsEnabled) {

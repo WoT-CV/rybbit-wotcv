@@ -147,6 +147,7 @@ function parseRequest(
     requestHeaders: getStringRecord(value.requestHeaders),
     responseHeaders: getStringRecord(value.responseHeaders),
     correlationId: normalizeCorrelationId(value.correlationId),
+    captureMode: value.captureMode === "metadata" ? "metadata" : undefined,
     traceId: normalizeTraceId(value.traceId),
     requestBody: getBody(value.requestBody),
     responseBody: getBody(value.responseBody),

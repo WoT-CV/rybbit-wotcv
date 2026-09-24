@@ -2359,5 +2359,6 @@
   "+B+qvw": "Změněno {type}input „{name}“",
   "vDpLV2": "Změněno {type}input",
   "WMOCxZ": "Je vyžadován přístup do Grafany. Logy mohou vypršet dříve než tento záznam.",
-  "pl7iME": "Otevřít logy v Grafaně"
+  "pl7iME": "Otevřít logy v Grafaně",
+  "2o6ues": "Pouze metadata: těla, hlavičky a parametry URL nebyly zaznamenány."
 }

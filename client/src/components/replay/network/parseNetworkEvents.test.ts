@@ -3,6 +3,30 @@ import { describe, expect, it } from "vitest";
 import { NETWORK_PLUGIN_NAME, parseNetworkEvents, parseNetworkReplayEvents } from "./parseNetworkEvents";
 
 describe("parseNetworkEvents", () => {
+  it("reads new metadata recordings without stripping bodies from historical recordings", () => {
+    const makeEvent = (captureMode?: string) => ({
+      type: 6,
+      timestamp: 1100,
+      data: {
+        plugin: NETWORK_PLUGIN_NAME,
+        payload: {
+          version: 1,
+          requests: [
+            {
+              schemaVersion: 1,
+              requestId: "r",
+              startedAt: 1000,
+              url: "https://api.example.com/a",
+              captureMode,
+              ...(captureMode ? {} : { responseBody: { kind: "text", value: "historical body" } }),
+            },
+          ],
+        },
+      },
+    });
+    expect(parseNetworkEvents([makeEvent("metadata")])[0]).toMatchObject({ captureMode: "metadata" });
+    expect(parseNetworkEvents([makeEvent()])[0].responseBody?.value).toBe("historical body");
+  });
   it("normalizes valid requests and removes duplicate request IDs", () => {
     const request = {
       schemaVersion: NETWORK_REPLAY_SCHEMA_VERSION,

@@ -1,6 +1,8 @@
 import type { NetworkReplayConfig } from "@rybbit/shared";
 
 import { observeFetch } from "./fetchObserver.js";
+import { normalizeNetworkReplayConfig } from "./config.js";
+import { toMetadataRequest } from "./metadataCapture.js";
 import { PendingRequests } from "./pendingRequests.js";
 import { observePerformance, type NetworkPerformanceObserver } from "./performanceObserver.js";
 import { RecorderLifecycle } from "./recorderLifecycle.js";
@@ -27,9 +29,12 @@ let stopActiveRecorder: (() => void) | undefined;
 
 export function startNetworkReplayRecorder({
   analyticsHost,
-  config,
-  emit,
+  config: inputConfig,
+  emit: emitRequest,
 }: StartNetworkReplayRecorderOptions): () => void {
+  const config = normalizeNetworkReplayConfig(inputConfig);
+  const emit: NetworkRequestEmitter = request =>
+    emitRequest(config.captureMode === "metadata" ? toMetadataRequest(request) : request);
   stopActiveRecorder?.();
   stopActiveRecorder = undefined;
 

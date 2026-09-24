@@ -2359,5 +2359,6 @@
   "+B+qvw": "Changed {type}input \"{name}\"",
   "vDpLV2": "Changed {type}input",
   "WMOCxZ": "Grafana access is required. Logs may expire before this replay.",
-  "pl7iME": "Open logs in Grafana"
+  "pl7iME": "Open logs in Grafana",
+  "2o6ues": "Metadata only: bodies, headers and URL parameters were not recorded."
 }

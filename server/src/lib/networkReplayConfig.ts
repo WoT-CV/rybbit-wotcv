@@ -1,4 +1,8 @@
-import { DEFAULT_NETWORK_REPLAY_CONFIG, type NetworkReplayConfig } from "@rybbit/shared";
+import {
+  applyNetworkReplayCapturePolicy,
+  DEFAULT_NETWORK_REPLAY_CONFIG,
+  type NetworkReplayConfig,
+} from "@rybbit/shared";
 import { z } from "zod";
 
 export { DEFAULT_NETWORK_REPLAY_CONFIG } from "@rybbit/shared";
@@ -6,6 +10,7 @@ export { DEFAULT_NETWORK_REPLAY_CONFIG } from "@rybbit/shared";
 export const networkReplayConfigSchema = z
   .object({
     enabled: z.boolean().optional(),
+    captureMode: z.enum(["full", "metadata"]).optional(),
     captureFetch: z.boolean().optional(),
     captureXhr: z.boolean().optional(),
     capturePerformanceResources: z.boolean().optional(),
@@ -24,10 +29,10 @@ export const networkReplayConfigSchema = z
 export type NetworkReplayConfigUpdate = z.infer<typeof networkReplayConfigSchema>;
 
 export function normalizeNetworkReplayConfig(config?: Partial<NetworkReplayConfig> | null): NetworkReplayConfig {
-  return {
+  return applyNetworkReplayCapturePolicy({
     ...DEFAULT_NETWORK_REPLAY_CONFIG,
     ...config,
-  };
+  });
 }
 
 export function resolveNetworkReplayConfig(
@@ -45,7 +50,7 @@ export function resolveNetworkReplayConfig(
 }
 
 export function getNetworkReplayConfigError(config: NetworkReplayConfig): string | null {
-  if (config.maxBodySizeBytes > config.maxNetworkEventSizeBytes) {
+  if (config.captureMode !== "metadata" && config.maxBodySizeBytes > config.maxNetworkEventSizeBytes) {
     return "Network Replay body limit cannot exceed the event limit";
   }
   if (config.maxNetworkEventSizeBytes > config.maxReplayBatchSizeBytes) {

@@ -2359,5 +2359,6 @@
   "+B+qvw": "Zmieniono {type}pole wprowadzania \"{name}\"",
   "vDpLV2": "Zmieniono {type}pole wprowadzania",
   "WMOCxZ": "Wymagany jest dostęp do Grafany. Logi mogą wygasnąć wcześniej niż to nagranie.",
-  "pl7iME": "Otwórz logi w Grafanie"
+  "pl7iME": "Otwórz logi w Grafanie",
+  "2o6ues": "Tylko metadane: treści żądań i odpowiedzi, nagłówki oraz parametry URL nie były nagrywane."
 }

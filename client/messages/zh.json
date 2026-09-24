@@ -2359,5 +2359,6 @@
   "+B+qvw": "已更改 {type}输入框 \"{name}\"",
   "vDpLV2": "已更改 {type}输入框",
   "WMOCxZ": "需要 Grafana 访问权限。日志可能比此录制更早过期。",
-  "pl7iME": "在 Grafana 中打开日志"
+  "pl7iME": "在 Grafana 中打开日志",
+  "2o6ues": "仅元数据：未录制正文、标头和 URL 参数。"
 }

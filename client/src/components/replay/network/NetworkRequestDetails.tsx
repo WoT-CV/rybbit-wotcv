@@ -50,6 +50,11 @@ export function NetworkRequestDetails({ request, onBack }: NetworkRequestDetails
       </div>
 
       <NetworkObservabilityLinks request={request} />
+      {request.captureMode === "metadata" && (
+        <p className="shrink-0 border-b border-neutral-100 p-2 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+          {t("Metadata only: bodies, headers and URL parameters were not recorded.")}
+        </p>
+      )}
       <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col p-2 pt-1.5">
         <div className="shrink-0 overflow-x-auto pb-1">
           <TabsList className="h-7 w-max p-0.5">

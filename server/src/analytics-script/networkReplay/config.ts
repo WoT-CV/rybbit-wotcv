@@ -1,4 +1,8 @@
-import { DEFAULT_NETWORK_REPLAY_CONFIG, type NetworkReplayConfig } from "@rybbit/shared";
+import {
+  applyNetworkReplayCapturePolicy,
+  DEFAULT_NETWORK_REPLAY_CONFIG,
+  type NetworkReplayConfig,
+} from "@rybbit/shared";
 
 export { DEFAULT_NETWORK_REPLAY_CONFIG } from "@rybbit/shared";
 
@@ -7,9 +11,14 @@ export function normalizeNetworkReplayConfig(config: unknown): NetworkReplayConf
     return DEFAULT_NETWORK_REPLAY_CONFIG;
   }
 
-  return {
+  return applyNetworkReplayCapturePolicy({
     ...DEFAULT_NETWORK_REPLAY_CONFIG,
     ...(config as Partial<NetworkReplayConfig>),
     enabled: (config as Partial<NetworkReplayConfig>).enabled === true,
-  };
+    captureMode:
+      (config as Partial<NetworkReplayConfig>).captureMode === undefined ||
+      (config as Partial<NetworkReplayConfig>).captureMode === "full"
+        ? "full"
+        : "metadata",
+  });
 }

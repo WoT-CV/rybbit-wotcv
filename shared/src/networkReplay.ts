@@ -1,5 +1,6 @@
 export interface NetworkReplayConfig {
   enabled: boolean;
+  captureMode?: "full" | "metadata";
   captureFetch: boolean;
   captureXhr: boolean;
   capturePerformanceResources: boolean;
@@ -18,6 +19,7 @@ export const NETWORK_REPLAY_SCHEMA_VERSION = 1 as const;
 
 export const DEFAULT_NETWORK_REPLAY_CONFIG = {
   enabled: false,
+  captureMode: "full",
   captureFetch: true,
   captureXhr: true,
   capturePerformanceResources: true,
@@ -31,6 +33,19 @@ export const DEFAULT_NETWORK_REPLAY_CONFIG = {
   maxNetworkEventSizeBytes: 2_500_000,
   maxReplayBatchSizeBytes: 7_000_000,
 } satisfies NetworkReplayConfig;
+
+/** Metadata is a privacy cap: stale body/header flags cannot override it. */
+export function applyNetworkReplayCapturePolicy(config: NetworkReplayConfig): NetworkReplayConfig {
+  return config.captureMode === "metadata"
+    ? {
+        ...config,
+        captureRequestHeaders: false,
+        captureResponseHeaders: false,
+        captureRequestBody: false,
+        captureResponseBody: false,
+      }
+    : config;
+}
 
 export type NetworkOutcome = "success" | "http_error" | "network_error" | "aborted" | "timeout" | "pending_on_unload";
 
@@ -85,6 +100,7 @@ export interface CapturedNetworkError {
 
 export interface CapturedNetworkRequest {
   schemaVersion: typeof NETWORK_REPLAY_SCHEMA_VERSION;
+  captureMode?: "full" | "metadata";
   requestId: string;
   currentUrl: string;
   url: string;

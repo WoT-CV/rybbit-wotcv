@@ -23,6 +23,34 @@ describe("parseScriptConfig", () => {
     consoleWarnSpy.mockRestore();
   });
 
+  it.each([
+    ["metadata", "full", true, "metadata"],
+    ["full", "metadata", true, "metadata"],
+    ["metadata", "full", false, "metadata"],
+    [null, "full", true, "full"],
+  ])(
+    "caps collection via script mode %s without overriding the server's %s policy",
+    async (tagMode, apiMode, enabled, expectedMode) => {
+      mockScriptTag.setAttribute("src", "https://analytics.example.com/script.js");
+      mockScriptTag.setAttribute("data-site-id", "123");
+      if (tagMode) mockScriptTag.setAttribute("data-replay-network-mode", tagMode);
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          sessionReplay: enabled,
+          networkReplay: { enabled, captureMode: apiMode, captureResponseBody: true },
+        }),
+      } as Response);
+      const result = await parseScriptConfig(mockScriptTag);
+      expect(result?.networkReplay).toMatchObject({
+        enabled,
+        captureMode: expectedMode,
+        captureResponseBody: expectedMode === "full",
+      });
+      expect(result?.enableSessionReplay).toBe(enabled);
+    }
+  );
+
   it("should parse valid configuration with API response", async () => {
     mockScriptTag.setAttribute("src", "https://analytics.example.com/script.js");
     mockScriptTag.setAttribute("data-site-id", "123");

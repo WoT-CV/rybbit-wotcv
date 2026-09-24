@@ -2359,5 +2359,6 @@
   "+B+qvw": "{type}campo di input \"{name}\" modificato",
   "vDpLV2": "{type}campo di input modificato",
   "WMOCxZ": "È richiesto l’accesso a Grafana. I log possono scadere prima di questa registrazione.",
-  "pl7iME": "Apri i log in Grafana"
+  "pl7iME": "Apri i log in Grafana",
+  "2o6ues": "Solo metadati: corpi, intestazioni e parametri URL non sono stati registrati."
 }

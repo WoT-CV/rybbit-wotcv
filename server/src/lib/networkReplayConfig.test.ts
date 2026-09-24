@@ -8,6 +8,18 @@ import {
 } from "./networkReplayConfig.js";
 
 describe("networkReplayConfig", () => {
+  it("accepts a metadata policy and forces sensitive capture flags off", () => {
+    const update = networkReplayConfigSchema.parse({ captureMode: "metadata", captureResponseBody: true });
+    expect(resolveNetworkReplayConfig({ enabled: true }, update, true, "web")).toMatchObject({
+      enabled: true,
+      captureMode: "metadata",
+      captureResponseBody: false,
+      captureRequestBody: false,
+      captureRequestHeaders: false,
+      captureResponseHeaders: false,
+    });
+    expect(networkReplayConfigSchema.safeParse({ captureMode: "typo" }).success).toBe(false);
+  });
   it("merges a partial update without losing defaults", () => {
     expect(resolveNetworkReplayConfig(null, { enabled: true, captureXhr: false }, true, "web")).toEqual({
       ...DEFAULT_NETWORK_REPLAY_CONFIG,
@@ -28,6 +40,13 @@ describe("networkReplayConfig", () => {
   });
 
   it("validates nested byte limits", () => {
+    expect(
+      getNetworkReplayConfigError({
+        ...DEFAULT_NETWORK_REPLAY_CONFIG,
+        captureMode: "metadata",
+        maxNetworkEventSizeBytes: 20_000,
+      })
+    ).toBeNull();
     expect(
       getNetworkReplayConfigError({
         ...DEFAULT_NETWORK_REPLAY_CONFIG,

@@ -131,9 +131,12 @@ function registerFetchRequest(
 ): FetchCaptureContext {
   const requestId = createRequestId();
   const startedAt = Date.now();
-  const capturedRequest = createCapturedRequest(input, init);
+  const capturedRequest = config.captureRequestBody ? createCapturedRequest(input, init) : undefined;
   const method = (capturedRequest?.method || init?.method || getInputRequestMethod(input) || "GET").toUpperCase();
-  const effectiveHeaders = capturedRequest?.headers || getInputRequestHeaders(input, init);
+  const effectiveHeaders =
+    config.captureRequestHeaders || config.captureRequestBody
+      ? capturedRequest?.headers || getInputRequestHeaders(input, init)
+      : undefined;
   const capturedHeaders = config.captureRequestHeaders ? captureHeaders(effectiveHeaders) : {};
   const requestBody = config.captureRequestBody
     ? createFetchRequestBodyCapture(input, init, capturedRequest, effectiveHeaders, limits)

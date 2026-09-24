@@ -135,9 +135,11 @@
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.DEFAULT_NETWORK_REPLAY_CONFIG = exports.NETWORK_REPLAY_SCHEMA_VERSION = void 0;
+      exports.applyNetworkReplayCapturePolicy = applyNetworkReplayCapturePolicy2;
       exports.NETWORK_REPLAY_SCHEMA_VERSION = 1;
       exports.DEFAULT_NETWORK_REPLAY_CONFIG = {
         enabled: false,
+        captureMode: "full",
         captureFetch: true,
         captureXhr: true,
         capturePerformanceResources: true,
@@ -151,6 +153,15 @@
         maxNetworkEventSizeBytes: 25e5,
         maxReplayBatchSizeBytes: 7e6
       };
+      function applyNetworkReplayCapturePolicy2(config) {
+        return config.captureMode === "metadata" ? {
+          ...config,
+          captureRequestHeaders: false,
+          captureResponseHeaders: false,
+          captureRequestBody: false,
+          captureResponseBody: false
+        } : config;
+      }
     }
   });
 
@@ -479,11 +490,12 @@
     if (!config || typeof config !== "object" || Array.isArray(config)) {
       return import_shared.DEFAULT_NETWORK_REPLAY_CONFIG;
     }
-    return {
+    return (0, import_shared.applyNetworkReplayCapturePolicy)({
       ...import_shared.DEFAULT_NETWORK_REPLAY_CONFIG,
       ...config,
-      enabled: config.enabled === true
-    };
+      enabled: config.enabled === true,
+      captureMode: config.captureMode === void 0 || config.captureMode === "full" ? "full" : "metadata"
+    });
   }
 
   // utils.ts
@@ -754,6 +766,12 @@
       }
     } catch (error) {
       console.warn("Error fetching tracking config:", error);
+    }
+    if (scriptTag.getAttribute("data-replay-network-mode") === "metadata") {
+      resolvedConfig.networkReplay = normalizeNetworkReplayConfig({
+        ...resolvedConfig.networkReplay,
+        captureMode: "metadata"
+      });
     }
     if (resolvedConfig.featureFlagsEnabled) {
       const result = await fetchFeatureFlags(analyticsHost, siteId, namespace, visitorId);
@@ -1322,9 +1340,9 @@
   function registerFetchRequest(input, init, requestUrl, config, limits, pendingRequests, performanceObserver) {
     const requestId = createRequestId();
     const startedAt = Date.now();
-    const capturedRequest = createCapturedRequest(input, init);
+    const capturedRequest = config.captureRequestBody ? createCapturedRequest(input, init) : void 0;
     const method = (capturedRequest?.method || init?.method || getInputRequestMethod(input) || "GET").toUpperCase();
-    const effectiveHeaders = capturedRequest?.headers || getInputRequestHeaders(input, init);
+    const effectiveHeaders = config.captureRequestHeaders || config.captureRequestBody ? capturedRequest?.headers || getInputRequestHeaders(input, init) : void 0;
     const capturedHeaders = config.captureRequestHeaders ? captureHeaders(effectiveHeaders) : {};
     const requestBody = config.captureRequestBody ? createFetchRequestBodyCapture(input, init, capturedRequest, effectiveHeaders, limits) : void 0;
     const request = {
@@ -1433,6 +1451,45 @@
   }
   function getHttpOutcome(status) {
     return status >= 400 ? "http_error" : "success";
+  }
+
+  // networkReplay/metadataCapture.ts
+  function sanitizeNetworkUrl(value) {
+    try {
+      const url = new URL(value);
+      if (url.protocol !== "https:" && url.protocol !== "http:") return "[redacted]";
+      const path = url.pathname.length <= 2048 ? url.pathname : "/[redacted]";
+      return `${url.origin}${path}`;
+    } catch {
+      return "[redacted]";
+    }
+  }
+  function toMetadataRequest(request) {
+    return {
+      schemaVersion: request.schemaVersion,
+      captureMode: "metadata",
+      requestId: request.requestId,
+      url: sanitizeNetworkUrl(request.url),
+      currentUrl: sanitizeNetworkUrl(request.currentUrl),
+      method: request.method,
+      initiatorType: request.initiatorType,
+      startedAt: request.startedAt,
+      completedAt: request.completedAt,
+      durationMs: request.durationMs,
+      status: request.status,
+      outcome: request.outcome,
+      requestHeaders: {},
+      responseHeaders: {},
+      correlationId: request.correlationId,
+      traceId: request.traceId,
+      timing: request.timing,
+      sizes: request.sizes,
+      performanceEntryFound: request.performanceEntryFound,
+      // Exception messages/stack and statusText can contain URLs, credentials or body data.
+      error: request.error ? {
+        name: request.outcome === "aborted" ? "AbortError" : request.outcome === "timeout" ? "TimeoutError" : "NetworkError"
+      } : void 0
+    };
   }
 
   // networkReplay/pendingRequests.ts
@@ -1928,7 +1985,7 @@
     const observedSetRequestHeader = function(name, value) {
       Reflect.apply(originalSetRequestHeader, this, [name, value]);
       const state = states.get(this);
-      if (state && !state.ignored) {
+      if (state && !state.ignored && (config.captureRequestHeaders || config.captureRequestBody && name.toLowerCase() === "content-type")) {
         appendCapturedHeader(state.requestHeaders, name, value);
       }
     };
@@ -2046,7 +2103,7 @@
     cleanupListeners(state, activeStates);
     const completedAt = Date.now();
     const status = getXhrStatus(state.xhr);
-    const allResponseHeaders = getXhrResponseHeaders(state.xhr);
+    const allResponseHeaders = config.captureResponseHeaders || config.captureResponseBody ? getXhrResponseHeaders(state.xhr) : {};
     const responseContentType = getCapturedHeader(allResponseHeaders, "content-type");
     const responseBody = config.captureResponseBody ? captureXhrResponseBody(state.xhr, responseContentType, limits) : void 0;
     const performanceTask = performanceObserver?.completeRequest(
@@ -2141,9 +2198,11 @@
   var stopActiveRecorder;
   function startNetworkReplayRecorder({
     analyticsHost,
-    config,
-    emit
+    config: inputConfig,
+    emit: emitRequest
   }) {
+    const config = normalizeNetworkReplayConfig(inputConfig);
+    const emit = (request) => emitRequest(config.captureMode === "metadata" ? toMetadataRequest(request) : request);
     stopActiveRecorder?.();
     stopActiveRecorder = void 0;
     if (!config.enabled) {
