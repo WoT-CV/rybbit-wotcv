@@ -165,6 +165,54 @@
     }
   });
 
+  // ../../../shared/dist/networkReplayMetadata.js
+  var require_networkReplayMetadata = __commonJS({
+    "../../../shared/dist/networkReplayMetadata.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.sanitizeNetworkUrl = sanitizeNetworkUrl2;
+      exports.toMetadataRequest = toMetadataRequest2;
+      function sanitizeNetworkUrl2(value) {
+        try {
+          const url = new URL(value);
+          if (url.protocol !== "https:" && url.protocol !== "http:")
+            return "[redacted]";
+          const path = url.pathname.length <= 2048 ? url.pathname : "/[redacted]";
+          return `${url.origin}${path}`;
+        } catch {
+          return "[redacted]";
+        }
+      }
+      function toMetadataRequest2(request) {
+        return {
+          schemaVersion: request.schemaVersion,
+          captureMode: "metadata",
+          requestId: request.requestId,
+          url: sanitizeNetworkUrl2(request.url),
+          currentUrl: sanitizeNetworkUrl2(request.currentUrl),
+          method: request.method,
+          initiatorType: request.initiatorType,
+          startedAt: request.startedAt,
+          completedAt: request.completedAt,
+          durationMs: request.durationMs,
+          status: request.status,
+          outcome: request.outcome,
+          requestHeaders: {},
+          responseHeaders: {},
+          correlationId: request.correlationId,
+          traceId: request.traceId,
+          timing: request.timing,
+          sizes: request.sizes,
+          performanceEntryFound: request.performanceEntryFound,
+          // Exception messages/stack and statusText can contain URLs, credentials or body data.
+          error: request.error ? {
+            name: request.outcome === "aborted" ? "AbortError" : request.outcome === "timeout" ? "TimeoutError" : "NetworkError"
+          } : void 0
+        };
+      }
+    }
+  });
+
   // ../../../shared/dist/networkCorrelation.js
   var require_networkCorrelation = __commonJS({
     "../../../shared/dist/networkCorrelation.js"(exports) {
@@ -474,6 +522,7 @@
       __exportStar(require_dashboards(), exports);
       __exportStar(require_filters(), exports);
       __exportStar(require_networkReplay(), exports);
+      __exportStar(require_networkReplayMetadata(), exports);
       __exportStar(require_networkCorrelation(), exports);
       __exportStar(require_replayObservability(), exports);
       __exportStar(require_params(), exports);
@@ -1461,43 +1510,7 @@
   }
 
   // networkReplay/metadataCapture.ts
-  function sanitizeNetworkUrl(value) {
-    try {
-      const url = new URL(value);
-      if (url.protocol !== "https:" && url.protocol !== "http:") return "[redacted]";
-      const path = url.pathname.length <= 2048 ? url.pathname : "/[redacted]";
-      return `${url.origin}${path}`;
-    } catch {
-      return "[redacted]";
-    }
-  }
-  function toMetadataRequest(request) {
-    return {
-      schemaVersion: request.schemaVersion,
-      captureMode: "metadata",
-      requestId: request.requestId,
-      url: sanitizeNetworkUrl(request.url),
-      currentUrl: sanitizeNetworkUrl(request.currentUrl),
-      method: request.method,
-      initiatorType: request.initiatorType,
-      startedAt: request.startedAt,
-      completedAt: request.completedAt,
-      durationMs: request.durationMs,
-      status: request.status,
-      outcome: request.outcome,
-      requestHeaders: {},
-      responseHeaders: {},
-      correlationId: request.correlationId,
-      traceId: request.traceId,
-      timing: request.timing,
-      sizes: request.sizes,
-      performanceEntryFound: request.performanceEntryFound,
-      // Exception messages/stack and statusText can contain URLs, credentials or body data.
-      error: request.error ? {
-        name: request.outcome === "aborted" ? "AbortError" : request.outcome === "timeout" ? "TimeoutError" : "NetworkError"
-      } : void 0
-    };
-  }
+  var import_shared4 = __toESM(require_dist(), 1);
 
   // networkReplay/pendingRequests.ts
   var PendingRequests = class {
@@ -1948,7 +1961,7 @@
   }
 
   // networkReplay/xhrObserver.ts
-  var import_shared4 = __toESM(require_dist(), 1);
+  var import_shared5 = __toESM(require_dist(), 1);
   function observeXhr({
     analyticsHost,
     config,
@@ -2126,7 +2139,7 @@
         error: state.error,
         outcome: state.outcome ?? getXhrOutcome(status),
         responseHeaders: config.captureResponseHeaders ? allResponseHeaders : {},
-        ...(0, import_shared4.readResponseCorrelation)((name) => state.xhr.getResponseHeader(name)),
+        ...(0, import_shared5.readResponseCorrelation)((name) => state.xhr.getResponseHeader(name)),
         status,
         statusText: getXhrStatusText(state.xhr)
       },
@@ -2209,7 +2222,7 @@
     emit: emitRequest
   }) {
     const config = normalizeNetworkReplayConfig(inputConfig);
-    const emit = (request) => emitRequest(config.captureMode === "metadata" ? toMetadataRequest(request) : request);
+    const emit = (request) => emitRequest(config.captureMode === "metadata" ? (0, import_shared4.toMetadataRequest)(request) : request);
     stopActiveRecorder?.();
     stopActiveRecorder = void 0;
     if (!config.enabled) {

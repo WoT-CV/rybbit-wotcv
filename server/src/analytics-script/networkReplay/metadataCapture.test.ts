@@ -1,4 +1,8 @@
-import { DEFAULT_NETWORK_REPLAY_CONFIG, type CapturedNetworkRequest } from "@rybbit/shared";
+import {
+  DEFAULT_NETWORK_REPLAY_CONFIG,
+  toMetadataRequest as sharedMetadataProjector,
+  type CapturedNetworkRequest,
+} from "@rybbit/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { normalizeNetworkReplayConfig } from "./config.js";
@@ -18,6 +22,10 @@ afterEach(() => {
 });
 
 describe("metadata capture policy", () => {
+  it("uses exactly the shared projector tested by the independently built replay client", () => {
+    expect(toMetadataRequest).toBe(sharedMetadataProjector);
+  });
+
   it("caps stale flags but preserves enabled/disabled and legacy modes", () => {
     expect(normalizeNetworkReplayConfig(metadataConfig)).toMatchObject({
       enabled: true,

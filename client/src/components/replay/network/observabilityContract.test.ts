@@ -1,7 +1,6 @@
-import { readResponseCorrelation, type CapturedNetworkRequest } from "@rybbit/shared";
+import { readResponseCorrelation, toMetadataRequest, type CapturedNetworkRequest } from "@rybbit/shared";
 import { describe, expect, it } from "vitest";
 
-import { toMetadataRequest } from "../../../../../server/src/analytics-script/networkReplay/metadataCapture";
 import { getObservabilityLinks } from "./observabilityLinks";
 import { parseNetworkEvents } from "./parseNetworkEvents";
 
