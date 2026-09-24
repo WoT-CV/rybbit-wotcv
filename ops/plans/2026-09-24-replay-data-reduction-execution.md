@@ -88,3 +88,25 @@ trwałości ani kompletności całego ruchu. Test end-to-end po wdrożeniu na st
 pozostaje bramką release. Review poprawiło odczyt API Loki: należy zażądać
 `categorize-labels` i czytać `structuredMetadata`, nie traktować braku pola jako
 zera wykorzystania budżetu. Brak metadata ma osobny licznik.
+
+## Etap 2 — analiza i plan przed implementacją
+
+Po wyłączeniu 1B żaden lokalny ID ani profil Grafany nie stanowi dowodu trwałości.
+Nie powstanie martwy mechanizm przyjmujący `bodySaved` od przeglądarki. Resolver
+w shared będzie rozdzielał request body/response body/nagłówki/query i obserwacje
+przeglądarki. Dokładny origin, w tym scheme/port, oraz profil serwera ograniczają
+tylko wyszukiwanie. Brak profilu, abort/opaque, brak ID i obcy origin nie mogą
+wywołać usunięcia danych. Stan verified/expired jest zarezerwowany do przyszłego
+zaufanego dowodu, którego aktualnie nie ma.
+
+Plan: czysta funkcja v1 bez I/O i nowych pól w każdym evencie; runtime walidacja
+wejścia; testy spoofingu origin/ID/stanu, błędów sieci i zachowania wszystkich
+pól. Zastosowanie w UI w etapie 3. Kontrakt nie zmienia privacy cap ani transportu.
+
+### Wynik 2 / review
+
+15/15 Vitest PASS, shared build PASS. Resolver nie przyjmuje żadnego receipt i
+zawsze zabrania dodatkowego usuwania captured fields. Historyczny obiekt wejścia
+pozostaje nietknięty. Inny port/scheme/subdomena nie dziedziczą profilu. Same
+statusy 200/401/403/500 i poprawne ID niczego nie potwierdzają. Bez nowych bajtów
+w uploadach, bez zależności i importów server/src do klienta.

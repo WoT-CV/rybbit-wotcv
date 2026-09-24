@@ -5,6 +5,7 @@ export * from "./networkReplay";
 export * from "./networkReplayMetadata";
 export * from "./networkCorrelation";
 export * from "./replayObservability";
+export * from "./replayCoverage";
 export * from "./params";
 export * from "./scopes";
 export * from "./segments";
