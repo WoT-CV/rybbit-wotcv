@@ -284,7 +284,9 @@ export async function parseScriptConfig(scriptTag: HTMLScriptElement): Promise<S
   }
 
   // A script tag may reduce collection, never enable it or relax the server policy.
-  if (scriptTag.getAttribute("data-replay-network-mode") === "metadata") {
+  const networkMode = scriptTag.getAttribute("data-replay-network-mode")?.trim().toLowerCase();
+  // An explicitly supplied but misspelled/empty mode must not silently collect bodies.
+  if (networkMode !== undefined && networkMode !== "full") {
     resolvedConfig.networkReplay = normalizeNetworkReplayConfig({
       ...resolvedConfig.networkReplay,
       captureMode: "metadata",

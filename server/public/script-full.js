@@ -773,7 +773,8 @@
     } catch (error) {
       console.warn("Error fetching tracking config:", error);
     }
-    if (scriptTag.getAttribute("data-replay-network-mode") === "metadata") {
+    const networkMode = scriptTag.getAttribute("data-replay-network-mode")?.trim().toLowerCase();
+    if (networkMode !== void 0 && networkMode !== "full") {
       resolvedConfig.networkReplay = normalizeNetworkReplayConfig({
         ...resolvedConfig.networkReplay,
         captureMode: "metadata"

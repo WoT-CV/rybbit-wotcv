@@ -27,13 +27,17 @@ describe("parseScriptConfig", () => {
     ["metadata", "full", true, "metadata"],
     ["full", "metadata", true, "metadata"],
     ["metadata", "full", false, "metadata"],
+    [" Metadata ", "full", true, "metadata"],
+    ["metdata", "full", true, "metadata"],
+    ["", "full", true, "metadata"],
+    [" Full ", "full", true, "full"],
     [null, "full", true, "full"],
   ])(
     "caps collection via script mode %s without overriding the server's %s policy",
     async (tagMode, apiMode, enabled, expectedMode) => {
       mockScriptTag.setAttribute("src", "https://analytics.example.com/script.js");
       mockScriptTag.setAttribute("data-site-id", "123");
-      if (tagMode) mockScriptTag.setAttribute("data-replay-network-mode", tagMode);
+      if (tagMode !== null) mockScriptTag.setAttribute("data-replay-network-mode", tagMode);
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
