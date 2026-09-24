@@ -2361,5 +2361,7 @@
   "QOaR8l": "Odeslán formulář na „{action}“",
   "IQ5tZg": "Odeslán formulář",
   "+B+qvw": "Změněno {type}input „{name}“",
-  "vDpLV2": "Změněno {type}input"
+  "vDpLV2": "Změněno {type}input",
+  "IQc9jr": "Tyto odkazy vyhledávají logy a stopy; nepotvrzují uložení těl, hlaviček ani parametrů URL.",
+  "znRQQ6": "Tento požadavek prohlížeče nemusel dorazit na backend. Uložení jeho těla v Grafaně není potvrzeno."
 }

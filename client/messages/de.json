@@ -2361,5 +2361,7 @@
   "QOaR8l": "Formular an \"{action}\" gesendet",
   "IQ5tZg": "Formular abgesendet",
   "+B+qvw": "{type}eingabefeld \"{name}\" geändert",
-  "vDpLV2": "{type}eingabefeld geändert"
+  "vDpLV2": "{type}eingabefeld geändert",
+  "IQc9jr": "Diese Links durchsuchen Logs und Traces; sie bestätigen nicht, dass Bodys, Header oder URL-Parameter gespeichert wurden.",
+  "znRQQ6": "Diese Browseranfrage hat das Backend möglicherweise nicht erreicht. Ihr Body ist in Grafana nicht bestätigt."
 }

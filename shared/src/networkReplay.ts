@@ -47,6 +47,17 @@ export function applyNetworkReplayCapturePolicy(config: NetworkReplayConfig): Ne
     : config;
 }
 
+/** Absent tag preserves server policy; present invalid/empty tags fail to metadata. */
+export function resolveNetworkReplayPrivacyCap(
+  config: NetworkReplayConfig,
+  scriptMode?: string | null
+): NetworkReplayConfig {
+  if (scriptMode === undefined || scriptMode === null || scriptMode.trim().toLowerCase() === "full") {
+    return applyNetworkReplayCapturePolicy(config);
+  }
+  return applyNetworkReplayCapturePolicy({ ...config, captureMode: "metadata" });
+}
+
 export type NetworkOutcome = "success" | "http_error" | "network_error" | "aborted" | "timeout" | "pending_on_unload";
 
 export type CapturedBodyKind =

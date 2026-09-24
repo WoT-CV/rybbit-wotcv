@@ -2361,5 +2361,7 @@
   "QOaR8l": "Przesłano formularz do \"{action}\"",
   "IQ5tZg": "Przesłano formularz",
   "+B+qvw": "Zmieniono {type}pole wprowadzania \"{name}\"",
-  "vDpLV2": "Zmieniono {type}pole wprowadzania"
+  "vDpLV2": "Zmieniono {type}pole wprowadzania",
+  "IQc9jr": "Te linki przeszukują logi i ślady; nie potwierdzają zapisania body, nagłówków ani parametrów URL.",
+  "znRQQ6": "To żądanie przeglądarki mogło nie dotrzeć do backendu. Zapis jego body w Grafanie nie jest potwierdzony."
 }

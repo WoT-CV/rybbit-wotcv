@@ -2361,5 +2361,7 @@
   "QOaR8l": "Modulo inviato a \"{action}\"",
   "IQ5tZg": "Modulo inviato",
   "+B+qvw": "{type}campo di input \"{name}\" modificato",
-  "vDpLV2": "{type}campo di input modificato"
+  "vDpLV2": "{type}campo di input modificato",
+  "IQc9jr": "Questi link cercano nei log e nelle tracce; non confermano che siano stati salvati corpi, intestazioni o parametri URL.",
+  "znRQQ6": "Questa richiesta del browser potrebbe non aver raggiunto il backend. Il suo corpo non è confermato in Grafana."
 }

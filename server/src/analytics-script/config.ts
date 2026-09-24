@@ -1,4 +1,5 @@
 import { DEFAULT_NETWORK_REPLAY_CONFIG, normalizeNetworkReplayConfig } from "./networkReplay/config.js";
+import { resolveNetworkReplayPrivacyCap } from "@rybbit/shared";
 import { ScriptConfig } from "./types.js";
 import { parseJsonSafely } from "./utils.js";
 
@@ -284,14 +285,10 @@ export async function parseScriptConfig(scriptTag: HTMLScriptElement): Promise<S
   }
 
   // A script tag may reduce collection, never enable it or relax the server policy.
-  const networkMode = scriptTag.getAttribute("data-replay-network-mode")?.trim().toLowerCase();
-  // An explicitly supplied but misspelled/empty mode must not silently collect bodies.
-  if (networkMode !== undefined && networkMode !== "full") {
-    resolvedConfig.networkReplay = normalizeNetworkReplayConfig({
-      ...resolvedConfig.networkReplay,
-      captureMode: "metadata",
-    });
-  }
+  resolvedConfig.networkReplay = resolveNetworkReplayPrivacyCap(
+    resolvedConfig.networkReplay ?? DEFAULT_NETWORK_REPLAY_CONFIG,
+    scriptTag.getAttribute("data-replay-network-mode")
+  );
 
   if (resolvedConfig.featureFlagsEnabled) {
     const result = await fetchFeatureFlags(analyticsHost, siteId, namespace, visitorId);

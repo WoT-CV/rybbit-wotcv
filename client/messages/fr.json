@@ -2361,5 +2361,7 @@
   "QOaR8l": "Formulaire soumis à \"{action}\"",
   "IQ5tZg": "Formulaire soumis",
   "+B+qvw": "{type}champ de saisie \"{name}\" modifié",
-  "vDpLV2": "{type}champ de saisie modifié"
+  "vDpLV2": "{type}champ de saisie modifié",
+  "IQc9jr": "Ces liens recherchent dans les logs et les traces ; ils ne confirment pas l'enregistrement des corps, des en-têtes ou des paramètres d'URL.",
+  "znRQQ6": "Cette requête du navigateur n'a peut-être pas atteint le backend. Son corps n'est pas confirmé dans Grafana."
 }

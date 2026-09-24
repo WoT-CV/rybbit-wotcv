@@ -2361,5 +2361,7 @@
   "QOaR8l": "Formulario enviado a \"{action}\"",
   "IQ5tZg": "Formulario enviado",
   "+B+qvw": "{type}campo de entrada \"{name}\" cambiado",
-  "vDpLV2": "{type}campo de entrada cambiado"
+  "vDpLV2": "{type}campo de entrada cambiado",
+  "IQc9jr": "Estos enlaces buscan en logs y trazas; no confirman que se hayan guardado cuerpos, cabeceras o parámetros de URL.",
+  "znRQQ6": "Es posible que esta solicitud del navegador no haya llegado al backend. No se ha confirmado su cuerpo en Grafana."
 }

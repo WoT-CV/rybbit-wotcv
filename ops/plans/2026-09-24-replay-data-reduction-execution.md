@@ -110,3 +110,26 @@ zawsze zabrania dodatkowego usuwania captured fields. Historyczny obiekt wejści
 pozostaje nietknięty. Inny port/scheme/subdomena nie dziedziczą profilu. Same
 statusy 200/401/403/500 i poprawne ID niczego nie potwierdzają. Bez nowych bajtów
 w uploadach, bez zależności i importów server/src do klienta.
+
+## Etap 3 — analiza i plan przed implementacją
+
+FE już ustawia metadata. Serwer full pozostaje dozwolonym fallbackiem starszych
+trackerów; bez 1B nie wolno globalnie go wyłączyć. Powtarzający się kod normalizacji
+script tagu przenosimy do kontraktu shared, z testami wszystkich kombinacji.
+Istniejący reader historycznych body pozostaje bez zmian. Nie dodajemy receipts,
+request headers ani usuwania przy ingest, ponieważ nie ma zaufanego dowodu.
+
+Plan: shared resolver privacy cap → użycie w recorder config → UI komunikat
+unknown/unavailable (nigdy fałszywe verified) → stopPropagation dla linków →
+testy React i parserów v1/full/metadata → extract/uzupełnienie lokalizacji → review.
+Nie wymuszamy odświeżenia starych kart. Rollback nie zmienia capture obecnego FE.
+
+### Wynik 3 / review
+
+67/67 testów konfiguracji/privacy cap oraz 13/13 testów linków, historycznych
+parserów i kontraktu PASS. Shared build PASS. Dwa komunikaty przetłumaczone we
+wszystkich 12 językach; zachowane istniejące wartości i kolejność kluczy (extract
+nie powoduje przypadkowego przeformatowania całych katalogów). Review uwzględniło
+różnicę null/undefined dla brakującego atrybutu DOM: brak tagu zachowuje politykę
+serwera, obecny błędny tag ogranicza do metadata. Klik/pointer nie zamyka przodka.
+Nie zmieniono historycznych payloadów, limitów ani ustawień produkcyjnych FE.

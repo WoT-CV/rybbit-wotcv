@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReplayObservabilityProfile } from "@rybbit/shared";
 
@@ -48,6 +48,23 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("request observability actions", () => {
+  it("does not close an ancestor replay panel or claim body coverage", () => {
+    const close = vi.fn();
+    render(
+      <div onClick={close} onPointerDown={close}>
+        <NetworkObservabilityLinks request={request} />
+      </div>
+    );
+    const link = screen.getByRole("link", { name: "Open logs in Grafana" });
+    fireEvent.pointerDown(link);
+    fireEvent.click(link);
+    expect(close).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        "These links search logs and traces; they do not confirm that bodies, headers or URL parameters were saved."
+      )
+    ).toBeTruthy();
+  });
   it("opens a protected external destination with no opener or referrer", () => {
     render(<NetworkObservabilityLinks request={request} />);
     const link = screen.getByRole("link", { name: "Open logs in Grafana" });

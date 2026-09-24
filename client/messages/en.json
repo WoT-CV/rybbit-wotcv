@@ -2361,5 +2361,7 @@
   "QOaR8l": "Submitted form to \"{action}\"",
   "IQ5tZg": "Submitted form",
   "+B+qvw": "Changed {type}input \"{name}\"",
-  "vDpLV2": "Changed {type}input"
+  "vDpLV2": "Changed {type}input",
+  "IQc9jr": "These links search logs and traces; they do not confirm that bodies, headers or URL parameters were saved.",
+  "znRQQ6": "This browser request may not have reached the backend. Its body is not confirmed in Grafana."
 }
