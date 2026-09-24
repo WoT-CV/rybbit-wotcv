@@ -2006,6 +2006,8 @@
   "pl7iME": "Abrir logs no Grafana",
   "nzu4J7": "Abrir rastreamento no Grafana",
   "WMOCxZ": "É necessário ter acesso ao Grafana. Os logs podem expirar antes desta gravação.",
+  "znRQQ6": "Esta solicitação do navegador pode não ter chegado ao backend. O seu corpo não está confirmado no Grafana.",
+  "IQc9jr": "Estes links pesquisam logs e rastros; não confirmam que corpos, cabeçalhos ou parâmetros de URL tenham sido guardados.",
   "ovdkHn": "",
   "2o6ues": "Apenas metadados: corpos, cabeçalhos e parâmetros de URL não foram gravados.",
   "/rKJc5": "",
@@ -2361,7 +2363,5 @@
   "QOaR8l": "Formulário enviado para \"{action}\"",
   "IQ5tZg": "Formulário enviado",
   "+B+qvw": "{type}campo de entrada \"{name}\" alterado",
-  "vDpLV2": "{type}campo de entrada alterado",
-  "IQc9jr": "Estes links pesquisam logs e rastros; não confirmam que corpos, cabeçalhos ou parâmetros de URL tenham sido guardados.",
-  "znRQQ6": "Esta solicitação do navegador pode não ter chegado ao backend. O seu corpo não está confirmado no Grafana."
+  "vDpLV2": "{type}campo de entrada alterado"
 }

@@ -2006,6 +2006,8 @@
   "pl7iME": "Open logs in Grafana",
   "nzu4J7": "Open trace in Grafana",
   "WMOCxZ": "Grafana access is required. Logs may expire before this replay.",
+  "znRQQ6": "This browser request may not have reached the backend. Its body is not confirmed in Grafana.",
+  "IQc9jr": "These links search logs and traces; they do not confirm that bodies, headers or URL parameters were saved.",
   "ovdkHn": "Back to network requests",
   "2o6ues": "Metadata only: bodies, headers and URL parameters were not recorded.",
   "/rKJc5": "Timing",
@@ -2361,7 +2363,5 @@
   "QOaR8l": "Submitted form to \"{action}\"",
   "IQ5tZg": "Submitted form",
   "+B+qvw": "Changed {type}input \"{name}\"",
-  "vDpLV2": "Changed {type}input",
-  "IQc9jr": "These links search logs and traces; they do not confirm that bodies, headers or URL parameters were saved.",
-  "znRQQ6": "This browser request may not have reached the backend. Its body is not confirmed in Grafana."
+  "vDpLV2": "Changed {type}input"
 }

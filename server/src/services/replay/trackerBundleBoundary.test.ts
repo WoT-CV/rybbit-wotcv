@@ -23,9 +23,13 @@ it("tree-shakes UI-only shared contracts from the browser tracker", async () => 
   expect(text).not.toContain("mayRemoveCapturedFields");
   expect(text).not.toContain("REPLAY_COVERAGE_POLICY_VERSION");
   const bundled = Object.values(result.metafile.outputs).flatMap(output =>
-    Object.entries(output.inputs).filter(([, value]) => value.bytesInOutput > 0).map(([path]) => path)
+    Object.entries(output.inputs)
+      .filter(([, value]) => value.bytesInOutput > 0)
+      .map(([path]) => path)
   );
-  expect(bundled.filter(path => /shared\/dist|shared\/src\/replayCoverage|src\/(?:api|db|services)\//.test(path))).toEqual([]);
+  expect(
+    bundled.filter(path => /shared\/dist|shared\/src\/replayCoverage|src\/(?:api|db|services)\//.test(path))
+  ).toEqual([]);
   expect(bundled.filter(path => /node_modules/.test(path) && !path.includes("web-vitals"))).toEqual([]);
   expect(readFileSync(fileURLToPath(new URL("../../analytics-script/build.js", import.meta.url)), "utf8")).toContain(
     '"@rybbit/shared": resolve(__dirname, "../../../shared/src/index.ts")'

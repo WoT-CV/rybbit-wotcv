@@ -2006,6 +2006,8 @@
   "pl7iME": "Otwórz logi w Grafanie",
   "nzu4J7": "Otwórz ślad w Grafanie",
   "WMOCxZ": "Wymagany jest dostęp do Grafany. Logi mogą wygasnąć wcześniej niż to nagranie.",
+  "znRQQ6": "To żądanie przeglądarki mogło nie dotrzeć do backendu. Zapis jego body w Grafanie nie jest potwierdzony.",
+  "IQc9jr": "Te linki przeszukują logi i ślady; nie potwierdzają zapisania body, nagłówków ani parametrów URL.",
   "ovdkHn": "Wróć do żądań sieciowych",
   "2o6ues": "Tylko metadane: treści żądań i odpowiedzi, nagłówki oraz parametry URL nie były nagrywane.",
   "/rKJc5": "Czasy",
@@ -2361,7 +2363,5 @@
   "QOaR8l": "Przesłano formularz do \"{action}\"",
   "IQ5tZg": "Przesłano formularz",
   "+B+qvw": "Zmieniono {type}pole wprowadzania \"{name}\"",
-  "vDpLV2": "Zmieniono {type}pole wprowadzania",
-  "IQc9jr": "Te linki przeszukują logi i ślady; nie potwierdzają zapisania body, nagłówków ani parametrów URL.",
-  "znRQQ6": "To żądanie przeglądarki mogło nie dotrzeć do backendu. Zapis jego body w Grafanie nie jest potwierdzony."
+  "vDpLV2": "Zmieniono {type}pole wprowadzania"
 }

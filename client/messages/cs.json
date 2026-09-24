@@ -2006,6 +2006,8 @@
   "pl7iME": "Otevřít logy v Grafaně",
   "nzu4J7": "Otevřít trasu v Grafaně",
   "WMOCxZ": "Je vyžadován přístup do Grafany. Logy mohou vypršet dříve než tento záznam.",
+  "znRQQ6": "Tento požadavek prohlížeče nemusel dorazit na backend. Uložení jeho těla v Grafaně není potvrzeno.",
+  "IQc9jr": "Tyto odkazy vyhledávají logy a stopy; nepotvrzují uložení těl, hlaviček ani parametrů URL.",
   "ovdkHn": "",
   "2o6ues": "Pouze metadata: těla, hlavičky a parametry URL nebyly zaznamenány.",
   "/rKJc5": "",
@@ -2361,7 +2363,5 @@
   "QOaR8l": "Odeslán formulář na „{action}“",
   "IQ5tZg": "Odeslán formulář",
   "+B+qvw": "Změněno {type}input „{name}“",
-  "vDpLV2": "Změněno {type}input",
-  "IQc9jr": "Tyto odkazy vyhledávají logy a stopy; nepotvrzují uložení těl, hlaviček ani parametrů URL.",
-  "znRQQ6": "Tento požadavek prohlížeče nemusel dorazit na backend. Uložení jeho těla v Grafaně není potvrzeno."
+  "vDpLV2": "Změněno {type}input"
 }

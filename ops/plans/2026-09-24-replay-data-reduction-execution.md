@@ -263,3 +263,40 @@ Wynik 6B: test metafile i tree shaking PASS. Minified tracker spadł z 71180 B
 22059 -> 19753 B. Produkcyjny precompress (jego poziom) daje 19726 B gzip.
 W bundlu nie ma resolvera coverage, usług serwera ani CommonJS shared/dist;
 pozostaje celowa zależność web-vitals. Nie usunięto danych replay.
+
+### Wynik 6 — końcowa walidacja i review
+
+- Rybbit client: 60 plików / 641 testów PASS. Server po poprawce bundla:
+  170 plików / 2409 testów PASS, 2 pliki / 16 testów integracyjnych ClickHouse SKIP.
+- Shared/server/client build oraz server typecheck PASS. Dodatkowy frozen offline
+  install i build klienta w osobnym katalogu, bez server/src: PASS. Nie wykonano
+  Docker/Alpine build, ponieważ Docker nie jest dostępny w tym środowisku.
+- Narzędzia Node: 14/14 PASS; istniejące testy Python wotcv deploy: 47/47 PASS.
+- BE reactor observability/api-shared i zależności PASS. Własna korekta 6A
+  `b285456e`: wszystkie overloady Servlet redirect, charset/locale, reset/flush,
+  błędne UTF-8 i bodyless205. W tych dwóch modułach 64 + 137 testów, bez skipów.
+- Produkcyjny uploader i decoder przeszły lokalny cross-origin HTTP w trzech
+  silnikach: 39 żądań, zgodność payloadów, CORS, stary JSON, gzip i fallback415.
+  Test trzech równoległych instancji uploadera nie jest pełnym testem wielu kart
+  aplikacji ani testem odtwarzacza na iPhonie. Żadne żądanie nie trafiło na prod.
+- Pełny lint: 85 błędów i 168 ostrzeżeń. Wszystkie 85 błędów leżą w plikach
+  identycznych z baseline d6b623ec (porównanie normalizuje wyłącznie CRLF/LF).
+  Lint zmienionych komponentów PASS. Pełny lint NIE jest oznaczony jako PASS;
+  nie wyłączono reguł ani nie podniesiono progów. Ten dług pozostaje jawny.
+- Read-only SSH: health na d6b623ec, limity bez zmian. Ostatnia próbka Loki:
+  200 wpisów / 100 par / unknown200 / brak brakującego metadata, maks. 9874 B
+  i 61 atrybutów; bez przekroczeń w próbce. Nowy BE nie jest wdrożony, dlatego
+  ta próbka nie weryfikuje nowych stanów. Nie potwierdza trwałego pokrycia.
+- Review: kolejność dwóch nowych kluczy w 12 słownikach dopasowano do extractor-a;
+  wartości tłumaczeń pozostają niezmienione. Nie ma cross-importu server/src do UI.
+  Testy/raporty nie zawierają body, tokenów ani ID z produkcji.
+
+Dodano powtarzalne narzędzia `replay-http-smoke.mjs`,
+`replay-lint-baseline.mjs` i `verify-isolated-client.ps1`. Porównanie baseline
+lintu nie zastępuje właściwego lintu. Bez push, deploy, migracji i zmian FE.
+Zastany indeks dwóch plików ResourceTimingFilter w BE pozostał niezmieniony.
+
+Decyzja: kod gotowy do staging; pełny rollout produkcyjny pozostaje NO-GO do
+zaliczenia bramek opisanych w
+[raporcie końcowym](replay-data-reduction-release-2026-09-24.md).
+Etap 1B jest świadomie wyłączony, nie oczekuje na provisioning.

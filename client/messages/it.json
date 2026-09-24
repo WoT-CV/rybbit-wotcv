@@ -2006,6 +2006,8 @@
   "pl7iME": "Apri i log in Grafana",
   "nzu4J7": "Apri traccia in Grafana",
   "WMOCxZ": "È richiesto l’accesso a Grafana. I log possono scadere prima di questa registrazione.",
+  "znRQQ6": "Questa richiesta del browser potrebbe non aver raggiunto il backend. Il suo corpo non è confermato in Grafana.",
+  "IQc9jr": "Questi link cercano nei log e nelle tracce; non confermano che siano stati salvati corpi, intestazioni o parametri URL.",
   "ovdkHn": "",
   "2o6ues": "Solo metadati: corpi, intestazioni e parametri URL non sono stati registrati.",
   "/rKJc5": "",
@@ -2361,7 +2363,5 @@
   "QOaR8l": "Modulo inviato a \"{action}\"",
   "IQ5tZg": "Modulo inviato",
   "+B+qvw": "{type}campo di input \"{name}\" modificato",
-  "vDpLV2": "{type}campo di input modificato",
-  "IQc9jr": "Questi link cercano nei log e nelle tracce; non confermano che siano stati salvati corpi, intestazioni o parametri URL.",
-  "znRQQ6": "Questa richiesta del browser potrebbe non aver raggiunto il backend. Il suo corpo non è confermato in Grafana."
+  "vDpLV2": "{type}campo di input modificato"
 }

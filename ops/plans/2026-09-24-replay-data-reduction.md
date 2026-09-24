@@ -13,6 +13,12 @@ Data: 2026-09-24. Status: projekt implementacji, nie raport z wykonania.
 
 Ten dokument nie stanowi potwierdzenia gotowości aplikacji do produkcji.
 
+Wynik wykonania oraz aktualne bramki wdrożenia:
+[raport końcowy](replay-data-reduction-release-2026-09-24.md).
+Historyczne kryteria poniżej, które wymagają archiwum, fragmentacji albo receipts,
+nie obowiązują po powyższej zmianie zakresu. Odrzucenie prototypu formatu na
+podstawie pomiarów jest poprawnym wynikiem etapu 5, nie brakiem jego realizacji.
+
 ## 1. Cel i kompletność zakresu
 
 Zmniejszamy koszt przesyłania danych z `wot-cv-fe` do Rybbit. Usuwamy wyłącznie
