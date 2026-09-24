@@ -1,4 +1,5 @@
 import type { NetworkReplayConfig } from "@rybbit/shared";
+import type { ReplayUploadCapability } from "./replayUpload.js";
 
 export interface ScriptConfig {
   namespace: string;
@@ -14,6 +15,7 @@ export interface ScriptConfig {
   trackErrors: boolean;
   enableSessionReplay: boolean;
   networkReplay?: NetworkReplayConfig;
+  replayTransport?: ReplayUploadCapability;
   sessionReplayBatchSize: number;
   sessionReplayBatchInterval: number;
   sessionReplayMaskTextSelectors: string[];

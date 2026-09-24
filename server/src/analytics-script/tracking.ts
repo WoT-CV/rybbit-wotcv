@@ -4,7 +4,6 @@ import {
   TrackingPayload,
   WebVitalsData,
   SessionReplayBatch,
-  SessionReplayTransportError,
   ButtonClickProperties,
   CopyProperties,
   FormSubmitProperties,
@@ -14,6 +13,7 @@ import { findMatchingPattern } from "./utils.js";
 import { SessionReplayRecorder } from "./sessionReplay.js";
 import { getBotScore, getBotSignalMask } from "./botSignals.js";
 import { rotateVisitorId } from "./config.js";
+import { createReplayUploader } from "./replayUpload.js";
 
 const IDENTIFY_MAX_ATTEMPTS = 3;
 const IDENTIFY_RETRY_BASE_DELAY_MS = 250;
@@ -23,6 +23,7 @@ const FEATURE_FLAG_REQUEST_TIMEOUT_MS = 2000;
 
 export class Tracker {
   private config: ScriptConfig;
+  private sendReplay: (batch: SessionReplayBatch) => Promise<void>;
   private customUserId: string | null = null;
   private sessionReplayRecorder?: SessionReplayRecorder;
   private errorDedupeCache: Map<string, number> = new Map();
@@ -30,6 +31,10 @@ export class Tracker {
   private exposedFeatureFlags = new Set<string>();
   constructor(config: ScriptConfig) {
     this.config = config;
+    this.sendReplay = createReplayUploader(
+      `${config.analyticsHost}/session-replay/record/${config.siteId}`,
+      config.replayTransport
+    );
     this.loadUserId();
 
     if (config.enableSessionReplay) {
@@ -134,19 +139,7 @@ export class Tracker {
   }
 
   private async sendSessionReplayBatch(batch: SessionReplayBatch): Promise<void> {
-    const response = await fetch(`${this.config.analyticsHost}/session-replay/record/${this.config.siteId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(batch),
-      mode: "cors",
-      keepalive: false, // Disable keepalive for large session replay requests
-    });
-
-    if (!response.ok) {
-      throw new SessionReplayTransportError(response.status, response.statusText);
-    }
+    await this.sendReplay(batch);
   }
 
   createBasePayload(): BasePayload | null {

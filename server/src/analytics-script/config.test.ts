@@ -95,6 +95,7 @@ describe("parseScriptConfig", () => {
 
     expect(config).toEqual({
       namespace: "rybbit",
+      replayTransport: { version: 1, gzip: false },
       analyticsHost: "https://analytics.example.com",
       siteId: "123",
       visitorId: expect.any(String),

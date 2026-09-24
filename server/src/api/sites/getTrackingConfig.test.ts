@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getConfig: vi.fn(),
@@ -21,6 +21,21 @@ vi.mock("../../services/usageService.js", () => ({
 import { getTrackingConfig } from "./getTrackingConfig.js";
 
 describe("getTrackingConfig", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  it.each([
+    ["true", true, true],
+    ["false", true, false],
+    ["TRUE", true, false],
+    ["true", false, false],
+  ])("advertises gzip only with opt-in %s and replay %s", async (flag, replay, expected) => {
+    vi.stubEnv("WOTCV_REPLAY_UPLOAD_GZIP", flag);
+    mocks.getConfig.mockResolvedValue({ siteId: 123, type: "web", sessionReplay: replay });
+    const reply = { send: vi.fn(), status: vi.fn().mockReturnThis() };
+    await getTrackingConfig({ params: { siteId: "123" }, log: { error: vi.fn() } } as any, reply as any);
+    expect(reply.send).toHaveBeenCalledWith(
+      expect.objectContaining({ replayTransport: { version: 1, gzip: expected } })
+    );
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getConfig.mockResolvedValue({

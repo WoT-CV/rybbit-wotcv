@@ -133,3 +133,43 @@ nie powoduje przypadkowego przeformatowania całych katalogów). Review uwzględ
 różnicę null/undefined dla brakującego atrybutu DOM: brak tagu zachowuje politykę
 serwera, obecny błędny tag ogranicza do metadata. Klik/pointer nie zamyka przodka.
 Nie zmieniono historycznych payloadów, limitów ani ustawień produkcyjnych FE.
+
+## Etap 4 — ponowna analiza i plan przed implementacją
+
+Fastify ma dziś limit 10 MiB, recorder 7 MB na batch oraz istniejące retry/split413.
+Nie zmieniamy żadnego z nich. Zlib async z maxOutputLength pozwala ograniczyć
+rozpakowywanie przed parsowaniem JSON; wejście również liczymy i ograniczamy do
+aktualnego route bodyLimit. Hook dotyczy wyłącznie POST record. Nie ma globalnego
+decompressora ani synchronizowanego gunzip na event loop. Limit obowiązuje także
+dla sklejonych członów gzip. Content-Length dotyczy bajtów zakodowanych.
+
+1. Route-local preParsing: identity/gzip; 415 inne encoding, 400 uszkodzone gzip,
+   413 wejście/wyjście ponad dotychczasowy limit; bez wypisywania payloadów.
+2. Content-Encoding w CORS tylko dla record. Public capability v1/gzip reklamowane
+   wyłącznie przy WOTCV_REPLAY_UPLOAD_GZIP=true i aktywnym replay; domyślnie false.
+3. Tracker: JSON snapshot przed await, CompressionStream bez nowej zależności,
+   próg 4 KiB, tylko oszczędność >=10%, brak kompresji przy hidden/unload.
+   Brak wsparcia/błąd lokalny = ten sam JSON. HTTP415 lub błąd sieci wyłącza gzip
+   na pozostały czas życia transportu; następna istniejąca próba idzie JSON.
+   Brak dodatkowego retry, brak zmiany tożsamości, kolejności i rozmiarów batchy.
+4. Zachować sequenceNumber w walidacji ingest (obecny Zod usuwa to pole).
+5. Testy golden Unicode/nieznane pluginy, legacy JSON, błędne gzip/JSON, bomb,
+   CORS, negotiate/rollback, brak wsparcia i retry budget. Potem review i commit.
+
+Deployment: najpierw backend z flagą false, potem tracker, dopiero canary po
+staging/iPhone. Wyłączenie flagi zatrzymuje nową negocjację; stare karty nadal
+muszą mieć działający decoder. Downgrade do starego backendu wymaga pozostawienia
+zgodnego decoder-a albo zakończenia kart (415/network-error fallback ogranicza
+ryzyko, ale nie zastępuje tej bramki). Nie zmieniamy produkcji w tej sesji.
+
+### Wynik 4 / review
+
+123/123 testy ukierunkowane PASS, server tsc --noEmit PASS. Gzip jest dokładnym
+round-tripem bajtów JSON, mniejszym o >=10% albo niewysyłanym. Testy obejmują
+chunked input bez Content-Length, sumę kontrolną, truncated gzip, gzip bomb,
+wiele członów gzip, granicę limitu, CORS, stare JSON i snapshot identity.
+Review naprawiło gubienie sequenceNumber przez Zod oraz typowanie Fastify przy
+nowym hooku. Nie zmieniono retry, split413 ani kolejek recordera. Flaga false.
+Buforowanie jest ograniczone: wejście do route bodyLimit, wyjście do tej samej
+wartości przez async zlib maxOutputLength; nie są to zwiększone limity.
+Zewnętrzny proxy i fizyczny iPhone wymagają canary przed aktywacją flagi.

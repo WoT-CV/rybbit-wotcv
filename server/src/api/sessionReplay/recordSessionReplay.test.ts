@@ -111,6 +111,19 @@ function createReply(): ReplyStub {
 }
 
 describe("recordSessionReplay exclusions", () => {
+  it("preserves sequence numbers, equal timestamps and unknown plugin data through validation", async () => {
+    mocks.getConfig.mockResolvedValue(baseConfig);
+    mocks.decideSiteExclusion.mockResolvedValue({ excluded: false });
+    const body = {
+      ...baseBody,
+      events: [
+        { type: 6, timestamp: 123, sequenceNumber: 0, data: { plugin: "unknown", extra: { n: null } } },
+        { type: 6, timestamp: 123, sequenceNumber: 1, data: { responseBody: "historical" } },
+      ],
+    };
+    await recordSessionReplay(createRequest({ body }), createReply());
+    expect(mocks.recordEvents).toHaveBeenCalledWith(42, body, expect.anything());
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getConfig.mockResolvedValue(baseConfig);

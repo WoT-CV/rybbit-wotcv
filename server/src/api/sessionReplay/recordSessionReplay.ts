@@ -15,6 +15,7 @@ const recordSessionReplaySchema = z.object({
       type: z.union([z.string(), z.number()]),
       data: z.any(),
       timestamp: z.number(),
+      sequenceNumber: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
     })
   ),
   metadata: z

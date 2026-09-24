@@ -1,5 +1,6 @@
 import { DEFAULT_NETWORK_REPLAY_CONFIG, normalizeNetworkReplayConfig } from "./networkReplay/config.js";
 import { resolveNetworkReplayPrivacyCap } from "@rybbit/shared";
+import { acceptsReplayGzip } from "./replayUpload.js";
 import { ScriptConfig } from "./types.js";
 import { parseJsonSafely } from "./utils.js";
 
@@ -270,6 +271,7 @@ export async function parseScriptConfig(scriptTag: HTMLScriptElement): Promise<S
         trackErrors: apiConfig.trackErrors ?? defaultConfig.trackErrors,
         enableSessionReplay: apiConfig.sessionReplay ?? defaultConfig.enableSessionReplay,
         networkReplay: normalizeNetworkReplayConfig(apiConfig.networkReplay),
+        replayTransport: { version: 1, gzip: acceptsReplayGzip(apiConfig.replayTransport) },
         trackButtonClicks: apiConfig.trackButtonClicks ?? defaultConfig.trackButtonClicks,
         trackCopy: apiConfig.trackCopy ?? defaultConfig.trackCopy,
         trackFormInteractions: apiConfig.trackFormInteractions ?? defaultConfig.trackFormInteractions,

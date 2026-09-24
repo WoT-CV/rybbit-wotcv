@@ -127,6 +127,9 @@ export function getCorsOptionsForRequest(request: FastifyRequest, env: NodeJS.Pr
     return {
       ...commonCorsOptions,
       origin: true,
+      allowedHeaders: /^\/api\/session-replay\/record\/[^/]+$/.test(getRequestPath(request))
+        ? [...corsAllowedHeaders, "Content-Encoding"]
+        : corsAllowedHeaders,
       credentials: getTrustedCorsOrigins(env).includes(requestOrigin),
     };
   }

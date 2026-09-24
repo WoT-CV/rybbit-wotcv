@@ -6,6 +6,8 @@ import { toNodeHandler } from "better-auth/node";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { decodeReplayUpload } from "./api/sessionReplay/replayUploadEncoding.js";
+import type { RecordSessionReplayRequest } from "./types/sessionReplay.js";
 import {
   adminMoveSite,
   collectTelemetry,
@@ -563,7 +565,9 @@ async function analyticsRoutes(fastify: FastifyInstance) {
 
 async function sessionReplayRoutes(fastify: FastifyInstance) {
   // Session Replay
-  fastify.post("/session-replay/record/:siteId", recordSessionReplay); // Public - tracking endpoint
+  fastify.post<{ Params: { siteId: string }; Body: RecordSessionReplayRequest }>(
+    "/session-replay/record/:siteId", { preParsing: decodeReplayUpload }, recordSessionReplay
+  );
   fastify.get("/sites/:siteId/session-replay/list", publicReplayRead, getSessionReplays);
   fastify.get("/sites/:siteId/replay-observability", authReplayRead, getReplayObservability);
   fastify.get("/sites/:siteId/session-replay/:sessionId", publicReplayRead, getSessionReplayEvents);

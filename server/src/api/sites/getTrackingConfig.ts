@@ -35,6 +35,7 @@ export async function getTrackingConfig(request: FastifyRequest<{ Params: { site
       featureFlagsEnabled,
       sessionReplay,
       networkReplay,
+      replayTransport: { version: 1, gzip: sessionReplay && process.env.WOTCV_REPLAY_UPLOAD_GZIP === "true" },
       webVitals: config.type === "mobile" ? false : config.webVitals || false,
       trackErrors: config.trackErrors || false,
       trackOutbound: config.trackOutbound ?? true,
