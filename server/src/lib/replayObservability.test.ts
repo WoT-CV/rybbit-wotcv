@@ -12,17 +12,46 @@ const profile = {
   environment: "prod",
 };
 
+const wotcvProfile = {
+  requestOrigin: "https://api.wot-cv.com",
+  grafanaUrl: "https://dashboard.wot-cv.com",
+  orgId: 1,
+  lokiDatasourceUid: "bet3mn133whkwd",
+  tempoDatasourceUid: "df0rqhtz9e3uoa",
+  serviceName: "wot-cv-be-prod",
+  environment: "prod",
+  timePaddingMs: 120_000,
+};
+
 describe("replay observability configuration", () => {
-  it("is opt-in and only exposes profiles for the authorized site", () => {
-    expect(parseReplayObservabilityProfiles(undefined, 2)).toEqual([]);
+  it.each([undefined, "", " \t\n"])("uses the WoT-CV production defaults for an unset or blank value (%j)", value => {
+    expect(parseReplayObservabilityProfiles(value, 2)).toEqual([wotcvProfile]);
+  });
+  it.each([0, 1, 3, -1, 2.5, NaN, Infinity])("does not expose the production defaults to another site (%s)", siteId => {
+    expect(parseReplayObservabilityProfiles(undefined, siteId)).toEqual([]);
+  });
+  it.each(["[]", " \n [ ] \t"])("allows an explicit empty array to disable all defaults (%j)", value => {
+    expect(parseReplayObservabilityProfiles(value, 2)).toEqual([]);
+  });
+  it("does not allow a caller to mutate subsequent default profiles", () => {
+    const [actual] = parseReplayObservabilityProfiles(undefined, 2);
+    actual.grafanaUrl = "https://other.example.com";
+    actual.lokiDatasourceUid = "other-logs";
+    expect(parseReplayObservabilityProfiles(undefined, 2)).toEqual([wotcvProfile]);
+  });
+  it("replaces defaults with explicit profiles and only exposes them for the authorized site", () => {
     expect(parseReplayObservabilityProfiles(JSON.stringify([profile]), 3)).toEqual([]);
-    const [actual] = parseReplayObservabilityProfiles(JSON.stringify([profile]), 2);
+    expect(parseReplayObservabilityProfiles(JSON.stringify([{ ...profile, siteIds: [3] }]), 2)).toEqual([]);
+    const profiles = parseReplayObservabilityProfiles(JSON.stringify([profile]), 2);
+    expect(profiles).toHaveLength(1);
+    const [actual] = profiles;
     expect(actual).toMatchObject({
       requestOrigin: "https://api.example.com",
       grafanaUrl: "https://grafana.example.com/grafana",
       timePaddingMs: 120_000,
     });
     expect(actual).not.toHaveProperty("siteIds");
+    expect(actual).not.toHaveProperty("tempoDatasourceUid");
   });
   it.each([
     { grafanaUrl: "javascript:alert(1)" },
@@ -44,8 +73,13 @@ describe("replay observability configuration", () => {
       1
     );
   });
-  it("rejects malformed and oversized configuration without silently using a different target", () => {
-    expect(() => parseReplayObservabilityProfiles("not-json", 2)).toThrow();
-    expect(() => parseReplayObservabilityProfiles("x".repeat(65_537), 2)).toThrow();
+  it.each(["not-json", "null", "{}", '""', "[null]", "x".repeat(65_537)])(
+    "rejects malformed and oversized configuration without falling back to production (case %#)",
+    value => {
+      expect(() => parseReplayObservabilityProfiles(value, 2)).toThrow();
+    }
+  );
+  it("rejects oversized valid JSON instead of bypassing the input limit", () => {
+    expect(() => parseReplayObservabilityProfiles(`[]${" ".repeat(65_536)}`, 2)).toThrow();
   });
 });

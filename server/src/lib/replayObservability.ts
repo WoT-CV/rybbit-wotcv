@@ -28,13 +28,29 @@ const profileSchema = z
   })
   .strict();
 
+// Non-secret production identifiers, scoped to the WoT-CV site and API origin.
+// An explicit JSON configuration replaces these defaults; [] disables the links.
+const WOTCV_REPLAY_OBSERVABILITY_PROFILES = [
+  {
+    siteIds: [2],
+    requestOrigin: "https://api.wot-cv.com",
+    grafanaUrl: "https://dashboard.wot-cv.com",
+    orgId: 1,
+    lokiDatasourceUid: "bet3mn133whkwd",
+    tempoDatasourceUid: "df0rqhtz9e3uoa",
+    serviceName: "wot-cv-be-prod",
+    environment: "prod",
+    timePaddingMs: 120_000,
+  },
+] satisfies z.input<typeof profileSchema>[];
+
 export function parseReplayObservabilityProfiles(
   value: string | undefined,
   siteId: number
 ): ReplayObservabilityProfile[] {
-  if (!value?.trim()) return [];
-  if (value.length > 65_536) throw new Error("Replay observability configuration exceeds its limit");
-  const profiles = z.array(profileSchema).max(100).parse(JSON.parse(value));
+  if (value && value.length > 65_536) throw new Error("Replay observability configuration exceeds its limit");
+  const configuration = value?.trim() ? JSON.parse(value) : WOTCV_REPLAY_OBSERVABILITY_PROFILES;
+  const profiles = z.array(profileSchema).max(100).parse(configuration);
   const origins = new Set<string>();
   return profiles
     .filter(profile => profile.siteIds.includes(siteId))

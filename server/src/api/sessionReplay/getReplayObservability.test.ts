@@ -37,9 +37,44 @@ describe("authenticated replay observability configuration", () => {
       });
       expect(response.statusCode).toBe(access ? 200 : 403);
       if (access) {
-        expect(response.json()).toEqual({ profiles: [] });
+        const { profiles } = response.json();
+        expect(profiles).toHaveLength(1);
+        expect(profiles[0]).toMatchObject({
+          requestOrigin: "https://api.wot-cv.com",
+          grafanaUrl: "https://dashboard.wot-cv.com",
+          orgId: 1,
+          lokiDatasourceUid: "bet3mn133whkwd",
+          tempoDatasourceUid: "df0rqhtz9e3uoa",
+        });
+        expect(profiles[0]).not.toHaveProperty("siteIds");
         expect(response.headers["cache-control"]).toBe("private, no-store");
+      } else {
+        expect(response.body).not.toContain("dashboard.wot-cv.com");
+        expect(response.body).not.toContain("bet3mn133whkwd");
       }
+    } finally {
+      await app.close();
+    }
+  });
+  it.each([
+    { siteId: 2, config: "[]" },
+    { siteId: 3, config: "" },
+  ])("returns no profiles when disabled or outside the default site (%j)", async ({ siteId, config }) => {
+    mocks.access.mockResolvedValue(true);
+    mocks.key.mockResolvedValue({ valid: false });
+    mocks.session.mockResolvedValue({ user: { id: "user-1" } });
+    vi.stubEnv("WOTCV_REPLAY_OBSERVABILITY_PROFILES", config);
+    const app = Fastify();
+    app.get<{ Params: { siteId: string } }>(
+      "/sites/:siteId/replay-observability",
+      { preHandler: requireSiteAccess({ resource: "replay", action: "read" }) },
+      getReplayObservability
+    );
+    try {
+      const response = await app.inject(`/sites/${siteId}/replay-observability`);
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ profiles: [] });
+      expect(response.headers["cache-control"]).toBe("private, no-store");
     } finally {
       await app.close();
     }
